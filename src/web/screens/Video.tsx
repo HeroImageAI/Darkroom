@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Pause, Play, Repeat, Sparkles, Waves, X } from 'lucide-react';
+import { Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Repeat, Sparkles, Undo2, Waves, X } from 'lucide-react';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { Dialog, formatDuration, ProgressBar, randomSeed, Segmented, timecode, useHotkey } from '../components/common';
 import { ensureNotifyPermission, notifyDesktop, useItem, usePersistent } from '../lib/hooks';
@@ -38,6 +38,8 @@ export function Video({ query }: { query: URLSearchParams }) {
   const [selected, setSelected] = usePersistent<string | null>('video.selected', null);
   const [takes, setTakes] = useState<Job[]>([]);
   const [warning, setWarning] = useState<{ text: string; body: Parameters<typeof api.submit>[0] } | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+  const [motionUndo, setMotionUndo] = useState<string[]>([]);
   const selectedItem = useItem(selected);
   const update = (p: Partial<VideoSettings>) => setS((prev) => ({ ...prev, ...p }));
   const animateRef = useRef<() => void>(() => undefined);
@@ -279,6 +281,34 @@ export function Video({ query }: { query: URLSearchParams }) {
               onChange={(e) => update({ motion: e.target.value })}
               placeholder="e.g. She turns her head towards the window and smiles; curtains sway in the breeze."
             />
+            <div className="field-row" style={{ marginTop: 6 }}>
+              <button
+                type="button"
+                className="btn sm"
+                disabled={!s.start || suggesting || !online}
+                title={s.start ? `Let the local Qwen3-VL write a ${vm.label} motion prompt from the start frame (and your text, if any)` : 'Add a start frame first'}
+                onClick={async () => {
+                  setSuggesting(true);
+                  try {
+                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name });
+                    setMotionUndo((u) => [...u.slice(-19), s.motion]);
+                    update({ motion: r.text });
+                    toast(`Motion prompt written for ${vm.label} in ${r.seconds}s.`, 'ok');
+                  } catch (e) {
+                    toast((e as Error).message, 'error');
+                  } finally {
+                    setSuggesting(false);
+                  }
+                }}
+              >
+                {suggesting ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} {s.motion.trim() ? 'Improve motion' : 'Suggest motion'}
+              </button>
+              {motionUndo.length > 0 && (
+                <button type="button" className="btn sm ghost" onClick={() => { update({ motion: motionUndo[motionUndo.length - 1] }); setMotionUndo((u) => u.slice(0, -1)); }}>
+                  <Undo2 size={14} /> Undo
+                </button>
+              )}
+            </div>
             <p className={`note ${words > T[vKey].max_words ? 'warn' : ''}`} style={{ margin: '4px 0 0' }}>
               {T[vKey].hint} <span className="mono">{words} words</span>
             </p>

@@ -2400,6 +2400,130 @@
       "outputs": {
         "image": "DR_OUTPUT"
       }
+    },
+    "vlm_image": {
+      "file": "vlm_image.json",
+      "family": "vlm",
+      "kind": "text",
+      "label": "Qwen3-VL 8B (image + text)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "max_tokens": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "max_length"
+            }
+          ],
+          "default": 512,
+          "min": 32,
+          "max": 2048
+        },
+        "temperature": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.temperature"
+            }
+          ],
+          "default": 0.7,
+          "min": 0.05,
+          "max": 1.5
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 4294967295
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "text": "DR_OUTPUT"
+      }
+    },
+    "vlm_text": {
+      "file": "vlm_text.json",
+      "family": "vlm",
+      "kind": "text",
+      "label": "Qwen3-VL 8B (text only)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "max_tokens": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "max_length"
+            }
+          ],
+          "default": 512,
+          "min": 32,
+          "max": 2048
+        },
+        "temperature": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.temperature"
+            }
+          ],
+          "default": 0.7,
+          "min": 0.05,
+          "max": 1.5
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 4294967295
+        }
+      },
+      "outputs": {
+        "text": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {

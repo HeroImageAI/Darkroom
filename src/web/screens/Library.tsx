@@ -180,6 +180,18 @@ const MODE_LABEL: Record<string, string> = {
 
 function Detail({ item, comfyUrl }: { item: Item; comfyUrl: string | null }) {
   const [fav, setFav] = useState(item.favourite);
+  const [vlm, setVlm] = useState<{ busy: string | null; text: string | null; label: string }>({ busy: null, text: (item.ui as any)?.caption ?? null, label: 'Caption' });
+  useEffect(() => setVlm({ busy: null, text: (item.ui as any)?.caption ?? null, label: 'Caption' }), [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const runVlm = async (task: 'caption' | 'reverse', variant: string, label: string) => {
+    setVlm((v) => ({ ...v, busy: label }));
+    try {
+      const r = await api.vlm({ task, variant, itemId: item.id, save: task === 'caption' });
+      setVlm({ busy: null, text: r.text, label });
+    } catch (e) {
+      toast((e as Error).message, 'error');
+      setVlm((v) => ({ ...v, busy: null }));
+    }
+  };
   useEffect(() => setFav(item.favourite), [item.id, item.favourite]);
   const p = item.params as Record<string, unknown>;
   const hidden = new Set(['prompt', 'motion_prompt', 'negative', 'output']);
@@ -248,6 +260,33 @@ function Detail({ item, comfyUrl }: { item: Item; comfyUrl: string | null }) {
           </button>
         </div>
 
+        <div>
+          <p className="section-label">Describe with Qwen3-VL {vlm.busy && <span className="mono">{vlm.busy}…</span>}</p>
+          <div className="pills">
+            <button className="pill" disabled={!!vlm.busy} onClick={() => runVlm('caption', 'short', 'Short caption')}>Caption: short</button>
+            <button className="pill" disabled={!!vlm.busy} onClick={() => runVlm('caption', 'detailed', 'Detailed caption')}>Detailed</button>
+            <button className="pill" disabled={!!vlm.busy} onClick={() => runVlm('caption', 'klein', 'Klein-style caption')}>Klein-style</button>
+            <button className="pill" disabled={!!vlm.busy} onClick={() => runVlm('reverse', 'klein', 'Prompt for Klein 9B')}>Prompt → Klein</button>
+            <button className="pill" disabled={!!vlm.busy} onClick={() => runVlm('reverse', 'qwen', 'Prompt for Qwen-Image 2.1')}>Prompt → Qwen</button>
+          </div>
+          {vlm.text && (
+            <div style={{ marginTop: 8, background: 'var(--bg)', border: '1px solid var(--input)', borderRadius: 8, padding: 10 }}>
+              <p className="note" style={{ margin: '0 0 4px' }}>{vlm.label}</p>
+              <p style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 13 }}>{vlm.text}</p>
+              <div className="field-row" style={{ marginTop: 8 }}>
+                <button className="btn sm" onClick={() => { void navigator.clipboard.writeText(vlm.text!); toast('Copied.', 'ok'); }}>
+                  <Copy size={14} /> Copy
+                </button>
+                <button
+                  className="btn sm"
+                  onClick={() => go('generate', undefined, { prompt: vlm.text!, model: /Qwen/.test(vlm.label) ? 'qwen' : 'klein' })}
+                >
+                  Use as prompt
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         <div>
           <p className="section-label">Prompt</p>
           <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{item.prompt || <span className="muted">—</span>}</p>

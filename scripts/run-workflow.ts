@@ -10,7 +10,7 @@ import path from 'node:path';
 import WebSocket from 'ws';
 import { loadConfig, ROOT } from '../src/server/config.js';
 import { discoverComfy } from '../src/server/discovery.js';
-import { ComfyClient, filesFromHistory, historyError, inputName, parseWsMessage } from '../src/shared/comfy.js';
+import { ComfyClient, filesFromHistory, historyError, inputName, parseWsMessage, textFromHistory } from '../src/shared/comfy.js';
 import { buildPrompt, outputNodeIds, type ApiPrompt, type ParamValues } from '../src/shared/workflow.js';
 import type { Manifest } from '../src/shared/manifest.js';
 
@@ -110,7 +110,10 @@ if (hist && !err && !herr) {
     saved.push(dest);
   }
 }
+const texts = hist && !err && !herr ? textFromHistory(hist, Object.values(outIds).flat()) : [];
+if (texts.length) fs.writeFileSync(path.join(outDir, 'output.txt'), texts.join('\n---\n'));
 const result = {
+  text: texts,
   label,
   workflow: wfName,
   ok: !err && !herr,

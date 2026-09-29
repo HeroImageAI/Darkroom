@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
 import WebSocket from 'ws';
-import { ComfyClient, filesFromHistory, historyError, parseWsMessage, type OutputFile } from '../shared/comfy.js';
+import { ComfyClient, filesFromHistory, historyError, parseWsMessage, textFromHistory, type OutputFile } from '../shared/comfy.js';
+import { cleanVlmOutput } from '../shared/vlm.js';
 import { friendlyError } from '../shared/errors.js';
 import type { Manifest } from '../shared/manifest.js';
 import { buildPrompt, findByTitle, titleOf, type ApiPrompt, type ParamValues } from '../shared/workflow.js';
@@ -123,10 +124,31 @@ export class JobManager {
     }
   }
 
+  private waiters = new Map<string, ((job: Job) => void)[]>();
+
   private patch(id: string, p: Partial<Job>): void {
     this.store.updateJob(id, p);
     const job = this.store.getJob(id);
     if (job) this.broadcast({ type: 'job', job: publicJob(job) });
+    if (job && ['done', 'error', 'cancelled', 'lost'].includes(job.status)) {
+      for (const w of this.waiters.get(id) ?? []) w(job);
+      this.waiters.delete(id);
+    }
+  }
+
+  /** Resolve when a job finishes (any terminal status) or after timeoutMs. */
+  waitFor(id: string, timeoutMs = 10 * 60 * 1000): Promise<Job> {
+    const now = this.store.getJob(id);
+    if (now && ['done', 'error', 'cancelled', 'lost'].includes(now.status)) return Promise.resolve(now);
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('The model took too long to answer.')), timeoutMs);
+      const list = this.waiters.get(id) ?? [];
+      list.push((job) => {
+        clearTimeout(t);
+        resolve(job);
+      });
+      this.waiters.set(id, list);
+    });
   }
 
   private fail(id: string, raw: string): void {
@@ -285,6 +307,13 @@ export class JobManager {
     const err = historyError(h);
     if (err) return this.fail(jobId, err);
     const spec = this.manifest().workflows[job.workflow];
+    if (spec.kind === 'text') {
+      const text = cleanVlmOutput(textFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.text ?? 'DR_OUTPUT')).join('\n'));
+      this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, text } });
+      // Auto-unload the VLM when nothing else is waiting, so the next image/video job gets the whole GPU.
+      if (this.store.activeJobs().length === 0) void this.comfy.free(true, true).catch(() => undefined);
+      return;
+    }
     const prompt = job.api_prompt as ApiPrompt;
     const role = (r: string): OutputFile[] => {
       const t = spec.outputs[r];

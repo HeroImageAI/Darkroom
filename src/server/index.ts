@@ -14,6 +14,7 @@ import { Store, type LibraryQuery } from './db.js';
 import { desktopRunning, launchDesktop, tailDesktopLog } from './desktop.js';
 import { discoverComfy } from './discovery.js';
 import { JobManager, publicJob, VramWarning, type SubmitRequest } from './jobs.js';
+import { buildVlmRequest, type VlmPrompts, type VlmTask } from '../shared/vlm.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -173,6 +174,44 @@ app.post('/api/items/:id/as-input', async (req, reply) => {
   }
 });
 
+/**
+ * Local VLM (Qwen3-VL 8B): caption | reverse | enhance | motion.
+ * body: { task, variant, text?, itemId?, input?, which? }  -> { text, seconds }
+ */
+app.post('/api/vlm', async (req, reply) => {
+  const b = (req.body ?? {}) as { task: VlmTask; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean };
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
+  let request;
+  try {
+    const prompts = readJson<VlmPrompts>(path.join(cfg.paths.presets, 'vlm_prompts.json'));
+    request = buildVlmRequest(prompts, b.task, b.variant, b.text ?? '');
+  } catch (e) {
+    return reply.code(400).send({ error: (e as Error).message });
+  }
+  const params: Record<string, string | number> = { prompt: request.prompt, max_tokens: request.maxTokens, seed: b.seed ?? Math.floor(Math.random() * 2 ** 31) };
+  if (request.workflow === 'vlm_image') {
+    let name = b.input;
+    if (!name && b.itemId) {
+      const item = store.getItem(b.itemId);
+      if (!item) return reply.code(404).send({ error: 'Picture not found.' });
+      name = await jobs.asInput(item, b.which ?? (item.kind === 'video' ? 'poster' : 'main'));
+    }
+    if (!name) return reply.code(400).send({ error: 'This needs a picture.' });
+    params.image_1 = name;
+  }
+  const t0 = Date.now();
+  try {
+    const job = await jobs.submit({ workflow: request.workflow, params, meta: { mode: `vlm:${b.task}`, model: 'Qwen3-VL 8B', prompt: b.text ?? '' } });
+    const done = await jobs.waitFor(job.id);
+    if (done.status !== 'done') return reply.code(500).send({ error: done.error ?? 'The model did not answer.' });
+    const text = String((done.meta as Record<string, unknown>).text ?? '');
+    if (b.save && b.itemId && b.task === 'caption') store.updateItem(b.itemId, { caption: text });
+    return { text, seconds: Math.round((Date.now() - t0) / 100) / 10 };
+  } catch (e) {
+    return reply.code(500).send({ error: (e as Error).message });
+  }
+});
+
 app.post('/api/jobs', async (req, reply) => {
   const body = req.body as SubmitRequest;
   try {
@@ -212,8 +251,8 @@ app.get('/api/items/:id', async (req, reply) => {
 app.patch('/api/items/:id', async (req, reply) => {
   const { id } = req.params as { id: string };
   if (!store.getItem(id)) return reply.code(404).send({ error: 'Not found' });
-  const body = req.body as { favourite?: boolean; tags?: string[] };
-  store.updateItem(id, { favourite: body.favourite, tags: body.tags });
+  const body = req.body as { favourite?: boolean; tags?: string[]; caption?: string };
+  store.updateItem(id, { favourite: body.favourite, tags: body.tags, caption: body.caption });
   const item = store.getItem(id)!;
   broadcast({ type: 'item', item: slim(item) });
   return slim(item);

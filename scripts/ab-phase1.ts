@@ -76,7 +76,7 @@ for (const model of ['klein', 'qwen'] as const) {
     const newP = composeImagePrompt(T, { model, mode: ed.mode, text: ed.text, masked: 'masked' in ed ? ed.masked : false, caption: CAPTION });
     const images: Record<string, string> = { image_1: SRC };
     if (ed.mode === 'inpaint' || ('masked' in ed && ed.masked)) images.mask = MASK;
-    const extra = ed.mode === 'outpaint' ? { pad_left: 256, pad_right: 256 } : {};
+    const extra: Record<string, number> = ed.mode === 'outpaint' ? { pad_left: 256, pad_right: 256 } : {};
     for (const [variant, prompt] of [['old', oldP], ['new', newP]] as const) {
       runs.push({ group: `edits-${model}`, key: ed.key, variant, family: model, workflow: wf, set: { prompt, seed: 77, ...extra }, images, prompt });
     }

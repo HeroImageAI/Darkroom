@@ -14,6 +14,9 @@ import {
   Shuffle,
   Sparkles,
   Unlock,
+  Undo2,
+  Loader2,
+  ScanText,
   X,
 } from 'lucide-react';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
@@ -72,6 +75,9 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const [strip, setStrip] = useState<Item[]>([]);
   const [capture, setCapture] = useState<HTMLCanvasElement | null>(null);
   const [busyRef, setBusyRef] = useState(false);
+  const [vlmBusy, setVlmBusy] = useState<null | 'enhance' | 'reverse'>(null);
+  const [promptUndo, setPromptUndo] = useState<string[]>([]);
+  const reverseInput = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const selectedItem = useItem(selected);
 
@@ -118,6 +124,48 @@ export function Generate({ query }: { query: URLSearchParams }) {
   );
 
   // "Reuse settings" from Library / elsewhere: #/generate?reuse=<id>
+  // #/generate?prompt=...&model=...  (from Library "Reverse prompt")
+  const promptParam = query.get('prompt');
+  useEffect(() => {
+    if (!promptParam) return;
+    const model = query.get('model');
+    setS((p) => ({ ...p, prompt: promptParam, ...(model && m?.models[model] ? { model } : {}) }));
+    go('generate');
+  }, [promptParam]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const replacePrompt = (text: string) => {
+    setPromptUndo((u) => [...u.slice(-19), s.prompt]);
+    update({ prompt: text });
+    promptRef.current?.focus();
+  };
+
+  const enhance = async () => {
+    if (!s.prompt.trim()) return toast('Type a short idea first, then press Enhance.', 'info');
+    setVlmBusy('enhance');
+    try {
+      const r = await api.vlm({ task: 'enhance', variant: s.model, text: s.prompt });
+      replacePrompt(r.text);
+      toast(`Prompt enhanced for ${m?.models[s.model]?.label} in ${r.seconds}s. Edit it freely; Undo brings back yours.`, 'ok');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setVlmBusy(null);
+    }
+  };
+
+  const reverseFrom = async (src: { input?: string; itemId?: string }) => {
+    setVlmBusy('reverse');
+    try {
+      const r = await api.vlm({ task: 'reverse', variant: s.model, ...src });
+      replacePrompt(r.text);
+      toast(`Prompt written from the picture for ${m?.models[s.model]?.label} in ${r.seconds}s.`, 'ok');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setVlmBusy(null);
+    }
+  };
+
   const reuseId = query.get('reuse');
   useEffect(() => {
     if (!reuseId) return;
@@ -281,21 +329,55 @@ export function Generate({ query }: { query: URLSearchParams }) {
       <aside className="panel" aria-label="Generate settings">
         <div className="panel-scroll">
           <div>
-            <label className="section-label" htmlFor="prompt">
-              Prompt
-              <button
-                type="button"
-                className="btn ghost sm"
-                title="Rewrite the prompt with more detail (not connected to a language model yet)"
-                onClick={async () => {
-                  const r = await api.post<{ prompt: string; note?: string }>('/api/enhance', { prompt: s.prompt });
-                  update({ prompt: r.prompt });
-                  if (r.note) toast(r.note, 'info');
-                }}
-              >
-                <Sparkles size={14} /> Enhance
-              </button>
-            </label>
+            <div className="section-label">
+              <label htmlFor="prompt">Prompt</label>
+              <span style={{ display: 'flex', gap: 2 }}>
+                {promptUndo.length > 0 && (
+                  <button
+                    type="button"
+                    className="btn ghost sm"
+                    title="Put back the prompt from before the last Enhance / From picture"
+                    onClick={() => {
+                      update({ prompt: promptUndo[promptUndo.length - 1] });
+                      setPromptUndo((u) => u.slice(0, -1));
+                    }}
+                  >
+                    <Undo2 size={14} /> Undo
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  disabled={!!vlmBusy || !online}
+                  title={`Write a prompt from a picture for ${model.label} (uses reference 1 if present, otherwise asks for a picture)`}
+                  onClick={() => (s.refs[0] ? void reverseFrom({ input: s.refs[0].name }) : reverseInput.current?.click())}
+                >
+                  {vlmBusy === 'reverse' ? <Loader2 size={14} className="spin" /> : <ScanText size={14} />} From picture
+                </button>
+                <input
+                  ref={reverseInput}
+                  className="sr"
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!f) return;
+                    const up = await api.upload(f, f.name);
+                    void reverseFrom({ input: up.name });
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  disabled={!!vlmBusy || !online}
+                  title={`Expand your idea into a detailed ${model.label} prompt (local Qwen3-VL). You can edit the result before generating.`}
+                  onClick={() => void enhance()}
+                >
+                  {vlmBusy === 'enhance' ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Enhance
+                </button>
+              </span>
+            </div>
             <textarea
               id="prompt"
               ref={promptRef}

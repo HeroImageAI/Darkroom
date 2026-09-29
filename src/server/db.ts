@@ -46,7 +46,7 @@ export interface Job {
   id: string;
   prompt_id: string | null;
   workflow: string;
-  kind: 'image' | 'video';
+  kind: 'image' | 'video' | 'text';
   family: string;
   status: JobStatus;
   created_at: number;
@@ -161,7 +161,11 @@ export class Store {
     return decode<Item>(this.db.prepare('SELECT * FROM items WHERE id = ?').get(id) as any, JSON_ITEM);
   }
 
-  updateItem(id: string, patch: Partial<Pick<Item, 'favourite' | 'tags' | 'input_name'>>): void {
+  updateItem(id: string, patch: Partial<Pick<Item, 'favourite' | 'tags' | 'input_name'>> & { caption?: string }): void {
+    if (patch.caption !== undefined) {
+      const it = this.getItem(id);
+      if (it) this.db.prepare('UPDATE items SET ui = ? WHERE id = ?').run(JSON.stringify({ ...(it.ui ?? {}), caption: patch.caption }), id);
+    }
     if (patch.favourite !== undefined) this.db.prepare('UPDATE items SET favourite = ? WHERE id = ?').run(patch.favourite ? 1 : 0, id);
     if (patch.tags !== undefined) this.db.prepare('UPDATE items SET tags = ? WHERE id = ?').run(JSON.stringify(patch.tags), id);
     if (patch.input_name !== undefined) this.db.prepare('UPDATE items SET input_name = ? WHERE id = ?').run(patch.input_name, id);

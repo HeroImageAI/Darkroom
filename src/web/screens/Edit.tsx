@@ -297,7 +297,16 @@ function Editor({ item }: { item: Item }) {
     }
     const T = boot!.prompts;
     const em = editModel as ImageModelKey;
-    const caption = captionFromLineage(lineage as unknown as CaptionSource[], item.id);
+    let caption = captionFromLineage(lineage as unknown as CaptionSource[], item.id);
+    if (!caption && em === 'qwen' && (mode === 'inpaint' || mode === 'outpaint')) {
+      // Qwen's official fill templates want a caption of the original; describe the picture once and remember it.
+      toast('Describing the picture first (local Qwen3-VL)…', 'info');
+      try {
+        caption = (await api.vlm({ task: 'caption', variant: 'short', itemId: item.id, save: true })).text;
+      } catch {
+        caption = null;
+      }
+    }
     if (mode === 'instruct') {
       if (!prompt.trim()) return toast('Type an instruction first, e.g. “make it night time”.', 'info');
       const masked = onlyMasked && !maskEmpty;

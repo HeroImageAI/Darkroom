@@ -33,6 +33,7 @@ WAN_LORA_LOW = "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors"
 WAN_TE = "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
 WAN_VAE = "wan_2.1_vae.safetensors"
 INTERP_MODEL = "rife_v4.26.safetensors"
+VLM_TE = "qwen3vl_8b_int8_convrot.safetensors"  # same file as QWEN21_TE; has lm_head + vision tower
 LTX_UNET = "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors"
 LTX_TE = "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors"
 LTX_VAE = "ltx-2.5-video-vae-bf16.safetensors"
@@ -319,6 +320,27 @@ def qwen_ref():
     return g
 
 
+
+def vlm_text(with_image=True):
+    """Qwen3-VL-8B text generation (caption / reverse prompt / enhance). Loaded with the generic CLIP
+    type so ComfyUI builds the plain Qwen3-VL chat model (comfy/sd.py, QWEN3VL_8B fall-through).
+    Qwen3-VL instruct sampling (model card): temperature 0.7, top_p 0.8, top_k 20."""
+    g = G()
+    clip = g.add("CLIPLoader", "DR_MODEL", clip_name=VLM_TE, type="stable_diffusion", device="default")
+    inputs = dict(clip=o(clip), prompt="", max_length=512, sampling_mode="on",
+                  **{"sampling_mode.temperature": 0.7, "sampling_mode.top_k": 20, "sampling_mode.top_p": 0.8,
+                     "sampling_mode.min_p": 0.0, "sampling_mode.repetition_penalty": 1.05, "sampling_mode.seed": 0},
+                  thinking=False, use_default_template=True)
+    if with_image:
+        img = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+        scaled = g.add("ImageScaleToTotalPixels", "Vision size", image=o(img), upscale_method="lanczos",
+                       megapixels=0.6, resolution_steps=32)
+        inputs["image"] = o(scaled)
+    gen = g.add("TextGenerate", "DR_PROMPT", **inputs)
+    g.add("PreviewAny", "DR_OUTPUT", source=o(gen))
+    return g
+
+
 # -------------------------------------------------------------- utility --
 def remove_bg():
     g = G()
@@ -529,3 +551,5 @@ if __name__ == "__main__":
     crop().save("crop.json")
     import_image().save("import.json")
     video_frame().save("video_frame.json")
+    vlm_text(True).save("vlm_image.json")
+    vlm_text(False).save("vlm_text.json")

@@ -46,7 +46,7 @@ export interface MissingPlan {
 export interface WorkflowSpec {
   file: string;
   family: string;
-  kind: 'image' | 'video';
+  kind: 'image' | 'video' | 'text';
   label?: string;
   params: Record<string, ParamSpec>;
   /** Titles of save nodes whose outputs the app collects, keyed by role. */
@@ -108,7 +108,7 @@ export function bypassNode(prompt: ApiPrompt, id: string, input: string, slot = 
 }
 
 /** Node classes that produce results (kept by prune). */
-const OUTPUT_CLASSES = new Set(['SaveImage', 'SaveVideo', 'PreviewImage', 'SaveAnimatedWEBP', 'SaveImageAdvanced', 'SaveAudio']);
+const OUTPUT_CLASSES = new Set(['PreviewAny', 'SaveImage', 'SaveVideo', 'PreviewImage', 'SaveAnimatedWEBP', 'SaveImageAdvanced', 'SaveAudio']);
 
 export function isOutputNode(node: ApiNode): boolean {
   return OUTPUT_CLASSES.has(node.class_type) || /^Save/.test(node.class_type);

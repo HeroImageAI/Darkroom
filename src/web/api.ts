@@ -67,6 +67,8 @@ export const api = {
   items: (q: { filter?: string; q?: string; limit?: number; offset?: number }) =>
     api.get<{ total: number; items: Item[] }>(`/api/items?${new URLSearchParams(Object.entries(q).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]))}`),
   favourite: (id: string, favourite: boolean) => api.patch<Item>(`/api/items/${id}`, { favourite }),
+  vlm: (body: { task: 'caption' | 'reverse' | 'enhance' | 'motion'; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; save?: boolean }) =>
+    api.post<{ text: string; seconds: number }>('/api/vlm', body),
 };
 
 export interface SubmitBody {

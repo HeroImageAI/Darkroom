@@ -120,6 +120,18 @@ export function filesFromHistory(entry: HistoryEntry, onlyNodes?: string[]): Out
   return out;
 }
 
+/** Text produced by text nodes (e.g. PreviewAny after TextGenerate), in node order. */
+export function textFromHistory(entry: HistoryEntry, onlyNodes?: string[]): string[] {
+  const out: string[] = [];
+  for (const [nodeId, output] of Object.entries(entry.outputs ?? {})) {
+    if (onlyNodes && !onlyNodes.includes(nodeId)) continue;
+    const t = (output as Record<string, unknown>).text;
+    if (Array.isArray(t)) out.push(...t.filter((x): x is string => typeof x === 'string'));
+    else if (typeof t === 'string') out.push(t);
+  }
+  return out;
+}
+
 /** Error text from a failed history entry, if any. */
 export function historyError(entry: HistoryEntry): string | null {
   if (entry.status?.status_str !== 'error') return null;
