@@ -12,6 +12,7 @@ import {
   ImagePlus,
   Lasso,
   Maximize,
+  Monitor,
   Redo2,
   ScanSearch,
   Trash2,
@@ -22,13 +23,15 @@ import {
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
 import { useItem } from '../lib/hooks';
+import { CropDialog, grabScreenFrame } from '../lib/capture';
 import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
 import { go } from '../router';
 import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
 import { onJob, toast, useApp } from '../store';
 
 type Tool = 'move' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
-type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'remove_bg' | 'upscale';
+type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'enhance' | 'remove_bg' | 'upscale';
+type EnhanceKind = 'subtle' | 'strong' | 'upscale';
 interface Pad {
   left: number;
   top: number;
@@ -56,6 +59,7 @@ const MODES: { id: Mode; label: string }[] = [
   { id: 'instruct', label: 'Instruct' },
   { id: 'inpaint', label: 'Inpaint' },
   { id: 'outpaint', label: 'Outpaint' },
+  { id: 'enhance', label: 'Enhance' },
   { id: 'remove_bg', label: 'Remove BG' },
   { id: 'upscale', label: 'Upscale' },
 ];
@@ -79,6 +83,9 @@ function Editor({ item }: { item: Item }) {
   const [mode, setMode] = useState<Mode>(() => (sessionStorage.getItem('dr.edit.mode') as Mode) || 'instruct');
   const boot = useApp((s) => s.boot);
   const [editModel, setEditModel] = useState<string>(() => localStorage.getItem('dr.edit.model') || 'qwen');
+  const [enhanceKind, setEnhanceKind] = useState<EnhanceKind>('subtle');
+  const [enhanceAdv, setEnhanceAdv] = useState(false);
+  const [denoise, setDenoise] = useState<number | null>(null); // null = model default for the chosen strength
   useEffect(() => {
     try {
       localStorage.setItem('dr.edit.model', editModel);
@@ -87,7 +94,10 @@ function Editor({ item }: { item: Item }) {
     }
   }, [editModel]);
   const modelLabel = boot?.manifest.models[editModel]?.label ?? editModel;
-  const wfFor = (m: 'instruct' | 'inpaint' | 'outpaint') => boot?.manifest.edit?.[m]?.[editModel] ?? { instruct: 'qwen_edit', inpaint: 'inpaint', outpaint: 'outpaint' }[m];
+  const wfFor = (m: 'instruct' | 'inpaint' | 'outpaint' | 'enhance') =>
+    boot?.manifest.edit?.[m]?.[editModel] ?? { instruct: 'qwen_edit', inpaint: 'inpaint', outpaint: 'outpaint', enhance: 'qwen_enhance' }[m];
+  const enhanceDefaults = (boot?.manifest as any)?.enhance?.[editModel] as { subtle: number; strong: number } | undefined;
+  const effDenoise = denoise ?? (enhanceKind === 'strong' ? enhanceDefaults?.strong : enhanceDefaults?.subtle) ?? 0.3;
   const [brush, setBrush] = useState(64);
   const [feather, setFeather] = useState(8);
   const [prompt, setPrompt] = useState(() => sessionStorage.getItem('dr.edit.prompt') ?? '');
@@ -339,6 +349,39 @@ function Editor({ item }: { item: Item }) {
       if (ref) params.image_2 = ref.name;
       return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text || 'Outpaint');
     }
+    if (mode === 'enhance') {
+      let cap = caption ?? ((item.ui as any)?.caption as string | undefined) ?? null;
+      if (!cap) {
+        toast('Describing the picture first (local Qwen3-VL)…', 'info');
+        try {
+          cap = (await api.vlm({ task: 'caption', variant: em === 'klein' ? 'klein' : 'short', itemId: item.id, save: true })).text;
+        } catch {
+          cap = null;
+        }
+      }
+      const strength = enhanceKind === 'strong' ? 'strong' : 'subtle';
+      const srcMP = (W * H) / 1e6;
+      const params: Record<string, string | number> = {
+        prompt: composeImagePrompt(T, { model: em, mode: 'enhance', text: '', caption: cap, strength }),
+        denoise: effDenoise,
+        megapixels: Math.round(Math.min(2, Math.max(1, srcMP)) * 100) / 100,
+      };
+      if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
+      const label = `${modelLabel} enhance (${enhanceKind === 'upscale' ? 'upscale + enhance' : strength})`;
+      try {
+        const inp = await api.asInput(item.id);
+        const j = await api.submit({
+          workflow: wfFor('enhance'),
+          params: { image_1: inp.name, seed: randomSeed(), ...params },
+          meta: { mode: 'edit:enhance', model: label, prompt: item.prompt, parentId: item.id, ui: { ...item.ui, caption: cap ?? undefined }, chain: enhanceKind === 'upscale' ? { kind: 'upscale' } : undefined },
+        });
+        setJobId(j.id);
+        if (enhanceKind === 'upscale') toast('Enhancing, then upscaling 2× with SeedVR2 — the upscaled version opens when it is ready.', 'info', 7000);
+      } catch (err) {
+        toast((err as Error).message, 'error');
+      }
+      return;
+    }
     if (mode === 'remove_bg') return submit('remove_bg', {}, 'edit:remove_bg', 'BiRefNet');
     return submit('upscale', { scale: 2 }, 'upscale', 'SeedVR2 7B');
   };
@@ -359,7 +402,7 @@ function Editor({ item }: { item: Item }) {
   const applyLabel =
     tool === 'crop'
       ? 'Apply crop'
-      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', remove_bg: 'Remove background', upscale: 'Upscale 2×' }[mode];
+      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', enhance: 'Enhance', remove_bg: 'Remove background', upscale: 'Upscale 2×' }[mode];
 
   return (
     <div className="screen" style={{ gridTemplateColumns: '68px 1fr 392px' }}>
@@ -539,7 +582,7 @@ function Editor({ item }: { item: Item }) {
             </div>
           </div>
 
-          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint') && boot && (
+          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance') && boot && (
             <div>
               <p className="section-label">Model</p>
               <div className="cards" role="group" aria-label="Edit model">
@@ -653,6 +696,38 @@ function Editor({ item }: { item: Item }) {
             </div>
           )}
 
+          {mode === 'enhance' && (
+            <div>
+              <p className="section-label">Enhance</p>
+              <div className="segmented" role="group" aria-label="Enhance strength">
+                {(
+                  [
+                    ['subtle', 'Subtle', 'More detail and clarity, same picture'],
+                    ['strong', 'Strong', 'Re-render with much more detail; small changes possible'],
+                    ['upscale', 'Upscale + enhance', 'Subtle enhance, then SeedVR2 2x'],
+                  ] as [EnhanceKind, string, string][]
+                ).map(([k, l, t]) => (
+                  <button key={k} type="button" aria-pressed={enhanceKind === k} title={t} onClick={() => { setEnhanceKind(k); setDenoise(null); }}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              <p className="note" style={{ marginTop: 6 }}>
+                The picture is described by the local Qwen3-VL, then re-rendered at low strength. Composition, faces and text are kept.
+              </p>
+              <label className="check">
+                <input type="checkbox" checked={enhanceAdv} onChange={(ev) => setEnhanceAdv(ev.target.checked)} /> Advanced
+              </label>
+              {enhanceAdv && (
+                <label className="field">
+                  <span>
+                    Strength (denoise) <b className="mono">{effDenoise.toFixed(2)}</b>
+                  </span>
+                  <input type="range" min={0.1} max={0.9} step={0.05} value={effDenoise} onChange={(ev) => setDenoise(Number(ev.target.value))} />
+                </label>
+              )}
+            </div>
+          )}
           {mode === 'remove_bg' && <p className="note">Cuts out the main subject and saves a PNG with a transparent background as a new version. This is a dedicated cut-out tool (BiRefNet), not an image model, so there is no model choice here.</p>}
           {mode === 'upscale' && <p className="note">Doubles the resolution, adding real detail (SeedVR2, a dedicated upscaler, not an image model). About 20 seconds for a 1 MP picture.</p>}
           {tool === 'crop' && <p className="note warn">Crop: drag a box on the picture. {crop ? `${Math.round(crop.w)} × ${Math.round(crop.h)} at ${Math.round(crop.x)}, ${Math.round(crop.y)}` : ''}</p>}
@@ -740,6 +815,7 @@ function EditEmpty() {
   const [over, setOver] = useState(false);
   const online = useApp((s) => s.status?.comfy === 'online');
   const [jobId, setJobId] = useState<string | null>(null);
+  const [capture, setCapture] = useState<HTMLCanvasElement | null>(null);
   useEffect(() => {
     api.items({ filter: 'all', limit: 24 }).then((r) => setRecent(r.items.filter((i) => i.kind === 'image').slice(0, 12)));
   }, []);
@@ -798,6 +874,29 @@ function EditEmpty() {
             <input className="sr" type="file" accept="image/*" disabled={!online} onChange={(e) => e.target.files?.[0] && void importFile(e.target.files[0])} />
           </label>
         </div>
+        <button
+          className="btn sm"
+          disabled={!online || busy}
+          onClick={async () => {
+            try {
+              setCapture(await grabScreenFrame());
+            } catch {
+              toast('Screen capture was cancelled or blocked by the browser.', 'info');
+            }
+          }}
+        >
+          <Monitor size={14} /> Capture part of the screen
+        </button>
+        {capture && (
+          <CropDialog
+            source={capture}
+            onCancel={() => setCapture(null)}
+            onDone={(b) => {
+              setCapture(null);
+              void importFile(new File([b], 'screen.png', { type: 'image/png' }));
+            }}
+          />
+        )}
         {recent.length > 0 && (
           <>
             <p className="section-label" style={{ marginTop: 16 }}>

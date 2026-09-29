@@ -427,6 +427,20 @@ export class JobManager {
   /** Follow-up work declared by a finished job (e.g. Extend = render continuation, then join). */
   private async runChain(job: Job, newIds: string[]): Promise<void> {
     const chain = job.meta.chain as { kind?: string; firstItemId?: string } | undefined;
+    if (chain?.kind === 'upscale' && newIds[0]) {
+      const it = this.store.getItem(newIds[0]);
+      if (!it) return;
+      try {
+        await this.submit({
+          workflow: 'upscale',
+          params: { image_1: await this.asInput(it), scale: 2, seed: Math.floor(Math.random() * 2 ** 31) },
+          meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: it.prompt, parentId: it.id, ui: it.ui },
+        });
+      } catch (e) {
+        this.broadcast({ type: 'toast', kind: 'error', text: 'Could not start the upscale: ' + friendlyError((e as Error).message) });
+      }
+      return;
+    }
     if (chain?.kind !== 'join' || !chain.firstItemId || !newIds[0]) return;
     const first = this.store.getItem(chain.firstItemId);
     const second = this.store.getItem(newIds[0]);

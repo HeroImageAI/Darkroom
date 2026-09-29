@@ -22,7 +22,7 @@ const style = (id: string) => styles.find((s) => s.id === id)!;
 
 // Tokens that belong to one model only.
 const QWEN_ONLY = [/<image\d>/, /\bStyle:/, /Ultra HD/, /Perform inpainting/, /using outpainting/, /original caption is/];
-const KLEIN_ONLY = [/Shot as a natural-light/, /Rendered as painterly/, /Continue the scene beyond/, /blending seamlessly/];
+const KLEIN_ONLY = [/Shot as a natural-light/, /Rendered as painterly/, /Continue the scene beyond/, /blending seamlessly/, /Crisp focus, fine natural detail/, /Re-rendered in high quality/];
 
 describe('shipped presets', () => {
   it('prompts.json is complete', () => expect(validateTemplates(T)).toEqual([]));
@@ -42,7 +42,7 @@ describe('shipped presets', () => {
 });
 
 describe('no cross-contamination', () => {
-  const modes: ImageMode[] = ['generate', 'instruct', 'inpaint', 'outpaint'];
+  const modes: ImageMode[] = ['generate', 'instruct', 'inpaint', 'outpaint', 'enhance'];
   for (const s of styles) {
     for (const mode of modes) {
       it(`klein ${mode} / ${s.id} contains no Qwen-only wording`, () => {
@@ -146,4 +146,18 @@ describe('caption source', () => {
 
 describe('fill', () => {
   it('drops empty placeholders cleanly', () => expect(fill('{a} {b}.', { a: 'Hello.' })).toBe('Hello.'));
+});
+
+describe('enhance', () => {
+  it('Klein describes the picture then asks for detail', () => {
+    expect(composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', caption: 'A fisherman on a pier', strength: 'subtle' })).toBe(
+      'A fisherman on a pier. Crisp focus, fine natural detail and clean texture, with the same composition, people, text and colours.',
+    );
+    expect(composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', strength: 'strong' })).toMatch(/^A high-quality version of this picture\. Re-rendered/);
+  });
+  it('Qwen gets an instruction with explicit preservation and the caption', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'enhance', text: '', caption: 'a red car', strength: 'subtle' })).toBe(
+      'Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: a red car.',
+    );
+  });
 });

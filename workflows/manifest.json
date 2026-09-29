@@ -2524,6 +2524,184 @@
       "outputs": {
         "text": "DR_OUTPUT"
       }
+    },
+    "klein_enhance": {
+      "file": "klein_enhance.json",
+      "family": "klein",
+      "kind": "image",
+      "label": "Enhance (Klein 9B)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "denoise": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_DENOISE",
+              "input": "denoise"
+            }
+          ],
+          "default": 0.3,
+          "min": 0.1,
+          "max": 0.9
+        },
+        "schedule_steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SCHEDULE",
+              "input": "steps"
+            }
+          ],
+          "default": 12,
+          "min": 4,
+          "max": 40
+        },
+        "megapixels": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_WORK",
+              "input": "megapixels"
+            }
+          ],
+          "default": 1.0,
+          "min": 0.5,
+          "max": 2.0
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/enhance"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "qwen_enhance": {
+      "file": "qwen_enhance.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Enhance (Qwen-Image 2.1)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "denoise": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "denoise"
+            }
+          ],
+          "default": 0.35,
+          "min": 0.1,
+          "max": 0.9
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "megapixels": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_WORK",
+              "input": "megapixels"
+            }
+          ],
+          "default": 1.0,
+          "min": 0.5,
+          "max": 2.0
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/enhance"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {
@@ -2542,6 +2720,20 @@
     "outpaint": {
       "klein": "outpaint",
       "qwen": "qwen_outpaint"
+    },
+    "enhance": {
+      "klein": "klein_enhance",
+      "qwen": "qwen_enhance"
+    }
+  },
+  "enhance": {
+    "klein": {
+      "subtle": 0.3,
+      "strong": 0.6
+    },
+    "qwen": {
+      "subtle": 0.35,
+      "strong": 0.65
     }
   }
 }

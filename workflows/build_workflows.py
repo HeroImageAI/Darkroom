@@ -183,6 +183,33 @@ def klein_masked(outpaint=False, prefix=None):
     return g
 
 
+
+def klein_enhance():
+    """Klein 9B enhance: the source is both the reference (ReferenceLatent) and the starting latent;
+    only the last part of the schedule is sampled (SplitSigmasDenoise). DR_SCHEDULE.steps is set to
+    ~4/denoise by the app so about 4 real steps run at any strength."""
+    g = G()
+    unet, clip, vae, pos, neg = klein_base(g)
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    work = g.add("ImageScaleToTotalPixels", "DR_WORK", image=o(src), upscale_method="lanczos",
+                 megapixels=1.0, resolution_steps=16)
+    size = g.add("GetImageSize", "Work dims", image=o(work))
+    lat = g.add("VAEEncode", "Encode picture", pixels=o(work), vae=o(vae))
+    pos = g.add("ReferenceLatent", "Ref pos", conditioning=o(pos), latent=o(lat))
+    neg = g.add("ReferenceLatent", "Ref neg", conditioning=o(neg), latent=o(lat))
+    sched = g.add("Flux2Scheduler", "DR_SCHEDULE", steps=12, width=o(size, 0), height=o(size, 1))
+    split = g.add("SplitSigmasDenoise", "DR_DENOISE", sigmas=o(sched), denoise=0.33)
+    sampler = g.add("KSamplerSelect", "Sampler", sampler_name="euler")
+    noise = g.add("RandomNoise", "DR_SEED", noise_seed=0)
+    guider = g.add("CFGGuider", "Guider", model=o(unet), positive=o(pos), negative=o(neg), cfg=1.0)
+    samp = g.add("SamplerCustomAdvanced", "Sample", noise=o(noise), guider=o(guider), sampler=o(sampler),
+                 sigmas=o(split, 1), latent_image=o(lat))
+    img = g.add("VAEDecodeTiled", "Decode", samples=o(samp), vae=o(vae), tile_size=1024, overlap=128,
+                temporal_size=64, temporal_overlap=8)
+    g.add("SaveImage", "DR_OUTPUT", images=o(img), filename_prefix="darkroom/enhance")
+    return g
+
+
 # ----------------------------------------------------------------- Qwen --
 def qwen_t2i():
     g = G()
@@ -338,6 +365,30 @@ def vlm_text(with_image=True):
         inputs["image"] = o(scaled)
     gen = g.add("TextGenerate", "DR_PROMPT", **inputs)
     g.add("PreviewAny", "DR_OUTPUT", source=o(gen))
+    return g
+
+
+
+def qwen_enhance():
+    """Qwen-Image 2.1 enhance: 2.1 edit conditioning on the source, sampling from the encoded source
+    with denoise < 1 (KSampler), so composition is kept and detail is re-rendered."""
+    g = G()
+    unet = g.add("UNETLoader", "DR_MODEL", unet_name=QWEN21_UNET, weight_dtype="default")
+    cache = g.add("QwenImage21Cache", "Prefix cache", model=o(unet), device="auto", dtype="default")
+    clip = g.add("CLIPLoader", "DR_TEXT_ENCODER", clip_name=QWEN21_TE, type="qwen_image", device="default")
+    vae = g.add("VAELoader", "DR_VAE", vae_name=QWEN21_VAE)
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    work = g.add("ImageScaleToTotalPixels", "DR_WORK", image=o(src), upscale_method="lanczos",
+                 megapixels=1.0, resolution_steps=32)
+    enc = g.add("TextEncodeQwenImage21", "DR_PROMPT", clip=o(clip), vae=o(vae), prompt="", negative_prompt="",
+                resolution=0, **{"images.image_1": o(work)})
+    lat = g.add("VAEEncode", "Encode picture", pixels=o(work), vae=o(vae))
+    ks = g.add("KSampler", "DR_SAMPLER", model=o(cache), positive=o(enc, 0), negative=o(enc, 1),
+               latent_image=o(lat), seed=0, steps=25, cfg=1.0, sampler_name="euler",
+               scheduler="simple", denoise=0.35)
+    img = g.add("VAEDecodeTiled", "Decode", samples=o(ks), vae=o(vae), tile_size=1024, overlap=128,
+                temporal_size=64, temporal_overlap=8)
+    g.add("SaveImage", "DR_OUTPUT", images=o(img), filename_prefix="darkroom/enhance")
     return g
 
 
@@ -538,6 +589,8 @@ if __name__ == "__main__":
     qwen_edit_2511().save("qwen_edit_2511.json")
     klein_masked(False).save("inpaint.json")
     klein_masked(False, prefix="darkroom/edit").save("klein_edit.json")
+    klein_enhance().save("klein_enhance.json")
+    qwen_enhance().save("qwen_enhance.json")
     klein_masked(True).save("outpaint.json")
     remove_bg().save("remove_bg.json")
     upscale().save("upscale.json")

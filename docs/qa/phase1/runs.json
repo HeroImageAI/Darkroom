@@ -651,5 +651,90 @@
     "ok": true,
     "seconds": 31.5,
     "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-photographic-old\\qwen_00014_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-photographic",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: realistic photography with natural light, a 35 mm lens, shallow depth of field, true-to-life colour and subtle film grain. Ultra HD, 4K, cinematic composition.",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: realistic photography with natural light, a 35 mm lens, shallow depth of field, true-to-life colour and subtle film grain. Ultra HD, 4K, cinematic composition.",
+    "ok": true,
+    "seconds": 31.3,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-photographic-new\\qwen_00015_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-concept",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+    "ok": true,
+    "seconds": 31.5,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-concept-old\\qwen_00016_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-concept",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork. Ultra HD, 4K, cinematic composition.",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork. Ultra HD, 4K, cinematic composition.",
+    "ok": true,
+    "seconds": 29.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-concept-new\\qwen_00017_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-product",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+    "ok": true,
+    "seconds": 29.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-product-old\\qwen_00018_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-product",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+    "ok": true,
+    "seconds": 29.7,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-product-new\\qwen_00019_.png"
   }
 ]

@@ -7,7 +7,7 @@
 
 export type ImageModelKey = 'klein' | 'qwen';
 export type VideoModelKey = 'wan' | 'ltx';
-export type ImageMode = 'generate' | 'instruct' | 'inpaint' | 'outpaint';
+export type ImageMode = 'generate' | 'instruct' | 'inpaint' | 'outpaint' | 'enhance';
 
 export interface ImageTemplates {
   generate: string;
@@ -22,6 +22,9 @@ export interface ImageTemplates {
   caption?: string;
   /** Qwen only: native RGBA output wording (model card). */
   transparent?: string;
+  enhance_subtle?: string;
+  enhance_strong?: string;
+  enhance_default_caption?: string;
 }
 
 export interface VideoTemplates {
@@ -103,6 +106,8 @@ export interface ComposeImageArgs {
   caption?: string | null;
   /** Generate only, Qwen only: ask for a transparent background (real alpha). */
   transparent?: boolean;
+  /** Enhance only. */
+  strength?: 'subtle' | 'strong';
 }
 
 export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): string {
@@ -120,6 +125,16 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
     case 'inpaint': {
       const caption = a.caption && tpl.caption ? sub(tpl.caption, { text: sentence(a.caption) }) : '';
       return fill(tpl.inpaint, { fill: fragment(text), caption });
+    }
+    case 'enhance': {
+      const tplText = a.strength === 'strong' ? tpl.enhance_strong : tpl.enhance_subtle;
+      if (!tplText) throw new Error(`No enhance template for ${a.model}`);
+      if (a.model === 'klein') {
+        const cap = sentence(a.caption ?? '') || tpl.enhance_default_caption || '';
+        return fill(tplText, { caption: cap });
+      }
+      const caption = a.caption && tpl.caption ? sub(tpl.caption, { text: sentence(a.caption) }) : '';
+      return fill(tplText, { caption });
     }
     case 'outpaint': {
       if (!text && !a.caption && tpl.outpaint_default) return tidy(tpl.outpaint_default);

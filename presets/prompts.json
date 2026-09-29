@@ -9,7 +9,10 @@
     "inpaint": "{fill}, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
     "outpaint": "Continue the scene beyond its original edges{surroundings}, matching the existing lighting, perspective, colour palette and style.",
     "outpaint_surroundings": ", showing {text}",
-    "outpaint_default": "Continue the scene beyond its original edges, matching the existing lighting, perspective, colour palette and style."
+    "outpaint_default": "Continue the scene beyond its original edges, matching the existing lighting, perspective, colour palette and style.",
+    "enhance_subtle": "{caption} Crisp focus, fine natural detail and clean texture, with the same composition, people, text and colours.",
+    "enhance_strong": "{caption} Re-rendered in high quality with rich realistic detail, accurate lighting and crisp focus, keeping the same composition, people and text.",
+    "enhance_default_caption": "A high-quality version of this picture."
   },
   "qwen": {
     "generate": "{prompt} {style}",
@@ -21,7 +24,9 @@
     "outpaint": "Extend the image beyond its boundaries using outpainting.{caption}{surroundings}",
     "caption": " The original caption is: {text}",
     "outpaint_surroundings": " The new areas show {text}.",
-    "transparent": "This is an RGBA image with transparency. {prompt} The image has alpha channel and the background is transparent."
+    "transparent": "This is an RGBA image with transparency. {prompt} The image has alpha channel and the background is transparent.",
+    "enhance_subtle": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged.{caption}",
+    "enhance_strong": "Re-render this image at higher quality with rich, realistic detail and texture and accurate lighting. Keep the composition, the identity of people and all text unchanged.{caption}"
   },
   "wan": {
     "motion": "{motion} {camera}",

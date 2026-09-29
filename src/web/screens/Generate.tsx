@@ -573,6 +573,15 @@ export function Generate({ query }: { query: URLSearchParams }) {
               <button className="btn sm" onClick={() => go('edit', selectedItem.id)}>
                 <Layers size={15} /> Edit
               </button>
+              <button
+                className="btn sm"
+                onClick={() => {
+                  sessionStorage.setItem('dr.edit.mode', 'enhance');
+                  go('edit', selectedItem.id);
+                }}
+              >
+                <Sparkles size={15} /> Enhance
+              </button>
               <button className="btn sm" onClick={vary} disabled={!online} title="Same settings, new seed">
                 <Shuffle size={15} /> Vary
               </button>

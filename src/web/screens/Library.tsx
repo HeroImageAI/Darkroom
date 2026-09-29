@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Copy, Download, ExternalLink, Film, Heart, Layers, Search, Share2 } from 'lucide-react';
+import { Copy, Download, ExternalLink, Film, Heart, Layers, Search, Share2, Sparkles } from 'lucide-react';
 import { api, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { formatDuration, Pills } from '../components/common';
 import { usePersistent } from '../lib/hooks';
@@ -224,6 +224,17 @@ function Detail({ item, comfyUrl }: { item: Item; comfyUrl: string | null }) {
           {item.kind === 'image' && (
             <button className="btn sm" onClick={() => go('edit', item.id)}>
               <Layers size={14} /> Send to Edit
+            </button>
+          )}
+          {item.kind === 'image' && (
+            <button
+              className="btn sm"
+              onClick={() => {
+                sessionStorage.setItem('dr.edit.mode', 'enhance');
+                go('edit', item.id);
+              }}
+            >
+              <Sparkles size={14} /> Enhance
             </button>
           )}
           {item.kind === 'image' && (
