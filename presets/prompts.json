@@ -20,13 +20,14 @@
     "ref_hint": "Refer to references as <image1>, <image2>, <image3> in the prompt.",
     "instruct": "{instruction} Keep everything else unchanged.",
     "instruct_masked": "{instruction} Keep the rest of the image unchanged.",
-    "inpaint": "Perform inpainting on this image. Fill the marked area with {fill}.{caption}",
+    "inpaint": "{fill}.",
     "outpaint": "Extend the image beyond its boundaries using outpainting.{caption}{surroundings}",
     "caption": " The original caption is: {text}",
     "outpaint_surroundings": " The new areas show {text}.",
     "transparent": "This is an RGBA image with transparency. {prompt} The image has alpha channel and the background is transparent.",
     "enhance_subtle": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged.{caption}",
-    "enhance_strong": "Re-render this image at higher quality with rich, realistic detail and texture and accurate lighting. Keep the composition, the identity of people and all text unchanged.{caption}"
+    "enhance_strong": "Re-render this image at higher quality with rich, realistic detail and texture and accurate lighting. Keep the composition, the identity of people and all text unchanged.{caption}",
+    "inpaint_remove": "Perform inpainting on this image. Fill the marked area with {fill}.{caption}"
   },
   "wan": {
     "motion": "{motion} {camera}",

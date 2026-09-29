@@ -120,7 +120,7 @@ for (const r of runs) {
   if (r.file) args.push('--file', r.file);
   for (const [k, v] of Object.entries(r.set)) args.push('--set', `${k}=${v}`);
   for (const [k, v] of Object.entries(r.images ?? {})) args.push('--image', `${k}=${v}`);
-  const res = spawnSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8' });
+  const res = spawnSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8', timeout: 20 * 60 * 1000 });
   lastFamily = r.family;
   const m = /"seconds": ([\d.]+)/.exec(res.stdout ?? '');
   const ok = res.status === 0;

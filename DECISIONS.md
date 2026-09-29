@@ -114,3 +114,54 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
 38. **Mask edges are softened with a real blur (MaskToImage → ImageBlur → ImageToMask), not FeatherMask.** FeatherMask
     fades the mask toward the canvas border, which left a thin grey frame around outpainted pictures. Pixels further than
     grow + blur from the mask are bit-exact (verified); outpaint blends up to ~90 px into the original edge by design.
+
+## v2 expansion (2026-09-29, approved plan in docs/PLAN.md)
+
+39. **Git from here on.** `v1.0-baseline` tag, one branch per phase (`phase-1-prompts` … `phase-6-qa`), stacked.
+40. **All prompt text is composed in one pure module** (`src/shared/prompts.ts`) from `presets/prompts.json`,
+    `styles.json` and `camera.json`, keyed by model. Unit tests forbid Qwen-only wording (`<imageN>`, `Style:`,
+    "Ultra HD", the official fill templates) in Klein prompts and vice versa. Rules and sources: docs/PROMPT_AUDIT.md.
+41. **Styles are per-model sentences, not keyword suffixes.** Klein gets prose appended after the subject (FLUX.2:
+    subject → action → style → context; no negations). Qwen gets a `Style:` description plus the official quality tail
+    for photographic and cinematic looks.
+42. **Qwen inpaint and outpaint use Qwen's official fixed templates** ("Perform inpainting on this image…", "Extend
+    the image beyond its boundaries using outpainting…") with a caption of the original. The caption is never taken from
+    an edit instruction (`captionFromLineage`). Without one, the local VLM describes the picture once and it is stored on
+    the item. Fixes the v1 bug where Qwen outpaint sent raw text.
+43. **Klein's instruct preservation clause doesn't mention lighting.** Caught in the dry run: "keep … lighting"
+    contradicts relighting instructions ("make it night").
+44. **Negative prompts removed from Wan and LTX** (`*.v2.json`). At CFG 1 ComfyUI skips the unconditional pass
+    (`comfy/samplers.py:610`), and the LTX-2.5 card says the distilled model runs at CFG=1. v1 graphs are kept.
+45. **Klein guidance is fixed at 1** (distilled); the UI shows it as fixed instead of a slider. Qwen gets a visible
+    Quality choice: Standard (25 steps, ~1.8 MP) or High (40 steps, model-card ~4 MP sizes).
+46. **Qwen "Transparent background"** uses the model card's RGBA wording. Verified: the saved PNG has a real alpha
+    channel (44 % fully transparent pixels on the test sticker).
+47. **VLM = the installed Qwen3-VL 8B int8** (user's choice), which is Qwen-Image 2.1's own text encoder. It has the
+    LM head and vision tower (checked from the file header). It's loaded through core `TextGenerate` with the generic
+    CLIP type, which makes ComfyUI build the plain Qwen3-VL chat model. No custom nodes and no download. Sampling follows
+    the Qwen card's instruct defaults (T 0.7, top-p 0.8, top-k 20); thinking is off.
+48. **VLM system prompts live in one file** (`presets/vlm_prompts.json`), adapted from the official Qwen-Image
+    rewriters, Wan 2.2's I2V system prompts, the BFL FLUX.2 guide and the LTX guide. TextGenerate has no system slot, so
+    instructions are prefixed to the user turn.
+49. **VLM auto-unload:** after a text job, if nothing else is queued, Darkroom calls `/free` so the next image or video
+    job gets the whole GPU. `vlm`, `sam` and `layered` are their own families, so the existing free-on-family-change
+    applies to them too.
+50. **Enhance = low-denoise re-render, never a new composition.** Klein: source as ReferenceLatent + source latent,
+    `SplitSigmasDenoise` on a ~4/denoise-step schedule, so ~4 real steps run at any strength. Qwen: 2.1 edit conditioning,
+    KSampler denoise < 1. The working size is the source clamped to 1–2 MP, so low-res inputs are upscaled into the model's
+    range first. Upscale + enhance = subtle enhance, then SeedVR2 2× (a server chain).
+51. **Background removal v2:** SAM 3.1 decides *which* object (text, optional); BiRefNet (or Lucida) supplies the soft
+    alpha. Final alpha = matting alpha × feathered, dilated SAM mask. Output is always a real RGBA PNG from
+    `JoinImageWithAlpha`; Qwen is only used for the optional *background plate* (official inpaint template on the dilated
+    subject mask), never for the cutout itself.
+52. **Layers:** Mode A = SAM `individual_masks` → one RGBA layer per object via a single `JoinImageWithAlpha` (it
+    repeats the image to the mask batch), plus an optional Qwen background plate. Mode B = Qwen-Image-Layered fp8mixed
+    (20.5 GB, official template settings: 640 px, 20 steps, CFG 2.5). Layers are library items sharing a `group_id`.
+    Export offers **both** a layered PSD (`ag-psd`, MIT) and a ZIP of PNGs (`fflate`, MIT); the PSD writer is
+    round-trip tested.
+53. **Compare** follows the cursor using direct DOM writes in `requestAnimationFrame` (no React state per mouse move).
+    Both images sit in the same transformed box, so they stay aligned at any zoom. A before image with a different aspect
+    is letterboxed, not stretched. Hold Space to see the original.
+54. **Video frame fitting:** "Crop to fill" is the graph's existing centred crop. "Fit with bars" letterboxes the frame
+    on a canvas and uploads it at submit time, so no graph change was needed. Both Wan (`WanFirstLastFrameToVideo`) and
+    LTX (`LTXVAddGuide` frame −1) support end frames, so the slot stays enabled.

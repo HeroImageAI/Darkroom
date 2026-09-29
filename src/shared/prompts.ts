@@ -22,6 +22,8 @@ export interface ImageTemplates {
   caption?: string;
   /** Qwen only: native RGBA output wording (model card). */
   transparent?: string;
+  /** Qwen: official restoration wording, used when removing something (background plate). */
+  inpaint_remove?: string;
   enhance_subtle?: string;
   enhance_strong?: string;
   enhance_default_caption?: string;
@@ -108,6 +110,8 @@ export interface ComposeImageArgs {
   transparent?: boolean;
   /** Enhance only. */
   strength?: 'subtle' | 'strong';
+  /** Inpaint only: the fill removes something (background plate) rather than adding content. */
+  remove?: boolean;
 }
 
 export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): string {
@@ -124,7 +128,7 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
     }
     case 'inpaint': {
       const caption = a.caption && tpl.caption ? sub(tpl.caption, { text: sentence(a.caption) }) : '';
-      return fill(tpl.inpaint, { fill: fragment(text), caption });
+      return fill(a.remove && tpl.inpaint_remove ? tpl.inpaint_remove : tpl.inpaint, { fill: a.remove || a.model === 'klein' ? fragment(text) : sentence(text).replace(/.$/, ''), caption });
     }
     case 'enhance': {
       const tplText = a.strength === 'strong' ? tpl.enhance_strong : tpl.enhance_subtle;

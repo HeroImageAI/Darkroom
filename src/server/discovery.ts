@@ -7,7 +7,7 @@ export interface FoundServer {
   desktop: boolean;
 }
 
-async function probe(url: string, timeoutMs = 1500): Promise<SystemStats | null> {
+async function probe(url: string, timeoutMs = 4000): Promise<SystemStats | null> {
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), timeoutMs);
   try {

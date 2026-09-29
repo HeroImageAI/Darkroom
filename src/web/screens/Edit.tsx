@@ -466,7 +466,7 @@ function Editor({ item }: { item: Item }) {
             parentId: item.id,
             ui: item.ui,
             chain: bgPlate
-              ? { kind: 'plate', firstItemId: item.id, prompt: composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'the background, continuing the surrounding scene naturally with nothing in the way', caption: plateCaption }) }
+              ? { kind: 'plate', firstItemId: item.id, prompt: composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'the background, continuing the surrounding scene naturally with nothing in the way', caption: plateCaption, remove: true }) }
               : undefined,
           },
         });
@@ -493,7 +493,7 @@ function Editor({ item }: { item: Item }) {
               ui: item.ui,
               layers: true,
               chain: layerFill
-                ? { kind: 'plate', firstItemId: item.id, prompt: composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'the background, continuing the surrounding scene naturally with nothing in the way', caption: caption ?? null }) }
+                ? { kind: 'plate', firstItemId: item.id, prompt: composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'the background, continuing the surrounding scene naturally with nothing in the way', caption: caption ?? null, remove: true }) }
                 : undefined,
             },
           });

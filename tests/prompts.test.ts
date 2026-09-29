@@ -88,11 +88,13 @@ describe('edit modes', () => {
       'Make it night, keep the man unchanged.',
     );
   });
-  it('qwen inpaint uses the official template with the caption', () => {
-    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'A stack of old books', caption: 'a fisherman on a pier' })).toBe(
-      'Perform inpainting on this image. Fill the marked area with a stack of old books. The original caption is: a fisherman on a pier.',
+  it('qwen inpaint keeps the user text for adding content (A/B: the official template left remnants)', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'A stack of old books', caption: 'a fisherman on a pier' })).toBe('A stack of old books.');
+  });
+  it('qwen removal (background plate) uses the official template with the caption', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'the background', caption: 'a fisherman on a pier', remove: true })).toBe(
+      'Perform inpainting on this image. Fill the marked area with the background. The original caption is: a fisherman on a pier.',
     );
-    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'books' })).toBe('Perform inpainting on this image. Fill the marked area with books.');
   });
   it('klein inpaint describes the fill in scene context', () => {
     expect(composeImagePrompt(T, { model: 'klein', mode: 'inpaint', text: 'A stack of old books.' })).toBe(
@@ -159,5 +161,11 @@ describe('enhance', () => {
     expect(composeImagePrompt(T, { model: 'qwen', mode: 'enhance', text: '', caption: 'a red car', strength: 'subtle' })).toBe(
       'Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: a red car.',
     );
+  });
+});
+
+describe('qwen fill keeps quoted text intact', () => {
+  it('does not strip a closing quote', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'a sign reading "OPEN"' })).toBe('a sign reading "OPEN".');
   });
 });

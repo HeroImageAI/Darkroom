@@ -1,7 +1,12 @@
 {
   "_help": "Style presets for the Generate screen. Each style has a sentence per model: Klein gets plain prose, Qwen gets a 'Style:' description. The sentence is appended after your prompt. Edit freely; the app reloads this file on every visit. See docs/PROMPT_AUDIT.md (P2).",
   "styles": [
-    { "id": "none", "label": "None", "klein": "", "qwen": "" },
+    {
+      "id": "none",
+      "label": "None",
+      "klein": "",
+      "qwen": ""
+    },
     {
       "id": "photographic",
       "label": "Photographic",
@@ -17,8 +22,8 @@
     {
       "id": "product",
       "label": "Product shot",
-      "klein": "Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-      "qwen": "Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K."
+      "klein": "Styled as a clean commercial product photograph with soft, even studio light, a seamless light backdrop, crisp controlled reflections and a centred composition.",
+      "qwen": "Style: clean commercial product photography - seamless light-grey backdrop, soft even studio light, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K."
     },
     {
       "id": "ink",
