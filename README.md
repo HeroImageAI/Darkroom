@@ -14,12 +14,14 @@ work; Darkroom is the only window you use day to day.
 
 - **Model-aware prompts.** Everything Darkroom adds to your text (styles, edit wording, video camera phrases) is written separately for Klein, Qwen, Wan and LTX, following each model's official guidance — see docs/PROMPT_AUDIT.md. Templates are editable in `presets/prompts.json`, `styles.json`, `camera.json`.
 - **Local vision model** (Qwen3-VL 8B — the text encoder Qwen-Image 2.1 already uses, so nothing extra was downloaded): caption, reverse prompt, prompt enhance, video motion suggestions. System prompts: `presets/vlm_prompts.json`.
-- **Enhance** (Edit → Enhance, or the Enhance buttons in Generate/Library): Subtle, Strong, or Upscale + enhance, with Klein or Qwen; strength under Advanced.
-- **Smart select** (Edit, **S**): click the object (Shift-click to exclude), drag a box, or type "the red car" / "person:2" — SAM 3.1 adds, subtracts or replaces the mask.
+- **Enhance** (Edit → Enhance, or the Enhance buttons in Generate/Library): Subtle, Strong, or Upscale + enhance, with Klein or Qwen; strength under Advanced. Small or low-quality pictures are upscaled with SeedVR2 first, then enhanced, so old phone photos and web thumbnails come out sharp instead of soft. Subtle keeps the picture as it is; Strong can change small things.
+- **Smart select** (Edit, **S**): click the object (Shift-click to exclude), drag a box, or type "the red car" — typing finds every match ("person" selects everyone; "person:2" the two clearest). One click may pick just a part (a boot's laces); click two or three spots to get the whole object. SAM 3.1 adds, subtracts or replaces the mask.
 - **Remove BG v2**: name the subject for SAM 3.1; BiRefNet or Lucida gives the soft edge; real transparent PNG; optional clean background plate (Qwen-Image 2.1).
-- **Layers** (Edit → Layers): one layer per named object (SAM 3.1, background filled by Qwen) or automatic layers (Qwen-Image-Layered, slow). Toggle, reorder, rename, export a layered **PSD** or a **ZIP** of PNGs.
+- **Layers** (Edit → Layers): one layer per named object (SAM 3.1, background filled by Qwen) or automatic layers (Qwen-Image-Layered, about 2 minutes; it describes the picture first with Qwen3-VL). Toggle, reorder, rename, export a layered **PSD** or a **ZIP** of PNGs.
 - **Compare**: hover the picture — the split follows the cursor; hold **Space** for the original.
 - **Video frames**: Start/End from the Library (drag or picker), swap, and Crop-to-fill / Fit-with-bars when the aspect differs.
+
+See docs/QA_REPORT.md for how every feature performed on the test pictures, with timings and memory use.
 
 ## Daily use
 

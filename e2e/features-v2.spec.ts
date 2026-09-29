@@ -20,10 +20,10 @@ test.describe.serial('Darkroom v2 features', () => {
 
   test('Generate: Klein guidance is fixed, Qwen offers quality + transparency', async () => {
     await page.goto('/#/generate');
-    await page.getByRole('button', { name: /Klein 9B/ }).click();
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
     await page.getByText('Advanced').click();
     await expect(page.getByText('1.0 (fixed)')).toBeVisible();
-    await page.getByRole('button', { name: /Qwen-Image 2.1/ }).click();
+    await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     await expect(page.getByRole('group', { name: 'Quality' })).toBeVisible();
     await expect(page.getByLabel('Transparent background')).toBeVisible();
     await shot(page, 'generate-qwen-options');
@@ -31,7 +31,7 @@ test.describe.serial('Darkroom v2 features', () => {
 
   test('Generate: Enhance rewrites the prompt with the local VLM, Undo restores it', async () => {
     await page.goto('/#/generate');
-    await page.getByRole('button', { name: /Qwen-Image 2.1/ }).click();
+    await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     const box = page.getByLabel('Prompt');
     await box.fill('poster for a jazz night called "Blue Hour"');
     await page.getByRole('button', { name: /Enhance/ }).first().click();
@@ -81,7 +81,7 @@ test.describe.serial('Darkroom v2 features', () => {
 
   test('Video: pick frames from the library, swap, aspect warning', async () => {
     await page.goto('/#/video');
-    await page.getByRole('button', { name: /Wan 2.2/ }).click();
+    await page.getByRole('button', { name: /^Wan 2.2/ }).click();
     await page.getByRole('button', { name: 'Start from library' }).click();
     await page.getByRole('dialog').getByRole('listitem').first().click();
     await expect(page.getByAltText('Start frame')).toBeVisible({ timeout: 30_000 });

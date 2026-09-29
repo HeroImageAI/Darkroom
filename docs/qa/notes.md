@@ -68,3 +68,6 @@ Rows re-run after a fix replace the failing ones in `runs.json`; the Enhance "be
 4. **Klein Strong enhance invents content** at frame edges; the Strong tooltip now says so; default stays Subtle.
 5. **Video end frame equal to start frame** gives a gentle, almost static clip on both models — expected, but worth a
    hint in the UI when both slots hold the same picture.
+6. **The amber mask overlay is hard to see on yellow or orange subjects** (seen in the e2e smart-select screenshot:
+   the selected person wears a yellow raincoat). The mask is correct; only its display colour is low-contrast there.
+   A future option: a contrasting outline around the mask, or a mask-colour toggle.

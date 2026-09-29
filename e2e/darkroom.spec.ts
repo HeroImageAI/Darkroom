@@ -29,7 +29,7 @@ test.describe.serial('Darkroom end to end', () => {
 
   test('Generate an image with Klein', async () => {
     await page.goto('/#/generate');
-    await page.getByRole('button', { name: /Klein 9B/ }).click();
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
     await page.getByRole('button', { name: '16:9' }).click();
     await page.getByRole('button', { name: 'Photographic' }).click();
     await page.getByRole('button', { name: '×2' }).click();
@@ -45,7 +45,7 @@ test.describe.serial('Darkroom end to end', () => {
 
   test('Generate typography with Qwen-Image 2.1', async () => {
     await page.goto('/#/generate');
-    await page.getByRole('button', { name: /Qwen-Image 2.1/ }).click();
+    await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     await page.getByRole('button', { name: '4:5' }).click();
     await page.getByRole('button', { name: 'Screen print' }).click();
     await page.getByRole('button', { name: '×1' }).click();
@@ -55,7 +55,7 @@ test.describe.serial('Darkroom end to end', () => {
     await expect(page.getByRole('toolbar', { name: 'Result actions' })).toBeVisible({ timeout: 400_000 });
     await shot(page, 'E3-generate-qwen');
     // back to Klein for the rest of the run
-    await page.getByRole('button', { name: /Klein 9B/ }).click();
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
   });
 
   test('Edit: instruction edit makes a new version', async () => {

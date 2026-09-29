@@ -56,7 +56,11 @@ BENCHMARKS.md.
   start + end frames, camera chips, draft → final, takes, Extend, Smooth, Save frame, notifications, survives reloads),
   and Library (search, filters, hover-play, full metadata, reuse, open graph).
 - Each output also embeds its settings in the PNG (`darkroom` text chunk plus the exact API `prompt`).
-- `npm test`: 67 unit tests. `npm run e2e`: 7 end-to-end tests in Edge against ComfyUI (about 3–4 minutes).
+- `npm test`: 203 unit tests. `npm run e2e`: 13 end-to-end tests in Edge against ComfyUI (7 from v1, 6 for the v2
+  features; about 4 minutes). If Darkroom is already open from the desktop shortcut, run the test stack beside it on
+  another port with its own library: `DR_SERVER_PORT=5179 DR_DATA_DIR=data/e2e npm run dev`, then `npx playwright test`.
+- `docs/QA_REPORT.md`: every feature run on the golden test pictures (`tests/golden/`), with grids, timings, peak memory,
+  a model-switching stress test and the remaining known issues. Re-run with `npx tsx scripts/qa-phase6.ts features`.
 
 ## Known limitations
 
