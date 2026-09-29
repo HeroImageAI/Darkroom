@@ -736,5 +736,175 @@
     "ok": true,
     "seconds": 29.7,
     "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-product-new\\qwen_00019_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-ink",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour",
+    "ok": true,
+    "seconds": 29.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-ink-old\\qwen_00020_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-ink",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: monochrome black ink sketch on white paper - confident linework, cross-hatched shading, loose gestural strokes, visible paper texture.",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: monochrome black ink sketch on white paper - confident linework, cross-hatched shading, loose gestural strokes, visible paper texture.",
+    "ok": true,
+    "seconds": 29.8,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-ink-new\\qwen_00021_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-screenprint",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper",
+    "ok": true,
+    "seconds": 30.5,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-screenprint-old\\qwen_00022_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-screenprint",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper.",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper.",
+    "ok": true,
+    "seconds": 30,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-screenprint-new\\qwen_00023_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-photographic",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain",
+    "ok": true,
+    "seconds": 29.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-photographic-old\\qwen_00024_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-photographic",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: realistic photography with natural light, a 35 mm lens, shallow depth of field, true-to-life colour and subtle film grain. Ultra HD, 4K, cinematic composition.",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: realistic photography with natural light, a 35 mm lens, shallow depth of field, true-to-life colour and subtle film grain. Ultra HD, 4K, cinematic composition.",
+    "ok": true,
+    "seconds": 30,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-photographic-new\\qwen_00025_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-concept",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+    "ok": true,
+    "seconds": 29.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-concept-old\\qwen_00026_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-concept",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork. Ultra HD, 4K, cinematic composition.",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork. Ultra HD, 4K, cinematic composition.",
+    "ok": true,
+    "seconds": 30,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-concept-new\\qwen_00027_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-product",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+    "ok": true,
+    "seconds": 29.8,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-product-old\\qwen_00028_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-product",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+    "ok": true,
+    "seconds": 29.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-product-new\\qwen_00029_.png"
   }
 ]

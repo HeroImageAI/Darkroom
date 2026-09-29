@@ -1,0 +1,247 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_1"
+    }
+  },
+  "2": {
+    "class_type": "LoadBackgroundRemovalModel",
+    "inputs": {
+      "bg_removal_name": "birefnet.safetensors"
+    },
+    "_meta": {
+      "title": "DR_MATTE"
+    }
+  },
+  "3": {
+    "class_type": "RemoveBackground",
+    "inputs": {
+      "bg_removal_model": [
+        "2",
+        0
+      ],
+      "image": [
+        "1",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Soft alpha"
+    }
+  },
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sam3.1_multiplex_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "SAM 3.1"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "",
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "DR_TEXT"
+    }
+  },
+  "6": {
+    "class_type": "SAM3_Detect",
+    "inputs": {
+      "model": [
+        "4",
+        0
+      ],
+      "image": [
+        "1",
+        0
+      ],
+      "conditioning": [
+        "5",
+        0
+      ],
+      "threshold": 0.5,
+      "refine_iterations": 2,
+      "individual_masks": false
+    },
+    "_meta": {
+      "title": "DR_SAM"
+    }
+  },
+  "7": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
+        "6",
+        0
+      ],
+      "expand": 24,
+      "tapered_corners": true
+    },
+    "_meta": {
+      "title": "DR_SAM_GROW"
+    }
+  },
+  "8": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Mask to image (feather)"
+    }
+  },
+  "9": {
+    "class_type": "ImageBlur",
+    "inputs": {
+      "image": [
+        "8",
+        0
+      ],
+      "blur_radius": 15,
+      "sigma": 4.0
+    },
+    "_meta": {
+      "title": "DR_FEATHER"
+    }
+  },
+  "10": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "9",
+        0
+      ],
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "Feathered mask"
+    }
+  },
+  "11": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": [
+        "3",
+        0
+      ],
+      "source": [
+        "10",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    },
+    "_meta": {
+      "title": "DR_SAM_COMBINE"
+    }
+  },
+  "12": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
+        "11",
+        0
+      ],
+      "expand": 0,
+      "tapered_corners": true
+    },
+    "_meta": {
+      "title": "DR_EDGE"
+    }
+  },
+  "13": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": [
+        "12",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Invert"
+    }
+  },
+  "14": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "alpha": [
+        "13",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Join alpha"
+    }
+  },
+  "15": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "14",
+        0
+      ],
+      "filename_prefix": "darkroom/cutout"
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  },
+  "16": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
+        "11",
+        0
+      ],
+      "expand": 16,
+      "tapered_corners": true
+    },
+    "_meta": {
+      "title": "Plate mask grow"
+    }
+  },
+  "17": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "16",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Plate mask image"
+    }
+  },
+  "18": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "17",
+        0
+      ],
+      "filename_prefix": "darkroom/masks/subject"
+    },
+    "_meta": {
+      "title": "DR_MASK_OUT"
+    }
+  }
+}

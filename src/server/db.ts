@@ -38,6 +38,8 @@ export interface Item {
   tags: string[];
   job_id: string | null;
   input_name: string | null;
+  /** Layers from one decomposition share a group id. */
+  group_id?: string | null;
 }
 
 export type JobStatus = 'queued' | 'running' | 'done' | 'error' | 'cancelled' | 'lost';
@@ -46,7 +48,7 @@ export interface Job {
   id: string;
   prompt_id: string | null;
   workflow: string;
-  kind: 'image' | 'video' | 'text';
+  kind: 'image' | 'video' | 'text' | 'mask';
   family: string;
   status: JobStatus;
   created_at: number;
@@ -144,6 +146,14 @@ export class Store {
     this.db = new DatabaseSync(path.join(dataDir, 'darkroom.sqlite'));
     this.db.exec('PRAGMA journal_mode = WAL;');
     this.db.exec(SCHEMA);
+    // additive migrations
+    const cols = (this.db.prepare('PRAGMA table_info(items)').all() as { name: string }[]).map((c) => c.name);
+    if (!cols.includes('group_id')) this.db.exec('ALTER TABLE items ADD COLUMN group_id TEXT');
+  }
+
+  groupItems(groupId: string): Item[] {
+    const rows = this.db.prepare('SELECT * FROM items WHERE group_id = ? ORDER BY created_at, id').all(groupId) as any[];
+    return rows.map((r) => decode<Item>(r, JSON_ITEM)!);
   }
 
   insertItem(it: Item): void {

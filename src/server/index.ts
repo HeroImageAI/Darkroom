@@ -10,11 +10,12 @@ import type { WebSocket } from 'ws';
 import { inputName, type SystemStats } from '../shared/comfy.js';
 import type { Manifest } from '../shared/manifest.js';
 import { loadConfig, ROOT } from './config.js';
-import { Store, type LibraryQuery } from './db.js';
+import { Store, type FileRef, type LibraryQuery } from './db.js';
 import { desktopRunning, launchDesktop, tailDesktopLog } from './desktop.js';
 import { discoverComfy } from './discovery.js';
 import { JobManager, publicJob, VramWarning, type SubmitRequest } from './jobs.js';
 import { buildVlmRequest, type VlmPrompts, type VlmTask } from '../shared/vlm.js';
+import { layersToPsd, layersToZip, type LayerInput } from './layers.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -212,6 +213,59 @@ app.post('/api/vlm', async (req, reply) => {
   }
 });
 
+/** Run SAM 3.1 and return mask file URLs (not saved to the library). */
+app.post('/api/segment', async (req, reply) => {
+  const b = (req.body ?? {}) as { itemId: string; text?: string; points?: { x: number; y: number }[]; negPoints?: { x: number; y: number }[]; box?: { x: number; y: number; width: number; height: number }; individual?: boolean; threshold?: number };
+  const item = store.getItem(b.itemId);
+  if (!item) return reply.code(404).send({ error: 'Picture not found.' });
+  if (!b.text?.trim() && !b.points?.length && !b.box) return reply.code(400).send({ error: 'Click on the object, drag a box around it, or type what to select.' });
+  const params: Record<string, string | number | boolean> = { image_1: await jobs.asInput(item), individual: !!b.individual };
+  if (b.text?.trim()) params.text = b.text.trim();
+  if (b.points?.length) params.points = JSON.stringify(b.points.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })));
+  if (b.negPoints?.length) params.neg_points = JSON.stringify(b.negPoints.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })));
+  if (b.box) params.boxes = JSON.stringify({ x: Math.round(b.box.x), y: Math.round(b.box.y), width: Math.round(b.box.width), height: Math.round(b.box.height) });
+  if (b.threshold) params.threshold = b.threshold;
+  const t0 = Date.now();
+  try {
+    const job = await jobs.submit({ workflow: 'sam_segment', params, meta: { mode: 'segment', model: 'SAM 3.1', prompt: b.text ?? '' } });
+    const done = await jobs.waitFor(job.id, 5 * 60 * 1000);
+    if (done.status !== 'done') return reply.code(500).send({ error: done.error ?? 'Segmentation failed.' });
+    const files = ((done.meta as Record<string, unknown>).files as FileRef[] | undefined) ?? [];
+    return { masks: files.map(outputUrl), seconds: Math.round((Date.now() - t0) / 100) / 10 };
+  } catch (e) {
+    return reply.code(500).send({ error: (e as Error).message });
+  }
+});
+
+/** Proxy a ComfyUI output file (e.g. a SAM mask) that is not a library item. */
+app.get('/api/output', async (req, reply) => {
+  const q = req.query as { filename?: string; subfolder?: string; type?: string };
+  if (!q.filename || !jobs.comfy || /\.\.|[\\/]/.test(q.filename) || (q.subfolder ?? '').includes('..')) return reply.code(400).send({ error: 'Bad request' });
+  const r = await fetch(jobs.comfy.viewUrl({ filename: q.filename, subfolder: q.subfolder ?? '', type: q.type ?? 'output' }));
+  if (!r.ok) return reply.code(r.status).send({ error: 'Not found' });
+  reply.header('content-type', r.headers.get('content-type') ?? 'application/octet-stream');
+  return reply.send(Buffer.from(await r.arrayBuffer()));
+});
+
+app.get('/api/groups/:id', async (req) => store.groupItems((req.params as { id: string }).id).map(slim));
+
+/** Export layers (top-to-bottom) as a layered PSD or a ZIP of PNGs. */
+app.post('/api/layers/export', async (req, reply) => {
+  const b = (req.body ?? {}) as { format: 'psd' | 'zip'; layers: { id: string; name: string; visible: boolean }[] };
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running, so the layer files can't be read." });
+  if (!b.layers?.length) return reply.code(400).send({ error: 'No layers to export.' });
+  const inputs: LayerInput[] = [];
+  for (const l of b.layers) {
+    const it = store.getItem(l.id);
+    if (!it) continue;
+    inputs.push({ name: l.name, visible: l.visible, png: new Uint8Array(await sharp(await jobs.comfy.view(it.file)).png().toBuffer()) });
+  }
+  const buf = b.format === 'psd' ? await layersToPsd(inputs) : layersToZip(inputs);
+  reply.header('content-type', b.format === 'psd' ? 'image/vnd.adobe.photoshop' : 'application/zip');
+  reply.header('content-disposition', `attachment; filename="darkroom-layers.${b.format}"`);
+  return reply.send(buf);
+});
+
 app.post('/api/jobs', async (req, reply) => {
   const body = req.body as SubmitRequest;
   try {
@@ -321,6 +375,10 @@ app.get('/api/items/:id/graph', async (req, reply) => {
   reply.header('content-disposition', `attachment; filename="darkroom-graph-${item.workflow}-${item.seed ?? item.id.slice(0, 8)}.json"`);
   return JSON.stringify(item.api_prompt, null, 2);
 });
+
+function outputUrl(f: FileRef): string {
+  return `/api/output?${new URLSearchParams({ filename: f.filename, subfolder: f.subfolder, type: f.type })}`;
+}
 
 function slim(item: NonNullable<ReturnType<typeof store.getItem>>) {
   const { api_prompt: _a, ...rest } = item;

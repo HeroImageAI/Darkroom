@@ -85,6 +85,8 @@ export interface SubmitBody {
     notify?: boolean;
     durationSec?: number;
     chain?: Record<string, unknown>;
+    layers?: boolean;
+    groupId?: string;
   };
   force?: boolean;
 }

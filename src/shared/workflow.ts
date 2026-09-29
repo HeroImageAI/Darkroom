@@ -24,7 +24,7 @@ export interface Target {
 export interface ParamSpec {
   /** One or more node inputs this parameter writes. */
   targets: Target[];
-  type: 'string' | 'int' | 'float' | 'bool' | 'image' | 'video' | 'combo';
+  type: 'string' | 'int' | 'float' | 'bool' | 'image' | 'video' | 'combo' | 'json';
   default?: string | number | boolean;
   min?: number;
   max?: number;
@@ -46,7 +46,7 @@ export interface MissingPlan {
 export interface WorkflowSpec {
   file: string;
   family: string;
-  kind: 'image' | 'video' | 'text';
+  kind: 'image' | 'video' | 'text' | 'mask';
   label?: string;
   params: Record<string, ParamSpec>;
   /** Titles of save nodes whose outputs the app collects, keyed by role. */
@@ -151,6 +151,13 @@ function coerce(spec: ParamSpec, name: string, raw: unknown): InputValue {
     }
     case 'bool':
       return raw === true || raw === 'true' || raw === 1;
+    case 'json':
+      if (typeof raw !== 'string') return raw as InputValue;
+      try {
+        return JSON.parse(raw) as InputValue;
+      } catch {
+        throw new WorkflowError(`${name} is not valid JSON`);
+      }
     default:
       return String(raw);
   }
@@ -216,6 +223,8 @@ export function validateSpec(template: ApiPrompt, spec: WorkflowSpec): string[] 
   Object.values(spec.outputs).forEach((t) => need.add(t));
   for (const t of need) if (findByTitle(template, t).length === 0) problems.push(`missing title ${t}`);
   for (const p of Object.values(spec.params)) {
+    // Optional node inputs (no default, not media) only exist once the app sets them.
+    if (p.default === undefined && p.type !== 'image' && p.type !== 'video') continue;
     for (const t of p.targets) {
       for (const id of findByTitle(template, t.title)) {
         if (!(t.input in template[id].inputs)) problems.push(`${t.title} has no input ${t.input}`);

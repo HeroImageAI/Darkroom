@@ -1073,10 +1073,10 @@
       }
     },
     "remove_bg": {
-      "file": "remove_bg.json",
-      "family": "util",
+      "file": "remove_bg.v2.json",
+      "family": "sam",
       "kind": "image",
-      "label": "Remove background (BiRefNet)",
+      "label": "Remove background (SAM 3.1 + BiRefNet)",
       "params": {
         "image_1": {
           "type": "image",
@@ -1087,6 +1087,61 @@
               "input": "image"
             }
           ]
+        },
+        "subject": {
+          "type": "string",
+          "label": "Subject",
+          "targets": [
+            {
+              "title": "DR_TEXT",
+              "input": "text"
+            }
+          ],
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_SAM_COMBINE",
+                "input": "destination"
+              }
+            ],
+            "remove": [
+              "DR_TEXT"
+            ]
+          }
+        },
+        "matte": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MATTE",
+              "input": "bg_removal_name"
+            }
+          ],
+          "default": "birefnet.safetensors"
+        },
+        "edge": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_EDGE",
+              "input": "expand"
+            }
+          ],
+          "default": 0,
+          "min": -8,
+          "max": 8
+        },
+        "threshold": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_SAM",
+              "input": "threshold"
+            }
+          ],
+          "default": 0.5,
+          "min": 0.05,
+          "max": 0.95
         },
         "output": {
           "type": "string",
@@ -1100,7 +1155,8 @@
         }
       },
       "outputs": {
-        "image": "DR_OUTPUT"
+        "image": "DR_OUTPUT",
+        "mask": "DR_MASK_OUT"
       }
     },
     "upscale": {
@@ -2702,11 +2758,286 @@
       "outputs": {
         "image": "DR_OUTPUT"
       }
+    },
+    "sam_segment": {
+      "file": "sam_segment.json",
+      "family": "sam",
+      "kind": "mask",
+      "label": "Segment (SAM 3.1)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "text": {
+          "type": "string",
+          "label": "Subject",
+          "targets": [
+            {
+              "title": "DR_TEXT",
+              "input": "text"
+            }
+          ],
+          "whenMissing": {
+            "remove": [
+              "DR_TEXT"
+            ]
+          }
+        },
+        "points": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_SAM",
+              "input": "positive_coords"
+            }
+          ]
+        },
+        "neg_points": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_SAM",
+              "input": "negative_coords"
+            }
+          ]
+        },
+        "boxes": {
+          "type": "json",
+          "targets": [
+            {
+              "title": "DR_SAM",
+              "input": "bboxes"
+            }
+          ]
+        },
+        "threshold": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_SAM",
+              "input": "threshold"
+            }
+          ],
+          "default": 0.5,
+          "min": 0.05,
+          "max": 0.95
+        },
+        "individual": {
+          "type": "bool",
+          "targets": [
+            {
+              "title": "DR_SAM",
+              "input": "individual_masks"
+            }
+          ],
+          "default": false
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/masks/sam"
+        }
+      },
+      "outputs": {
+        "mask": "DR_OUTPUT"
+      }
+    },
+    "remove_bg_v1": {
+      "file": "remove_bg.json",
+      "family": "util",
+      "kind": "image",
+      "label": "Remove background (BiRefNet only, v1)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/cutout"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "sam_layers": {
+      "file": "sam_layers.json",
+      "family": "sam",
+      "kind": "image",
+      "label": "Layers from objects (SAM 3.1)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "text": {
+          "type": "string",
+          "label": "Objects",
+          "targets": [
+            {
+              "title": "DR_TEXT",
+              "input": "text"
+            }
+          ]
+        },
+        "threshold": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_SAM",
+              "input": "threshold"
+            },
+            {
+              "title": "SAM union",
+              "input": "threshold"
+            }
+          ],
+          "default": 0.5,
+          "min": 0.05,
+          "max": 0.95
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/layers/object"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT",
+        "mask": "DR_MASK_OUT"
+      }
+    },
+    "qwen_layered": {
+      "file": "qwen_layered.json",
+      "family": "layered",
+      "kind": "image",
+      "label": "Layers (Qwen-Image-Layered)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "layers": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_LAYERS",
+              "input": "layers"
+            }
+          ],
+          "default": 4,
+          "min": 2,
+          "max": 8
+        },
+        "size": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SIZE",
+              "input": "largest_size"
+            }
+          ],
+          "default": 640,
+          "min": 512,
+          "max": 1024,
+          "step": 32
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 20,
+          "min": 10,
+          "max": 50
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/layers/qwen"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {
     "wan": 12,
-    "ltx": 12
+    "ltx": 12,
+    "layered": 20
   },
   "edit": {
     "instruct": {

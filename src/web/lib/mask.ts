@@ -130,6 +130,29 @@ export class MaskLayer {
     this.render();
   }
 
+  /** Apply a mask picture (white = selected) with add / subtract / replace. */
+  applyMaskImage(img: CanvasImageSource, op: 'add' | 'subtract' | 'replace'): void {
+    this.checkpoint();
+    const t = document.createElement('canvas');
+    t.width = this.width;
+    t.height = this.height;
+    const tc = t.getContext('2d', { willReadFrequently: true })!;
+    tc.drawImage(img, 0, 0, this.width, this.height);
+    const d = tc.getImageData(0, 0, this.width, this.height);
+    for (let i = 0; i < d.data.length; i += 4) {
+      const a = d.data[i];
+      d.data[i] = d.data[i + 1] = d.data[i + 2] = 255;
+      d.data[i + 3] = a;
+    }
+    tc.putImageData(d, 0, 0);
+    if (op === 'replace') this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.save();
+    this.ctx.globalCompositeOperation = op === 'subtract' ? 'destination-out' : 'source-over';
+    this.ctx.drawImage(t, 0, 0);
+    this.ctx.restore();
+    this.render();
+  }
+
   isEmpty(): boolean {
     const d = this.ctx.getImageData(0, 0, this.width, this.height).data;
     for (let i = 3; i < d.length; i += 16) if (d[i] > 8) return false;

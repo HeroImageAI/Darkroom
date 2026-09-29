@@ -33,6 +33,10 @@ WAN_LORA_LOW = "wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors"
 WAN_TE = "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
 WAN_VAE = "wan_2.1_vae.safetensors"
 INTERP_MODEL = "rife_v4.26.safetensors"
+SAM_CKPT = "sam3.1_multiplex_fp16.safetensors"
+LAYERED_UNET = "qwen_image_layered_fp8mixed.safetensors"
+LAYERED_VAE = "qwen_image_layered_vae.safetensors"
+LAYERED_TE = "qwen_2.5_vl_7b_fp8_scaled.safetensors"
 VLM_TE = "qwen3vl_8b_int8_convrot.safetensors"  # same file as QWEN21_TE; has lm_head + vision tower
 LTX_UNET = "ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors"
 LTX_TE = "gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors"
@@ -392,6 +396,89 @@ def qwen_enhance():
     return g
 
 
+
+def sam_detect(g, image, individual=False, title="DR_SAM"):
+    """SAM 3.1 (core SAM3_Detect): text via the checkpoint's own text encoder, plus optional points/boxes."""
+    ck = g.add("CheckpointLoaderSimple", "SAM 3.1", ckpt_name=SAM_CKPT)
+    te = g.add("CLIPTextEncode", "DR_TEXT", text="", clip=o(ck, 1))
+    det = g.add("SAM3_Detect", title, model=o(ck, 0), image=image, conditioning=o(te), threshold=0.5,
+                refine_iterations=2, individual_masks=individual)
+    return det
+
+
+def sam_segment():
+    """Mask from text / clicks / box. White = selected. individual=True gives one mask per object."""
+    g = G()
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    det = sam_detect(g, o(src))
+    img = g.add("MaskToImage", "Mask to image", mask=o(det, 0))
+    g.add("SaveImage", "DR_OUTPUT", images=o(img), filename_prefix="darkroom/masks/sam")
+    return g
+
+
+def remove_bg_v2():
+    """Cut-out: BiRefNet/Lucida soft alpha (hair, fur, glass edges) restricted to the SAM subject (optional).
+    Always a real RGBA PNG (JoinImageWithAlpha). Also saves a dilated subject mask for a background plate."""
+    g = G()
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    model = g.add("LoadBackgroundRemovalModel", "DR_MATTE", bg_removal_name=BIREFNET)
+    fg = g.add("RemoveBackground", "Soft alpha", bg_removal_model=o(model), image=o(src))
+    det = sam_detect(g, o(src))
+    sam_grown = g.add("GrowMask", "DR_SAM_GROW", mask=o(det, 0), expand=24, tapered_corners=True)
+    sam_soft = soft_mask(g, o(sam_grown), radius=15)
+    both = g.add("MaskComposite", "DR_SAM_COMBINE", destination=o(fg), source=o(sam_soft), x=0, y=0, operation="multiply")
+    edge = g.add("GrowMask", "DR_EDGE", mask=o(both), expand=0, tapered_corners=True)
+    inv = g.add("InvertMask", "Invert", mask=o(edge))
+    rgba = g.add("JoinImageWithAlpha", "Join alpha", image=o(src), alpha=o(inv))
+    g.add("SaveImage", "DR_OUTPUT", images=o(rgba), filename_prefix="darkroom/cutout")
+    plate_mask = g.add("GrowMask", "Plate mask grow", mask=o(both), expand=16, tapered_corners=True)
+    pm_img = g.add("MaskToImage", "Plate mask image", mask=o(plate_mask))
+    g.add("SaveImage", "DR_MASK_OUT", images=o(pm_img), filename_prefix="darkroom/masks/subject")
+    return g
+
+
+def sam_layers():
+    """Layers mode A: one RGBA layer per detected object (text prompt, e.g. 'person, car:2'),
+    plus the union mask (dilated) for a Qwen background plate."""
+    g = G()
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    det = sam_detect(g, o(src), individual=True)
+    inv = g.add("InvertMask", "Invert", mask=o(det, 0))
+    layers = g.add("JoinImageWithAlpha", "Object layers", image=o(src), alpha=o(inv))
+    g.add("SaveImage", "DR_OUTPUT", images=o(layers), filename_prefix="darkroom/layers/object")
+    union = g.add("SAM3_Detect", "SAM union", model=o("2", 0), image=o(src), conditioning=o("3"), threshold=0.5,
+                  refine_iterations=2, individual_masks=False)
+    grown = g.add("GrowMask", "Union grow", mask=o(union, 0), expand=16, tapered_corners=True)
+    um = g.add("MaskToImage", "Union image", mask=o(grown))
+    g.add("SaveImage", "DR_MASK_OUT", images=o(um), filename_prefix="darkroom/masks/union")
+    return g
+
+
+def qwen_layered():
+    """Layers mode B: Qwen-Image-Layered native RGBA decomposition (official template: 640 px, 20 steps, CFG 2.5)."""
+    g = G()
+    unet = g.add("UNETLoader", "DR_MODEL", unet_name=LAYERED_UNET, weight_dtype="default")
+    shift = g.add("ModelSamplingAuraFlow", "Shift", model=o(unet), shift=1.0)
+    clip = g.add("CLIPLoader", "DR_TEXT_ENCODER", clip_name=LAYERED_TE, type="qwen_image", device="default")
+    vae = g.add("VAELoader", "DR_VAE", vae_name=LAYERED_VAE)
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    sized = g.add("ImageScaleToMaxDimension", "DR_SIZE", image=o(src), upscale_method="lanczos", largest_size=640)
+    dims = g.add("GetImageSize", "Dims", image=o(sized))
+    enc = g.add("VAEEncode", "Encode", pixels=o(sized), vae=o(vae))
+    pos = g.add("CLIPTextEncode", "DR_PROMPT", text="", clip=o(clip))
+    neg = g.add("CLIPTextEncode", "Negative", text="", clip=o(clip))
+    posr = g.add("ReferenceLatent", "Ref +", conditioning=o(pos), latent=o(enc))
+    negr = g.add("ReferenceLatent", "Ref -", conditioning=o(neg), latent=o(enc))
+    lat = g.add("EmptyQwenImageLayeredLatentImage", "DR_LAYERS", width=o(dims, 0), height=o(dims, 1), layers=4, batch_size=1)
+    ks = g.add("KSampler", "DR_SAMPLER", model=o(shift), positive=o(posr), negative=o(negr), latent_image=o(lat),
+               seed=0, steps=20, cfg=2.5, sampler_name="euler", scheduler="simple", denoise=1.0)
+    cut = g.add("LatentCut", "Drop composite", samples=o(ks), dim="t", index=1, amount=16384)
+    batch = g.add("LatentCutToBatch", "Layers to batch", samples=o(cut), dim="t", slice_size=1)
+    dec = g.add("VAEDecode", "Decode", samples=o(batch), vae=o(vae))
+    g.add("SaveImage", "DR_OUTPUT", images=o(dec), filename_prefix="darkroom/layers/qwen")
+    return g
+
+
 # -------------------------------------------------------------- utility --
 def remove_bg():
     g = G()
@@ -593,6 +680,10 @@ if __name__ == "__main__":
     qwen_enhance().save("qwen_enhance.json")
     klein_masked(True).save("outpaint.json")
     remove_bg().save("remove_bg.json")
+    remove_bg_v2().save("remove_bg.v2.json")
+    sam_segment().save("sam_segment.json")
+    sam_layers().save("sam_layers.json")
+    qwen_layered().save("qwen_layered.json")
     upscale().save("upscale.json")
     wan22_i2v().save("wan22_i2v.json")
     # v2: negatives removed - inert at CFG 1 (comfy/samplers.py skips the uncond pass). PROMPT_AUDIT P6/P7.

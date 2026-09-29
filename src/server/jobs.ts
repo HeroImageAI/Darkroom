@@ -24,6 +24,8 @@ export interface SubmitRequest {
     notify?: boolean;
     durationSec?: number;
     chain?: Record<string, unknown>;
+    groupId?: string;
+    layers?: boolean;
   };
   /** Proceed even if the VRAM check fails. */
   force?: boolean;
@@ -307,6 +309,11 @@ export class JobManager {
     const err = historyError(h);
     if (err) return this.fail(jobId, err);
     const spec = this.manifest().workflows[job.workflow];
+    if (spec.kind === 'mask') {
+      const files = filesFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.mask ?? 'DR_OUTPUT')).map(ref);
+      this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, files } });
+      return;
+    }
     if (spec.kind === 'text') {
       const text = cleanVlmOutput(textFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.text ?? 'DR_OUTPUT')).join('\n'));
       this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, text } });
@@ -345,6 +352,7 @@ export class JobManager {
       tags: [] as string[],
       job_id: job.id,
       input_name: null,
+      group_id: (job.meta.groupId as string | undefined) ?? (job.meta.layers ? job.id : null),
     };
     if (spec.kind === 'video') {
       const vid = role('video')[0];
@@ -403,7 +411,15 @@ export class JobManager {
       }
       if (!ids.length) return this.fail(jobId, 'ComfyUI finished but produced no image.');
     }
-    this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: finished, result_ids: ids });
+    const maskFiles = spec.outputs.mask ? filesFromHistory(h, findByTitle(prompt, spec.outputs.mask)).map(ref) : [];
+    this.patch(jobId, {
+      status: 'done',
+      progress: 1,
+      stage: 'Done',
+      finished_at: finished,
+      result_ids: ids,
+      ...(maskFiles.length ? { meta: { ...job.meta, maskFiles } } : {}),
+    });
     this.broadcast({ type: 'library', ids });
     void this.runChain(this.store.getJob(jobId)!, ids);
   }
@@ -427,6 +443,26 @@ export class JobManager {
   /** Follow-up work declared by a finished job (e.g. Extend = render continuation, then join). */
   private async runChain(job: Job, newIds: string[]): Promise<void> {
     const chain = job.meta.chain as { kind?: string; firstItemId?: string } | undefined;
+    if (chain?.kind === 'plate') {
+      // Background plate: Qwen-Image 2.1 inpaints the (dilated) subject mask on the ORIGINAL picture.
+      const done = this.store.getJob(job.id);
+      const mf = ((done?.meta.maskFiles as FileRef[] | undefined) ?? [])[0];
+      const src = chain.firstItemId ? this.store.getItem(chain.firstItemId) : null;
+      if (!mf || !src || !this.comfy) return;
+      try {
+        const bytes = await this.comfy.view(mf);
+        const up = await this.comfy.upload('image', new Blob([new Uint8Array(bytes)]), `plate_mask_${job.id}.png`, { subfolder: 'darkroom', overwrite: true });
+        const c = chain as Record<string, unknown>;
+        await this.submit({
+          workflow: 'qwen_inpaint',
+          params: { image_1: await this.asInput(src), mask: up.subfolder ? `${up.subfolder}/${up.name}` : up.name, prompt: String(c.prompt ?? ''), seed: Math.floor(Math.random() * 2 ** 31), grow: 8 },
+          meta: { mode: 'edit:plate', model: 'Qwen-Image 2.1 background plate', prompt: 'Background plate', parentId: src.id, ui: src.ui, groupId: (c.groupId as string | undefined) ?? (job.meta.layers ? job.id : undefined) },
+        });
+      } catch (e) {
+        this.broadcast({ type: 'toast', kind: 'error', text: 'Could not make the background plate: ' + friendlyError((e as Error).message) });
+      }
+      return;
+    }
     if (chain?.kind === 'upscale' && newIds[0]) {
       const it = this.store.getItem(newIds[0]);
       if (!it) return;
