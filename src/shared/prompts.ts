@@ -128,7 +128,7 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
     }
     case 'inpaint': {
       const caption = a.caption && tpl.caption ? sub(tpl.caption, { text: sentence(a.caption) }) : '';
-      return fill(a.remove && tpl.inpaint_remove ? tpl.inpaint_remove : tpl.inpaint, { fill: a.remove || a.model === 'klein' ? fragment(text) : sentence(text).replace(/.$/, ''), caption });
+      return fill(a.remove && tpl.inpaint_remove ? tpl.inpaint_remove : tpl.inpaint, { fill: a.remove || a.model === 'klein' ? fragment(text) : text.trim().replace(/\.+$/, ''), caption });
     }
     case 'enhance': {
       const tplText = a.strength === 'strong' ? tpl.enhance_strong : tpl.enhance_subtle;
