@@ -165,3 +165,28 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
 54. **Video frame fitting:** "Crop to fill" is the graph's existing centred crop. "Fit with bars" letterboxes the frame
     on a canvas and uploads it at submit time, so no graph change was needed. Both Wan (`WanFirstLastFrameToVideo`) and
     LTX (`LTXVAddGuide` frame −1) support end frames, so the slot stays enabled.
+
+### Phase 6 (QA on the golden set)
+
+55. **Enhance pre-upscales small pictures.** QA showed Klein and Qwen img2img at enhance strengths keep the blur and JPEG
+    blocking of a lanczos-enlarged source; even Strong (0.6 / 0.65) returned a soft enlargement of a 320 px JPEG. A source
+    under half the working size is now upscaled with SeedVR2 first (2–4×, rounded up to a half step; `planEnhance`),
+    and the enhance pass runs on that as a server chain. Edit follows the chain (`followOf`) to the final picture. The
+    enhance denoise defaults stay (Klein 0.3 / 0.6, Qwen 0.35 / 0.65): on a clean input Subtle stays faithful and Strong
+    is where invented detail starts (Klein Strong added a person at the frame edge of the low-res harbour).
+56. **SAM 3 text finds every match.** The SAM 3 tokenizer keeps only the best detection per comma-separated category
+    unless the text says `name:N`. Manifest string params can declare `samMaxPerCategory`: smart select 20, Remove BG
+    subject 10, SAM layers 3 (each match becomes a layer). A count the user types (`car:2`) is kept.
+57. **A single SAM click is sent twice.** With exactly one point SAM switches to multi-mask ambiguity mode and returns its
+    most confident candidate, which QA showed can be empty or a sliver. Two identical points switch that off. One click
+    can still legitimately select a part (the laces of a boot); the UI hint says to click two or three spots.
+58. **VLM output hygiene.** Qwen3-VL overshoots word limits by about 30 %, so token caps were raised, an unfinished last
+    sentence is dropped, and a stray closing quote is removed. The Klein-style caption/reverse prompts now forbid naming
+    real places, brands or people not written in the image, and allow one lens/look mention (QA saw "Taipei's Raohe
+    Street" and "50mm … 85mm f/1.4" in one caption).
+59. **Qwen-Image-Layered always gets a caption.** With an empty prompt its layers came out as noise (a smeared fake
+    background, a pink wash). With a one-sentence caption the same seed gives a clean inpainted background plate plus
+    one layer per element. Edit now auto-captions (Qwen3-VL, saved to the item) when the picture has no lineage caption.
+    The ComfyUI template settings (20 steps, CFG 2.5, about 115 s) match the reference pipeline's 50 steps / CFG 4
+    (about 215 s) in quality, so they stay. Asking for more layers than the picture has elements yields a near-empty
+    layer, which the Layers panel shows and the user can hide or delete.

@@ -123,8 +123,8 @@ function cases(): Case[] {
   }
   add({ feature: 'layers_sam', id: '09_car', family: 'sam', workflow: 'sam_layers', set: { text: 'car, house, plant' }, images: { image_1: g('09_car') } });
   add({ feature: 'layers_sam', id: '10_interior', family: 'sam', workflow: 'sam_layers', set: { text: 'sofa, lamp, plant, bookshelf' }, images: { image_1: g('10_interior') } });
-  add({ feature: 'layers_qwen', id: '09_car', family: 'layered', workflow: 'qwen_layered', set: { layers: 4, seed: 5 }, images: { image_1: g('09_car') } });
-  add({ feature: 'layers_qwen', id: '02_product', family: 'layered', workflow: 'qwen_layered', set: { layers: 3, seed: 5 }, images: { image_1: g('02_product') } });
+  add({ feature: 'layers_qwen', id: '09_car', family: 'layered', workflow: 'qwen_layered', set: { layers: 4, seed: 5, prompt: GOLDEN[8].prompt }, images: { image_1: g('09_car') }, note: 'captioned (the app auto-captions)' });
+  add({ feature: 'layers_qwen', id: '02_product', family: 'layered', workflow: 'qwen_layered', set: { layers: 3, seed: 5, prompt: GOLDEN[1].prompt }, images: { image_1: g('02_product') }, note: 'captioned (the app auto-captions)' });
   // Edit on both models
   for (const model of ['klein', 'qwen'] as const) {
     const wf = (m: string) => (model === 'klein' ? { instruct: 'klein_edit', inpaint: 'inpaint', outpaint: 'outpaint', enhance: 'klein_enhance' } : { instruct: 'qwen_edit', inpaint: 'qwen_inpaint', outpaint: 'qwen_outpaint', enhance: 'qwen_enhance' })[m as 'instruct']!;

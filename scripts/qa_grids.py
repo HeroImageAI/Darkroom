@@ -60,6 +60,16 @@ def main():
             y = 34 + i * (CELL + 8)
             d.text((8, y + 8), r['id'], fill=(237, 235, 229), font=FONT)
             d.text((8, y + 28), f"{r.get('seconds', '?')}s  {r.get('peak', '?')} GB", fill=(240, 180, 76), font=FONT)
+            if r.get('note'):
+                # wrap the note into the 190 px label column
+                words, line, ly = r['note'].split(), '', y + 50
+                for w in words:
+                    if d.textlength(line + ' ' + w, font=FONT) > 185 and line:
+                        d.text((8, ly), line, fill=(160, 156, 146), font=FONT); ly += 18; line = w
+                    else:
+                        line = (line + ' ' + w).strip()
+                if line:
+                    d.text((8, ly), line, fill=(160, 156, 146), font=FONT)
             src = next(iter((r.get('images') or {}).values()), None)
             if src:
                 sheet.paste(cell(os.path.join(ROOT, src)), (200, y))

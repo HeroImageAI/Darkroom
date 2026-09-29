@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../src/server/config.js';
+import { cleanVlmOutput } from '../src/shared/vlm.js';
 
 const read = <T>(p: string, d: T): T => (fs.existsSync(p) ? (JSON.parse(fs.readFileSync(p, 'utf8')) as T) : d);
 const p1 = read<any[]>(path.join(ROOT, 'docs/qa/phase1/runs.json'), []);
@@ -16,7 +17,8 @@ let md = `# QA report — Darkroom v2
 
 Generated ${new Date().toISOString().slice(0, 16).replace('T', ' ')} from the fixed-seed runs in \`docs/qa/\`
 (\`scripts/ab-phase1.ts\`, \`scripts/qa-phase6.ts\`). Machine: RTX 3090 24 GB, ComfyUI 0.37.4. Golden set: \`tests/golden/\`
-(synthetic, no real people, no Google Earth captures). Peak VRAM is whole-GPU usage sampled every 0.5 s.
+(synthetic, no real people, no Google Earth captures). Peak VRAM is whole-GPU usage sampled every 0.5 s, in decimal
+GB (10⁹ bytes): the card's 24 GiB is 25.8 GB on this scale, so 25 GB means "nearly full", not "over capacity".
 
 ${notes}
 
@@ -43,8 +45,8 @@ for (const [f, rows] of byFeature) {
 
 const texts = p6.filter((r) => r.ok && r.text?.length);
 if (texts.length) {
-  md += `\n## VLM outputs (Qwen3-VL 8B)\n\n`;
-  for (const r of texts) md += `**${r.feature} / ${r.id}** (${r.seconds}s)\n\n> ${String(r.text[0]).replace(/\n+/g, '\n> ')}\n\n`;
+  md += `\n## VLM outputs (Qwen3-VL 8B)\n\nShown after \`cleanVlmOutput\`, exactly as the app displays them.\n\n`;
+  for (const r of texts) md += `**${r.feature} / ${r.id}** (${r.seconds}s)\n\n> ${cleanVlmOutput(r.text.join(' ')).replace(/\n+/g, '\n> ')}\n\n`;
 }
 
 const fails = [...p6.filter((r) => !r.ok), ...st.filter((r) => !r.ok)];

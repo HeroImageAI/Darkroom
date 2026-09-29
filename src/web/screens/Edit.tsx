@@ -389,6 +389,17 @@ function Editor({ item }: { item: Item }) {
         caption = null;
       }
     }
+    /** Lineage / saved caption, or describe the picture now with the local VLM (saved to the item). */
+    const ensureCaption = async (variant: 'short' | 'klein'): Promise<string | null> => {
+      const known = caption ?? ((item.ui as any)?.caption as string | undefined) ?? null;
+      if (known) return known;
+      toast('Describing the picture first (local Qwen3-VL)…', 'info');
+      try {
+        return (await api.vlm({ task: 'caption', variant, itemId: item.id, save: true })).text;
+      } catch {
+        return null;
+      }
+    };
     if (mode === 'instruct') {
       if (!prompt.trim()) return toast('Type an instruction first, e.g. “make it night time”.', 'info');
       const masked = onlyMasked && !maskEmpty;
@@ -422,15 +433,7 @@ function Editor({ item }: { item: Item }) {
       return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text || 'Outpaint');
     }
     if (mode === 'enhance') {
-      let cap = caption ?? ((item.ui as any)?.caption as string | undefined) ?? null;
-      if (!cap) {
-        toast('Describing the picture first (local Qwen3-VL)…', 'info');
-        try {
-          cap = (await api.vlm({ task: 'caption', variant: em === 'klein' ? 'klein' : 'short', itemId: item.id, save: true })).text;
-        } catch {
-          cap = null;
-        }
-      }
+      const cap = await ensureCaption(em === 'klein' ? 'klein' : 'short');
       const strength = enhanceKind === 'strong' ? 'strong' : 'subtle';
       const plan = planEnhance(W, H);
       const params: Record<string, string | number> = {
@@ -510,10 +513,12 @@ function Editor({ item }: { item: Item }) {
           });
           setJobId(j.id);
         } else {
+          // Qwen-Image-Layered needs a caption of the whole picture; with an empty prompt its layers come out as noise (Phase 6 QA)
+          const cap = await ensureCaption('short');
           const j = await api.submit({
             workflow: 'qwen_layered',
-            params: { image_1: inp.name, layers: layerCount, prompt: caption ?? '', seed: randomSeed() },
-            meta: { mode: 'edit:layers', model: 'Qwen-Image-Layered', prompt: caption ?? '', parentId: item.id, ui: item.ui, layers: true },
+            params: { image_1: inp.name, layers: layerCount, prompt: cap ?? '', seed: randomSeed() },
+            meta: { mode: 'edit:layers', model: 'Qwen-Image-Layered', prompt: cap ?? '', parentId: item.id, ui: { ...item.ui, caption: cap ?? undefined }, layers: true },
           });
           setJobId(j.id);
           toast('Qwen-Image-Layered is slow (a few minutes). You can keep working; the layers appear when ready.', 'info', 8000);
