@@ -1,0 +1,12 @@
+================= utility_image_segment_sam3.json
+[79] LoadImage  W=['neon_guitarist.png', 'image'] IN=[] mode=0
+NOTE: Guide: [Subgraph](https://docs.comfy.org/interface/features/subgraph) |  | ## Model Links |  | **checkpoints** |  | - [sam3.1_multiplex_fp16.safetensors](https://huggingface.co/Comfy-Org/sam3.1/resolve/main/checkpoints/sam3.1_multiplex_fp16.safetensors) |  |  | ## Model Storage Location |  | ``` | 📂 ComfyUI/ | ├── 📂 models/ | │   └── 📂 checkpoints/ | │       └── sam3.1_multiplex_fp16.safetensors | ``` |  | ## Report Issue |  | Note: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare required models. Desktop/Cloud updates follow stable releases, so some nightly-supported models may not be available yet. |  | - Cannot run / runtime errors: [ComfyUI/issues](https://github.com/comfyanonymous/ComfyUI/issues) | - UI / frontend issues: [ComfyUI_frontend/issues](https://github.com/Comfy-Org/ComfyUI_frontend/issues) | - Workflow issues: [workflow_templates/issues](https://github.com/Comfy-Org/workflow_templates/issues) | 
+NOTE: Max tokens for this model is only 32, to separately prompt multiple subjects you can separate prompts with comma, and set the max amount of objects detected for each prompt with :N |  | For example above test prompt finds 2 cakes, one apron, 4 window panels |  | ``` | eye:2, window panels:4 | ``` |  |  |  | 
+[99] 6e7ab3ea-96aa-470f-9b94-3d9d0e01f481  W=[] IN=['image<-79.0'] mode=0
+[95] MaskPreview  W=[] IN=['mask<-99.0'] mode=0
+[111] JoinImageWithAlpha  W=[] IN=['image<-79.0', 'alpha<-99.0'] mode=0
+[106] PreviewImage  W=[] IN=['images<-111.0'] mode=0
+  --- subgraph Image Segment (SAM3) 6e7ab3ea-96aa-470f-9b94-3d9d0e01f481
+    [75] SAM3_Detect  W=[0.5, 2, False] IN=['model<-77.0', 'image<--10.0', 'conditioning<-78.0', 'bboxes<--10.2', 'positive_coords<--10.3', 'negative_coords<--10.4', 'threshold<--10.5', 'refine_iterations<--10.6', 'individual_masks<--10.7'] mode=0
+    [77] CheckpointLoaderSimple  W=['sam3.1_multiplex_fp16.safetensors'] IN=['ckpt_name<--10.8'] mode=0
+    [78] CLIPTextEncode  W=['guitar'] IN=['clip<-77.1', 'text<--10.1'] mode=0

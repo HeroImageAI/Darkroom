@@ -1,0 +1,15 @@
+import { chromium } from '@playwright/test';
+const browser = await chromium.launch({ channel: 'msedge' });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+page.on('pageerror', (e) => console.log('pageerror:', e.message));
+await page.goto('http://127.0.0.1:5173/#/generate');
+await page.getByLabel('Prompt').fill('An old brass pocket watch lying open on weathered driftwood, macro photo, warm evening light');
+await page.getByRole('button', { name: '3:2' }).click();
+await page.getByRole('button', { name: '×2' }).click();
+await page.getByLabel('Prompt').press('Control+Enter');
+await page.waitForTimeout(3500);
+await page.screenshot({ path: 'proof/A1-generate-running.png' });
+await page.getByRole('toolbar', { name: 'Result actions' }).waitFor({ timeout: 180000 });
+await page.waitForTimeout(1500);
+await page.screenshot({ path: 'proof/A2-generate-result.png' });
+await browser.close();

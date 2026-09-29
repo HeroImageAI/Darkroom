@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/
+logs/
+bench/
+proof/e2e-artifacts/
+proof/e2e-report/
+research/templates/*.json
+.env
+*.part

@@ -1,0 +1,40 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_1"
+    }
+  },
+  "2": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "width": 512,
+      "height": 512,
+      "x": 0,
+      "y": 0
+    },
+    "_meta": {
+      "title": "DR_CROP"
+    }
+  },
+  "3": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "2",
+        0
+      ],
+      "filename_prefix": "darkroom/crop"
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  }
+}

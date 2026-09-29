@@ -1,0 +1,17 @@
+{
+  "cacheDir": "E:\\Comfy-Desktop\\ComfyUI-Cache\\download-cache",
+  "maxCachedDownloads": 1,
+  "onAppClose": "quit",
+  "modelsDirs": [
+    "E:\\Comfy-Desktop\\ComfyUI-Shared\\models"
+  ],
+  "inputDir": "E:\\Comfy-Desktop\\ComfyUI-Shared\\input",
+  "outputDir": "E:\\Comfy-Desktop\\ComfyUI-Shared\\output",
+  "installDir": "E:\\Comfy-Desktop\\ComfyUI-Installs",
+  "telemetryEnabled": true,
+  "firstUseCompleted": true,
+  "hasSeenCentralPillHint": true,
+  "dashboardWorkspaceId": "personal",
+  "betaFeaturesEnabled": true,
+  "comfyRouterAnnouncementSeen": true
+}

@@ -1,0 +1,89 @@
+[
+  {
+    "id": "inst-1790618188034",
+    "createdAt": "2026-09-28T17:56:28.034Z",
+    "name": "ComfyUI",
+    "installPath": "E:\\ComfyUI\\Desktop ComfyUI\\ComfyUI",
+    "sourceId": "standalone",
+    "sourceLabel": "Standalone",
+    "version": "v0.34.0",
+    "releaseTag": "v0.34.0-env1",
+    "variant": "win-nvidia",
+    "downloadUrl": "https://desktop-assets.comfy.org/standalone-environments/win-nvidia/v0.34.0-env1/comfyui-standalone-win-nvidia-v0.34.0-env1.7z",
+    "downloadFiles": [
+      {
+        "url": "https://desktop-assets.comfy.org/standalone-environments/win-nvidia/v0.34.0-env1/comfyui-standalone-win-nvidia-v0.34.0-env1.7z",
+        "filename": "comfyui-standalone-win-nvidia-v0.34.0-env1.7z",
+        "size": 2365760769
+      }
+    ],
+    "pythonVersion": "3.13.12",
+    "originalBuild": 1,
+    "originalTorchVersion": "2.12.1+cu130",
+    "launchArgs": "--enable-manager",
+    "launchMode": "window",
+    "browserPartition": "unique",
+    "autoUpdateComfyUI": true,
+    "updateChannel": "stable",
+    "comfyVersionTag": "v0.37.4",
+    "status": "installed",
+    "workspaceId": "personal",
+    "seen": false,
+    "comfyVersion": {
+      "commit": "8ff6dc384ba5c410266b40e137799e049459d4f2",
+      "baseTag": "v0.37.4",
+      "commitsAhead": 0,
+      "baseTagVerified": true
+    },
+    "lastSnapshot": "20260928_200435_532-boot-492603.json",
+    "snapshotCount": 3,
+    "updateInfoByChannel": {
+      "stable": {
+        "installedTag": "v0.37.4"
+      }
+    },
+    "lastVerifiedTorchStack": {
+      "stackId": "comfy-bundle:win-nvidia:v0.34.0-env1",
+      "variant": "win-nvidia",
+      "pythonVersion": "3.13.12",
+      "packages": {
+        "torch": "2.12.1+cu130",
+        "torchvision": "0.27.1+cu130",
+        "torchaudio": "2.11.0+cu130"
+      },
+      "source": {
+        "kind": "comfy-bundle",
+        "variant": "win-nvidia",
+        "bundleTag": "v0.34.0-env1"
+      },
+      "bundle": {
+        "url": "https://desktop-assets.comfy.org/standalone-environments/win-nvidia/v0.34.0-env1/comfyui-standalone-win-nvidia-v0.34.0-env1.7z",
+        "filename": "comfyui-standalone-win-nvidia-v0.34.0-env1.7z",
+        "size": 2365760769
+      },
+      "date": "2026-09-04T02:09:45Z",
+      "comfyuiVersion": "v0.34.0"
+    },
+    "observedTorchStack": null,
+    "lastLaunchedAt": 1790682218430,
+    "lastLaunchedAtByCategory": {
+      "local": 1790682218430
+    },
+    "firstRunAt": "2026-09-28T18:54:42.369Z",
+    "portConflict": "auto"
+  },
+  {
+    "id": "inst-1786605203431",
+    "createdAt": "2026-08-13T07:13:23.431Z",
+    "status": "installed",
+    "name": "Comfy Cloud",
+    "sourceId": "cloud",
+    "remoteUrl": "https://cloud.comfy.org/",
+    "launchMode": "window",
+    "browserPartition": "shared",
+    "lastLaunchedAt": 1787644341297,
+    "lastLaunchedAtByCategory": {
+      "cloud": 1787644341297
+    }
+  }
+]

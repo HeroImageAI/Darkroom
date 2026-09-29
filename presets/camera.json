@@ -1,0 +1,11 @@
+{
+  "_help": "Camera chips on the Video screen. 'phrase' is appended to the motion prompt. 'exclusive' chips cannot be combined with others.",
+  "camera": [
+    { "id": "static", "label": "Static", "phrase": "The camera is locked off on a tripod and does not move.", "exclusive": true },
+    { "id": "push", "label": "Slow push-in", "phrase": "The camera slowly pushes in toward the subject." },
+    { "id": "pull", "label": "Pull back", "phrase": "The camera slowly pulls back to reveal more of the scene." },
+    { "id": "orbit", "label": "Orbit", "phrase": "The camera slowly orbits around the subject." },
+    { "id": "pan", "label": "Pan left", "phrase": "The camera pans slowly to the left." },
+    { "id": "handheld", "label": "Handheld", "phrase": "Handheld camera with subtle natural shake." }
+  ]
+}

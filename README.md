@@ -1,0 +1,145 @@
+# Darkroom
+
+A simple, fast studio for **image generation, image editing and image-to-video** on your own RTX 3090. ComfyUI Desktop does the
+work; Darkroom is the only window you use day to day.
+
+| Screen | What it does |
+|---|---|
+| **Generate** | Prompt → Klein 9B (fast, 4 steps) or Qwen-Image 2.1 (text & layout). Aspect pills, style presets, up to 3 reference images (drop, paste, or capture part of your screen), batch ×1–4. |
+| **Edit** | Mask brush / eraser / lasso on a zoomable canvas. Pick **Klein 9B or Qwen-Image 2.1** for Instruct, Inpaint and Outpaint; Remove BG, Upscale 2× (SeedVR2), Crop. Every apply is a new version (v1, v2…), with a before/after slider and undo/redo. |
+| **Video** | Start frame (+ optional end frame) → Wan 2.2 (best motion) or LTX 2.5 (fast drafts). 3/5/8 s, Draft 480p / Final 720p, camera chips, measured time estimate. Takes panel, Extend +5 s, Smooth 2×, Save frame. Jobs keep running if you close or reload the page. |
+| **Library** | Everything you make, with the full settings (prompt, model, seed, size, render time, parent version). Search, filters, favourites, Reuse settings, Send to Edit, Animate, Open graph in ComfyUI. |
+
+## Daily use
+
+1. Double-click **Darkroom** on the desktop (or `E:\Darkroom\start-darkroom.bat`).
+   - If ComfyUI isn't running, it opens **Comfy Desktop** and waits for the server.
+   - If Comfy Desktop shows its dashboard instead of starting ComfyUI, click your **ComfyUI** install once.
+     To skip this click in future: *Comfy Desktop → Settings → Auto-launch on startup → ComfyUI*.
+2. Your browser opens at <http://127.0.0.1:5178>. Keep the black Darkroom window open while you work; closing it stops Darkroom
+   (ComfyUI keeps running).
+
+### Shortcuts
+
+| Where | Keys |
+|---|---|
+| Everywhere | **Ctrl+Enter** Generate / Apply / Animate |
+| Edit | **V** move · **B** brush · **E** eraser · **L** lasso (hold Shift on release to subtract) · **O** outpaint frame · **C** crop · **[ ]** brush size · **Ctrl+Z / Ctrl+Y** undo/redo · wheel zoom · Alt-drag pan |
+| Video player | **Space** play/pause · **← / →** one frame |
+| Library | **/** search |
+
+### Tips
+
+- Paste an image (Ctrl+V) on Generate to add it as a reference, or on Edit to import it.
+- Drag a thumbnail from the history rail or the Library onto any image slot.
+- Video: start with **Draft**. When the motion looks right, click **Render final** to render 720p with the same seed and settings.
+- Turn on **Notify when done** to get a desktop notification when a video finishes (allow notifications when the browser asks).
+- The **Enhance** button is a placeholder: it keeps your prompt as written (see *Extending* below).
+- Style presets live in `presets/styles.json`, camera phrases in `presets/camera.json`. Edit them freely; changes appear on
+  the next page load.
+- Licence: FLUX.2 [klein] **9B** is non-commercial (FLUX Non-Commercial License). See AUDIT.md.
+
+## Setup (already done on this PC)
+
+Requirements: Windows, Node.js 22+ (24 recommended), Comfy Desktop with ComfyUI ≥ 0.37 and the models listed in AUDIT.md.
+
+```bash
+npm install
+```
+
+```bash
+npm run dev
+```
+
+`npm run dev` starts the API server (port 5178) and the Vite dev UI (<http://127.0.0.1:5173>, hot reload). `start-darkroom.bat`
+builds the UI and serves everything from port 5178.
+
+Configuration lives in `config.json` (ComfyUI host and ports, Comfy Desktop exe path, Darkroom ports). `.env` can override it
+(`DR_COMFY_URL`, `DR_DESKTOP_EXE`, `DR_SERVER_PORT`, `DR_DATA_DIR`). The library database and thumbnails are in `data/`.
+Images and videos stay in ComfyUI's output folder (`E:\Comfy-Desktop\ComfyUI-Shared\output\darkroom\`); Darkroom reads them
+through ComfyUI's `/view` API.
+
+Models: `bash scripts/download-models.sh` fetches the Wan 2.2 / LTX-2.5 files again (resumable; it skips files that already
+exist). LTX-2.5 is gated: accept the licence on huggingface.co/Lightricks/LTX-2.5 and log in with `hf auth login`.
+
+### Tests
+
+```bash
+npm test
+```
+
+```bash
+npm run e2e
+```
+
+`npm test` runs the unit tests (workflow patching, ComfyUI client, manifest, planning). `npm run e2e` drives the real UI in
+Microsoft Edge against the real ComfyUI (Generate → Edit → Animate → Library) and saves screenshots to `proof/`. It takes 3–4 minutes and needs `npm run dev` running (or set `DR_E2E_URL=http://127.0.0.1:5178` to use the started app).
+
+## Adding or changing a workflow
+
+Darkroom never refers to ComfyUI node ids, only to **node titles that start with `DR_`**.
+
+1. Build the graph in ComfyUI and check that it runs.
+2. Give every node the app should control a title such as `DR_PROMPT`, `DR_SEED`, `DR_WIDTH`, `DR_IMAGE_1`, `DR_MASK` or
+   `DR_OUTPUT` (right-click the node → Title).
+3. **Workflow → Export (API)** and save it as `workflows/<name>.json`.
+4. Add an entry to `workflows/manifest.json`: for each UI parameter, list `{title, input}` targets with a default and range.
+   Optional images get a `whenMissing` plan (`remove` loaders, `bypass` the nodes they feed). List output nodes under
+   `outputs`.
+5. Run `npm test`. It fails if any title in the manifest is missing from the workflow.
+
+The shipped workflows are generated by `workflows/build_workflows.py` (model file names are at the top). Run it with any
+Python 3 to rebuild them; re-exporting from ComfyUI works too, as long as the titles survive.
+
+| File | Purpose |
+|---|---|
+| klein_t2i / klein_ref | Klein 9B text-to-image / with 1–3 references |
+| qwen_ref | Qwen-Image 2.1 with 1–3 references (mention them as <image1>, <image2>…) |
+| klein_edit | Klein 9B instruction edit, optional mask |
+| qwen_t2i | Qwen-Image 2.1 text-to-image |
+| qwen_edit | Qwen-Image 2.1 instruction edit, optional reference and mask (pixels outside the mask are untouched) |
+| qwen_edit_2511 | Qwen-Image-Edit-2511 + Lightning (alternate, not used by the UI) |
+| inpaint / outpaint | Klein 9B masked fill / canvas extension, composited at full resolution |
+| qwen_inpaint / qwen_outpaint | the same with Qwen-Image 2.1 |
+| remove_bg | BiRefNet cut-out → RGBA PNG |
+| upscale | SeedVR2 7B 2× |
+| wan22_i2v | Wan 2.2 A14B (high + low noise, lightx2v 4-step), start and optional end frame |
+| ltx25_i2v | LTX-2.5 22B distilled, start and optional end frame, with audio |
+| video_interp | RIFE 4.26 frame interpolation (Smooth 2×) |
+| video_join, video_frame, crop, import | helpers for Extend, Save frame, Crop and importing pictures |
+
+### Extending "Enhance"
+
+`POST /api/enhance` in `src/server/index.ts` returns the prompt unchanged. Replace its body with a call to your preferred
+language model and return `{ prompt }`.
+
+## Troubleshooting
+
+**"ComfyUI isn't running" / red status pill.** Click *Start ComfyUI* in the top bar. If Comfy Desktop opens its dashboard, click
+your *ComfyUI* install. *Log* in the status pill shows the last lines of the Comfy Desktop log
+(`%APPDATA%\Comfy Desktop\logs\app.log`).
+
+**Darkroom connects to the wrong ComfyUI.** Darkroom only accepts the server started by Comfy Desktop. If another tool runs its
+own ComfyUI on 8188, Desktop moves to the next free port and Darkroom finds it (ports are listed in `config.json`). To force
+one, set `DR_COMFY_URL=http://127.0.0.1:8189` in `.env`.
+
+**Out of memory / "The graphics card ran out of memory".** Close other GPU-heavy apps: games, other ComfyUI windows, and browser
+tabs using WebGPU. Use Draft or a shorter clip. Darkroom already unloads image models before videos (`/free`), and warns when
+free VRAM is too low. If a job gets *very* slow rather than failing, the NVIDIA driver is spilling into system RAM. You can
+change that in *NVIDIA Control Panel → Manage 3D settings → CUDA - Sysmem Fallback Policy → Prefer No Sysmem Fallback* for
+ComfyUI's `python.exe` (Darkroom does not change driver settings).
+
+**"A model file is missing: …".** The file is not in any model folder ComfyUI knows about. Run `bash scripts/download-models.sh`
+or check the file names at the top of `workflows/build_workflows.py`. Folders: `E:\Comfy-Desktop\ComfyUI-Shared\models\…` and
+`E:\ComfyUI\Desktop ComfyUI\ComfyUI\ComfyUI\models\…`.
+
+**"ComfyUI rejected the workflow" after a ComfyUI update.** A core node changed its inputs. Open the workflow in ComfyUI
+(Library → *Open graph in ComfyUI*), fix it, re-export in API format with the same `DR_` titles, and run `npm test`.
+
+**A video job disappeared after restarting ComfyUI.** ComfyUI forgets its queue when it restarts. The take is marked *lost*;
+render it again (settings are kept).
+
+**Port 5178 is in use.** Set `DR_SERVER_PORT` in `.env`.
+
+**Start over with an empty library.** Stop Darkroom and rename `data/`. Your images and videos are not touched; they stay
+in ComfyUI's output folder.

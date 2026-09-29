@@ -1,0 +1,57 @@
+================= video_ltx2_5_i2v.json
+[395] LoadImage «Load First Frame» W=['neon_cyborg_portrait.png', 'image'] IN=[] mode=0
+NOTE: # LTX-2.5 |  | LTX-2.5 is Lightricks' open video generation model : fast, local-first, and built for production. Run it locally, fine-tune it for your own use case, or integrate it into your pipeline. |  | **Key highlights:** |  | - **Pixel Diffusion** : keyframes-first generation that builds every scene on a grid of high-fidelity keyframes for industry-leading pixel quality | - **Diffusion Video Decoder** : sharper faces, legible text, fewer smears in fast motion | - **Native multishot** : one generation yields multiple connected shots holding character, environment, lighting, voice, and style across cuts | - **Custom Gemma 4 12B text encoder** : retains multiple subjects, actions, lighting, detail, and camera direction across complex prompts | - **Dedicated Prompt Enhancer** *(optional)* : a lightweight model that expands short prompts into rich cinematic instructions | - **Auto Duration** : predicts the right clip length from the described action before diffusion begins | - **Better distilled model** : carries far more quality, prompt adherence, and motion into a smaller, faster variant | - Carried over from LTX-2.3: native 4K, synchronized audio-video |  | Official model & files: https://huggingface.co/Ligh
+NOTE: Guide: [Subgraph](https://docs.comfy.org/interface/features/subgraph) |  | ## Model Links |  | **Input Asset**  |  | - [neon_cyborg_portrait.png](https://raw.githubusercontent.com/Comfy-Org/workflow_templates/refs/heads/main/input/neon_cyborg_portrait.png) — required workflow input (`input/neon_cyborg_portrait.png`) |  | **text_encoders** |  | - [gemma4_e2b_it_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/gemma-4/resolve/main/text_encoders/gemma4_e2b_it_int8_convrot.safetensors) — *optional, only needed when **prompt_enhance** is enabled* | - [gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors](https://huggingface.co/Lightricks/LTX-2.5/resolve/main/text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors) |  | **diffusion_models** |  | - [ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors](https://huggingface.co/Lightricks/LTX-2.5/resolve/main/diffusion_models/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors) |  | **vae** |  | - [ltx-2.5-video-vae-bf16.safetensors](https://huggingface.co/Lightricks/LTX-2.5/resolve/main/vae/ltx-2.5-video-vae-bf16.safetensors) | - [ltx-2.5-audio-vae-bf16.safetensors](https://huggingface.co/Lightricks/LTX-2.5/resolve/main/
+NOTE: | megapixels | Aspect | Output (multiple=32) | | |---|---|---| | | 0.2 | 16:9 | 608 x 352 | | | 0.3 | 16:9 | 736 x 416 | | | 0.4 | 16:9 | 864 x 480 | | | 0.5 | 16:9 | 960 x 544 | | | 0.6 | 16:9 | 1056 x 608 | | | 0.7 | 16:9 | 1152 x 640 | | | 0.8 | 16:9 | 1216 x 672 | | | 0.9 | 16:9 | 1280 x 736 | | | 1.0 | 16:9 | 1376 x 768 | | | 1.2 | 16:9 | 1504 x 832 | | | 1.5 | 16:9 | 1664 x 928 | | | 1.8 | 16:9 | 1824 x 1024 | | | 2.0 | 16:9 | 1920 x 1088 | | 
+[403] ResolutionSelector  W=['16:9 (Widescreen)', 0.9, 32] IN=[] mode=0
+NOTE: Before you download all the models, please make sure you have granted access to [LTX-2.5](https://huggingface.co/Lightricks/LTX-2.5) first.
+[398] 6e397a2b-68f7-48f6-8930-f3a5491a163c  W=['Use the provided start image as the first frame. The cybernetic figure slowly turns his head to the right, his glowing blue eyes scanning the horizon, mechanical joints in his neck whirring faintly. The camera follows his gaze, panning across the rooftop to reveal the city beyond: a river of light winding between dark towers, a flying vehicle gliding past between the buildings, its lights streaking. He watches it pass, then his eyes narrow slightly. The camera settles on his profile against the city glow, distant hover traffic humming, wind gusting across the rooftop. No text, no black frames.', False, 5, 1280, 720, 875362541677469, 24, 'ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors', 'ltx-2.5-video-vae-bf16.safetensors', 'ltx-2.5-audio-vae-bf16.safetensors', 'gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors', 'ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors', 'gemma4_e2b_it_int8_convrot.safetensors'] IN=['input<-395.0', 'value_3<-403.0', 'value_4<-403.1'] mode=0
+[75] SaveVideo  W=['video/LTX-2.5_i2v', 'auto', 'auto'] IN=['video<-398.0'] mode=0
+  --- subgraph Image to Video (LTX-2.5) 6e397a2b-68f7-48f6-8930-f3a5491a163c
+    [363] PrimitiveBoolean «Switch to Text to Video?» W=[False] IN=[] mode=0
+    [352] KSamplerSelect  W=['euler_ancestral'] IN=[] mode=0
+    [397] ManualSigmas  W=['1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0'] IN=[] mode=0
+    [338] RandomNoise  W=[42, 'fixed'] IN=[] mode=0
+    [396] ManualSigmas  W=['0.85, 0.7250, 0.4219, 0.0'] IN=[] mode=0
+    [341] KSamplerSelect  W=['euler_ancestral'] IN=[] mode=0
+    [339] RandomNoise  W=[900359092894726, 'randomize'] IN=['noise_seed<--10.6'] mode=0
+    [340] LTXVConcatAVLatent  W=[] IN=['video_latent<-349.0', 'audio_latent<-367.1'] mode=0
+    [344] SamplerCustomAdvanced  W=[] IN=['noise<-339.0', 'guider<-388.0', 'sampler<-352.0', 'sigmas<-397.0', 'latent_image<-377.0'] mode=0
+    [348] LTXVLatentUpsampler  W=[] IN=['samples<-367.0', 'upscale_model<-371.0', 'vae<-385.0'] mode=0
+    [349] LTXVImgToVideoInplace  W=[1, False] IN=['vae<-385.0', 'image<-350.0', 'latent<-348.0', 'bypass<-363.0'] mode=0
+    [350] LTXVPreprocess  W=[18] IN=['image<-351.0'] mode=0
+    [351] ResizeImageMaskNode  W=['scale longer dimension', 1536, 'lanczos'] IN=['input<--10.0'] mode=0
+    [353] ComfyMathExpression  W=['a/2'] IN=['values.a<-372.0'] mode=0
+    [355] ComfyMathExpression  W=['a/2'] IN=['values.a<-360.0'] mode=0
+    [356] EmptyLTXVLatentVideo  W=[768, 512, 97, 1] IN=['width<-353.1', 'height<-355.1', 'length<-378.1'] mode=0
+    [357] LTXVImgToVideoInplace  W=[0.7, False] IN=['vae<-385.0', 'image<-350.0', 'latent<-356.0', 'bypass<-363.0'] mode=0
+    [358] LTXVAudioVAEDecode  W=[] IN=['samples<-369.1', 'audio_vae<-386.0'] mode=0
+    [359] ComfyMathExpression «Math Expression (fps)» W=['a'] IN=['values.a<-361.0'] mode=0
+    [360] PrimitiveInt «Height» W=[720, 'fixed'] IN=['value<--10.5'] mode=0
+    [361] PrimitiveInt «Frame Rate» W=[24, 'fixed'] IN=['value<--10.7'] mode=0
+    [362] PrimitiveInt «Duration» W=[5, 'fixed'] IN=['value<--10.3'] mode=0
+    [364] CLIPTextEncode  W=[''] IN=['clip<-387.0', 'text<-382.0'] mode=0
+    [365] LTXVConditioning  W=[24] IN=['positive<-364.0', 'negative<-373.0', 'frame_rate<-359.0'] mode=0
+    [366] LTXVEmptyLatentAudio  W=[97, 25, 1] IN=['audio_vae<-386.0', 'frames_number<-378.1', 'frame_rate<-359.1'] mode=0
+    [367] LTXVSeparateAVLatent  W=[] IN=['av_latent<-344.0'] mode=0
+    [368] SamplerCustomAdvanced  W=[] IN=['noise<-338.0', 'guider<-391.0', 'sampler<-341.0', 'sigmas<-396.0', 'latent_image<-340.0'] mode=0
+    [369] LTXVSeparateAVLatent  W=[] IN=['av_latent<-368.0'] mode=0
+    [370] CreateVideo  W=[24, 8] IN=['images<-374.0', 'audio<-358.0', 'fps<-359.0'] mode=0
+    [371] LatentUpscaleModelLoader  W=['ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors'] IN=['model_name<--10.12'] mode=0
+    [372] PrimitiveInt «Width» W=[1280, 'fixed'] IN=['value<--10.4'] mode=0
+    [373] CLIPTextEncode  W=['pc game, console game, video game, cartoon, childish, ugly'] IN=['clip<-387.0'] mode=0
+    [374] VAEDecodeTiled  W=[512, 64, 64, 16] IN=['samples<-369.0', 'vae<-385.0'] mode=0
+    [376] PrimitiveStringMultiline «Prompt» W=['Egyptian royal in blue-and-gold headdress and high collar, white dress with golden embroidery and armbands, desert, robot soldiers in formation left and right. She walks steadily forward, head held level and gaze fixed ahead—no dipping or lowering of the head. The camera performs a single, smooth push-in only: starting in a wider shot of her, the robots, and the desert, it moves steadily forward until she is in a medium or medium-close frame, then holds. She stops, posture and head still upright, and says: “The old gods are silent. I am not.” Robot soldiers shift or march in place; sand and fabric move with the wind. No pull-back; the only camera move is the continuous push-in.'] IN=['value<--10.1'] mode=0
+    [377] LTXVConcatAVLatent  W=[] IN=['video_latent<-357.0', 'audio_latent<-366.0'] mode=0
+    [378] ComfyMathExpression «Math Expression (length)» W=['a * b + 1'] IN=['values.a<-362.0', 'values.b<-361.0'] mode=0
+    [380] TextGenerateLTX2Prompt  W=['', 600, 'on', 0.7, 64, 0.95, 0.05, 1.15, 0, 0, False, True] IN=['clip<-393.0', 'image<-350.0', 'prompt<-376.0'] mode=0
+    [381] PreviewAny  W=[] IN=['source<-382.0'] mode=0
+    [382] ComfySwitchNode  W=[False] IN=['on_false<-376.0', 'on_true<-380.0', 'switch<-383.0'] mode=0
+    [383] PrimitiveBoolean «Boolean (Enable Prompt Enhance)» W=[True] IN=['value<--10.2'] mode=0
+    [384] UNETLoader  W=['ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors', 'default'] IN=['unet_name<--10.8'] mode=0
+    [385] VAELoader  W=['ltx-2.5-video-vae-bf16.safetensors'] IN=['vae_name<--10.9'] mode=0
+    [386] VAELoader  W=['ltx-2.5-audio-vae-bf16.safetensors'] IN=['vae_name<--10.10'] mode=0
+    [387] CLIPLoader  W=['gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors', 'ltxv', 'default'] IN=['clip_name<--10.11'] mode=0
+    [388] LTXVDualCFGGuider  W=[1, 1] IN=['model<-384.0', 'positive<-365.0', 'negative<-365.1'] mode=0
+    [391] LTXVDualCFGGuider  W=[1, 1] IN=['model<-384.0', 'positive<-365.0', 'negative<-365.1'] mode=0
+    [393] CLIPLoader  W=['gemma4_e2b_it_int8_convrot.safetensors', 'ltxv', 'default'] IN=['clip_name<--10.13'] mode=0

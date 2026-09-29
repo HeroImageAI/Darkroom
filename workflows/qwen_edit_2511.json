@@ -1,0 +1,418 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "Qwen-Image-Edit-2511-FP8_e4m3fn.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "DR_MODEL"
+    }
+  },
+  "2": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "shift": 3.1
+    },
+    "_meta": {
+      "title": "Shift"
+    }
+  },
+  "3": {
+    "class_type": "CFGNorm",
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "strength": 1.0
+    },
+    "_meta": {
+      "title": "CFG norm"
+    }
+  },
+  "4": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+      "model": [
+        "3",
+        0
+      ],
+      "lora_name": "Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+      "strength_model": 1.0
+    },
+    "_meta": {
+      "title": "DR_LORA"
+    }
+  },
+  "5": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_2.5_vl_7b_fp8_scaled.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "DR_TEXT_ENCODER"
+    }
+  },
+  "6": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_vae.safetensors"
+    },
+    "_meta": {
+      "title": "DR_VAE"
+    }
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_1"
+    }
+  },
+  "8": {
+    "class_type": "FluxKontextImageScale",
+    "inputs": {
+      "image": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Scale target"
+    }
+  },
+  "9": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_2"
+    }
+  },
+  "10": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "clip": [
+        "5",
+        0
+      ],
+      "vae": [
+        "6",
+        0
+      ],
+      "prompt": "",
+      "image1": [
+        "8",
+        0
+      ],
+      "image2": [
+        "9",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_PROMPT"
+    }
+  },
+  "11": {
+    "class_type": "TextEncodeQwenImageEditPlus",
+    "inputs": {
+      "clip": [
+        "5",
+        0
+      ],
+      "vae": [
+        "6",
+        0
+      ],
+      "prompt": "",
+      "image1": [
+        "8",
+        0
+      ],
+      "image2": [
+        "9",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_NEGATIVE"
+    }
+  },
+  "12": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "conditioning": [
+        "10",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    },
+    "_meta": {
+      "title": "Ref method +"
+    }
+  },
+  "13": {
+    "class_type": "FluxKontextMultiReferenceLatentMethod",
+    "inputs": {
+      "conditioning": [
+        "11",
+        0
+      ],
+      "reference_latents_method": "index_timestep_zero"
+    },
+    "_meta": {
+      "title": "Ref method -"
+    }
+  },
+  "14": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "8",
+        0
+      ],
+      "vae": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Encode target"
+    }
+  },
+  "15": {
+    "class_type": "GetImageSize",
+    "inputs": {
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Target dims"
+    }
+  },
+  "16": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "darkroom_placeholder.png",
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "DR_MASK"
+    }
+  },
+  "17": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
+        "16",
+        0
+      ],
+      "expand": 8,
+      "tapered_corners": true
+    },
+    "_meta": {
+      "title": "DR_MASK_GROW"
+    }
+  },
+  "18": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "17",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Mask as image"
+    }
+  },
+  "19": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "18",
+        0
+      ],
+      "upscale_method": "bilinear",
+      "width": [
+        "15",
+        0
+      ],
+      "height": [
+        "15",
+        1
+      ],
+      "crop": "disabled"
+    },
+    "_meta": {
+      "title": "Mask scale"
+    }
+  },
+  "20": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "19",
+        0
+      ],
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "Work mask"
+    }
+  },
+  "21": {
+    "class_type": "SetLatentNoiseMask",
+    "inputs": {
+      "samples": [
+        "14",
+        0
+      ],
+      "mask": [
+        "20",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_MASK_LATENT"
+    }
+  },
+  "22": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "4",
+        0
+      ],
+      "positive": [
+        "12",
+        0
+      ],
+      "negative": [
+        "13",
+        0
+      ],
+      "latent_image": [
+        "21",
+        0
+      ],
+      "seed": 0,
+      "steps": 4,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "DR_SAMPLER"
+    }
+  },
+  "23": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+      "samples": [
+        "22",
+        0
+      ],
+      "vae": [
+        "6",
+        0
+      ],
+      "tile_size": 1024,
+      "overlap": 128,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+    },
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "24": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "20",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Mask to image (feather)"
+    }
+  },
+  "25": {
+    "class_type": "ImageBlur",
+    "inputs": {
+      "image": [
+        "24",
+        0
+      ],
+      "blur_radius": 6,
+      "sigma": 4.0
+    },
+    "_meta": {
+      "title": "DR_FEATHER"
+    }
+  },
+  "26": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "25",
+        0
+      ],
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "Feathered mask"
+    }
+  },
+  "27": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": [
+        "8",
+        0
+      ],
+      "source": [
+        "23",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+        "26",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_MASK_COMPOSITE"
+    }
+  },
+  "28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "27",
+        0
+      ],
+      "filename_prefix": "darkroom/edit"
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+Access to model facebook/sam3.1 is restricted and you are not in the authorized list. Visit https://huggingface.co/facebook/sam3.1 to ask for access.

@@ -1,0 +1,17 @@
+================= utility_seedvr2_7b_int8_upscale_image.json
+[1] LoadImage  W=['indoor_portrait.png', 'image'] IN=[] mode=0
+NOTE: Guide: [Subgraph](https://docs.comfy.org/interface/features/subgraph) |  | ## Model Links |  | **vae** |  | - [seedvr2_ema_vae_fp16.safetensors](https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/vae/seedvr2_ema_vae_fp16.safetensors) |  | **diffusion_models** |  | - [seedvr2_7b_int8_convrot.safetensors](https://huggingface.co/Comfy-Org/SeedVR2/resolve/main/diffusion_models/seedvr2_7b_int8_convrot.safetensors) |  |  | ## Model Storage Location |  | ``` | 📂 ComfyUI/ | ├── 📂 models/ | │   ├── 📂 vae/ | │   │   └── seedvr2_ema_vae_fp16.safetensors | │   └── 📂 diffusion_models/ | │       └── seedvr2_7b_int8_convrot.safetensors | ``` |  | ## Report Issue |  | Note: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare required models. Desktop/Cloud updates follow stable releases, so some nightly-supported models may not be available yet. |  | - Cannot run / runtime errors: [ComfyUI/issues](https://github.com/comfyanonymous/ComfyUI/issues) | - UI / frontend issues: [ComfyUI_frontend/issues](https://github.com/Comfy-Org/ComfyUI_frontend/issues) | - Workflow issues: [workflow_templates/issues](https://github.com/Comfy-Org/workflow_templates/issues) | 
+[66] 1970dcb4-982a-4c01-a373-4d239a3041e4  W=[] IN=['image<-1.0', 'alpha<-1.1'] mode=0
+[9] SaveImage  W=['seedvr2_after/image'] IN=['images<-66.0'] mode=0
+[65] ImageCompare  W=[] IN=['image_a<-1.0', 'image_b<-9.0'] mode=0
+  --- subgraph Upscale Image (SeedVR2 7B Int8) 1970dcb4-982a-4c01-a373-4d239a3041e4
+    [48] VAEEncodeTiled  W=[512, 128, 4096, 8] IN=['pixels<-58.0', 'vae<-51.0'] mode=0
+    [50] JoinImageWithAlpha  W=[] IN=['image<--10.0', 'alpha<--10.1'] mode=0
+    [51] VAELoader  W=['seedvr2_ema_vae_fp16.safetensors'] IN=['vae_name<--10.8'] mode=0
+    [52] UNETLoader  W=['seedvr2_7b_int8_convrot.safetensors', 'default'] IN=['unet_name<--10.7'] mode=0
+    [54] KSampler  W=[959948902156062, 'fixed', 1, 1, 'euler', 'simple', 1] IN=['model<-52.0', 'positive<-61.0', 'negative<-61.1', 'latent_image<-48.0', 'seed<--10.3', 'sampler_name<--10.4', 'scheduler<--10.5', 'denoise<--10.6'] mode=0
+    [55] VAEDecodeTiled  W=[512, 128, 4096, 8] IN=['samples<-54.0', 'vae<-51.0'] mode=0
+    [57] ResizeImageMaskNode  W=['scale by multiplier', 4, 'lanczos'] IN=['input<-50.0', 'resize_type.multiplier<--10.2'] mode=0
+    [58] SeedVR2Preprocess  W=[] IN=['resized_images<-57.0'] mode=0
+    [59] SeedVR2PostProcessing  W=['none'] IN=['images<-55.0', 'original_resized_images<-57.0', 'color_correction_method<--10.9'] mode=0
+    [61] SeedVR2Conditioning  W=[] IN=['model<-52.0', 'vae_conditioning<-48.0'] mode=0

@@ -1,0 +1,37 @@
+================= image_flux2_klein_text_to_image.json
+NOTE: Guide: [Subgraph](https://docs.comfy.org/interface/features/subgraph) |  | ## Model links (for local users) |  | **text_encoders** |  | - [qwen_3_4b.safetensors](https://huggingface.co/Comfy-Org/flux2-klein/resolve/main/split_files/text_encoders/qwen_3_4b.safetensors) |  | **diffusion_models** |  | - [flux-2-klein-base-4b.safetensors](https://huggingface.co/Comfy-Org/flux2-klein/resolve/main/split_files/diffusion_models/flux-2-klein-base-4b.safetensors) | - [flux-2-klein-4b.safetensors](https://huggingface.co/Comfy-Org/flux2-klein/resolve/main/split_files/diffusion_models/flux-2-klein-4b.safetensors) |  | **vae** |  | - [flux2-vae.safetensors](https://huggingface.co/Comfy-Org/flux2-dev/resolve/main/split_files/vae/flux2-vae.safetensors) |  |  | Model Storage Location |  | ``` | 📂 ComfyUI/ | ├── 📂 models/ | │   ├── 📂 text_encoders/ | │   │      └── qwen_3_4b.safetensors | │   ├── 📂 diffusion_models/ | │   │      ├── flux-2-klein-base-4b.safetensors | │   │      └── flux-2-klein-4b.safetensors | │   └── 📂 vae/ | │          └── flux2-vae.safetensors | ``` |  | ## Report issue |  | Note: please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare the required models. Desktop/Cloud will be updated after the stab
+[76] PrimitiveStringMultiline «Prompt» W=['A hedgehog wearing a tiny party hat surrounded by confetti, early digital camera style, slight noise, flash photography, candid moment, 2000s digicam aesthetic, festive birthday celebration atmosphere\n'] IN=[] mode=0
+[75] 7b34ab90-36f9-45ba-a665-71d418f0df18  W=[] IN=['text<-76.0'] mode=0
+[77] a67caa28-5f85-4917-8396-36004960dd30  W=[] IN=['text<-76.0'] mode=4
+[9] SaveImage  W=['Flux2-Klein'] IN=['images<-75.0'] mode=0
+[78] SaveImage  W=['Flux2-Klein'] IN=['images<-77.0'] mode=4
+  --- subgraph Text to Image (Flux.2 Klein 4B) 7b34ab90-36f9-45ba-a665-71d418f0df18
+    [61] KSamplerSelect  W=['euler'] IN=[] mode=0
+    [62] Flux2Scheduler  W=[20, 1024, 1024] IN=['width<-68.0', 'height<-69.0'] mode=0
+    [63] CFGGuider  W=[5] IN=['model<-70.0', 'positive<-74.0', 'negative<-67.0'] mode=0
+    [64] SamplerCustomAdvanced  W=[] IN=['noise<-73.0', 'guider<-63.0', 'sampler<-61.0', 'sigmas<-62.0', 'latent_image<-66.0'] mode=0
+    [65] VAEDecode  W=[] IN=['samples<-64.0', 'vae<-72.0'] mode=0
+    [66] EmptyFlux2LatentImage  W=[1024, 1024, 1] IN=['width<-68.0', 'height<-69.0'] mode=0
+    [67] CLIPTextEncode «CLIP Text Encode (Negative Prompt)» W=[''] IN=['clip<-71.0'] mode=0
+    [68] PrimitiveInt «Width» W=[1024, 'fixed'] IN=['value<--10.0'] mode=0
+    [69] PrimitiveInt «Height» W=[1024, 'fixed'] IN=['value<--10.1'] mode=0
+    [70] UNETLoader  W=['flux-2-klein-base-4b.safetensors', 'default'] IN=['unet_name<--10.2'] mode=0
+    [71] CLIPLoader  W=['qwen_3_4b.safetensors', 'flux2', 'default'] IN=['clip_name<--10.3'] mode=0
+    [72] VAELoader  W=['flux2-vae.safetensors'] IN=['vae_name<--10.4'] mode=0
+    [73] RandomNoise  W=[0, 'randomize'] IN=[] mode=0
+    [74] CLIPTextEncode «CLIP Text Encode (Positive Prompt)» W=[''] IN=['clip<-71.0', 'text<--10.5'] mode=0
+  --- subgraph Text to Image (Flux.2 Klein 4B Distilled) a67caa28-5f85-4917-8396-36004960dd30
+    [61] KSamplerSelect  W=['euler'] IN=[] mode=0
+    [62] Flux2Scheduler  W=[4, 1024, 1024] IN=['width<-68.0', 'height<-69.0'] mode=0
+    [63] CFGGuider  W=[1] IN=['model<-70.0', 'positive<-74.0', 'negative<-76.0'] mode=0
+    [64] SamplerCustomAdvanced  W=[] IN=['noise<-73.0', 'guider<-63.0', 'sampler<-61.0', 'sigmas<-62.0', 'latent_image<-66.0'] mode=0
+    [65] VAEDecode  W=[] IN=['samples<-64.0', 'vae<-72.0'] mode=0
+    [66] EmptyFlux2LatentImage  W=[1024, 1024, 1] IN=['width<-68.0', 'height<-69.0'] mode=0
+    [68] PrimitiveInt «Width» W=[1024, 'fixed'] IN=['value<--10.0'] mode=0
+    [69] PrimitiveInt «Height» W=[1024, 'fixed'] IN=['value<--10.1'] mode=0
+    [70] UNETLoader  W=['flux-2-klein-4b.safetensors', 'default'] IN=['unet_name<--10.2'] mode=0
+    [71] CLIPLoader  W=['qwen_3_4b.safetensors', 'flux2', 'default'] IN=['clip_name<--10.3'] mode=0
+    [72] VAELoader  W=['flux2-vae.safetensors'] IN=['vae_name<--10.4'] mode=0
+    [73] RandomNoise  W=[432262096973490, 'randomize'] IN=[] mode=0
+    [74] CLIPTextEncode «CLIP Text Encode (Positive Prompt)» W=[''] IN=['clip<-71.0', 'text<--10.5'] mode=0
+    [76] ConditioningZeroOut  W=[] IN=['conditioning<-74.0'] mode=0

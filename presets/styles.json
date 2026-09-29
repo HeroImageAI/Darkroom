@@ -1,0 +1,11 @@
+{
+  "_help": "Style presets for the Generate screen. 'suffix' is appended to the prompt after a comma. Edit freely; the app reloads this file on every visit.",
+  "styles": [
+    { "id": "none", "label": "None", "suffix": "" },
+    { "id": "photographic", "label": "Photographic", "suffix": "photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain" },
+    { "id": "concept", "label": "Concept art", "suffix": "concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality" },
+    { "id": "product", "label": "Product shot", "suffix": "studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality" },
+    { "id": "ink", "label": "Ink sketch", "suffix": "ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour" },
+    { "id": "screenprint", "label": "Screen print", "suffix": "screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper" }
+  ]
+}

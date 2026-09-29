@@ -1,0 +1,45 @@
+import { chromium, expect } from '@playwright/test';
+const B = 'http://127.0.0.1:5173';
+const items = await (await fetch('http://127.0.0.1:5178/api/items?limit=100')).json();
+const it = items.items.find((i: any) => i.kind === 'image' && i.mode === 'generate' && i.workflow === 'klein_t2i' && i.width === 1024);
+const browser = await chromium.launch({ channel: 'msedge' });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+page.on('pageerror', (e) => console.log('pageerror:', e.message));
+for (const model of ['Klein 9B', 'Qwen-Image 2.1']) {
+  await page.goto(`${B}/#/edit/${it.id}`);
+  await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+  await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: new RegExp(model) }).click();
+  await page.waitForTimeout(1200);
+  const b = (await page.getByAltText('Picture being edited').boundingBox())!;
+  await page.keyboard.press('b');
+  await page.mouse.move(b.x + b.width * 0.3, b.y + b.height * 0.75);
+  await page.mouse.down();
+  for (let i = 0; i <= 25; i++) await page.mouse.move(b.x + b.width * (0.3 + i * 0.02), b.y + b.height * (0.72 + Math.sin(i / 3) * 0.06));
+  await page.mouse.up();
+  await page.getByLabel('Instruction').fill('Make the fishing net bright blue');
+  const slug = model.startsWith('Klein') ? 'klein' : 'qwen';
+  await page.screenshot({ path: `proof/B3-edit-model-${slug}.png` });
+  const before = page.url();
+  await page.getByRole('button', { name: /Apply instruction/ }).click();
+  await page.waitForURL((u) => u.toString() !== before, { timeout: 300000 });
+  await page.waitForTimeout(2500);
+  await expect(page.getByText(new RegExp(`made with ${model}`))).toBeVisible();
+  await page.screenshot({ path: `proof/B4-edit-result-${slug}.png` });
+  console.log(model, 'ok', page.url());
+}
+// Generate with Qwen + a reference image
+await page.goto(`${B}/#/generate`);
+await page.getByRole('button', { name: /Qwen-Image 2.1/ }).click();
+await page.getByRole('button', { name: '3:2' }).click();
+await page.getByRole('button', { name: '×1' }).click();
+await page.getByRole('button', { name: 'None' }).click();
+await page.locator('input[type=file]').first().setInputFiles('bench/klein_t2i/klein_00001_.png');
+await page.waitForTimeout(3000);
+await page.getByLabel('Prompt').fill('The fisherman from <image1> mending the same orange net on a snowy harbour quay in winter, same clothes and cap');
+await page.getByLabel('Prompt').press('Control+Enter');
+await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
+await expect(page.getByRole('toolbar', { name: 'Result actions' })).toBeVisible({ timeout: 300000 });
+await page.waitForTimeout(1500);
+await page.screenshot({ path: 'proof/A3-generate-qwen-ref.png' });
+console.log('qwen ref ok');
+await browser.close();

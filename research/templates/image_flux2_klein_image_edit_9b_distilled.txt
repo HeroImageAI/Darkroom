@@ -1,0 +1,48 @@
+================= image_flux2_klein_image_edit_9b_distilled.json
+[76] LoadImage  W=['bold_outfit_woman.jpeg', 'image'] IN=[] mode=0
+NOTE: ## Model Links |  | **diffusion_models** |  | - [flux-2-klein-9b-fp8.safetensors](https://huggingface.co/black-forest-labs/FLUX.2-klein-9b-fp8/resolve/main/flux-2-klein-9b-fp8.safetensors) |  | **text_encoders** |  | - [qwen_3_8b_fp8mixed.safetensors](https://huggingface.co/Comfy-Org/flux2-klein-9B/resolve/main/split_files/text_encoders/qwen_3_8b_fp8mixed.safetensors) |  | **vae** |  | - [full_encoder_small_decoder.safetensors](https://huggingface.co/black-forest-labs/FLUX.2-small-decoder/resolve/main/full_encoder_small_decoder.safetensors) |  |  | ## Model Storage Location |  | ``` | 📂 ComfyUI/ | ├── 📂 models/ | │   ├── 📂 diffusion_models/ | │   │   └── flux-2-klein-9b-fp8.safetensors | │   ├── 📂 text_encoders/ | │   │   └── qwen_3_8b_fp8mixed.safetensors | │   └── 📂 vae/ | │       └── full_encoder_small_decoder.safetensors | ``` |  | ## Report Issue |  | Note: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare required models. Desktop/Cloud updates follow stable releases, so some nightly-supported models may not be available yet. |  | - Cannot run / runtime errors: [ComfyUI/issues](https://github.com/comfyanonymous/ComfyUI/issues) | - UI / frontend issues: [ComfyUI_frontend/issues](https://gith
+[121] LoadImage  W=['handbag_white.png', 'image'] IN=[] mode=0
+[75] 7b34ab90-36f9-45ba-a665-71d418f0df18  W=['flux-2-klein-9b-fp8.safetensors', 'qwen_3_8b_fp8mixed.safetensors', 'full_encoder_small_decoder.safetensors', 'Replace the background with a quiet coastal cliff at overcast sunset. Remove all buildings and streets. Add wind-shaped grass and a distant ocean horizon. Keep the subject’s pose and framing unchanged.', 26416064315367] IN=['image<-76.0'] mode=0
+[92] 65c22b29-59aa-496b-89c6-55a603658670  W=['flux-2-klein-9b-fp8.safetensors', 'qwen_3_8b_fp8mixed.safetensors', 'full_encoder_small_decoder.safetensors', 'Let this character hold the bag with both hands', 583453753589969] IN=['image<-76.0', 'image_1<-121.0'] mode=4
+[9] SaveImage  W=['Flux2-Klein'] IN=['images<-75.0'] mode=0
+[122] SaveImage  W=['ComfyUI'] IN=['images<-92.0'] mode=4
+  --- subgraph Image Edit (Flux.2 Klein 9B Distilled) 7b34ab90-36f9-45ba-a665-71d418f0df18
+    [61] KSamplerSelect  W=['euler'] IN=[] mode=0
+    [73] RandomNoise  W=[26416064315367, 'randomize'] IN=['noise_seed<--10.5'] mode=0
+    [62] Flux2Scheduler  W=[4, 1024, 1024] IN=['width<-99.0', 'height<-99.1'] mode=0
+    [63] CFGGuider  W=[1] IN=['model<-70.0', 'positive<-125.0', 'negative<-123.0'] mode=0
+    [64] SamplerCustomAdvanced  W=[] IN=['noise<-73.0', 'guider<-63.0', 'sampler<-61.0', 'sigmas<-62.0', 'latent_image<-66.0'] mode=0
+    [65] VAEDecode  W=[] IN=['samples<-64.0', 'vae<-72.0'] mode=0
+    [66] EmptyFlux2LatentImage  W=[1024, 1024, 1] IN=['width<-99.0', 'height<-99.1'] mode=0
+    [70] UNETLoader  W=['flux-2-klein-9b-fp8.safetensors', 'default'] IN=['unet_name<--10.0'] mode=0
+    [71] CLIPLoader  W=['qwen_3_8b_fp8mixed.safetensors', 'flux2', 'default'] IN=['clip_name<--10.1'] mode=0
+    [72] VAELoader  W=['full_encoder_small_decoder.safetensors'] IN=['vae_name<--10.2'] mode=0
+    [74] CLIPTextEncode «CLIP Text Encode (Positive Prompt)» W=['Replace the background with a quiet coastal cliff at overcast sunset. Remove all buildings and streets. Add wind-shaped grass and a distant ocean horizon. Keep the subject’s pose and framing unchanged.'] IN=['clip<-71.0', 'text<--10.3'] mode=0
+    [80] ImageScaleToTotalPixels  W=['nearest-exact', 1, 1] IN=['image<--10.4'] mode=0
+    [82] ConditioningZeroOut  W=[] IN=['conditioning<-74.0'] mode=0
+    [99] GetImageSize  W=[] IN=['image<-80.0'] mode=0
+    [123] ReferenceLatent  W=[] IN=['conditioning<-82.0', 'latent<-124.0'] mode=0
+    [124] VAEEncode  W=[] IN=['pixels<-80.0', 'vae<-72.0'] mode=0
+    [125] ReferenceLatent  W=[] IN=['conditioning<-74.0', 'latent<-124.0'] mode=0
+  --- subgraph Image Edit (Flux.2 Klein 9B Distilled) 65c22b29-59aa-496b-89c6-55a603658670
+    [101] KSamplerSelect  W=['euler'] IN=[] mode=0
+    [106] RandomNoise  W=[583453753589969, 'randomize'] IN=['noise_seed<--10.6'] mode=0
+    [85] ImageScaleToTotalPixels  W=['lanczos', 1, 1] IN=['image<--10.5'] mode=0
+    [86] ConditioningZeroOut  W=[] IN=['conditioning<-109.0'] mode=0
+    [102] Flux2Scheduler  W=[4, 1024, 1024] IN=['width<-114.0', 'height<-114.1'] mode=0
+    [103] CFGGuider  W=[1] IN=['model<-107.0', 'positive<-131.0', 'negative<-129.0'] mode=0
+    [104] SamplerCustomAdvanced  W=[] IN=['noise<-106.0', 'guider<-103.0', 'sampler<-101.0', 'sigmas<-102.0', 'latent_image<-113.0'] mode=0
+    [105] VAEDecode  W=[] IN=['samples<-104.0', 'vae<-110.0'] mode=0
+    [107] UNETLoader  W=['flux-2-klein-9b-fp8.safetensors', 'default'] IN=['unet_name<--10.0'] mode=0
+    [108] CLIPLoader  W=['qwen_3_8b_fp8mixed.safetensors', 'flux2', 'default'] IN=['clip_name<--10.1'] mode=0
+    [109] CLIPTextEncode «CLIP Text Encode (Positive Prompt)» W=['Let this character hold the bag with both hands'] IN=['clip<-108.0', 'text<--10.3'] mode=0
+    [110] VAELoader  W=['full_encoder_small_decoder.safetensors'] IN=['vae_name<--10.2'] mode=0
+    [111] ImageScaleToTotalPixels  W=['lanczos', 1, 1] IN=['image<--10.4'] mode=0
+    [113] EmptyFlux2LatentImage  W=[1024, 1024, 1] IN=['width<-114.0', 'height<-114.1'] mode=0
+    [114] GetImageSize  W=[] IN=['image<-111.0'] mode=0
+    [126] ReferenceLatent  W=[] IN=['conditioning<-86.0', 'latent<-127.0'] mode=0
+    [127] VAEEncode  W=[] IN=['pixels<-111.0', 'vae<-110.0'] mode=0
+    [128] ReferenceLatent  W=[] IN=['conditioning<-109.0', 'latent<-127.0'] mode=0
+    [129] ReferenceLatent  W=[] IN=['conditioning<-126.0', 'latent<-130.0'] mode=0
+    [130] VAEEncode  W=[] IN=['pixels<-85.0', 'vae<-110.0'] mode=0
+    [131] ReferenceLatent  W=[] IN=['conditioning<-128.0', 'latent<-130.0'] mode=0

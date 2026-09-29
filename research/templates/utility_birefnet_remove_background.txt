@@ -1,0 +1,11 @@
+================= utility_birefnet_remove_background.json
+[17] LoadImage  W=['the_lily_veil.png', 'image'] IN=[] mode=0
+NOTE: ## Model Link |  | **background_removal** |  | - [birefnet.safetensors](https://huggingface.co/Comfy-Org/BiRefNet/resolve/main/background_removal/birefnet.safetensors) |  |  | ## Model Storage Location |  | ``` | 📂 ComfyUI/ | ├── 📂 models/ | │   └── 📂 background_removal/ | │       └── birefnet.safetensors | ``` |  | ## Report Issue |  | Note: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare required models. Desktop/Cloud updates follow stable releases, so some nightly-supported models may not be available yet. |  | - Cannot run / runtime errors: [ComfyUI/issues](https://github.com/comfyanonymous/ComfyUI/issues) | - UI / frontend issues: [ComfyUI_frontend/issues](https://github.com/Comfy-Org/ComfyUI_frontend/issues) | - Workflow issues: [workflow_templates/issues](https://github.com/Comfy-Org/workflow_templates/issues) | 
+[19] 5b40ca21-ba1a-41d5-b403-4d2d7acdc195  W=[] IN=['image<-17.0'] mode=0
+[18] PreviewImage  W=[] IN=['images<-19.0'] mode=0
+[20] MaskPreview  W=[] IN=['mask<-19.1'] mode=0
+  --- subgraph Remove Background (BiRefNet) 5b40ca21-ba1a-41d5-b403-4d2d7acdc195
+    [13] RemoveBackground  W=[] IN=['image<--10.0', 'bg_removal_model<-14.0'] mode=0
+    [14] LoadBackgroundRemovalModel  W=['birefnet.safetensors'] IN=['bg_removal_name<--10.1'] mode=0
+    [15] InvertMask  W=[] IN=['mask<-13.0'] mode=0
+    [16] JoinImageWithAlpha  W=[] IN=['image<--10.0', 'alpha<-15.0'] mode=0

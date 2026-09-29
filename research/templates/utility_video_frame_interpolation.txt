@@ -1,0 +1,14 @@
+================= utility_video_frame_interpolation.json
+[4] LoadVideo  W=['white_armored_warrior.mp4', 'image'] IN=[] mode=0
+NOTE: Related PR: [#13258](https://github.com/Comfy-Org/ComfyUI/pull/13258) | ## Model Links |  | Related repo: [Comfy-Org/frame_interpolation]( https://huggingface.co/Comfy-Org/frame_interpolation) |  | **frame_interpolation** |  | - [film_net_fp16.safetensors](https://huggingface.co/Comfy-Org/frame_interpolation/resolve/main/frame_interpolation/film_net_fp16.safetensors) |  |  | ## Model Storage Location |  | ``` | 📂 ComfyUI/ | ├── 📂 models/ | │   ├── 📂 frame_interpolation/ | │   │   ├── film_net_fp16.safetensors (current template) | │   │   ├── rife_v4.25.safetensors | │   │   ├── rife_v4.25_heavy.safetensors | │   │   ├── rife_v4.25_lite.safetensors | │   │   ├── rife_v4.26.safetensors | │   │   └── rife_v4.26_heavy.safetensors | ``` |  | ## Report Issue |  | Note: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and prepare required models. Desktop/Cloud updates follow stable releases, so some nightly-supported models may not be available yet. |  | - Cannot run / runtime errors: [ComfyUI/issues](https://github.com/comfyanonymous/ComfyUI/issues) | - UI / frontend issues: [ComfyUI_frontend/issues](https://github.com/Comfy-Org/ComfyUI_frontend/issues) | - Workflow issues: [workflow_templates/issues](http
+[16] 022693be-2baa-4009-870a-28921508a7ef «Frame Interpolation» W=[] IN=['video<-4.0'] mode=0
+[7] SaveVideo  W=['video/ComfyUI', 'auto', 'auto'] IN=['video<-16.0'] mode=0
+  --- subgraph Frame Interpolation 022693be-2baa-4009-870a-28921508a7ef
+    [1] FrameInterpolationModelLoader  W=['film_net_fp16.safetensors'] IN=['model_name<--10.3'] mode=0
+    [2] FrameInterpolate  W=[2] IN=['interp_model<-1.0', 'images<-3.0', 'multiplier<-9.0'] mode=0
+    [3] GetVideoComponents  W=[] IN=['video<--10.0'] mode=0
+    [5] CreateVideo  W=[30] IN=['images<-2.0', 'audio<-3.1', 'fps<-10.0'] mode=0
+    [9] PrimitiveInt «Int (Multiplier)» W=[2, 'fixed'] IN=['value<--10.1'] mode=0
+    [10] ComfySwitchNode  W=[True] IN=['on_false<-3.2', 'on_true<-11.0', 'switch<-13.0'] mode=0
+    [11] ComfyMathExpression  W=['min(abs(b), 16) * a'] IN=['values.a<-3.2', 'values.b<-9.0'] mode=0
+    [13] PrimitiveBoolean «Boolean (Apply multiplier to FPS?)» W=[True] IN=['value<--10.2'] mode=0

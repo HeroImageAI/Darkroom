@@ -1,0 +1,37 @@
+================= video_wan2_2_14B_i2v.json
+NOTE: ## GPU:RTX4090D 24GB |  | | Model            | Size |VRAM Usage | 1st Generation | 2nd Generation | | |---------------------|-------|-----------|---------------|-----------------| | | fp8_scaled               |640*640| 84%               | ≈  536s              | ≈ 513s                   | | | fp8_scaled +  4steps LoRA  | 640*640  | 83%                | ≈ 97s               | ≈ 71s                   |
+NOTE: [Tutorial](https://docs.comfy.org/tutorials/video/wan/wan2_2 | ) |  | **Diffusion Model** | - [wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors) | - [wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors) |  | **LoRA** | - [wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors) | - [wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/loras/wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors) |  | **VAE** | - [wan_2.1_vae.safetensors](https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors) |  | **Text Encoder**    | - [umt5_xxl_fp8_e4m3fn_scaled.safetensors](https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/r
+[97] LoadImage  W=['video_wan2_2_14B_i2v_input_image.jpg', 'image'] IN=[] mode=0
+[129] 84e2cf3f-de93-40ef-ab22-b9375296917b  W=['The white dragon warrior stands still, eyes full of determination and strength. The camera slowly moves closer or circles around the warrior, highlighting the powerful presence and heroic spirit of the character.', 640, 640, 5, 264244520398999, 'wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors', 'wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors', 'wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors', 'wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors', 'umt5_xxl_fp8_e4m3fn_scaled.safetensors', 'wan_2.1_vae.safetensors', False] IN=['start_image<-97.0'] mode=0
+[108] SaveVideo  W=['video/Wan2.2_i2v', 'auto', 'auto'] IN=['video<-129.0'] mode=0
+  --- subgraph Image to Video (Wan2.2) 84e2cf3f-de93-40ef-ab22-b9375296917b
+    [128] PrimitiveInt «Int (Steps)» W=[20, 'fixed'] IN=[] mode=0
+    [127] PrimitiveInt «Int (split_step)» W=[10, 'fixed'] IN=[] mode=0
+    [126] PrimitiveFloat «Float (CFG)» W=[3.5] IN=[] mode=0
+    [122] PrimitiveFloat «Float (CFG)» W=[1] IN=[] mode=0
+    [124] PrimitiveInt «Int (split_step)» W=[2, 'fixed'] IN=[] mode=0
+    [118] PrimitiveInt «Int (Steps)» W=[4, 'fixed'] IN=[] mode=0
+    [162] PrimitiveFloat «Float (FPS)» W=[16] IN=[] mode=0
+    [84] CLIPLoader  W=['umt5_xxl_fp8_e4m3fn_scaled.safetensors', 'wan', 'default'] IN=['clip_name<--10.10'] mode=0
+    [85] KSamplerAdvanced  W=['disable', 0, 'fixed', 4, 1, 'euler', 'simple', 2, 1, 'disable'] IN=['model<-103.0', 'positive<-98.0', 'negative<-98.1', 'latent_image<-86.0', 'steps<-119.0', 'cfg<-120.0', 'start_at_step<-125.0', 'end_at_step<-119.0'] mode=0
+    [86] KSamplerAdvanced  W=['enable', 264244520398999, 'randomize', 4, 1, 'euler', 'simple', 0, 2, 'enable'] IN=['model<-104.0', 'positive<-98.0', 'negative<-98.1', 'latent_image<-98.2', 'noise_seed<--10.5', 'steps<-119.0', 'cfg<-120.0', 'end_at_step<-125.0'] mode=0
+    [87] VAEDecode  W=[] IN=['samples<-85.0', 'vae<-90.0'] mode=0
+    [89] CLIPTextEncode «CLIP Text Encode (Negative Prompt)» W=['色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走'] IN=['clip<-84.0'] mode=0
+    [90] VAELoader  W=['wan_2.1_vae.safetensors'] IN=['vae_name<--10.11'] mode=0
+    [93] CLIPTextEncode «CLIP Text Encode (Positive Prompt)» W=['The white dragon warrior stands still, eyes full of determination and strength. The camera slowly moves closer or circles around the warrior, highlighting the powerful presence and heroic spirit of the character.'] IN=['clip<-84.0', 'text<--10.1'] mode=0
+    [94] CreateVideo  W=[16, 8] IN=['images<-87.0', 'fps<-162.0'] mode=0
+    [95] UNETLoader  W=['wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors', 'default'] IN=['unet_name<--10.6'] mode=0
+    [96] UNETLoader  W=['wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors', 'default'] IN=['unet_name<--10.8'] mode=0
+    [98] WanImageToVideo  W=[640, 640, 81, 1] IN=['positive<-93.0', 'negative<-89.0', 'vae<-90.0', 'start_image<--10.0', 'width<--10.2', 'height<--10.3', 'length<-163.1'] mode=0
+    [101] LoraLoaderModelOnly  W=['wan2.2_i2v_lightx2v_4steps_lora_v1_high_noise.safetensors', 1.0000000000000002] IN=['model<-95.0', 'lora_name<--10.7'] mode=0
+    [102] LoraLoaderModelOnly  W=['wan2.2_i2v_lightx2v_4steps_lora_v1_low_noise.safetensors', 1.0000000000000002] IN=['model<-96.0', 'lora_name<--10.9'] mode=0
+    [103] ModelSamplingSD3  W=[5.000000000000001] IN=['model<-117.0'] mode=0
+    [104] ModelSamplingSD3  W=[5.000000000000001] IN=['model<-116.0'] mode=0
+    [116] ComfySwitchNode «Switch (Model)» W=[False] IN=['on_false<-95.0', 'on_true<-101.0', 'switch<-131.0'] mode=0
+    [117] ComfySwitchNode «Switch (Model)» W=[False] IN=['on_false<-96.0', 'on_true<-102.0', 'switch<-131.0'] mode=0
+    [119] ComfySwitchNode «Switch (Steps)» W=[False] IN=['on_false<-128.0', 'on_true<-118.0', 'switch<-131.0'] mode=0
+    [120] ComfySwitchNode «Switch (CFG)» W=[False] IN=['on_false<-126.0', 'on_true<-122.0', 'switch<-131.0'] mode=0
+    [125] ComfySwitchNode «Switch (Split Step)» W=[False] IN=['on_false<-127.0', 'on_true<-124.0', 'switch<-131.0'] mode=0
+    [131] PrimitiveBoolean «Enable 4steps LoRA?» W=[False] IN=['value<--10.12'] mode=0
+    [161] PrimitiveFloat «Float (Duration)» W=[5] IN=['value<--10.4'] mode=0
+    [163] ComfyMathExpression  W=['floor (a * b + 1)'] IN=['values.a<-161.0', 'values.b<-162.0'] mode=0

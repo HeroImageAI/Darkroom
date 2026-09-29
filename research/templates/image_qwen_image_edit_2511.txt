@@ -1,0 +1,31 @@
+================= image_qwen_image_edit_2511.json
+NOTE: Guide: [Subgraph](https://docs.comfy.org/interface/features/subgraph) |  | ## Model Links |  | **vae** |  | - [qwen_image_vae.safetensors](https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors) |  | **loras** |  | - [Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors](https://huggingface.co/lightx2v/Qwen-Image-Edit-2511-Lightning/resolve/main/Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors) |  | **diffusion_models** |  | - [qwen_image_edit_2511_bf16.safetensors](https://huggingface.co/Comfy-Org/Qwen-Image-Edit_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_edit_2511_bf16.safetensors) |  | **text_encoders** |  | - [qwen_2.5_vl_7b_fp8_scaled.safetensors](https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors) |  |  | ## Model Storage Location |  | ``` | 📂 ComfyUI/ | ├── 📂 models/ | │   ├── 📂 vae/ | │   │   └── qwen_image_vae.safetensors | │   ├── 📂 loras/ | │   │   └── Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors | │   ├── 📂 diffusion_models/ | │   │   └── qwen_image_edit_2511_bf16.safetensors | │   └── 📂 text_encoders/ | │       └── qwen_2.5_vl_7b_fp8_scaled.safet
+NOTE: You can test and find the best setting by yourself. The following table is for reference. | |   | Qwen | Comfy | | |--------|---------|------------| | | Steps  | 40      | 20         | | | CFG    | 4.0     | 4.0       | |  | 
+[41] LoadImage  W=['leather_sofa.png', 'image'] IN=[] mode=0
+[83] LoadImage  W=['texture_fur.png', 'image'] IN=[] mode=0
+[170] cdb2cf24-c432-439b-b5c8-5f69838580c9  W=[] IN=['image<-41.0', 'image2<-83.0'] mode=0
+[9] SaveImage  W=['Qwen_Edit_2511'] IN=['images<-170.0'] mode=0
+  --- subgraph Image Edit (Qwen-Image 2511) cdb2cf24-c432-439b-b5c8-5f69838580c9
+    NOTE: The "Edit Model Reference Method" nodes above are not needed if you use Comfy files, but may be needed if you use repackaged ones from other people.
+    [154] PrimitiveFloat «CFG» W=[4] IN=[] mode=0
+    [155] PrimitiveFloat «CFG» W=[1] IN=[] mode=0
+    [165] PrimitiveInt «Steps» W=[4, 'fixed'] IN=[] mode=0
+    [166] PrimitiveInt «Steps» W=[40, 'fixed'] IN=[] mode=0
+    [145] ModelSamplingAuraFlow  W=[3.1] IN=['model<-161.0'] mode=0
+    [146] VAELoader  W=['qwen_image_vae.safetensors'] IN=['vae_name<--10.7'] mode=0
+    [147] FluxKontextMultiReferenceLatentMethod  W=['index_timestep_zero'] IN=['conditioning<-149.0'] mode=0
+    [148] FluxKontextMultiReferenceLatentMethod  W=['index_timestep_zero'] IN=['conditioning<-151.0'] mode=0
+    [149] TextEncodeQwenImageEditPlus  W=[''] IN=['clip<-162.0', 'vae<-146.0', 'image1<-160.0', 'image2<--10.1', 'image3<--10.2', 'prompt<--10.4'] mode=0
+    [151] TextEncodeQwenImageEditPlus «TextEncodeQwenImageEditPlus (Positive)» W=['Change the furniture leather difference in image 1 to the fur material in image 2.'] IN=['clip<-162.0', 'vae<-146.0', 'image1<-160.0', 'image2<--10.1', 'image3<--10.2', 'prompt<--10.3'] mode=0
+    [152] CFGNorm  W=[1, False] IN=['model<-145.0'] mode=0
+    [153] LoraLoaderModelOnly  W=['Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors', 1] IN=['model<-152.0', 'lora_name<--10.9'] mode=0
+    [156] VAEEncode  W=[] IN=['pixels<-160.0', 'vae<-146.0'] mode=0
+    [158] VAEDecode  W=[] IN=['samples<-169.0', 'vae<-146.0'] mode=0
+    [160] FluxKontextImageScale  W=[] IN=['image<--10.0'] mode=0
+    [161] UNETLoader  W=['qwen_image_edit_2511_fp8mixed.safetensors', 'default'] IN=['unet_name<--10.5'] mode=0
+    [162] CLIPLoader  W=['qwen_2.5_vl_7b_fp8_scaled.safetensors', 'qwen_image', 'default'] IN=['clip_name<--10.6'] mode=0
+    [163] ComfySwitchNode «Switch (Model)» W=[False] IN=['on_false<-152.0', 'on_true<-153.0', 'switch<-168.0'] mode=0
+    [164] ComfySwitchNode «Switch (CFG)» W=[False] IN=['on_false<-154.0', 'on_true<-155.0', 'switch<-168.0'] mode=0
+    [167] ComfySwitchNode «Switch (Steps)» W=[False] IN=['on_false<-166.0', 'on_true<-165.0', 'switch<-168.0'] mode=0
+    [168] PrimitiveBoolean «Enable 4steps LoRA?» W=[False] IN=['value<--10.8'] mode=0
+    [169] KSampler  W=[677909188488042, 'randomize', 40, 3, 'euler', 'simple', 1] IN=['model<-163.0', 'positive<-148.0', 'negative<-147.0', 'latent_image<-156.0', 'seed<--10.10', 'steps<-167.0', 'cfg<-164.0'] mode=0

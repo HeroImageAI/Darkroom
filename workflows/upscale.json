@@ -1,0 +1,173 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_1"
+    }
+  },
+  "2": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "seedvr2_7b_sharp_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "DR_MODEL"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "ema_vae_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "DR_VAE"
+    }
+  },
+  "4": {
+    "class_type": "ResizeImageMaskNode",
+    "inputs": {
+      "input": [
+        "1",
+        0
+      ],
+      "resize_type": "scale by multiplier",
+      "resize_type.multiplier": 2.0,
+      "scale_method": "lanczos"
+    },
+    "_meta": {
+      "title": "DR_SCALE"
+    }
+  },
+  "5": {
+    "class_type": "SeedVR2Preprocess",
+    "inputs": {
+      "resized_images": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Preprocess"
+    }
+  },
+  "6": {
+    "class_type": "VAEEncodeTiled",
+    "inputs": {
+      "pixels": [
+        "5",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "tile_size": 512,
+      "overlap": 128,
+      "temporal_size": 4096,
+      "temporal_overlap": 8
+    },
+    "_meta": {
+      "title": "Encode"
+    }
+  },
+  "7": {
+    "class_type": "SeedVR2Conditioning",
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "vae_conditioning": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Condition"
+    }
+  },
+  "8": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "positive": [
+        "7",
+        0
+      ],
+      "negative": [
+        "7",
+        1
+      ],
+      "latent_image": [
+        "6",
+        0
+      ],
+      "seed": 0,
+      "steps": 1,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "DR_SAMPLER"
+    }
+  },
+  "9": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+      "samples": [
+        "8",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "tile_size": 512,
+      "overlap": 128,
+      "temporal_size": 4096,
+      "temporal_overlap": 8
+    },
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "10": {
+    "class_type": "SeedVR2PostProcessing",
+    "inputs": {
+      "images": [
+        "9",
+        0
+      ],
+      "original_resized_images": [
+        "4",
+        0
+      ],
+      "color_correction_method": "lab"
+    },
+    "_meta": {
+      "title": "Colour match"
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "10",
+        0
+      ],
+      "filename_prefix": "darkroom/upscale"
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  }
+}

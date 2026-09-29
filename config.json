@@ -1,0 +1,17 @@
+{
+  "comfy": {
+    "host": "127.0.0.1",
+    "ports": [8188, 8189, 8190, 8191, 8192, 8000],
+    "desktopMarker": "instance-model-paths",
+    "startTimeoutSec": 240
+  },
+  "desktop": {
+    "exe": "E:\\ComfyUI\\Desktop ComfyUI\\Comfy Desktop\\Comfy Desktop.exe",
+    "logsDir": "%APPDATA%\\Comfy Desktop\\logs",
+    "installationId": "inst-1790618188034"
+  },
+  "server": { "host": "127.0.0.1", "port": 5178 },
+  "web": { "port": 5173 },
+  "paths": { "data": "./data", "workflows": "./workflows", "presets": "./presets" },
+  "vram": { "reserveGB": 1.0 }
+}

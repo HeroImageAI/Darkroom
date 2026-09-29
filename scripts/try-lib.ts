@@ -1,0 +1,13 @@
+import { chromium } from '@playwright/test';
+const browser = await chromium.launch({ channel: 'msedge' });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+await page.goto('http://127.0.0.1:5173/#/library');
+await page.getByRole('button', { name: 'Videos' }).click();
+await page.getByRole('listitem').first().click();
+await page.waitForTimeout(2500);
+await page.screenshot({ path: 'proof/D2-library-video-detail.png' });
+await page.getByRole('button', { name: 'All', exact: true }).click();
+await page.waitForTimeout(1000);
+await page.getByRole('listitem').nth(2).hover();
+await page.screenshot({ path: 'proof/D3-library-all.png' });
+await browser.close();

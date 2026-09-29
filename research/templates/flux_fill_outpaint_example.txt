@@ -1,0 +1,15 @@
+================= flux_fill_outpaint_example.json
+[34] DualCLIPLoader  W=['clip_l.safetensors', 't5xxl_fp16.safetensors', 'flux', 'default'] IN=[] mode=0
+[31] UNETLoader  W=['flux1-fill-dev.safetensors', 'default'] IN=[] mode=0
+[32] VAELoader  W=['ae.safetensors'] IN=[] mode=0
+[17] LoadImage  W=['flux_fill_outpaint_example_input_image.png', 'image'] IN=[] mode=0
+NOTE: [Tutorial](https://docs.comfy.org/tutorials/flux/flux-1-fill-dev) |  |  | ## Model links |  | **text_encoders** |  | - [clip_l.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors?download=true) | - [t5xxl_fp16.safetensors](https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors?download=true) |  | **diffusion_models** |  | - [flux1-fill-dev.safetensors](https://huggingface.co/Comfy-Org/flux1-dev/resolve/main/split_files/diffusion_models/flux1-fill-dev.safetensors) |  | **vae** |  | - [ae.safetensors](https://huggingface.co/Comfy-Org/Lumina_Image_2.0_Repackaged/resolve/main/split_files/vae/ae.safetensors) |  |  | Model Storage Location |  | ``` | 📂 ComfyUI/ | ├── 📂 models/ | │   ├── 📂 text_encoders/ | │   │      ├── clip_l.safetensors | │   │      └── t5xxl_fp16.safetensors | │   ├── 📂 diffusion_models/ | │   │      └── flux1-fill-dev.safetensors | │   └── 📂 vae/ | │          └── ae.safetensors | ``` | 
+[23] CLIPTextEncode «CLIP Text Encode (Positive Prompt)» W=['beautiful scenery'] IN=['clip<-34.0'] mode=0
+[39] DifferentialDiffusion  W=[1] IN=['model<-31.0'] mode=0
+[44] ImagePadForOutpaint  W=[400, 0, 400, 400, 24] IN=['image<-17.0'] mode=0
+[26] FluxGuidance  W=[30] IN=['conditioning<-23.0'] mode=0
+[46] ConditioningZeroOut  W=[] IN=['conditioning<-23.0'] mode=0
+[38] InpaintModelConditioning  W=[False] IN=['positive<-26.0', 'negative<-46.0', 'vae<-32.0', 'pixels<-44.0', 'mask<-44.1'] mode=0
+[3] KSampler  W=[164211176398261, 'randomize', 20, 1, 'euler', 'normal', 1] IN=['model<-39.0', 'positive<-38.0', 'negative<-38.1', 'latent_image<-38.2'] mode=0
+[8] VAEDecode  W=[] IN=['samples<-3.0', 'vae<-32.0'] mode=0
+[9] SaveImage  W=['ComfyUI'] IN=['images<-8.0'] mode=0

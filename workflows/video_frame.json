@@ -1,0 +1,50 @@
+{
+  "1": {
+    "class_type": "LoadVideo",
+    "inputs": {
+      "file": "darkroom_placeholder.mp4"
+    },
+    "_meta": {
+      "title": "DR_VIDEO"
+    }
+  },
+  "2": {
+    "class_type": "GetVideoComponents",
+    "inputs": {
+      "video": [
+        "1",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Components"
+    }
+  },
+  "3": {
+    "class_type": "ImageFromBatch",
+    "inputs": {
+      "image": [
+        "2",
+        0
+      ],
+      "batch_index": 0,
+      "length": 1
+    },
+    "_meta": {
+      "title": "DR_FRAME"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "3",
+        0
+      ],
+      "filename_prefix": "darkroom/frame"
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  }
+}

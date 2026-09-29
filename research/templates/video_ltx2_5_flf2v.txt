@@ -1,0 +1,48 @@
+================= video_ltx2_5_flf2v.json
+[39] LoadImage «Load Last Frame» W=['robot_hand_energy.png', 'image'] IN=[] mode=0
+NOTE: # LTX-2.5 |  | LTX-2.5 is Lightricks' open video generation model : fast, local-first, and built for production. Run it locally, fine-tune it for your own use case, or integrate it into your pipeline. |  | **Key highlights:** |  | - **Pixel Diffusion** : keyframes-first generation that builds every scene on a grid of high-fidelity keyframes for industry-leading pixel quality | - **Diffusion Video Decoder** : sharper faces, legible text, fewer smears in fast motion | - **Native multishot** : one generation yields multiple connected shots holding character, environment, lighting, voice, and style across cuts | - **Custom Gemma 4 12B text encoder** : retains multiple subjects, actions, lighting, detail, and camera direction across complex prompts | - **Dedicated Prompt Enhancer** *(optional)* : a lightweight model that expands short prompts into rich cinematic instructions | - **Auto Duration** : predicts the right clip length from the described action before diffusion begins | - **Better distilled model** : carries far more quality, prompt adherence, and motion into a smaller, faster variant | - Carried over from LTX-2.3: native 4K, synchronized audio-video |  | Official model & files: https://huggingface.co/Ligh
+NOTE: Guide: [Subgraph](https://docs.comfy.org/interface/features/subgraph) |  | ## Model Links |  | **Input Assets**  |  | - [robot_hand.png](https://raw.githubusercontent.com/Comfy-Org/workflow_templates/refs/heads/main/input/robot_hand.png) — required workflow input (`input/robot_hand.png`) | - [robot_hand_energy.png](https://raw.githubusercontent.com/Comfy-Org/workflow_templates/refs/heads/main/input/robot_hand_energy.png) — required workflow input (`input/robot_hand_energy.png`) |  | **diffusion_models** |  | - [ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors](https://huggingface.co/Lightricks/LTX-2.5/resolve/main/diffusion_models/ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors) |  | **vae** |  | - [ltx-2.5-video-vae-bf16.safetensors](https://huggingface.co/Lightricks/LTX-2.5/resolve/main/vae/ltx-2.5-video-vae-bf16.safetensors) | - [ltx-2.5-audio-vae-bf16.safetensors](https://huggingface.co/Lightricks/LTX-2.5/resolve/main/vae/ltx-2.5-audio-vae-bf16.safetensors) |  | **text_encoders** |  | - [gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors](https://huggingface.co/Lightricks/LTX-2.5/resolve/main/text_encoders/gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors) | - [gemma4
+NOTE: Before you download all the models, please make sure you have granted access to [LTX-2.5](https://huggingface.co/Lightricks/LTX-2.5) first.
+[31] LoadImage «Load First Frame» W=['robot_hand.png', 'image'] IN=[] mode=0
+[251] cf70afc4-5a03-47ce-8210-734b1de6c6bc  W=["Use the provided start image as the first frame and the provided end image as the final frame anchor. The video opens on the back of the robotic hand, four fingers slightly curled, joints glowing faintly in the darkness, a low electrical hum filling the space. The hand rotates slowly at the wrist, turning from the back view toward the palm side, the four visible fingers uncurling gently one by one, starting with the index finger, then the middle, ring, and pinky, each joint clicking softly. As the palm turns upward, the thumb swings out from the side of the hand into view, clearly separate from the four fingers, all five fingers spreading open. A blue energy crystal fades into existence above the palm, its hum rising into a resonant tone, thin energy threads coiling around it, particles crackling softly as they spiral away like sparks. The crystal rotates slowly, hovering above the fully open hand, light spilling between the five spread fingers, the crystal's steady hum filling the silence as the video ends on the open palm with the glowing crystal.\n", False, 5, 1280, 720, 873293130933086, 24, 'ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors', 'ltx-2.5-video-vae-bf16.safetensors', 'ltx-2.5-audio-vae-bf16.safetensors', 'gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors', 'gemma4_e2b_it_int8_convrot.safetensors'] IN=['input<-31.0', 'input_1<-39.0'] mode=0
+[68] SaveVideo  W=['video/ltx2.5_flf2v', 'auto', 'auto'] IN=['video<-251.0'] mode=0
+  --- subgraph First & Last Frame to Video (LTX-2.5) cf70afc4-5a03-47ce-8210-734b1de6c6bc
+    [239] ManualSigmas  W=['1.0, 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0'] IN=[] mode=0
+    [208] SamplerEulerAncestral  W=[0, 1] IN=[] mode=0
+    [195] LTXVPreprocess  W=[18] IN=['image<-214.0'] mode=0
+    [196] RandomNoise  W=[358144640282042, 'randomize'] IN=['noise_seed<--10.7'] mode=0
+    [197] LTXVEmptyLatentAudio  W=[97, 25, 1] IN=['audio_vae<-227.0', 'frames_number<-226.1', 'frame_rate<-205.0'] mode=0
+    [198] PrimitiveInt «Duration» W=[5, 'fixed'] IN=['value<--10.4'] mode=0
+    [199] LTXVPreprocess  W=[18] IN=['image<-213.0'] mode=0
+    [200] LTXVCropGuides  W=[] IN=['positive<-204.0', 'negative<-204.1', 'latent<-221.0'] mode=0
+    [201] EmptyLTXVLatentVideo  W=[768, 512, 97, 1] IN=['width<-203.0', 'height<-203.1', 'length<-226.1'] mode=0
+    [202] LTXVConditioning  W=[25] IN=['positive<-222.0', 'negative<-217.0', 'frame_rate<-212.0'] mode=0
+    [203] GetImageSize  W=[] IN=['image<-213.0'] mode=0
+    [204] LTXVAddGuide  W=[-1, 0.7] IN=['positive<-206.0', 'negative<-206.1', 'vae<-229.0', 'latent<-206.2', 'image<-195.0'] mode=0
+    [205] PrimitiveInt «Frame Rate(int)» W=[24, 'fixed'] IN=['value<--10.8'] mode=0
+    [206] LTXVAddGuide  W=[0, 0.7] IN=['positive<-202.0', 'negative<-202.1', 'vae<-229.0', 'latent<-201.0', 'image<-199.0'] mode=0
+    [210] LTXVConcatAVLatent  W=[] IN=['video_latent<-204.2', 'audio_latent<-197.0'] mode=0
+    [211] SamplerCustomAdvanced  W=[] IN=['noise<-196.0', 'guider<-235.0', 'sampler<-208.0', 'sigmas<-239.0', 'latent_image<-210.0'] mode=0
+    [212] ComfyMathExpression  W=['a'] IN=['values.a<-205.0'] mode=0
+    [213] ResizeImageMaskNode  W=['scale dimensions', 640, 360, 'center', 'nearest-exact'] IN=['input<--10.0', 'resize_type.width<-215.0', 'resize_type.height<-216.0'] mode=0
+    [214] ResizeImageMaskNode  W=['scale dimensions', 640, 360, 'center', 'nearest-exact'] IN=['input<--10.1', 'resize_type.width<-215.0', 'resize_type.height<-216.0'] mode=0
+    [215] PrimitiveInt «Width» W=[1280, 'fixed'] IN=['value<--10.5'] mode=0
+    [216] PrimitiveInt «height» W=[720, 'fixed'] IN=['value<--10.6'] mode=0
+    [217] CLIPTextEncode  W=['blurry, out of focus, overexposed, underexposed, low contrast, washed out colors, excessive noise, grainy texture, poor lighting, flickering, motion blur, distorted proportions, unnatural skin tones, deformed facial features, asymmetrical face, missing facial features, extra limbs, disfigured hands, wrong hand count, artifacts around text, unreadable text on shirt or hat, incorrect lettering on cap (“PNTR”), incorrect t-shirt slogan (“JUST DO IT”), missing microphone, misplaced microphone, inconsistent perspective, camera shake, incorrect depth of field, background too sharp, background clutter, distracting reflections, harsh shadows, inconsistent lighting direction, color banding, cartoonish rendering, 3D CGI look, unrealistic materials, uncanny valley effect, incorrect ethnicity, wrong gender, exaggerated expressions, smiling, laughing, exaggerated sadness, wrong gaze direction, eyes looking at camera, mismatched lip sync, silent or muted audio, distorted voice, robotic voice, echo, background noise, off-sync audio, missing sniff sounds, incorrect dialogue, added dialogue, repetitive speech, jittery movement, awkward pauses, incorrect timing, unnatural transitions, inconsistent framing, tilted camera, missing door or shelves, missing shallow depth of field, flat lighting, inconsistent tone, cinematic oversaturation, stylized filters, or AI artifacts.'] IN=['clip<-228.0'] mode=0
+    [218] CreateVideo  W=[24, 8] IN=['images<-219.0', 'audio<-220.0', 'fps<-212.0'] mode=0
+    [219] VAEDecodeTiled  W=[512, 64, 64, 16] IN=['samples<-200.2', 'vae<-229.0'] mode=0
+    [220] LTXVAudioVAEDecode  W=[] IN=['samples<-221.1', 'audio_vae<-227.0'] mode=0
+    [221] LTXVSeparateAVLatent  W=[] IN=['av_latent<-211.1'] mode=0
+    [222] CLIPTextEncode  W=[''] IN=['clip<-228.0', 'text<-248.0'] mode=0
+    [226] ComfyMathExpression  W=['a * b + 1'] IN=['values.a<-198.0', 'values.b<-205.0'] mode=0
+    [227] VAELoader  W=['ltx-2.5-audio-vae-bf16.safetensors'] IN=['vae_name<--10.11'] mode=0
+    [228] CLIPLoader  W=['gemma4-12b-with-proj-ltx-2.5-comfy-int8-convrot.safetensors', 'ltxv', 'default'] IN=['clip_name<--10.12'] mode=0
+    [229] VAELoader  W=['ltx-2.5-video-vae-bf16.safetensors'] IN=['vae_name<--10.10'] mode=0
+    [230] UNETLoader  W=['ltx-2.5-22b-distilled-transformer-comfy-int8-convrot.safetensors', 'default'] IN=['unet_name<--10.9'] mode=0
+    [235] LTXVDualCFGGuider  W=[1, 1] IN=['model<-230.0', 'positive<-204.0', 'negative<-204.1'] mode=0
+    [246] CLIPLoader  W=['gemma4_e2b_it_int8_convrot.safetensors', 'ltxv', 'default'] IN=['clip_name<--10.13'] mode=0
+    [247] TextGenerateLTX2Prompt  W=['', 600, 'on', 0.7, 64, 0.95, 0.05, 1.15, 0, 0, False, True] IN=['clip<-246.0', 'image<-199.0', 'prompt<-252.0'] mode=0
+    [248] ComfySwitchNode  W=[False] IN=['on_false<-252.0', 'on_true<-247.0', 'switch<-250.0'] mode=0
+    [249] PreviewAny  W=[] IN=['source<-248.0'] mode=0
+    [250] PrimitiveBoolean «Boolean (Enable Prompt Enhance)» W=[True] IN=['value<--10.3'] mode=0
+    [252] PrimitiveStringMultiline «Prompt» W=[''] IN=['value<--10.2'] mode=0
