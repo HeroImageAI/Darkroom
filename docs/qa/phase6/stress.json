@@ -1,0 +1,471 @@
+[
+  {
+    "feature": "stress",
+    "id": "0-klein",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A red kite over green hills",
+      "seed": 0
+    },
+    "ok": true,
+    "seconds": 15.2,
+    "peak": 20.5,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "0-qwen",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A poster that says \"STRESS TEST\"",
+      "seed": 0,
+      "width": 1024,
+      "height": 1024
+    },
+    "ok": true,
+    "seconds": 20.1,
+    "peak": 18.2,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "0-vlm",
+    "family": "vlm",
+    "workflow": "vlm_image",
+    "set": {
+      "prompt": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.\n\nDescribe this image.",
+      "max_tokens": 60,
+      "seed": 0
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 4.3,
+    "peak": 11,
+    "files": [],
+    "text": [
+      "A vibrant red classic car is parked in front of a light blue house with white trim, beside a potted palm tree."
+    ]
+  },
+  {
+    "feature": "stress",
+    "id": "0-sam",
+    "family": "sam",
+    "workflow": "sam_segment",
+    "set": {
+      "text": "car"
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 3.2,
+    "peak": 4,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "0-edit",
+    "family": "qwen",
+    "workflow": "qwen_edit",
+    "set": {
+      "prompt": "Make the car blue. Keep everything else unchanged.",
+      "seed": 0
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 27.1,
+    "peak": 20.7,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "0-upscale",
+    "family": "seedvr2",
+    "workflow": "upscale",
+    "set": {
+      "scale": 2,
+      "seed": 0
+    },
+    "images": {
+      "image_1": "tests\\golden\\08_lowres.png"
+    },
+    "ok": true,
+    "seconds": 7.5,
+    "peak": 14.1,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "0-layered",
+    "family": "layered",
+    "workflow": "qwen_layered",
+    "set": {
+      "layers": 2,
+      "seed": 0,
+      "steps": 10
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 36.8,
+    "peak": 24.8,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "0-wan",
+    "family": "wan",
+    "workflow": "wan22_i2v",
+    "set": {
+      "motion_prompt": "The car drives slowly away.",
+      "seed": 0,
+      "frames": 17,
+      "fps": 16,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 38.2,
+    "peak": 24.3,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "0-ltx",
+    "family": "ltx",
+    "workflow": "ltx25_i2v",
+    "set": {
+      "motion_prompt": "The car drives slowly away.",
+      "seed": 0,
+      "frames": 25,
+      "fps": 24,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 49.6,
+    "peak": 25.3,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "1-klein",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A red kite over green hills",
+      "seed": 1
+    },
+    "ok": true,
+    "seconds": 15.8,
+    "peak": 20.3,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "1-qwen",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A poster that says \"STRESS TEST\"",
+      "seed": 1,
+      "width": 1024,
+      "height": 1024
+    },
+    "ok": true,
+    "seconds": 24.2,
+    "peak": 17.9,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "1-vlm",
+    "family": "vlm",
+    "workflow": "vlm_image",
+    "set": {
+      "prompt": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.\n\nDescribe this image.",
+      "max_tokens": 60,
+      "seed": 1
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 4.7,
+    "peak": 11,
+    "files": [],
+    "text": [
+      "A vibrant red classic car is parked in front of a light blue house with white trim, beside a potted palm tree."
+    ]
+  },
+  {
+    "feature": "stress",
+    "id": "1-sam",
+    "family": "sam",
+    "workflow": "sam_segment",
+    "set": {
+      "text": "car"
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 3.3,
+    "peak": 3.9,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "1-edit",
+    "family": "qwen",
+    "workflow": "qwen_edit",
+    "set": {
+      "prompt": "Make the car blue. Keep everything else unchanged.",
+      "seed": 1
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 27.1,
+    "peak": 20.7,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "1-upscale",
+    "family": "seedvr2",
+    "workflow": "upscale",
+    "set": {
+      "scale": 2,
+      "seed": 1
+    },
+    "images": {
+      "image_1": "tests\\golden\\08_lowres.png"
+    },
+    "ok": true,
+    "seconds": 7.4,
+    "peak": 14.2,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "1-wan",
+    "family": "wan",
+    "workflow": "wan22_i2v",
+    "set": {
+      "motion_prompt": "The car drives slowly away.",
+      "seed": 1,
+      "frames": 17,
+      "fps": 16,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 38.2,
+    "peak": 24.3,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "1-ltx",
+    "family": "ltx",
+    "workflow": "ltx25_i2v",
+    "set": {
+      "motion_prompt": "The car drives slowly away.",
+      "seed": 1,
+      "frames": 25,
+      "fps": 24,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 49.3,
+    "peak": 25.4,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "2-klein",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A red kite over green hills",
+      "seed": 2
+    },
+    "ok": true,
+    "seconds": 15.8,
+    "peak": 20.2,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "2-qwen",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A poster that says \"STRESS TEST\"",
+      "seed": 2,
+      "width": 1024,
+      "height": 1024
+    },
+    "ok": true,
+    "seconds": 24.2,
+    "peak": 17.9,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "2-vlm",
+    "family": "vlm",
+    "workflow": "vlm_image",
+    "set": {
+      "prompt": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.\n\nDescribe this image.",
+      "max_tokens": 60,
+      "seed": 2
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 4.7,
+    "peak": 11,
+    "files": [],
+    "text": [
+      "A vibrant red classic car is parked in front of a light blue house with white trim, beside a potted palm tree."
+    ]
+  },
+  {
+    "feature": "stress",
+    "id": "2-sam",
+    "family": "sam",
+    "workflow": "sam_segment",
+    "set": {
+      "text": "car"
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 3.2,
+    "peak": 4,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "2-edit",
+    "family": "qwen",
+    "workflow": "qwen_edit",
+    "set": {
+      "prompt": "Make the car blue. Keep everything else unchanged.",
+      "seed": 2
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 27,
+    "peak": 20.5,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "2-upscale",
+    "family": "seedvr2",
+    "workflow": "upscale",
+    "set": {
+      "scale": 2,
+      "seed": 2
+    },
+    "images": {
+      "image_1": "tests\\golden\\08_lowres.png"
+    },
+    "ok": true,
+    "seconds": 7.4,
+    "peak": 14.2,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "2-wan",
+    "family": "wan",
+    "workflow": "wan22_i2v",
+    "set": {
+      "motion_prompt": "The car drives slowly away.",
+      "seed": 2,
+      "frames": 17,
+      "fps": 16,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 38.1,
+    "peak": 24,
+    "files": [],
+    "text": []
+  },
+  {
+    "feature": "stress",
+    "id": "2-ltx",
+    "family": "ltx",
+    "workflow": "ltx25_i2v",
+    "set": {
+      "motion_prompt": "The car drives slowly away.",
+      "seed": 2,
+      "frames": 25,
+      "fps": 24,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "tests\\golden\\09_car.png"
+    },
+    "ok": true,
+    "seconds": 49.6,
+    "peak": 25.3,
+    "files": [],
+    "text": []
+  }
+]

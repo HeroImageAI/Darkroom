@@ -68,51 +68,6 @@
     "text": []
   },
   {
-    "feature": "layers_qwen",
-    "id": "09_car",
-    "family": "layered",
-    "workflow": "qwen_layered",
-    "set": {
-      "layers": 4,
-      "seed": 5
-    },
-    "images": {
-      "image_1": "tests\\golden\\09_car.png"
-    },
-    "ok": true,
-    "seconds": 81.9,
-    "peak": 24.3,
-    "files": [
-      "docs\\qa\\phase6\\layers_qwen\\09_car\\qwen_00001_.png",
-      "docs\\qa\\phase6\\layers_qwen\\09_car\\qwen_00002_.png",
-      "docs\\qa\\phase6\\layers_qwen\\09_car\\qwen_00003_.png",
-      "docs\\qa\\phase6\\layers_qwen\\09_car\\qwen_00004_.png"
-    ],
-    "text": []
-  },
-  {
-    "feature": "layers_qwen",
-    "id": "02_product",
-    "family": "layered",
-    "workflow": "qwen_layered",
-    "set": {
-      "layers": 3,
-      "seed": 5
-    },
-    "images": {
-      "image_1": "tests\\golden\\02_product.png"
-    },
-    "ok": true,
-    "seconds": 108.6,
-    "peak": 24,
-    "files": [
-      "docs\\qa\\phase6\\layers_qwen\\02_product\\qwen_00005_.png",
-      "docs\\qa\\phase6\\layers_qwen\\02_product\\qwen_00006_.png",
-      "docs\\qa\\phase6\\layers_qwen\\02_product\\qwen_00007_.png"
-    ],
-    "text": []
-  },
-  {
     "feature": "instruct_klein",
     "id": "01-scarf-red",
     "family": "klein",
@@ -193,7 +148,7 @@
     "seconds": 18,
     "peak": 20.7,
     "files": [
-      "docs\\qa\\phase6\\enhance_klein\\08_lowres-subtle\\enhance_00001_.png"
+      "docs\\qa\\phase6\\enhance_klein\\08_lowres-subtle-lanczos\\enhance_00001_.png"
     ],
     "text": [],
     "note": "before the fix: lanczos enlargement only"
@@ -217,7 +172,7 @@
     "seconds": 17.8,
     "peak": 20.4,
     "files": [
-      "docs\\qa\\phase6\\enhance_klein\\08_lowres-strong\\enhance_00002_.png"
+      "docs\\qa\\phase6\\enhance_klein\\08_lowres-strong-lanczos\\enhance_00002_.png"
     ],
     "text": [],
     "note": "before the fix: lanczos enlargement only"
@@ -325,7 +280,7 @@
     "seconds": 28.2,
     "peak": 20.8,
     "files": [
-      "docs\\qa\\phase6\\enhance_qwen\\08_lowres-subtle\\enhance_00004_.png"
+      "docs\\qa\\phase6\\enhance_qwen\\08_lowres-subtle-lanczos\\enhance_00004_.png"
     ],
     "text": [],
     "note": "before the fix: lanczos enlargement only"
@@ -348,7 +303,7 @@
     "seconds": 25.6,
     "peak": 19.4,
     "files": [
-      "docs\\qa\\phase6\\enhance_qwen\\08_lowres-strong\\enhance_00005_.png"
+      "docs\\qa\\phase6\\enhance_qwen\\08_lowres-strong-lanczos\\enhance_00005_.png"
     ],
     "text": [],
     "note": "before the fix: lanczos enlargement only"
@@ -1182,6 +1137,149 @@
       "docs\\qa\\phase6\\layers_sam\\10_interior\\object_00016_.png",
       "docs\\qa\\phase6\\layers_sam\\10_interior\\object_00017_.png",
       "docs\\qa\\phase6\\layers_sam\\10_interior\\union_00004_.png"
+    ],
+    "text": []
+  },
+  {
+    "feature": "enhance_klein",
+    "id": "08_lowres-subtle",
+    "family": "klein",
+    "workflow": "klein_enhance",
+    "set": {
+      "prompt": "A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon. Crisp focus, fine natural detail and clean texture, with the same composition, people, text and colours.",
+      "denoise": 0.3,
+      "seed": 11,
+      "megapixels": 1,
+      "schedule_steps": 13
+    },
+    "images": {
+      "image_1": "tests\\golden\\08_lowres_seedvr2x4.png"
+    },
+    "note": "SeedVR2 4x first",
+    "ok": true,
+    "seconds": 16.4,
+    "peak": 20.6,
+    "files": [
+      "docs\\qa\\phase6\\enhance_klein\\08_lowres-subtle\\enhance_00011_.png"
+    ],
+    "text": []
+  },
+  {
+    "feature": "enhance_klein",
+    "id": "08_lowres-strong",
+    "family": "klein",
+    "workflow": "klein_enhance",
+    "set": {
+      "prompt": "A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon. Re-rendered in high quality with rich realistic detail, accurate lighting and crisp focus, keeping the same composition, people and text.",
+      "denoise": 0.6,
+      "seed": 11,
+      "megapixels": 1,
+      "schedule_steps": 7
+    },
+    "images": {
+      "image_1": "tests\\golden\\08_lowres_seedvr2x4.png"
+    },
+    "note": "SeedVR2 4x first",
+    "ok": true,
+    "seconds": 12.7,
+    "peak": 20.3,
+    "files": [
+      "docs\\qa\\phase6\\enhance_klein\\08_lowres-strong\\enhance_00012_.png"
+    ],
+    "text": []
+  },
+  {
+    "feature": "enhance_qwen",
+    "id": "08_lowres-subtle",
+    "family": "qwen",
+    "workflow": "qwen_enhance",
+    "set": {
+      "prompt": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "denoise": 0.35,
+      "seed": 11,
+      "megapixels": 1
+    },
+    "images": {
+      "image_1": "tests\\golden\\08_lowres_seedvr2x4.png"
+    },
+    "note": "SeedVR2 4x first",
+    "ok": true,
+    "seconds": 27.1,
+    "peak": 20.7,
+    "files": [
+      "docs\\qa\\phase6\\enhance_qwen\\08_lowres-subtle\\enhance_00013_.png"
+    ],
+    "text": []
+  },
+  {
+    "feature": "layers_qwen",
+    "id": "09_car",
+    "family": "layered",
+    "workflow": "qwen_layered",
+    "set": {
+      "layers": 4,
+      "seed": 5,
+      "prompt": "A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph."
+    },
+    "images": {
+      "image_1": "tests\\golden\\09_car.png"
+    },
+    "note": "captioned (the app auto-captions)",
+    "ok": true,
+    "seconds": 88,
+    "peak": 24.8,
+    "files": [
+      "docs\\qa\\phase6\\layers_qwen\\09_car\\qwen_00016_.png",
+      "docs\\qa\\phase6\\layers_qwen\\09_car\\qwen_00017_.png",
+      "docs\\qa\\phase6\\layers_qwen\\09_car\\qwen_00018_.png",
+      "docs\\qa\\phase6\\layers_qwen\\09_car\\qwen_00019_.png"
+    ],
+    "text": []
+  },
+  {
+    "feature": "layers_qwen",
+    "id": "02_product",
+    "family": "layered",
+    "workflow": "qwen_layered",
+    "set": {
+      "layers": 3,
+      "seed": 5,
+      "prompt": "A pair of brown leather hiking boots with red laces on a pale wooden bench, studio product photograph on a seamless light-grey backdrop, softbox lighting."
+    },
+    "images": {
+      "image_1": "tests\\golden\\02_product.png"
+    },
+    "note": "captioned (the app auto-captions)",
+    "ok": true,
+    "seconds": 115,
+    "peak": 25.3,
+    "files": [
+      "docs\\qa\\phase6\\layers_qwen\\02_product\\qwen_00020_.png",
+      "docs\\qa\\phase6\\layers_qwen\\02_product\\qwen_00021_.png",
+      "docs\\qa\\phase6\\layers_qwen\\02_product\\qwen_00022_.png"
+    ],
+    "text": []
+  },
+  {
+    "feature": "enhance_qwen",
+    "id": "08_lowres-strong",
+    "family": "qwen",
+    "workflow": "qwen_enhance",
+    "set": {
+      "prompt": "Re-render this image at higher quality with rich, realistic detail and texture and accurate lighting. Keep the composition, the identity of people and all text unchanged. The original caption is: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "denoise": 0.65,
+      "seed": 11,
+      "megapixels": 1
+    },
+    "images": {
+      "image_1": "tests\\golden\\08_lowres_seedvr2x4.png"
+    },
+    "note": "SeedVR2 4x first",
+    "ok": true,
+    "seconds": 27,
+    "peak": 20.7,
+    "files": [
+      "docs\\qa\\phase6\\enhance_qwen\\08_lowres-strong\\enhance_00015_.png"
     ],
     "text": []
   }

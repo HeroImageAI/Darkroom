@@ -860,7 +860,7 @@ function Editor({ item }: { item: Item }) {
                 {(
                   [
                     ['subtle', 'Subtle', 'More detail and clarity, same picture'],
-                    ['strong', 'Strong', 'Re-render with much more detail; small changes possible'],
+                    ['strong', 'Strong', 'Re-render with much more detail; can change or add small things, especially near the edges'],
                     ['upscale', 'Upscale + enhance', 'Subtle enhance, then SeedVR2 2x'],
                   ] as [EnhanceKind, string, string][]
                 ).map(([k, l, t]) => (

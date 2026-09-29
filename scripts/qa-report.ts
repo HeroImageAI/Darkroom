@@ -43,6 +43,10 @@ for (const [f, rows] of byFeature) {
   md += `| ${f} | ${rows.length} | ${ok.length} | ${med(ok.map((r) => r.seconds ?? NaN)).toFixed(1)} s | ${Math.max(...ok.map((r) => r.peak ?? 0)).toFixed(1)} GB | ${grid} |\n`;
 }
 
+if (fs.existsSync(path.join(ROOT, 'docs/qa/phase6/enhance_lowres_zoom.jpg'))) {
+  md += `\n**Enhance on a 320 px JPEG, zoomed to native resolution** (before and after the SeedVR2 pre-upscale fix, DECISIONS 55):\n\n![Enhance before/after](qa/phase6/enhance_lowres_zoom.jpg)\n`;
+}
+
 const texts = p6.filter((r) => r.ok && r.text?.length);
 if (texts.length) {
   md += `\n## VLM outputs (Qwen3-VL 8B)\n\nShown after \`cleanVlmOutput\`, exactly as the app displays them.\n\n`;

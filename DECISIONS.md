@@ -190,3 +190,7 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     The ComfyUI template settings (20 steps, CFG 2.5, about 115 s) match the reference pipeline's 50 steps / CFG 4
     (about 215 s) in quality, so they stay. Asking for more layers than the picture has elements yields a near-empty
     layer, which the Layers panel shows and the user can hide or delete.
+60. **ComfyUI stall handling.** A Wan render once froze ComfyUI's HTTP server for over 8 minutes with VRAM full (the
+    NVIDIA system-memory-fallback pattern). Discovery now allows 4 missed polls before calling ComfyUI offline (probe
+    timeout 4 s), so heavy model loads no longer flip the app to "offline"; a job with no progress for 3 minutes shows
+    a stall message suggesting a restart from Comfy Desktop. Harness scripts have per-run timeouts.

@@ -80,5 +80,44 @@ def main():
         print('wrote', out)
 
 
+def crop(path, box=(0.42, 0.5, 0.72, 0.8), w=360):
+    """Same relative region of every output, enlarged with lanczos so blur and JPEG blocks stay visible."""
+    im = Image.open(path).convert('RGB')
+    W, H = im.size
+    c = im.crop((int(W * box[0]), int(H * box[1]), int(W * box[2]), int(H * box[3])))
+    return c.resize((w, int(w * c.height / c.width)), Image.LANCZOS)
+
+
+def enhance_zoom():
+    """Low-res enhance before/after the SeedVR2 pre-upscale fix (DECISIONS 55), at native resolution."""
+    runs = {f"{r['feature']}/{r['id']}": r for r in json.load(open(os.path.join(QA, 'runs.json'), encoding='utf-8'))}
+    cols = [('input (320 px)', None, 'tests/golden/08_lowres.png'), ('before: Subtle', '08_lowres-subtle-lanczos', None),
+            ('before: Strong', '08_lowres-strong-lanczos', None), ('after: SeedVR2 4x', None, 'tests/golden/08_lowres_seedvr2x4.png'),
+            ('after: Subtle', '08_lowres-subtle', None), ('after: Strong', '08_lowres-strong', None)]
+    rows = []
+    for model in ('klein', 'qwen'):
+        cells = []
+        for label, rid, fixed in cols:
+            fp = fixed or (runs.get(f'enhance_{model}/{rid}') or {}).get('files', [None])[0]
+            if not fp or not os.path.exists(os.path.join(ROOT, fp)):
+                return print('skip enhance zoom: missing', model, label)
+            cells.append((label, crop(os.path.join(ROOT, fp))))
+        rows.append((model, cells))
+    cw, ch = cells[0][1].size
+    sheet = Image.new('RGB', (110 + len(cols) * (cw + 6), 30 + len(rows) * (ch + 6)), (18, 18, 16))
+    d = ImageDraw.Draw(sheet)
+    for j, (label, _, _) in enumerate(cols):
+        d.text((110 + j * (cw + 6), 8), label, fill=(240, 180, 76) if j >= 3 else (160, 156, 146), font=FONT)
+    for i, (model, cells) in enumerate(rows):
+        y = 30 + i * (ch + 6)
+        d.text((8, y + 8), model, fill=(237, 235, 229), font=FONT)
+        for j, (_, im) in enumerate(cells):
+            sheet.paste(im, (110 + j * (cw + 6), y))
+    out = os.path.join(QA, 'enhance_lowres_zoom.jpg')
+    sheet.save(out, quality=90)
+    print('wrote', out)
+
+
 if __name__ == '__main__':
     main()
+    enhance_zoom()
