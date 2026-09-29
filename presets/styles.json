@@ -1,11 +1,36 @@
 {
-  "_help": "Style presets for the Generate screen. 'suffix' is appended to the prompt after a comma. Edit freely; the app reloads this file on every visit.",
+  "_help": "Style presets for the Generate screen. Each style has a sentence per model: Klein gets plain prose, Qwen gets a 'Style:' description. The sentence is appended after your prompt. Edit freely; the app reloads this file on every visit. See docs/PROMPT_AUDIT.md (P2).",
   "styles": [
-    { "id": "none", "label": "None", "suffix": "" },
-    { "id": "photographic", "label": "Photographic", "suffix": "photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain" },
-    { "id": "concept", "label": "Concept art", "suffix": "concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality" },
-    { "id": "product", "label": "Product shot", "suffix": "studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality" },
-    { "id": "ink", "label": "Ink sketch", "suffix": "ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour" },
-    { "id": "screenprint", "label": "Screen print", "suffix": "screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper" }
+    { "id": "none", "label": "None", "klein": "", "qwen": "" },
+    {
+      "id": "photographic",
+      "label": "Photographic",
+      "klein": "Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain.",
+      "qwen": "Style: realistic photography with natural light, a 35 mm lens, shallow depth of field, true-to-life colour and subtle film grain. Ultra HD, 4K, cinematic composition."
+    },
+    {
+      "id": "concept",
+      "label": "Concept art",
+      "klein": "Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting.",
+      "qwen": "Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork. Ultra HD, 4K, cinematic composition."
+    },
+    {
+      "id": "product",
+      "label": "Product shot",
+      "klein": "Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
+      "qwen": "Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K."
+    },
+    {
+      "id": "ink",
+      "label": "Ink sketch",
+      "klein": "Drawn as a black ink sketch on white paper with confident linework, cross-hatched shading and loose gestural strokes, entirely monochrome.",
+      "qwen": "Style: monochrome black ink sketch on white paper - confident linework, cross-hatched shading, loose gestural strokes, visible paper texture."
+    },
+    {
+      "id": "screenprint",
+      "label": "Screen print",
+      "klein": "Printed as a screen print in two or three flat spot colours, with visible halftone dots, slight misregistration and bold graphic shapes on textured paper.",
+      "qwen": "Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."
+    }
   ]
 }

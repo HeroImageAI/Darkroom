@@ -1,0 +1,38 @@
+{
+  "_help": "Darkroom prompt templates, one block per model. {placeholders} are filled by src/shared/prompts.ts. Empty optional parts are dropped cleanly. Sources and reasoning: docs/PROMPT_AUDIT.md. Keep Klein text as plain prose; Qwen text may be structured; video text describes motion only.",
+  "klein": {
+    "generate": "{prompt} {style}",
+    "ref_token": "image {n}",
+    "ref_hint": "Refer to references in plain words, e.g. \"the jacket from image 2\".",
+    "instruct": "{instruction} Keep the composition, the people and all other details exactly as they are.",
+    "instruct_masked": "{instruction} Keep everything outside the edited area exactly as it is.",
+    "inpaint": "{fill}, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
+    "outpaint": "Continue the scene beyond its original edges{surroundings}, matching the existing lighting, perspective, colour palette and style.",
+    "outpaint_surroundings": ", showing {text}",
+    "outpaint_default": "Continue the scene beyond its original edges, matching the existing lighting, perspective, colour palette and style."
+  },
+  "qwen": {
+    "generate": "{prompt} {style}",
+    "ref_token": "<image{n}>",
+    "ref_hint": "Refer to references as <image1>, <image2>, <image3> in the prompt.",
+    "instruct": "{instruction} Keep everything else unchanged.",
+    "instruct_masked": "{instruction} Keep the rest of the image unchanged.",
+    "inpaint": "Perform inpainting on this image. Fill the marked area with {fill}.{caption}",
+    "outpaint": "Extend the image beyond its boundaries using outpainting.{caption}{surroundings}",
+    "caption": " The original caption is: {text}",
+    "outpaint_surroundings": " The new areas show {text}.",
+    "transparent": "This is an RGBA image with transparency. {prompt} The image has alpha channel and the background is transparent."
+  },
+  "wan": {
+    "motion": "{motion} {camera}",
+    "fallback": "The subject moves naturally with small, realistic motions while the scene stays calm.",
+    "max_words": 100,
+    "hint": "Describe what moves and how the camera moves - not what the picture shows. Under 100 words."
+  },
+  "ltx": {
+    "motion": "{motion} {camera}",
+    "fallback": "The scene comes gently to life: the subject makes small natural movements, fabric and hair shift slightly in the air, and light flickers softly across the surfaces.",
+    "max_words": 200,
+    "hint": "One flowing present-tense paragraph, 4-8 sentences: what moves, how the camera moves, and any sound. Don't describe the still picture."
+  }
+}

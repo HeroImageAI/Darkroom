@@ -131,6 +131,7 @@ app.get('/api/manifest', async () => ({
   manifest: manifest(),
   styles: readJson(path.join(cfg.paths.presets, 'styles.json')),
   camera: readJson(path.join(cfg.paths.presets, 'camera.json')),
+  prompts: readJson(path.join(cfg.paths.presets, 'prompts.json')),
   comfyUrl: status.url,
 }));
 

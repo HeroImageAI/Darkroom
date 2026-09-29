@@ -364,7 +364,7 @@ def video_tail(g, frames_img, fps_node, prefix):
     g.add("SaveImage", "DR_LAST_FRAME", images=o(last), filename_prefix=prefix + "_last")
 
 
-def wan22_i2v():
+def wan22_i2v(negative=WAN_NEGATIVE):
     g = G()
     te = g.add("CLIPLoader", "DR_TEXT_ENCODER", clip_name=WAN_TE, type="wan", device="default")
     vae = g.add("VAELoader", "DR_VAE", vae_name=WAN_VAE)
@@ -375,7 +375,7 @@ def wan22_i2v():
     his = g.add("ModelSamplingSD3", "Shift high", model=o(hil), shift=5.0)
     los = g.add("ModelSamplingSD3", "Shift low", model=o(lol), shift=5.0)
     pos = g.add("CLIPTextEncode", "DR_MOTION_PROMPT", text="", clip=o(te))
-    neg = g.add("CLIPTextEncode", "DR_NEGATIVE", text=WAN_NEGATIVE, clip=o(te))
+    neg = g.add("CLIPTextEncode", "DR_NEGATIVE", text=negative, clip=o(te))
     start = g.add("LoadImage", "DR_START_IMAGE", image=PLACEHOLDER_IMAGE)
     end = g.add("LoadImage", "DR_END_IMAGE", image=PLACEHOLDER_IMAGE)
     w = g.add("PrimitiveInt", "DR_WIDTH", value=832)
@@ -404,7 +404,7 @@ def wan22_i2v():
     return g
 
 
-def ltx25_i2v():
+def ltx25_i2v(negative=LTX_NEGATIVE):
     """LTX-2.5 distilled, single stage at full resolution (from the official FLF2V template).
     Start frame guide at frame 0, optional end frame guide at frame -1. Generates synced audio."""
     g = G()
@@ -417,7 +417,7 @@ def ltx25_i2v():
     fr = g.add("PrimitiveInt", "DR_FRAMES", value=121)
     fps = g.add("PrimitiveFloat", "DR_FPS", value=24.0)
     pos = g.add("CLIPTextEncode", "DR_MOTION_PROMPT", text="", clip=o(te))
-    neg = g.add("CLIPTextEncode", "DR_NEGATIVE", text=LTX_NEGATIVE, clip=o(te))
+    neg = g.add("CLIPTextEncode", "DR_NEGATIVE", text=negative, clip=o(te))
     cond = g.add("LTXVConditioning", "Frame rate", positive=o(pos), negative=o(neg), frame_rate=o(fps))
     start = g.add("LoadImage", "DR_START_IMAGE", image=PLACEHOLDER_IMAGE)
     s_fit = g.add("ImageScale", "Start fit", image=o(start), upscale_method="lanczos", width=o(w), height=o(h), crop="center")
@@ -520,7 +520,10 @@ if __name__ == "__main__":
     remove_bg().save("remove_bg.json")
     upscale().save("upscale.json")
     wan22_i2v().save("wan22_i2v.json")
+    # v2: negatives removed - inert at CFG 1 (comfy/samplers.py skips the uncond pass). PROMPT_AUDIT P6/P7.
+    wan22_i2v(negative="").save("wan22_i2v.v2.json")
     ltx25_i2v().save("ltx25_i2v.json")
+    ltx25_i2v(negative="").save("ltx25_i2v.v2.json")
     video_interp().save("video_interp.json")
     video_join().save("video_join.json")
     crop().save("crop.json")

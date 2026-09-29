@@ -14,6 +14,8 @@ export interface ImageModel {
   aspects: Record<Aspect, [number, number]>;
   defaults: { steps: number; cfg: number };
   ranges: { steps: [number, number]; cfg: [number, number] };
+  /** Optional quality presets (Qwen: Standard / High). */
+  quality?: Record<string, { label: string; note: string; steps: number; aspects: Record<Aspect, [number, number]> }>;
 }
 
 export type VideoQuality = 'draft' | 'final';

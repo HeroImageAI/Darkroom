@@ -1,5 +1,6 @@
 import type { Item as DbItem, Job as DbJob } from '../server/db';
 import type { Manifest } from '../shared/manifest';
+import type { CameraPreset, PromptTemplates, StylePreset } from '../shared/prompts';
 
 export type Item = Omit<DbItem, 'api_prompt'>;
 export type Job = Omit<DbJob, 'api_prompt'>;
@@ -15,21 +16,13 @@ export interface Status {
   connected: boolean;
 }
 
-export interface Style {
-  id: string;
-  label: string;
-  suffix: string;
-}
-export interface Camera {
-  id: string;
-  label: string;
-  phrase: string;
-  exclusive?: boolean;
-}
+export type Style = StylePreset;
+export type Camera = CameraPreset;
 export interface Bootstrap {
   manifest: Manifest;
   styles: { styles: Style[] };
   camera: { camera: Camera[] };
+  prompts: PromptTemplates;
   comfyUrl: string | null;
 }
 

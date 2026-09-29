@@ -23,6 +23,7 @@ import { useItem, usePersistent } from '../lib/hooks';
 import { go } from '../router';
 import { onJob, toast, useApp } from '../store';
 import { ASPECTS, type Aspect } from '../../shared/manifest';
+import { composeImagePrompt, refToken, type ImageModelKey } from '../../shared/prompts';
 
 interface Ref {
   name: string; // ComfyUI input name
@@ -40,6 +41,10 @@ export interface GenSettings {
   steps: number;
   cfg: number;
   refs: Ref[];
+  /** Qwen: 'standard' | 'high' */
+  quality?: string;
+  /** Qwen: transparent background (real alpha) */
+  transparent?: boolean;
 }
 
 const DEFAULTS: GenSettings = {
@@ -75,7 +80,9 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const styles = boot?.styles.styles ?? [];
   const job: Job | undefined = jobId ? jobs[jobId] : undefined;
   const running = !!job && (job.status === 'queued' || job.status === 'running');
-  const [w, h] = model ? model.aspects[s.aspect] : [1024, 1024];
+  const aspectsFor = (mm: typeof model, quality?: string) => mm?.quality?.[quality ?? 'standard']?.aspects ?? mm?.aspects;
+  const [w, h] = model ? aspectsFor(model, s.quality)![s.aspect] : [1024, 1024];
+  const T = boot?.prompts;
 
   const update = (p: Partial<GenSettings>) => setS((prev) => ({ ...prev, ...p }));
 
@@ -187,15 +194,22 @@ export function Generate({ query }: { query: URLSearchParams }) {
     const seed = cur.seedLocked ? cur.seed : randomSeed();
     if (!cur.seedLocked) update({ seed });
     const style = styles.find((x) => x.id === cur.style);
-    const fullPrompt = style?.suffix ? `${cur.prompt.trim()}, ${style.suffix}` : cur.prompt.trim();
     const mm = m.models[cur.model];
+    const fullPrompt = composeImagePrompt(boot!.prompts, {
+      model: cur.model as ImageModelKey,
+      mode: 'generate',
+      text: cur.prompt,
+      style: style ?? null,
+      transparent: cur.model === 'qwen' && !!cur.transparent,
+    });
     const wf = cur.refs.length ? mm.ref : mm.t2i;
-    const [ww, hh] = mm.aspects[cur.aspect];
+    const q = mm.quality?.[cur.quality ?? 'standard'];
+    const [ww, hh] = aspectsFor(mm, cur.quality)![cur.aspect];
     const params: Record<string, string | number> = {
       prompt: fullPrompt,
       seed,
-      steps: cur.steps,
-      cfg: cur.cfg,
+      steps: q ? q.steps : cur.steps,
+      cfg: mm.ranges.cfg[0] === mm.ranges.cfg[1] ? mm.ranges.cfg[0] : cur.cfg,
       width: ww,
       height: hh,
       batch: cur.batch,
@@ -314,8 +328,31 @@ export function Generate({ query }: { query: URLSearchParams }) {
 
           <div>
             <p className="section-label">Style</p>
-            <Pills label="Style preset" options={styles.map((x) => ({ value: x.id, label: x.label, title: x.suffix }))} value={s.style} onChange={(style) => update({ style })} />
+            <Pills
+              label="Style preset"
+              options={styles.map((x) => ({ value: x.id, label: x.label, title: x[s.model as ImageModelKey] || 'No style added' }))}
+              value={s.style}
+              onChange={(style) => update({ style })}
+            />
           </div>
+
+          {model.quality && (
+            <div>
+              <p className="section-label">
+                Quality <span className="mono">{model.quality[s.quality ?? 'standard']?.note}</span>
+              </p>
+              <Segmented
+                label="Quality"
+                options={Object.entries(model.quality).map(([k, v]) => ({ value: k, label: v.label, title: v.note }))}
+                value={s.quality ?? 'standard'}
+                onChange={(quality) => update({ quality })}
+              />
+              <label className="check" title="Qwen-Image 2.1 can paint a real transparent background (saved as PNG with alpha)">
+                <input type="checkbox" checked={!!s.transparent} onChange={(e) => update({ transparent: e.target.checked })} />
+                Transparent background
+              </label>
+            </div>
+          )}
 
           <RefSlots
             refs={s.refs}
@@ -324,6 +361,12 @@ export function Generate({ query }: { query: URLSearchParams }) {
             onAdd={(files) => files.forEach((f) => void addRefBlob(f, f.name))}
             onAddItem={addRefItem}
             onRemove={(i) => setS((p) => ({ ...p, refs: p.refs.filter((_, k) => k !== i) }))}
+            hint={T ? T[s.model as ImageModelKey]?.ref_hint : undefined}
+            token={(n) => (T ? refToken(T, s.model as ImageModelKey, n) : '')}
+            onInsert={(tok) => {
+              update({ prompt: (s.prompt.trim() ? s.prompt.trimEnd() + ' ' : '') + tok + ' ' });
+              promptRef.current?.focus();
+            }}
             onScreen={async () => {
               try {
                 setCapture(await grabScreenFrame());
@@ -373,12 +416,21 @@ export function Generate({ query }: { query: URLSearchParams }) {
                 </span>
                 <input type="range" min={model.ranges.steps[0]} max={model.ranges.steps[1]} value={s.steps} onChange={(e) => update({ steps: Number(e.target.value) })} />
               </label>
-              <label className="field">
-                <span>
-                  Guidance <b className="mono">{s.cfg.toFixed(1)}</b>
-                </span>
-                <input type="range" min={model.ranges.cfg[0]} max={model.ranges.cfg[1]} step={0.5} value={s.cfg} onChange={(e) => update({ cfg: Number(e.target.value) })} />
-              </label>
+              {model.ranges.cfg[0] !== model.ranges.cfg[1] ? (
+                <label className="field">
+                  <span>
+                    Guidance <b className="mono">{s.cfg.toFixed(1)}</b>
+                  </span>
+                  <input type="range" min={model.ranges.cfg[0]} max={model.ranges.cfg[1]} step={0.5} value={s.cfg} onChange={(e) => update({ cfg: Number(e.target.value) })} />
+                </label>
+              ) : (
+                <div className="field" title="This model is distilled to run at guidance 1; higher values only make results worse.">
+                  <span>Guidance</span>
+                  <span className="mono" style={{ color: 'var(--text)' }}>
+                    1.0 (fixed)
+                  </span>
+                </div>
+              )}
               <div className="field" style={{ gridColumn: '1 / -1' }}>
                 <span>Workflow</span>
                 <span className="mono" style={{ color: 'var(--text)' }}>
@@ -518,7 +570,9 @@ function RefSlots({
   onAddItem,
   onRemove,
   onScreen,
-  note,
+  hint,
+  token,
+  onInsert,
 }: {
   refs: Ref[];
   max: number;
@@ -527,7 +581,9 @@ function RefSlots({
   onAddItem: (id: string) => void;
   onRemove: (i: number) => void;
   onScreen: () => void;
-  note?: string;
+  hint?: string;
+  token: (n: number) => string;
+  onInsert: (token: string) => void;
 }) {
   const [over, setOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -556,6 +612,15 @@ function RefSlots({
               <img src={refs[i].preview || '/favicon.ico'} alt={`Reference ${i + 1}`} />
               <button className="x" aria-label={`Remove reference ${i + 1}`} onClick={() => onRemove(i)}>
                 <X size={14} />
+              </button>
+              <button
+                type="button"
+                className="mono"
+                title="Insert this reference's name into the prompt"
+                onClick={() => onInsert(token(i + 1))}
+                style={{ position: 'absolute', left: 4, bottom: 4, fontSize: 11, border: 0, borderRadius: 4, padding: '2px 6px', background: 'rgba(18,18,16,.85)', color: 'var(--accent)' }}
+              >
+                {token(i + 1)}
               </button>
             </div>
           ) : (
@@ -587,7 +652,7 @@ function RefSlots({
         </button>
         <span className="note">{refs.length ? 'References steer composition, subject and style.' : 'Optional.'}</span>
       </div>
-      {note && <p className="note warn" style={{ marginTop: 6 }}>{note}</p>}
+      {refs.length > 0 && hint && <p className="note" style={{ marginTop: 6 }}>{hint}</p>}
     </div>
   );
 }

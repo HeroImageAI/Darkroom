@@ -5,7 +5,7 @@
     "klein": {
       "label": "Klein 9B",
       "tagline": "Fast · 4 steps",
-      "licence": "FLUX.2 [klein] 9B is released under the FLUX Non-Commercial License. Commercial use of outputs needs a licence from Black Forest Labs.",
+      "licence": "FLUX.2 [klein] 9B: FLUX Non-Commercial License (personal/non-commercial use).",
       "t2i": "klein_t2i",
       "ref": "klein_ref",
       "maxRefs": 3,
@@ -37,19 +37,19 @@
       },
       "ranges": {
         "steps": [
-          1,
-          12
+          4,
+          8
         ],
         "cfg": [
-          1,
-          5
+          1.0,
+          1.0
         ]
       }
     },
     "qwen": {
       "label": "Qwen-Image 2.1",
       "tagline": "Text & layout",
-      "licence": "Qwen-Image 2.1 is released under the Qwen licence.",
+      "licence": "Qwen-Image 2.1: Qwen Research License - non-commercial use only.",
       "t2i": "qwen_t2i",
       "ref": "qwen_ref",
       "maxRefs": 3,
@@ -85,9 +85,65 @@
           50
         ],
         "cfg": [
-          1,
-          6
+          1.0,
+          1.0
         ]
+      },
+      "quality": {
+        "standard": {
+          "label": "Standard",
+          "note": "25 steps, ~1.8 MP",
+          "steps": 25,
+          "aspects": {
+            "1:1": [
+              1328,
+              1328
+            ],
+            "4:5": [
+              1184,
+              1472
+            ],
+            "3:2": [
+              1584,
+              1056
+            ],
+            "16:9": [
+              1664,
+              928
+            ],
+            "9:16": [
+              928,
+              1664
+            ]
+          }
+        },
+        "high": {
+          "label": "High",
+          "note": "40 steps, ~4 MP (model-card sizes)",
+          "steps": 40,
+          "aspects": {
+            "1:1": [
+              2048,
+              2048
+            ],
+            "4:5": [
+              1792,
+              2240
+            ],
+            "3:2": [
+              2528,
+              1696
+            ],
+            "16:9": [
+              2752,
+              1536
+            ],
+            "9:16": [
+              1536,
+              2752
+            ]
+          }
+        }
       }
     }
   },
@@ -249,8 +305,8 @@
             }
           ],
           "default": 1,
-          "min": 1,
-          "max": 5
+          "min": 1.0,
+          "max": 1.0
         },
         "width": {
           "type": "int",
@@ -354,8 +410,8 @@
             }
           ],
           "default": 1,
-          "min": 1,
-          "max": 5
+          "min": 1.0,
+          "max": 1.0
         },
         "width": {
           "type": "int",
@@ -529,8 +585,8 @@
             }
           ],
           "default": 1,
-          "min": 1,
-          "max": 6
+          "min": 1.0,
+          "max": 1.0
         },
         "width": {
           "type": "int",
@@ -542,7 +598,7 @@
           ],
           "default": 1328,
           "min": 256,
-          "max": 2048,
+          "max": 2816,
           "step": 16
         },
         "height": {
@@ -555,7 +611,7 @@
           ],
           "default": 1328,
           "min": 256,
-          "max": 2048,
+          "max": 2816,
           "step": 16
         },
         "batch": {
@@ -1103,7 +1159,7 @@
       }
     },
     "wan22_i2v": {
-      "file": "wan22_i2v.json",
+      "file": "wan22_i2v.v2.json",
       "family": "wan",
       "kind": "video",
       "label": "Wan 2.2 image to video",
@@ -1143,15 +1199,6 @@
             }
           ],
           "default": ""
-        },
-        "negative": {
-          "type": "string",
-          "targets": [
-            {
-              "title": "DR_NEGATIVE",
-              "input": "text"
-            }
-          ]
         },
         "seed": {
           "type": "int",
@@ -1510,7 +1557,7 @@
       }
     },
     "ltx25_i2v": {
-      "file": "ltx25_i2v.json",
+      "file": "ltx25_i2v.v2.json",
       "family": "ltx",
       "kind": "video",
       "label": "LTX 2.5 image to video",
@@ -1566,15 +1613,6 @@
             }
           ],
           "default": ""
-        },
-        "negative": {
-          "type": "string",
-          "targets": [
-            {
-              "title": "DR_NEGATIVE",
-              "input": "text"
-            }
-          ]
         },
         "seed": {
           "type": "int",
@@ -2267,8 +2305,8 @@
             }
           ],
           "default": 1,
-          "min": 1,
-          "max": 6
+          "min": 1.0,
+          "max": 1.0
         },
         "width": {
           "type": "int",
@@ -2280,7 +2318,7 @@
           ],
           "default": 1328,
           "min": 256,
-          "max": 2048,
+          "max": 2816,
           "step": 16
         },
         "height": {
@@ -2293,7 +2331,7 @@
           ],
           "default": 1328,
           "min": 256,
-          "max": 2048,
+          "max": 2816,
           "step": 16
         },
         "batch": {

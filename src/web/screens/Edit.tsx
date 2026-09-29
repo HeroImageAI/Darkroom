@@ -24,6 +24,7 @@ import { ProgressBar, randomSeed, useHotkey } from '../components/common';
 import { useItem } from '../lib/hooks';
 import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
 import { go } from '../router';
+import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
 import { onJob, toast, useApp } from '../store';
 
 type Tool = 'move' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
@@ -294,26 +295,40 @@ function Editor({ item }: { item: Item }) {
       if (!crop || crop.w < 16 || crop.h < 16) return toast('Drag a crop box on the picture first.', 'info');
       return submit('crop', { width: Math.round(crop.w), height: Math.round(crop.h), x: Math.round(crop.x), y: Math.round(crop.y) }, 'edit:crop', 'Crop');
     }
+    const T = boot!.prompts;
+    const em = editModel as ImageModelKey;
+    const caption = captionFromLineage(lineage as unknown as CaptionSource[], item.id);
     if (mode === 'instruct') {
       if (!prompt.trim()) return toast('Type an instruction first, e.g. “make it night time”.', 'info');
-      const params: Record<string, string | number> = { prompt: prompt.trim() };
+      const masked = onlyMasked && !maskEmpty;
+      const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt, masked }) };
       if (ref) params.image_2 = ref.name;
-      if (onlyMasked && !maskEmpty) params.mask = await uploadMask();
+      if (masked) params.mask = await uploadMask();
       return submit(wfFor('instruct'), params, 'edit:instruct', `${modelLabel} edit`, prompt.trim());
     }
     if (mode === 'inpaint') {
       if (maskEmpty) return toast('Paint over the area to replace first (B for brush).', 'info');
       if (!prompt.trim()) return toast('Describe what should appear in the masked area.', 'info');
-      const params: Record<string, string | number> = { prompt: prompt.trim(), mask: await uploadMask(), feather: Math.round(feather) };
+      const params: Record<string, string | number> = {
+        prompt: composeImagePrompt(T, { model: em, mode: 'inpaint', text: prompt, caption }),
+        mask: await uploadMask(),
+        feather: Math.round(feather),
+      };
       if (ref) params.image_2 = ref.name;
       return submit(wfFor('inpaint'), params, 'edit:inpaint', `${modelLabel} fill`, prompt.trim());
     }
     if (mode === 'outpaint') {
       if (!pad.left && !pad.right && !pad.top && !pad.bottom) return toast('Choose how far to extend: drag an edge with the frame tool (O) or use a preset.', 'info');
-      const text = prompt.trim() || item.prompt || 'continue the scene naturally';
-      const params: Record<string, string | number> = { prompt: text, pad_left: pad.left, pad_top: pad.top, pad_right: pad.right, pad_bottom: pad.bottom };
+      const text = prompt.trim();
+      const params: Record<string, string | number> = {
+        prompt: composeImagePrompt(T, { model: em, mode: 'outpaint', text, caption }),
+        pad_left: pad.left,
+        pad_top: pad.top,
+        pad_right: pad.right,
+        pad_bottom: pad.bottom,
+      };
       if (ref) params.image_2 = ref.name;
-      return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text);
+      return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text || 'Outpaint');
     }
     if (mode === 'remove_bg') return submit('remove_bg', {}, 'edit:remove_bg', 'BiRefNet');
     return submit('upscale', { scale: 2 }, 'upscale', 'SeedVR2 7B');

@@ -1,11 +1,23 @@
 {
-  "_help": "Camera chips on the Video screen. 'phrase' is appended to the motion prompt. 'exclusive' chips cannot be combined with others.",
+  "_help": "Camera chips on the Video screen. Each chip has a phrase per video model: Wan follows its official short 'the camera ...' style, LTX wants how and when the camera moves. 'exclusive' chips cannot be combined with others. See docs/PROMPT_AUDIT.md (P5).",
   "camera": [
-    { "id": "static", "label": "Static", "phrase": "The camera is locked off on a tripod and does not move.", "exclusive": true },
-    { "id": "push", "label": "Slow push-in", "phrase": "The camera slowly pushes in toward the subject." },
-    { "id": "pull", "label": "Pull back", "phrase": "The camera slowly pulls back to reveal more of the scene." },
-    { "id": "orbit", "label": "Orbit", "phrase": "The camera slowly orbits around the subject." },
-    { "id": "pan", "label": "Pan left", "phrase": "The camera pans slowly to the left." },
-    { "id": "handheld", "label": "Handheld", "phrase": "Handheld camera with subtle natural shake." }
+    { "id": "static", "label": "Static", "exclusive": true,
+      "wan": "The camera is locked off on a tripod and does not move.",
+      "ltx": "The camera holds a locked-off static shot for the whole clip." },
+    { "id": "push", "label": "Slow push-in",
+      "wan": "The camera slowly pushes in toward the subject.",
+      "ltx": "The camera slowly pushes in toward the subject until it fills most of the frame." },
+    { "id": "pull", "label": "Pull back",
+      "wan": "The camera slowly pulls back to reveal more of the scene.",
+      "ltx": "The camera slowly pulls back, gradually revealing more of the surroundings." },
+    { "id": "orbit", "label": "Orbit",
+      "wan": "The camera slowly orbits around the subject.",
+      "ltx": "The camera orbits slowly around the subject, keeping it centred in the frame." },
+    { "id": "pan", "label": "Pan left",
+      "wan": "The camera pans slowly to the left.",
+      "ltx": "The camera pans slowly to the left, revealing more of the scene on that side." },
+    { "id": "handheld", "label": "Handheld",
+      "wan": "Handheld camera with subtle natural shake.",
+      "ltx": "The shot is handheld, with subtle natural camera shake throughout." }
   ]
 }

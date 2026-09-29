@@ -1,0 +1,87 @@
+[
+  {
+    "group": "styles-klein",
+    "key": "fisherman-photographic",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain",
+      "seed": 101,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain",
+    "ok": true,
+    "seconds": 11.3,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\fisherman-photographic-old\\klein_00028_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "fisherman-photographic",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain.",
+      "seed": 101,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain.",
+    "ok": true,
+    "seconds": 7.4,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\fisherman-photographic-new\\klein_00029_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "fisherman-concept",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+      "seed": 101,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+    "ok": true,
+    "seconds": 7.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\fisherman-concept-old\\klein_00030_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "fisherman-concept",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting.",
+      "seed": 101,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting.",
+    "ok": true,
+    "seconds": 7.3,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\fisherman-concept-new\\klein_00031_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "fisherman-product",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+      "seed": 101,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+    "ok": true,
+    "seconds": 7.8,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\fisherman-product-old\\klein_00032_.png"
+  }
+]

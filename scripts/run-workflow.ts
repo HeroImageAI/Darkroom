@@ -21,6 +21,7 @@ const uploads: Record<string, string> = {};
 let outDir = path.join(ROOT, 'bench', wfName ?? 'x');
 let label = wfName;
 let doFree = false;
+let fileOverride: string | null = null;
 for (let i = 1; i < args.length; i++) {
   const a = args[i];
   if (a === '--set' || a === '--image' || a === '--video') {
@@ -31,13 +32,14 @@ for (let i = 1; i < args.length; i++) {
   } else if (a === '--out') outDir = path.resolve(args[++i]);
   else if (a === '--label') label = args[++i];
   else if (a === '--free') doFree = true;
+  else if (a === '--file') fileOverride = args[++i];
 }
 
 const cfg = loadConfig();
 const manifest = JSON.parse(fs.readFileSync(path.join(cfg.paths.workflows, 'manifest.json'), 'utf8')) as Manifest;
 const spec = manifest.workflows[wfName];
 if (!spec) throw new Error(`Unknown workflow ${wfName}`);
-const template = JSON.parse(fs.readFileSync(path.join(cfg.paths.workflows, spec.file), 'utf8')) as ApiPrompt;
+const template = JSON.parse(fs.readFileSync(path.join(cfg.paths.workflows, fileOverride ?? spec.file), 'utf8')) as ApiPrompt;
 
 const server = await discoverComfy(cfg);
 if (!server) throw new Error('ComfyUI Desktop server not found');

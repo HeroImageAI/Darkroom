@@ -6,6 +6,7 @@ import { ensureNotifyPermission, notifyDesktop, useItem, usePersistent } from '.
 import { go } from '../router';
 import { onJob, toast, useApp } from '../store';
 import { planVideo, type VideoQuality } from '../../shared/manifest';
+import { composeMotionPrompt, wordCount, type VideoModelKey } from '../../shared/prompts';
 
 interface Frame {
   name: string;
@@ -138,10 +139,9 @@ export function Video({ query }: { query: URLSearchParams }) {
   const plan = planVideo(vm, s.quality, s.seconds, s.start?.width ?? 16, s.start?.height ?? 9);
   const endAllowed = vm.supportsEndFrame;
 
-  const motionPrompt = (motion: string, camera: string[]) => {
-    const phrases = camera.map((c) => cams.find((x) => x.id === c)?.phrase).filter(Boolean);
-    return [motion.trim(), ...phrases].filter(Boolean).join(' ');
-  };
+  const T = boot!.prompts;
+  const vKey = (s.model === 'ltx' ? 'ltx' : 'wan') as VideoModelKey;
+  const words = wordCount(s.motion);
 
   const queue = async (body: Parameters<typeof api.submit>[0]) => {
     try {
@@ -161,7 +161,7 @@ export function Video({ query }: { query: URLSearchParams }) {
     if (model.unavailable) return toast(model.unavailable, 'error');
     const p = planVideo(model, cur.quality, cur.seconds, cur.start.width, cur.start.height);
     const seed = override.seed ?? randomSeed();
-    const prompt = motionPrompt(cur.motion, cur.camera) || 'Natural, subtle motion.';
+    const prompt = composeMotionPrompt(T, cams, { model: (cur.model === 'ltx' ? 'ltx' : 'wan') as VideoModelKey, motion: cur.motion, camera: cur.camera });
     const params: Record<string, string | number> = {
       start_image: cur.start.name,
       motion_prompt: prompt,
@@ -279,9 +279,12 @@ export function Video({ query }: { query: URLSearchParams }) {
               onChange={(e) => update({ motion: e.target.value })}
               placeholder="e.g. She turns her head towards the window and smiles; curtains sway in the breeze."
             />
+            <p className={`note ${words > T[vKey].max_words ? 'warn' : ''}`} style={{ margin: '4px 0 0' }}>
+              {T[vKey].hint} <span className="mono">{words} words</span>
+            </p>
             <div className="pills" role="group" aria-label="Camera" style={{ marginTop: 8 }}>
               {cams.map((c) => (
-                <button key={c.id} type="button" className="pill" aria-pressed={s.camera.includes(c.id)} title={c.phrase} onClick={() => toggleCam(c.id)}>
+                <button key={c.id} type="button" className="pill" aria-pressed={s.camera.includes(c.id)} title={c[vKey]} onClick={() => toggleCam(c.id)}>
                   {c.label}
                 </button>
               ))}
