@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Repeat, Sparkles, Undo2, Waves, X } from 'lucide-react';
+import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Repeat, Sparkles, Undo2, Waves, X } from 'lucide-react';
+import { LibraryPicker } from '../components/LibraryPicker';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { Dialog, formatDuration, ProgressBar, randomSeed, Segmented, timecode, useHotkey } from '../components/common';
 import { ensureNotifyPermission, notifyDesktop, useItem, usePersistent } from '../lib/hooks';
@@ -25,6 +26,8 @@ interface VideoSettings {
   quality: VideoQuality;
   notify: boolean;
   seed: number;
+  /** How frames with a different aspect are fitted: crop to fill (default) or letterbox with bars. */
+  frameFit?: 'crop' | 'fit';
 }
 
 const DEFAULTS: VideoSettings = { start: null, end: null, motion: '', camera: [], model: 'wan', seconds: 5, quality: 'draft', notify: true, seed: 0 };
@@ -39,6 +42,7 @@ export function Video({ query }: { query: URLSearchParams }) {
   const [takes, setTakes] = useState<Job[]>([]);
   const [warning, setWarning] = useState<{ text: string; body: Parameters<typeof api.submit>[0] } | null>(null);
   const [suggesting, setSuggesting] = useState(false);
+  const [picker, setPicker] = useState<null | 'start' | 'end'>(null);
   const [motionUndo, setMotionUndo] = useState<string[]>([]);
   const selectedItem = useItem(selected);
   const update = (p: Partial<VideoSettings>) => setS((prev) => ({ ...prev, ...p }));
@@ -113,6 +117,25 @@ export function Video({ query }: { query: URLSearchParams }) {
     [], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  /** Letterbox a frame to the video's aspect (bars), upload it, return the new input name. */
+  const letterbox = async (fr: Frame, w: number, h: number): Promise<string> => {
+    const img = new Image();
+    img.src = inputUrl(fr.name);
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+    const k = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+    const dw = img.naturalWidth * k;
+    const dh = img.naturalHeight * k;
+    ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    const blob = await new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not prepare the frame'))), 'image/png'));
+    return (await api.upload(blob, 'frame_fit.png')).name;
+  };
+
   const uploadFrame = async (f: File, which: 'start' | 'end') => {
     try {
       const up = await api.upload(f, f.name);
@@ -156,7 +179,7 @@ export function Video({ query }: { query: URLSearchParams }) {
     }
   };
 
-  const animate = (override: Partial<VideoSettings> = {}, parentId: string | null = null, chain?: Record<string, unknown>) => {
+  const animate = async (override: Partial<VideoSettings> = {}, parentId: string | null = null, chain?: Record<string, unknown>) => {
     const cur = { ...s, ...override };
     if (!cur.start) return toast('Add a start frame first (step 1).', 'info');
     const model = m.video[cur.model];
@@ -164,8 +187,12 @@ export function Video({ query }: { query: URLSearchParams }) {
     const p = planVideo(model, cur.quality, cur.seconds, cur.start.width, cur.start.height);
     const seed = override.seed ?? randomSeed();
     const prompt = composeMotionPrompt(T, cams, { model: (cur.model === 'ltx' ? 'ltx' : 'wan') as VideoModelKey, motion: cur.motion, camera: cur.camera });
+    const fit = cur.frameFit === 'fit';
+    const mismatch = (fr: Frame | null) => !!fr && Math.abs(fr.width / fr.height / (p.width / p.height) - 1) > 0.03;
+    const startName = fit && mismatch(cur.start) ? await letterbox(cur.start, p.width, p.height) : cur.start.name;
+    const endName = cur.end && model.supportsEndFrame ? (fit && mismatch(cur.end) ? await letterbox(cur.end, p.width, p.height) : cur.end.name) : null;
     const params: Record<string, string | number> = {
-      start_image: cur.start.name,
+      start_image: startName,
       motion_prompt: prompt,
       seed,
       frames: p.frames,
@@ -173,7 +200,7 @@ export function Video({ query }: { query: URLSearchParams }) {
       width: p.width,
       height: p.height,
     };
-    if (cur.end && model.supportsEndFrame) params.end_image = cur.end.name;
+    if (endName) params.end_image = endName;
     void queue({
       workflow: model.workflow,
       params,
@@ -264,9 +291,46 @@ export function Video({ query }: { query: URLSearchParams }) {
                 onClear={() => update({ end: null })}
               />
             </div>
-            <p className="note" style={{ marginTop: 6 }}>
-              Drop, paste or browse — or use “Animate” on any picture.
-            </p>
+            <div className="field-row" style={{ marginTop: 6 }}>
+              <button type="button" className="btn sm" onClick={() => setPicker('start')}>
+                <ImagePlus size={14} /> Start from library
+              </button>
+              <button
+                type="button"
+                className="btn sm icon"
+                title="Swap start and end frames"
+                aria-label="Swap start and end frames"
+                disabled={!endAllowed || (!s.start && !s.end)}
+                onClick={() => update({ start: s.end, end: s.start })}
+              >
+                <ArrowLeftRight size={15} />
+              </button>
+              <button type="button" className="btn sm" disabled={!endAllowed} onClick={() => setPicker('end')}>
+                <ImagePlus size={14} /> End from library
+              </button>
+            </div>
+            {(() => {
+              const planA = plan.width / plan.height;
+              const bad = [s.start && ['Start', s.start] as const, endAllowed && s.end && ['End', s.end] as const]
+                .filter(Boolean)
+                .filter((x) => Math.abs((x as any)[1].width / (x as any)[1].height / planA - 1) > 0.03) as (readonly [string, Frame])[];
+              if (!bad.length) return <p className="note" style={{ marginTop: 6 }}>Drag from the Library, drop a file, paste — or use “Animate” on any picture.</p>;
+              return (
+                <div style={{ marginTop: 8, padding: 10, border: '1px solid var(--accent)', borderRadius: 8 }}>
+                  <p className="note warn" style={{ margin: '0 0 6px' }}>
+                    {bad.map(([n, f]) => `${n} frame is ${f.width}×${f.height}`).join(', ')}, but the video will be {plan.width}×{plan.height}.
+                  </p>
+                  <div className="segmented" role="group" aria-label="Fit frames">
+                    <button type="button" aria-pressed={(s.frameFit ?? 'crop') === 'crop'} onClick={() => update({ frameFit: 'crop' })} title="Scale to fill the video and crop the overflow (centred)">
+                      Crop to fill
+                    </button>
+                    <button type="button" aria-pressed={s.frameFit === 'fit'} onClick={() => update({ frameFit: 'fit' })} title="Keep the whole frame and add black bars">
+                      Fit with bars
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </section>
 
           <section>
@@ -409,6 +473,17 @@ export function Video({ query }: { query: URLSearchParams }) {
         </div>
       </aside>
 
+      {picker && (
+        <LibraryPicker
+          title={picker === 'start' ? 'Choose the start frame' : 'Choose the end frame'}
+          onClose={() => setPicker(null)}
+          onPick={(it) => {
+            const which = picker;
+            setPicker(null);
+            void itemFrame(it.id, which);
+          }}
+        />
+      )}
       {warning && (
         <Dialog title="Not enough graphics memory" onClose={() => setWarning(null)}>
           <p>{warning.text}</p>

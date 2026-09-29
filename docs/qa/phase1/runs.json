@@ -906,5 +906,56 @@
     "ok": true,
     "seconds": 29.9,
     "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-product-new\\qwen_00029_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-ink",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour",
+    "ok": true,
+    "seconds": 30.1,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-ink-old\\qwen_00030_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-ink",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: monochrome black ink sketch on white paper - confident linework, cross-hatched shading, loose gestural strokes, visible paper texture.",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: monochrome black ink sketch on white paper - confident linework, cross-hatched shading, loose gestural strokes, visible paper texture.",
+    "ok": true,
+    "seconds": 29.8,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-ink-new\\qwen_00031_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-screenprint",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper",
+    "ok": true,
+    "seconds": 30,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-screenprint-old\\qwen_00032_.png"
   }
 ]

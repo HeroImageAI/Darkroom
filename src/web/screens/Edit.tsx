@@ -23,6 +23,7 @@ import {
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
 import { useItem } from '../lib/hooks';
+import { CompareView } from '../components/Compare';
 import { LayerStack, LayersPanel, useLayerGroup } from '../components/LayersPanel';
 import { CropDialog, grabScreenFrame } from '../lib/capture';
 import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
@@ -109,7 +110,6 @@ function Editor({ item }: { item: Item }) {
   const [crop, setCrop] = useState<Rect | null>(null);
   const [view, setView] = useState({ scale: 1, x: 0, y: 0 });
   const [compare, setCompare] = useState(false);
-  const [split, setSplit] = useState(50);
   const [jobId, setJobId] = useState<string | null>(() => sessionStorage.getItem('dr.edit.job'));
   const [maskEmpty, setMaskEmpty] = useState(true);
   const [lasso, setLasso] = useState<{ x: number; y: number }[] | null>(null);
@@ -600,7 +600,7 @@ function Editor({ item }: { item: Item }) {
               />
             )}
             {compare && parent ? (
-              <CompareView before={fileUrl(parent.id)} after={fileUrl(item.id)} split={split} />
+              <CompareView before={fileUrl(parent.id)} after={fileUrl(item.id)} />
             ) : (
               <img
                 ref={imgRef}
@@ -690,7 +690,7 @@ function Editor({ item }: { item: Item }) {
           <button className={`btn sm ${compare ? 'on' : ''}`} disabled={!parent} onClick={() => setCompare((c) => !c)} title={parent ? 'Compare with the previous version' : 'This is the first version'}>
             <Columns2 size={15} /> Compare
           </button>
-          {compare && <input type="range" min={0} max={100} value={split} onChange={(e) => setSplit(Number(e.target.value))} aria-label="Before/after split" style={{ width: 160 }} />}
+          {compare && <span className="note">Hover the picture to compare · hold Space for the original</span>}
         </div>
       </section>
 
@@ -988,22 +988,6 @@ function Editor({ item }: { item: Item }) {
           </div>
         </div>
       </aside>
-    </div>
-  );
-}
-
-function CompareView({ before, after, split }: { before: string; after: string; split: number }) {
-  return (
-    <div style={{ position: 'absolute', inset: 0 }}>
-      <img src={after} alt="After" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-      <img src={before} alt="Before" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', clipPath: `inset(0 ${100 - split}% 0 0)` }} />
-      <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${split}%`, width: 2, background: 'var(--accent)' }} />
-      <span className="btn sm" style={{ position: 'absolute', left: 8, top: 8, pointerEvents: 'none' }}>
-        Before
-      </span>
-      <span className="btn sm" style={{ position: 'absolute', right: 8, top: 8, pointerEvents: 'none' }}>
-        After
-      </span>
     </div>
   );
 }
