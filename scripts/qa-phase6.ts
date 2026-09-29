@@ -104,7 +104,7 @@ function cases(): Case[] {
   // SAM segmentation, background removal, layers
   add({ feature: 'segment', id: '04-text-person', family: 'sam', workflow: 'sam_segment', set: { text: 'person', individual: false }, images: { image_1: g('04_busy_street') } });
   add({ feature: 'segment', id: '09-text-car', family: 'sam', workflow: 'sam_segment', set: { text: 'car' }, images: { image_1: g('09_car') } });
-  add({ feature: 'segment', id: '02-click-boot', family: 'sam', workflow: 'sam_segment', set: { points: JSON.stringify([{ x: 400, y: 520 }]) }, images: { image_1: g('02_product') } });
+  add({ feature: 'segment', id: '02-click-boot', family: 'sam', workflow: 'sam_segment', set: { points: JSON.stringify([{ x: 430, y: 430 }]) }, images: { image_1: g('02_product') } });
   add({ feature: 'segment', id: '09-box-car', family: 'sam', workflow: 'sam_segment', set: { boxes: JSON.stringify({ x: 150, y: 330, width: 800, height: 380 }) }, images: { image_1: g('09_car') } });
   for (const [img, subject] of [['05_hair', 'woman'], ['06_fur', 'cat'], ['07_transparent', 'carafe'], ['02_product', 'boots']] as const) {
     add({ feature: 'bg_v1_birefnet', id: img, family: 'util', workflow: 'remove_bg_v1', set: {}, images: { image_1: g(img) } });
