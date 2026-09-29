@@ -1,46 +1,23 @@
-# Darkroom: progress
+# Darkroom — progress
 
-## Status: done (2026-09-29 20:05)
+## v2 expansion (approved 2026-09-29; plan in docs/PLAN.md)
 
-- [x] **Step 1: Audit** (AUDIT.md). New Comfy Desktop v1.1.3, ComfyUI 0.37.4, port 8188 (discovered at runtime).
-- [x] **Backups** in `./backup/` (pip freeze, custom_nodes listing, Desktop settings/installations/model-path YAMLs, commit).
-- [x] **Step 2: Models.** Wan 2.2 I2V (fp8 + lightx2v), LTX-2.5 (int8 + Gemma int8), RIFE/FILM downloaded. Everything else
-  was already present. No custom nodes needed; `.venv` untouched.
-- [x] **Workflows**: all 15 tested through the API, with outputs checked by eye (images opened, video frames sampled):
+| Phase | Branch | Status |
+|---|---|---|
+| 0 Git baseline | `main` @ `v1.0-baseline` | ✔ |
+| 1 Prompt system | `phase-1-prompts` | ✔ code + 192 unit tests; A/B done (grids in `docs/qa/phase1/`): new ≥ old on every row |
+| 2 Local VLM (Qwen3-VL 8B) | `phase-2-vlm` | ✔ code; caption verified live (fisherman test, accurate); full QA in Phase 6 |
+| 3 Enhance | `phase-3-enhance` | ✔ code; defaults to be confirmed on the golden set |
+| 4 SAM 3.1 / BG v2 / Layers | `phase-4-segment-layers` | ✔ code; PSD/ZIP export unit-tested; SAM + Layered first live runs in Phase 6 |
+| 5 UI (compare, video frames) | `phase-5-ui` | ✔ code; Playwright spec `e2e/features-v2.spec.ts` |
+| 6 QA | `phase-6-qa` | ⏳ golden set → feature runs → stress test → QA_REPORT.md |
 
-  | Workflow | Result |
-  |---|---|
-  | klein_t2i / klein_ref | ✔ 8 s warm / 15 s with a reference |
-  | qwen_t2i | ✔ typography rendered correctly |
-  | qwen_edit | ✔ relight; masked recolour leaves the rest untouched |
-  | inpaint / outpaint | ✔ coherent fills, full-resolution composite |
-  | remove_bg | ✔ RGBA PNG |
-  | upscale | ✔ SeedVR2 2× |
-  | wan22_i2v | ✔ 480p 3 s / 5 s, 720p 5 s, with end frame |
-  | ltx25_i2v | ✔ 480p 3 s / 5 s, 720p 5 s, with end frame, with audio |
-  | video_interp | ✔ 49 → 97 frames at 32 fps |
-  | video_join | ✔ 49 + 81 − 1 = 129 frames, no visible seam |
-  | crop, video_frame, import | ✔ |
+### Log
+- 23:40 — A/B closed. Product style re-render: softboxes/light stands gone, clean studio look on both models. LTX "slowdown" in the video A/B was a harness artifact (no `/free` between runs); with `/free` 48–50 s, same as v1. Raw renders kept on disk, untracked (grids + runs.json committed).
+- 23:10 — A/B review: Qwen "Perform inpainting" template worse for *adding* content → reverted to plain text (kept for background-plate removal). Product style named softboxes → Klein painted them → rewritten to describe the look. Ink sketch clearly better; others equal.
+- 22:58 — ComfyUI hung during a Wan A/B render (HTTP dead 8+ min, VRAM full at 24.0 GB — sysmem-fallback pattern). Restarted from Comfy Desktop; the same job then ran in 83 s. Added: discovery grace period (heavy steps no longer flip Darkroom to "offline"), stall watchdog message after 3 min, per-run harness timeouts. RAM ruled out (`/free` returns RAM to ~48 GB after every family).
+- 22:20 — Phases 2–5 implemented on stacked branches while A/B renders ran.
+- 21:50 — Plan approved: Qwen3-VL 8B (installed) as VLM; SAM 3.1 + Qwen-Image-Layered fp8 downloaded (22 GB).
 
-- [x] **Step 3: App.** Fastify + `node:sqlite` server, React UI with all four screens.
-  - [x] Phase A Generate (proof/A*, E1–E3)
-  - [x] Phase B Edit (proof/B*, E4–E6)
-  - [x] Phase C Video: survives reload; Smooth, Extend, Render final (proof/C*, E7–E9)
-  - [x] Phase D Library (proof/D*, E10–E11)
-- [x] **Tests:** 67 unit tests passing; strict typecheck clean; **Playwright e2e 7/7 passing** against real ComfyUI.
-- [x] **UX pass:** empty states, offline state (proof/X-*), plain-language errors, visible shortcuts, unsaved-mask guard,
-  VRAM warning dialog.
-- [x] **One-click start:** `start-darkroom.bat` + desktop shortcut tested (proof/F1-production-5178.png).
-- [x] Library holds at least one real output from every workflow (33 items).
-
-## Log
-- 20:00: Production launch via start-darkroom.bat verified; e2e 7/7 green.
-- 19:45: LTX-2.5 measured: 480p 3 s 29 s, 5 s 79 s cold; 720p 5 s 105 s.
-- 19:25: Extend +5 s (server-side chain) and Smooth 2× verified.
-- 19:20: Wan draft via UI: estimate 1m22s, actual 1m22s.
-- 19:10: Wan measured: 480p 3 s 82 s, 5 s 153 s; 720p 5 s 538 s.
-- 18:45: Fixed a 12-minute VAE-decode stall (driver sysmem fallback); all image decodes are now tiled.
-- 18:15: Server pipeline verified end to end.
-- 16:15: Klein 9B t2i verified through the API.
-- 16:00: Desktop auto-launch setting could not be changed from here (sandbox: persistence); the launcher waits instead.
-- 15:45: Forma's private ComfyUI server closed by user; Desktop server started.
+## v1 (2026-09-29, earlier)
+All four screens, 15 workflows, 67 unit + 7 e2e tests — see git tag `v1.0-baseline`.

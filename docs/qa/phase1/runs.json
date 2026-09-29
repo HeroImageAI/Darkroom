@@ -86,23 +86,6 @@
   },
   {
     "group": "styles-klein",
-    "key": "fisherman-product",
-    "variant": "new",
-    "family": "klein",
-    "workflow": "klein_t2i",
-    "set": {
-      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-      "seed": 101,
-      "width": 1024,
-      "height": 1024
-    },
-    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-    "ok": true,
-    "seconds": 7.5,
-    "file_out": "docs\\qa\\phase1\\styles-klein\\fisherman-product-new\\klein_00033_.png"
-  },
-  {
-    "group": "styles-klein",
     "key": "fisherman-ink",
     "variant": "old",
     "family": "klein",
@@ -250,21 +233,6 @@
   },
   {
     "group": "styles-klein",
-    "key": "teapot-product",
-    "variant": "new",
-    "family": "klein",
-    "workflow": "klein_t2i",
-    "set": {
-      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-      "seed": 202,
-      "width": 1024,
-      "height": 1024
-    },
-    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-    "ok": false
-  },
-  {
-    "group": "styles-klein",
     "key": "teapot-ink",
     "variant": "old",
     "family": "klein",
@@ -396,21 +364,6 @@
       "height": 1024
     },
     "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
-    "ok": false
-  },
-  {
-    "group": "styles-klein",
-    "key": "courier-product",
-    "variant": "new",
-    "family": "klein",
-    "workflow": "klein_t2i",
-    "set": {
-      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-      "seed": 303,
-      "width": 1024,
-      "height": 1024
-    },
-    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
     "ok": false
   },
   {
@@ -549,23 +502,6 @@
     "ok": true,
     "seconds": 35.8,
     "file_out": "docs\\qa\\phase1\\styles-qwen\\fisherman-product-old\\qwen_00008_.png"
-  },
-  {
-    "group": "styles-qwen",
-    "key": "fisherman-product",
-    "variant": "new",
-    "family": "qwen",
-    "workflow": "qwen_t2i",
-    "set": {
-      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
-      "seed": 101,
-      "width": 1328,
-      "height": 1328
-    },
-    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
-    "ok": true,
-    "seconds": 41.1,
-    "file_out": "docs\\qa\\phase1\\styles-qwen\\fisherman-product-new\\qwen_00009_.png"
   },
   {
     "group": "styles-qwen",
@@ -722,23 +658,6 @@
   },
   {
     "group": "styles-qwen",
-    "key": "teapot-product",
-    "variant": "new",
-    "family": "qwen",
-    "workflow": "qwen_t2i",
-    "set": {
-      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
-      "seed": 202,
-      "width": 1328,
-      "height": 1328
-    },
-    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
-    "ok": true,
-    "seconds": 29.7,
-    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-product-new\\qwen_00019_.png"
-  },
-  {
-    "group": "styles-qwen",
     "key": "teapot-ink",
     "variant": "old",
     "family": "qwen",
@@ -889,23 +808,6 @@
     "ok": true,
     "seconds": 29.8,
     "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-product-old\\qwen_00028_.png"
-  },
-  {
-    "group": "styles-qwen",
-    "key": "courier-product",
-    "variant": "new",
-    "family": "qwen",
-    "workflow": "qwen_t2i",
-    "set": {
-      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
-      "seed": 303,
-      "width": 1328,
-      "height": 1328
-    },
-    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: commercial studio product photography - seamless light-grey backdrop, large softbox lighting, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
-    "ok": true,
-    "seconds": 29.9,
-    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-product-new\\qwen_00029_.png"
   },
   {
     "group": "styles-qwen",
@@ -1222,25 +1124,6 @@
   },
   {
     "group": "edits-qwen",
-    "key": "inpaint-traps",
-    "variant": "new",
-    "family": "qwen",
-    "workflow": "qwen_inpaint",
-    "set": {
-      "prompt": "Perform inpainting on this image. Fill the marked area with a pile of lobster traps and coiled yellow rope. The original caption is: A weathered fisherman mending an orange net on a wooden pier at dawn, misty lake behind him.",
-      "seed": 77
-    },
-    "images": {
-      "image_1": "bench/klein_t2i/klein_00001_.png",
-      "mask": "bench/inputs/mask_net.png"
-    },
-    "prompt": "Perform inpainting on this image. Fill the marked area with a pile of lobster traps and coiled yellow rope. The original caption is: A weathered fisherman mending an orange net on a wooden pier at dawn, misty lake behind him.",
-    "ok": true,
-    "seconds": 25,
-    "file_out": "docs\\qa\\phase1\\edits-qwen\\inpaint-traps-new\\inpaint_00010_.png"
-  },
-  {
-    "group": "edits-qwen",
     "key": "outpaint-wide",
     "variant": "old",
     "family": "qwen",
@@ -1394,21 +1277,6 @@
   },
   {
     "group": "styles-klein",
-    "key": "teapot-product",
-    "variant": "new",
-    "family": "klein",
-    "workflow": "klein_t2i",
-    "set": {
-      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-      "seed": 202,
-      "width": 1024,
-      "height": 1024
-    },
-    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-    "ok": false
-  },
-  {
-    "group": "styles-klein",
     "key": "teapot-ink",
     "variant": "old",
     "family": "klein",
@@ -1540,21 +1408,6 @@
       "height": 1024
     },
     "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
-    "ok": false
-  },
-  {
-    "group": "styles-klein",
-    "key": "courier-product",
-    "variant": "new",
-    "family": "klein",
-    "workflow": "klein_t2i",
-    "set": {
-      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
-      "seed": 303,
-      "width": 1024,
-      "height": 1024
-    },
-    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Photographed as a studio product shot on a seamless backdrop, lit by large softboxes, with crisp controlled reflections and a centred composition.",
     "ok": false
   },
   {
@@ -1778,5 +1631,578 @@
     },
     "prompt": "The scene comes gently to life: the subject makes small natural movements, fabric and hair shift slightly in the air, and light flickers softly across the surfaces.",
     "ok": false
+  },
+  {
+    "group": "styles-klein",
+    "key": "fisherman-product",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Styled as a clean commercial product photograph with soft, even studio light, a seamless light backdrop, crisp controlled reflections and a centred composition.",
+      "seed": 101,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Styled as a clean commercial product photograph with soft, even studio light, a seamless light backdrop, crisp controlled reflections and a centred composition.",
+    "ok": true,
+    "seconds": 16.1,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\fisherman-product-new\\klein_00041_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "teapot-concept",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+      "seed": 202,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+    "ok": true,
+    "seconds": 8.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\teapot-concept-old\\klein_00042_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "teapot-concept",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting.",
+      "seed": 202,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting.",
+    "ok": true,
+    "seconds": 8.3,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\teapot-concept-new\\klein_00043_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "teapot-product",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+      "seed": 202,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+    "ok": true,
+    "seconds": 8.4,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\teapot-product-old\\klein_00044_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "teapot-product",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Styled as a clean commercial product photograph with soft, even studio light, a seamless light backdrop, crisp controlled reflections and a centred composition.",
+      "seed": 202,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Styled as a clean commercial product photograph with soft, even studio light, a seamless light backdrop, crisp controlled reflections and a centred composition.",
+    "ok": true,
+    "seconds": 8.4,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\teapot-product-new\\klein_00045_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "teapot-ink",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour",
+      "seed": 202,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour",
+    "ok": true,
+    "seconds": 8.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\teapot-ink-old\\klein_00046_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "teapot-ink",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Drawn as a black ink sketch on white paper with confident linework, cross-hatched shading and loose gestural strokes, entirely monochrome.",
+      "seed": 202,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Drawn as a black ink sketch on white paper with confident linework, cross-hatched shading and loose gestural strokes, entirely monochrome.",
+    "ok": true,
+    "seconds": 8.3,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\teapot-ink-new\\klein_00047_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "teapot-screenprint",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper",
+      "seed": 202,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea, screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper",
+    "ok": true,
+    "seconds": 8.4,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\teapot-screenprint-old\\klein_00048_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "teapot-screenprint",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Printed as a screen print in two or three flat spot colours, with visible halftone dots, slight misregistration and bold graphic shapes on textured paper.",
+      "seed": 202,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Printed as a screen print in two or three flat spot colours, with visible halftone dots, slight misregistration and bold graphic shapes on textured paper.",
+    "ok": true,
+    "seconds": 8.4,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\teapot-screenprint-new\\klein_00049_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-photographic",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain",
+    "ok": true,
+    "seconds": 8.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-photographic-old\\klein_00050_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-photographic",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain.",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain.",
+    "ok": true,
+    "seconds": 8.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-photographic-new\\klein_00051_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-concept",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+    "ok": true,
+    "seconds": 8.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-concept-old\\klein_00052_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-concept",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting.",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting.",
+    "ok": true,
+    "seconds": 8.4,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-concept-new\\klein_00053_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-product",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, studio product photography, seamless backdrop, softbox lighting, crisp reflections, centred composition, commercial catalogue quality",
+    "ok": true,
+    "seconds": 8.4,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-product-old\\klein_00054_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-product",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Styled as a clean commercial product photograph with soft, even studio light, a seamless light backdrop, crisp controlled reflections and a centred composition.",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Styled as a clean commercial product photograph with soft, even studio light, a seamless light backdrop, crisp controlled reflections and a centred composition.",
+    "ok": true,
+    "seconds": 8.4,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-product-new\\klein_00055_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-ink",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, ink sketch on white paper, confident black linework, cross-hatching, loose gestural strokes, no colour",
+    "ok": true,
+    "seconds": 8.6,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-ink-old\\klein_00056_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-ink",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Drawn as a black ink sketch on white paper with confident linework, cross-hatched shading and loose gestural strokes, entirely monochrome.",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Drawn as a black ink sketch on white paper with confident linework, cross-hatched shading and loose gestural strokes, entirely monochrome.",
+    "ok": true,
+    "seconds": 8.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-ink-new\\klein_00057_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-screenprint",
+    "variant": "old",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt, screen print, two to three flat spot colours, visible halftone dots, slight misregistration, bold graphic shapes, textured paper",
+    "ok": true,
+    "seconds": 8.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-screenprint-old\\klein_00058_.png"
+  },
+  {
+    "group": "styles-klein",
+    "key": "courier-screenprint",
+    "variant": "new",
+    "family": "klein",
+    "workflow": "klein_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Printed as a screen print in two or three flat spot colours, with visible halftone dots, slight misregistration and bold graphic shapes on textured paper.",
+      "seed": 303,
+      "width": 1024,
+      "height": 1024
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Printed as a screen print in two or three flat spot colours, with visible halftone dots, slight misregistration and bold graphic shapes on textured paper.",
+    "ok": true,
+    "seconds": 8.5,
+    "file_out": "docs\\qa\\phase1\\styles-klein\\courier-screenprint-new\\klein_00059_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "fisherman-photographic",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain",
+      "seed": 101,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, photograph, natural light, 35mm lens, shallow depth of field, true-to-life colour, fine film grain",
+    "ok": true,
+    "seconds": 44.2,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\fisherman-photographic-old\\qwen_00035_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "fisherman-photographic",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Style: realistic photography with natural light, a 35 mm lens, shallow depth of field, true-to-life colour and subtle film grain. Ultra HD, 4K, cinematic composition.",
+      "seed": 101,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Style: realistic photography with natural light, a 35 mm lens, shallow depth of field, true-to-life colour and subtle film grain. Ultra HD, 4K, cinematic composition.",
+    "ok": true,
+    "seconds": 36.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\fisherman-photographic-new\\qwen_00036_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "fisherman-concept",
+    "variant": "old",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+      "seed": 101,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn, concept art, painterly digital illustration, strong silhouette, atmospheric perspective, dramatic lighting, production design sheet quality",
+    "ok": true,
+    "seconds": 35.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\fisherman-concept-old\\qwen_00037_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "fisherman-concept",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork. Ultra HD, 4K, cinematic composition.",
+      "seed": 101,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork. Ultra HD, 4K, cinematic composition.",
+    "ok": true,
+    "seconds": 36.1,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\fisherman-concept-new\\qwen_00038_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "fisherman-product",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Style: clean commercial product photography - seamless light-grey backdrop, soft even studio light, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+      "seed": 101,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A weathered fisherman mending an orange net on a wooden pier at dawn. Style: clean commercial product photography - seamless light-grey backdrop, soft even studio light, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+    "ok": true,
+    "seconds": 35.9,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\fisherman-product-new\\qwen_00039_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "teapot-product",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: clean commercial product photography - seamless light-grey backdrop, soft even studio light, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+      "seed": 202,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A ceramic teapot with a chipped blue glaze on a linen tablecloth next to a cup of tea. Style: clean commercial product photography - seamless light-grey backdrop, soft even studio light, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+    "ok": true,
+    "seconds": 36,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\teapot-product-new\\qwen_00040_.png"
+  },
+  {
+    "group": "styles-qwen",
+    "key": "courier-product",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_t2i",
+    "set": {
+      "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: clean commercial product photography - seamless light-grey backdrop, soft even studio light, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+      "seed": 303,
+      "width": 1328,
+      "height": 1328
+    },
+    "prompt": "A bicycle courier riding through a rainy city street at night, neon reflections on wet asphalt. Style: clean commercial product photography - seamless light-grey backdrop, soft even studio light, crisp controlled reflections, centred composition, catalogue sharpness. Ultra HD, 4K.",
+    "ok": true,
+    "seconds": 36.1,
+    "file_out": "docs\\qa\\phase1\\styles-qwen\\courier-product-new\\qwen_00041_.png"
+  },
+  {
+    "group": "edits-qwen",
+    "key": "inpaint-traps",
+    "variant": "new",
+    "family": "qwen",
+    "workflow": "qwen_inpaint",
+    "set": {
+      "prompt": "A pile of lobster traps and coiled yellow rope.",
+      "seed": 77
+    },
+    "images": {
+      "image_1": "bench/klein_t2i/klein_00001_.png",
+      "mask": "bench/inputs/mask_net.png"
+    },
+    "prompt": "A pile of lobster traps and coiled yellow rope.",
+    "ok": true,
+    "seconds": 31.4,
+    "file_out": "docs\\qa\\phase1\\edits-qwen\\inpaint-traps-new\\inpaint_00011_.png"
+  },
+  {
+    "group": "video-wan",
+    "key": "empty-motion",
+    "variant": "new",
+    "family": "wan",
+    "workflow": "wan22_i2v",
+    "set": {
+      "motion_prompt": "The subject moves naturally with small, realistic motions while the scene stays calm.",
+      "seed": 55,
+      "frames": 49,
+      "fps": 16,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "bench/klein_t2i/klein_00001_.png"
+    },
+    "prompt": "The subject moves naturally with small, realistic motions while the scene stays calm.",
+    "ok": true,
+    "seconds": 87.5,
+    "file_out": "docs\\qa\\phase1\\video-wan\\empty-motion-new\\wan_00011_.mp4"
+  },
+  {
+    "group": "video-ltx",
+    "key": "net-pull",
+    "variant": "old",
+    "family": "ltx",
+    "workflow": "ltx25_i2v",
+    "file": "ltx25_i2v.json",
+    "set": {
+      "motion_prompt": "He pulls the orange net tight with both hands, then lifts his head and looks out over the lake The camera slowly pushes in toward the subject.",
+      "seed": 55,
+      "frames": 73,
+      "fps": 24,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "bench/klein_t2i/klein_00001_.png"
+    },
+    "prompt": "He pulls the orange net tight with both hands, then lifts his head and looks out over the lake The camera slowly pushes in toward the subject.",
+    "ok": true,
+    "seconds": 61.6,
+    "file_out": "docs\\qa\\phase1\\video-ltx\\net-pull-old\\ltx_00009_.mp4"
+  },
+  {
+    "group": "video-ltx",
+    "key": "net-pull",
+    "variant": "new",
+    "family": "ltx",
+    "workflow": "ltx25_i2v",
+    "set": {
+      "motion_prompt": "He pulls the orange net tight with both hands, then lifts his head and looks out over the lake. The camera slowly pushes in toward the subject until it fills most of the frame.",
+      "seed": 55,
+      "frames": 73,
+      "fps": 24,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "bench/klein_t2i/klein_00001_.png"
+    },
+    "prompt": "He pulls the orange net tight with both hands, then lifts his head and looks out over the lake. The camera slowly pushes in toward the subject until it fills most of the frame.",
+    "ok": true,
+    "seconds": 254.9,
+    "file_out": "docs\\qa\\phase1\\video-ltx\\net-pull-new\\ltx_00010_.mp4"
+  },
+  {
+    "group": "video-ltx",
+    "key": "empty-motion",
+    "variant": "old",
+    "family": "ltx",
+    "workflow": "ltx25_i2v",
+    "file": "ltx25_i2v.json",
+    "set": {
+      "motion_prompt": "Natural, subtle motion.",
+      "seed": 55,
+      "frames": 73,
+      "fps": 24,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "bench/klein_t2i/klein_00001_.png"
+    },
+    "prompt": "Natural, subtle motion.",
+    "ok": true,
+    "seconds": 53.1,
+    "file_out": "docs\\qa\\phase1\\video-ltx\\empty-motion-old\\ltx_00011_.mp4"
+  },
+  {
+    "group": "video-ltx",
+    "key": "empty-motion",
+    "variant": "new",
+    "family": "ltx",
+    "workflow": "ltx25_i2v",
+    "set": {
+      "motion_prompt": "The scene comes gently to life: the subject makes small natural movements, fabric and hair shift slightly in the air, and light flickers softly across the surfaces.",
+      "seed": 55,
+      "frames": 73,
+      "fps": 24,
+      "width": 640,
+      "height": 640
+    },
+    "images": {
+      "start_image": "bench/klein_t2i/klein_00001_.png"
+    },
+    "prompt": "The scene comes gently to life: the subject makes small natural movements, fabric and hair shift slightly in the air, and light flickers softly across the surfaces.",
+    "ok": true,
+    "seconds": 172.3,
+    "file_out": "docs\\qa\\phase1\\video-ltx\\empty-motion-new\\ltx_00012_.mp4"
   }
 ]

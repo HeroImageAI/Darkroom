@@ -8,3 +8,7 @@ proof/e2e-report/
 research/templates/*.json
 .env
 *.part
+
+# raw QA renders stay on disk; grids + runs.json are committed
+docs/qa/*/*/
+
