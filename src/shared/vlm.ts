@@ -57,5 +57,17 @@ export function cleanVlmOutput(raw: string): string {
   s = s.replace(/^\*\*[^*]+\*\*\s*:?\s*/, '');
   const q = s.match(/^["“](.*)["”]$/s);
   if (q && !q[1].includes('"')) s = q[1];
-  return s.replace(/\n{3,}/g, '\n\n').trim();
+  s = s.trim();
+  // a lone closing quote left over after the answer (odd quote count, quote at the very end)
+  if (/["”]$/.test(s) && (s.match(/["“”]/g) ?? []).length % 2 === 1) s = s.slice(0, -1).trim();
+  return completeSentences(s).replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/** If generation stopped at the token limit mid-sentence, drop the unfinished sentence. */
+export function completeSentences(s: string): string {
+  if (!s || /[.!?]["”')\]]?$/.test(s)) return s;
+  let cut = -1;
+  for (const m of s.matchAll(/[.!?]["”')\]]?(?=\s)/g)) cut = m.index! + m[0].length;
+  // keep the fragment if cutting would throw away most of the answer
+  return cut >= s.length * 0.5 ? s.slice(0, cut) : s;
 }

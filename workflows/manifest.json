@@ -41,8 +41,8 @@
           8
         ],
         "cfg": [
-          1.0,
-          1.0
+          1,
+          1
         ]
       }
     },
@@ -85,8 +85,8 @@
           50
         ],
         "cfg": [
-          1.0,
-          1.0
+          1,
+          1
         ]
       },
       "quality": {
@@ -305,8 +305,8 @@
             }
           ],
           "default": 1,
-          "min": 1.0,
-          "max": 1.0
+          "min": 1,
+          "max": 1
         },
         "width": {
           "type": "int",
@@ -410,8 +410,8 @@
             }
           ],
           "default": 1,
-          "min": 1.0,
-          "max": 1.0
+          "min": 1,
+          "max": 1
         },
         "width": {
           "type": "int",
@@ -585,8 +585,8 @@
             }
           ],
           "default": 1,
-          "min": 1.0,
-          "max": 1.0
+          "min": 1,
+          "max": 1
         },
         "width": {
           "type": "int",
@@ -689,9 +689,9 @@
               "input": "cfg"
             }
           ],
-          "default": 1.0,
-          "min": 1.0,
-          "max": 6.0
+          "default": 1,
+          "min": 1,
+          "max": 6
         },
         "image_1": {
           "type": "image",
@@ -1107,7 +1107,8 @@
             "remove": [
               "DR_TEXT"
             ]
-          }
+          },
+          "samMaxPerCategory": 10
         },
         "matte": {
           "type": "string",
@@ -2066,9 +2067,9 @@
               "input": "cfg"
             }
           ],
-          "default": 1.0,
-          "min": 1.0,
-          "max": 6.0
+          "default": 1,
+          "min": 1,
+          "max": 6
         },
         "image_1": {
           "type": "image",
@@ -2192,9 +2193,9 @@
               "input": "cfg"
             }
           ],
-          "default": 1.0,
-          "min": 1.0,
-          "max": 6.0
+          "default": 1,
+          "min": 1,
+          "max": 6
         },
         "image_1": {
           "type": "image",
@@ -2361,8 +2362,8 @@
             }
           ],
           "default": 1,
-          "min": 1.0,
-          "max": 1.0
+          "min": 1,
+          "max": 1
         },
         "width": {
           "type": "int",
@@ -2651,9 +2652,9 @@
               "input": "megapixels"
             }
           ],
-          "default": 1.0,
+          "default": 1,
           "min": 0.5,
-          "max": 2.0
+          "max": 2
         },
         "output": {
           "type": "string",
@@ -2740,9 +2741,9 @@
               "input": "megapixels"
             }
           ],
-          "default": 1.0,
+          "default": 1,
           "min": 0.5,
-          "max": 2.0
+          "max": 2
         },
         "output": {
           "type": "string",
@@ -2788,7 +2789,8 @@
             "remove": [
               "DR_TEXT"
             ]
-          }
+          },
+          "samMaxPerCategory": 20
         },
         "points": {
           "type": "string",
@@ -2909,7 +2911,8 @@
               "title": "DR_TEXT",
               "input": "text"
             }
-          ]
+          ],
+          "samMaxPerCategory": 3
         },
         "threshold": {
           "type": "float",

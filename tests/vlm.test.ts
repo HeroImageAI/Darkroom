@@ -50,4 +50,17 @@ describe('cleanVlmOutput', () => {
   it('keeps inner quotes for text rendering', () => {
     expect(cleanVlmOutput('A sign reading "OPEN" above the door.')).toBe('A sign reading "OPEN" above the door.');
   });
+  // real Qwen3-VL outputs from the Phase 6 QA run
+  it('drops a sentence cut off at the token limit', () => {
+    const raw = 'A quaint bakery on a cobbled street. A chalkboard reads "Fresh bread daily." Shot at eye level, the frame captures the inviting storefront aga';
+    expect(cleanVlmOutput(raw)).toBe('A quaint bakery on a cobbled street. A chalkboard reads "Fresh bread daily."');
+    expect(cleanVlmOutput('Shallow depth of field, fine detail. Ultra HD, 4K,')).toBe('Shallow depth of field, fine detail.');
+  });
+  it('keeps a long fragment rather than losing most of the answer', () => {
+    expect(cleanVlmOutput('Hi. A long single clause about a lighthouse in a storm with waves')).toBe('Hi. A long single clause about a lighthouse in a storm with waves');
+  });
+  it('strips a stray closing quote on its own line', () => {
+    expect(cleanVlmOutput('An elderly woman smiles by a window.\n\n"')).toBe('An elderly woman smiles by a window.');
+    expect(cleanVlmOutput('A sign reads "OPEN"')).toBe('A sign reads "OPEN"');
+  });
 });

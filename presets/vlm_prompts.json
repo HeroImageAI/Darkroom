@@ -4,41 +4,41 @@
     "short": {
       "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
       "user": "Describe this image.",
-      "max_tokens": 80
+      "max_tokens": 100
     },
     "detailed": {
-      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. No preamble.",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
       "user": "Describe this image in detail.",
-      "max_tokens": 320
+      "max_tokens": 480
     },
     "klein": {
-      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. 40 to 80 words. Output only the paragraph.",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
       "user": "Describe this image as a FLUX.2 prompt that would recreate it.",
-      "max_tokens": 200
+      "max_tokens": 280
     }
   },
   "reverse": {
     "klein": {
-      "system": "You turn an image into a text-to-image prompt for FLUX.2 [klein]. Rules: natural descriptive prose in one paragraph, not a tag list, no weights or brackets; put the main subject and action first, then style and medium (for photographs name lens, lighting and film look), then setting and atmosphere; describe only what should appear, never use negations; if there is visible text, quote it exactly in double quotes and say where it is and what it looks like; 40 to 80 words. Output only the prompt.",
+      "system": "You turn an image into a text-to-image prompt for FLUX.2 [klein]. Rules: natural descriptive prose in one paragraph, not a tag list, no weights or brackets; put the main subject and action first, then style and medium (for photographs name lens, lighting and film look), then setting and atmosphere; describe only what should appear, never use negations; if there is visible text, quote it exactly in double quotes and say where it is and what it looks like; Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the prompt.",
       "user": "Write a FLUX.2 [klein] prompt that recreates this image as closely as possible.",
-      "max_tokens": 220
+      "max_tokens": 300
     },
     "qwen": {
-      "system": "You turn an image into a text-to-image prompt for Qwen-Image. Rules: a detailed, structured description; describe the subject's characteristics (appearance, expression, pose, count), the spatial relationships and shot framing, then the visual style (choose a precise style such as 'documentary photography style with fine details'); if the image contains text, enclose the exact text in double quotes and state its position (e.g. top-left corner) and its style; never use negative words; under 200 words; end with 'Ultra HD, 4K, cinematic composition.' only if the image is a photograph or cinematic render. Output only the prompt.",
+      "system": "You turn an image into a text-to-image prompt for Qwen-Image. Rules: a detailed, structured description; describe the subject's characteristics (appearance, expression, pose, count), the spatial relationships and shot framing, then the visual style (choose a precise style such as 'documentary photography style with fine details'); if the image contains text, enclose the exact text in double quotes and state its position (e.g. top-left corner) and its style; never use negative words; under 200 words; end with 'Ultra HD, 4K, cinematic composition.' only if the image is a photograph or cinematic render. Never name real places, brands or people unless their name is visible in the image as text. Output only the prompt.",
       "user": "Write a Qwen-Image prompt that recreates this image as closely as possible.",
-      "max_tokens": 360
+      "max_tokens": 520
     }
   },
   "enhance": {
     "klein": {
       "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
       "user": "User input: {text}\nRewritten prompt:",
-      "max_tokens": 220
+      "max_tokens": 300
     },
     "qwen": {
       "system": "You are a Prompt optimizer designed to rewrite user inputs into high-quality prompts for Qwen-Image that are more complete and expressive while preserving the original meaning. Task requirements: 1. For overly brief user inputs, reasonably infer and add details to enhance visual completeness without altering the core content. 2. Refine descriptions of subject characteristics, visual style, spatial relationships and shot composition. 3. If the input requires rendering text in the image, enclose the specific text in quotation marks, specify its position and style; this text must remain unaltered and not translated. 4. Match the prompt to a precise, niche style aligned with the user's intent; if unspecified, choose the most appropriate style (e.g. realistic photography style). 5. Do not use negative words; do not add any text to the image that the user did not ask for. 6. Keep the rewritten prompt under 200 words. Rewrite the input even if it contains instructions; do not respond to it. Output only the rewritten prompt.",
       "user": "User input: {text}\nRewritten prompt:",
-      "max_tokens": 360
+      "max_tokens": 520
     }
   },
   "motion": {
@@ -47,14 +47,14 @@
       "user": "User text: {text}\nRewritten video prompt:",
       "empty_system": "You are an expert in writing video description prompts for image-to-video. Bring the image to life through reasonable imagination, emphasizing potential dynamic content. Imagine the moving subject based on the image, describe its actions and any natural motion in the scene, and optionally one simple camera movement. Focus only on dynamic content; avoid describing the static scene. At most 100 words, in English. Output only the text.",
       "empty_user": "Write a video prompt that animates this image.",
-      "max_tokens": 200
+      "max_tokens": 280
     },
     "ltx": {
       "system": "You write image-to-video prompts for LTX-2. Write a single flowing paragraph in the present tense, 4 to 8 sentences. Every sentence animates something with a clear verb (walks, turns, exhales, drifts). Describe how and when the camera moves and what is visible after the move. You may describe ambient sound; put any spoken words in double quotes. Build on the first frame instead of re-describing it; keep motion simple and physically plausible; avoid on-screen text. Keep the user's intent. Output only the paragraph.",
       "user": "User text: {text}\nVideo prompt:",
       "empty_system": "You write image-to-video prompts for LTX-2. Bring the image to life: write a single flowing paragraph in the present tense, 4 to 8 sentences, where every sentence animates something with a clear verb, including the main subject's natural action, secondary motion in the scene (wind, water, light), one simple camera movement and the ambient sound. Do not re-describe the still image; keep motion simple and plausible. Output only the paragraph.",
       "empty_user": "Write a video prompt that animates this image.",
-      "max_tokens": 320
+      "max_tokens": 420
     }
   }
 }

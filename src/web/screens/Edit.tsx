@@ -29,6 +29,7 @@ import { CropDialog, grabScreenFrame } from '../lib/capture';
 import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
 import { go } from '../router';
 import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
+import { planEnhance } from '../../shared/enhance';
 import { onJob, toast, useApp } from '../store';
 
 type Tool = 'move' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
@@ -184,7 +185,11 @@ function Editor({ item }: { item: Item }) {
   useEffect(
     () =>
       onJob((j) => {
+        // a server-side follow-up of the job we're waiting on (pre-upscale -> enhance, enhance -> upscale): track that instead
+        if (jobId && (j.meta as any).followOf === jobId) return setJobId(j.id);
         if (j.id !== jobId) return;
+        const chainKind = (j.meta as any).chain?.kind as string | undefined;
+        if (j.status === 'done' && (chainKind === 'upscale' || chainKind === 'enhance')) return; // wait for the follow-up
         if (j.status === 'done' && (j.meta as any).layers) {
           sessionStorage.removeItem('dr.edit.job');
           setLayerGroup(j.id);
@@ -427,23 +432,29 @@ function Editor({ item }: { item: Item }) {
         }
       }
       const strength = enhanceKind === 'strong' ? 'strong' : 'subtle';
-      const srcMP = (W * H) / 1e6;
+      const plan = planEnhance(W, H);
       const params: Record<string, string | number> = {
         prompt: composeImagePrompt(T, { model: em, mode: 'enhance', text: '', caption: cap, strength }),
         denoise: effDenoise,
-        megapixels: Math.round(Math.min(2, Math.max(1, srcMP)) * 100) / 100,
+        megapixels: plan.megapixels,
       };
       if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
       const label = `${modelLabel} enhance (${enhanceKind === 'upscale' ? 'upscale + enhance' : strength})`;
+      const ui = { ...item.ui, caption: cap ?? undefined };
+      const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain: enhanceKind === 'upscale' ? { kind: 'upscale' } : undefined };
       try {
         const inp = await api.asInput(item.id);
-        const j = await api.submit({
-          workflow: wfFor('enhance'),
-          params: { image_1: inp.name, seed: randomSeed(), ...params },
-          meta: { mode: 'edit:enhance', model: label, prompt: item.prompt, parentId: item.id, ui: { ...item.ui, caption: cap ?? undefined }, chain: enhanceKind === 'upscale' ? { kind: 'upscale' } : undefined },
-        });
+        const j = plan.preScale
+          ? // small source: SeedVR2 first, then the enhance pass runs on its result (server chain)
+            await api.submit({
+              workflow: 'upscale',
+              params: { image_1: inp.name, scale: plan.preScale, seed: randomSeed() },
+              meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: item.prompt, parentId: item.id, ui, chain: { kind: 'enhance', workflow: wfFor('enhance'), params, meta: enhanceMeta } },
+            })
+          : await api.submit({ workflow: wfFor('enhance'), params: { image_1: inp.name, seed: randomSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
         setJobId(j.id);
-        if (enhanceKind === 'upscale') toast('Enhancing, then upscaling 2× with SeedVR2 — the upscaled version opens when it is ready.', 'info', 7000);
+        if (plan.preScale) toast(`Small picture: upscaling ${plan.preScale}× with SeedVR2 first, then enhancing — the enhanced version opens when it is ready.`, 'info', 7000);
+        else if (enhanceKind === 'upscale') toast('Enhancing, then upscaling 2× with SeedVR2 — the upscaled version opens when it is ready.', 'info', 7000);
       } catch (err) {
         toast((err as Error).message, 'error');
       }
@@ -875,7 +886,7 @@ function Editor({ item }: { item: Item }) {
                 Smart select (SAM 3.1) {samBusy && <span className="mono">working…</span>}
               </p>
               <p className="note" style={{ marginTop: 0 }}>
-                Click the object (Shift-click to exclude a spot) or drag a box, then Select. Or type what to select.
+                Click the object (Shift-click to exclude a spot) or drag a box, then Select. One click may pick just a part (the laces of a boot), so click two or three spots across the object to get all of it. Or type what to select; typing finds every match (&ldquo;person&rdquo; selects everyone).
               </p>
               <div className="segmented" role="group" aria-label="Selection mode">
                 {(['add', 'subtract', 'replace'] as const).map((o) => (

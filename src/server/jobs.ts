@@ -26,6 +26,8 @@ export interface SubmitRequest {
     chain?: Record<string, unknown>;
     groupId?: string;
     layers?: boolean;
+    /** Set on server-side follow-up jobs: the job whose chain started this one (the UI follows it). */
+    followOf?: string;
   };
   /** Proceed even if the VRAM check fails. */
   force?: boolean;
@@ -470,10 +472,26 @@ export class JobManager {
         await this.submit({
           workflow: 'upscale',
           params: { image_1: await this.asInput(it), scale: 2, seed: Math.floor(Math.random() * 2 ** 31) },
-          meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: it.prompt, parentId: it.id, ui: it.ui },
+          meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: it.prompt, parentId: it.id, ui: it.ui, followOf: job.id },
         });
       } catch (e) {
         this.broadcast({ type: 'toast', kind: 'error', text: 'Could not start the upscale: ' + friendlyError((e as Error).message) });
+      }
+      return;
+    }
+    if (chain?.kind === 'enhance' && newIds[0]) {
+      // SeedVR2 pre-upscale of a small picture finished; now the Klein / Qwen enhance pass runs on it.
+      const it = this.store.getItem(newIds[0]);
+      const c = chain as { workflow?: string; params?: Record<string, string | number>; meta?: Record<string, unknown> };
+      if (!it || !c.workflow) return;
+      try {
+        await this.submit({
+          workflow: c.workflow,
+          params: { ...(c.params ?? {}), image_1: await this.asInput(it), seed: Math.floor(Math.random() * 2 ** 31) },
+          meta: { mode: 'edit:enhance', ...(c.meta ?? {}), parentId: it.id, followOf: job.id },
+        });
+      } catch (e) {
+        this.broadcast({ type: 'toast', kind: 'error', text: 'Could not start the enhance pass: ' + friendlyError((e as Error).message) });
       }
       return;
     }

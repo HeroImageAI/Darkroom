@@ -15,6 +15,8 @@ import { desktopRunning, launchDesktop, tailDesktopLog } from './desktop.js';
 import { discoverComfy } from './discovery.js';
 import { JobManager, publicJob, VramWarning, type SubmitRequest } from './jobs.js';
 import { buildVlmRequest, type VlmPrompts, type VlmTask } from '../shared/vlm.js';
+import { validateTemplates } from '../shared/prompts.js';
+import { samPointsJson } from '../shared/workflow.js';
 import { layersToPsd, layersToZip, type LayerInput } from './layers.js';
 
 const cfg = loadConfig();
@@ -149,18 +151,18 @@ app.post('/api/free', async () => {
   return { ok: true };
 });
 
-app.get('/api/manifest', async () => ({
-  manifest: manifest(),
-  styles: readJson(path.join(cfg.paths.presets, 'styles.json')),
-  camera: readJson(path.join(cfg.paths.presets, 'camera.json')),
-  prompts: readJson(path.join(cfg.paths.presets, 'prompts.json')),
-  comfyUrl: status.url,
-}));
-
-/** Prompt enhancement stub: returns the prompt unchanged. Swap in an LLM call here later. */
-app.post('/api/enhance', async (req) => {
-  const { prompt } = (req.body ?? {}) as { prompt?: string };
-  return { prompt: (prompt ?? '').trim(), enhanced: false, note: 'Enhance is not connected to a language model yet — your prompt was kept as written.' };
+app.get('/api/manifest', async (_req, reply) => {
+  const prompts = readJson(path.join(cfg.paths.presets, 'prompts.json'));
+  const errs = validateTemplates(prompts);
+  // a hand edit that breaks a template must not silently send malformed prompts
+  if (errs.length) return reply.code(500).send({ error: `presets/prompts.json: ${errs.join('; ')}` });
+  return {
+    manifest: manifest(),
+    styles: readJson(path.join(cfg.paths.presets, 'styles.json')),
+    camera: readJson(path.join(cfg.paths.presets, 'camera.json')),
+    prompts,
+    comfyUrl: status.url,
+  };
 });
 
 app.post('/api/upload', async (req, reply) => {
@@ -241,8 +243,7 @@ app.post('/api/segment', async (req, reply) => {
   if (!b.text?.trim() && !b.points?.length && !b.box) return reply.code(400).send({ error: 'Click on the object, drag a box around it, or type what to select.' });
   const params: Record<string, string | number | boolean> = { image_1: await jobs.asInput(item), individual: !!b.individual };
   if (b.text?.trim()) params.text = b.text.trim();
-  if (b.points?.length) params.points = JSON.stringify(b.points.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })));
-  if (b.negPoints?.length) params.neg_points = JSON.stringify(b.negPoints.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })));
+  Object.assign(params, samPointsJson(b.points ?? [], b.negPoints ?? []));
   if (b.box) params.boxes = JSON.stringify({ x: Math.round(b.box.x), y: Math.round(b.box.y), width: Math.round(b.box.width), height: Math.round(b.box.height) });
   if (b.threshold) params.threshold = b.threshold;
   const t0 = Date.now();

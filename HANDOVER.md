@@ -20,6 +20,12 @@
 | ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0 | latent_upscale_models | 1.0 GB (downloaded, not used by the shipped graph) |
 | ltx-2.5-duration-head-bf16 | model_patches | tiny |
 | rife_v4.26.safetensors, film_net_fp16.safetensors | frame_interpolation | 92 MB |
+| **v2:** sam3.1_multiplex_fp16.safetensors | checkpoints | 1.7 GB (SAM 3.1: smart select, Remove BG v2, SAM layers) |
+| **v2:** qwen_image_layered_fp8mixed.safetensors | diffusion_models | 19.1 GB (Qwen-Image-Layered: Layers mode B) |
+| **v2:** qwen_image_layered_vae.safetensors | vae | 0.24 GB |
+
+The v2 VLM (Qwen3-VL 8B, `qwen3vl_8b_int8_convrot`) and Lucida matting were **already installed**. All three v2 downloads
+were fetched by `scripts/download-models-v2.sh`, which only adds files.
 
 Klein 9B, Qwen-Image 2.1, Qwen-Image-Edit-2511, SeedVR2, BiRefNet and their encoders were **already installed** and are used
 as they are.
@@ -28,6 +34,9 @@ as they are.
 
 **None.** Everything runs on core ComfyUI 0.37.4 nodes, so the Desktop `.venv` was not modified and nothing needs
 reinstalling after a Desktop update. (`backup/pip-freeze.txt` records the environment as found.)
+
+Darkroom's own npm packages added in v2: `ag-psd` (layered PSD export) and `fflate` (ZIP export). Both live in
+`E:\Darkroom\node_modules` only.
 
 ### Configuration
 
@@ -51,8 +60,10 @@ BENCHMARKS.md.
 
 ## Known limitations
 
-- **Smart select** is a disabled stub (tooltip explains). Use the brush or lasso.
-- **Enhance** is a stub that returns your prompt unchanged.
+- **Licences:** Klein 9B and Qwen-Image 2.1 are non-commercial licences, which fits Darkroom's private, personal use.
+  Wan 2.2, Qwen3-VL and Qwen-Image-Layered are Apache 2.0; SAM 3.1 is under the SAM License; LTX under its community licence.
+- **Prompt templates, style text, camera chips and VLM system prompts** are plain JSON in `presets\` and can be edited
+  freely; the app validates `prompts.json` on load and reports a broken edit instead of sending a bad prompt.
 - **Open graph in ComfyUI** downloads the API graph and opens ComfyUI; you drop the file onto the canvas (ComfyUI has no URL
   for loading a graph).
 - If ComfyUI restarts mid-render, that take is marked *lost* (ComfyUI forgets its queue); settings are kept for a re-run.

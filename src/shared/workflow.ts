@@ -32,6 +32,34 @@ export interface ParamSpec {
   /** For optional image/video params: what to do when no value is given. */
   whenMissing?: MissingPlan;
   label?: string;
+  /**
+   * String params only: SAM 3 text prompt. Each comma-separated category gets ":N" (up to N matches)
+   * unless the user wrote a count; the SAM 3 tokenizer otherwise keeps only the single best match.
+   */
+  samMaxPerCategory?: number;
+}
+
+/**
+ * SAM point prompts as JSON. With exactly one point SAM 3 switches to multi-mask "ambiguity" mode and
+ * keeps its most confident candidate, which is often a small part or even empty; a lone positive click
+ * is therefore sent twice (same place) so SAM returns the single whole-object mask.
+ */
+export function samPointsJson(pos: { x: number; y: number }[], neg: { x: number; y: number }[]): { points?: string; neg_points?: string } {
+  const r = (p: { x: number; y: number }) => ({ x: Math.round(p.x), y: Math.round(p.y) });
+  const P = pos.map(r);
+  const N = neg.map(r);
+  if (P.length === 1 && N.length === 0) P.push({ ...P[0] });
+  return { ...(P.length ? { points: JSON.stringify(P) } : {}), ...(N.length ? { neg_points: JSON.stringify(N) } : {}) };
+}
+
+/** "person, car:2" -> "person:20, car:2" (SAM 3 tokenizer syntax, comfy/text_encoders/sam3_clip.py). */
+export function samTextPrompt(text: string, maxPer: number): string {
+  return text
+    .split(',')
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => (/:\s*[\d.]+\s*$/.test(p) ? p : `${p}:${maxPer}`))
+    .join(', ');
 }
 
 export interface MissingPlan {
@@ -159,7 +187,7 @@ function coerce(spec: ParamSpec, name: string, raw: unknown): InputValue {
         throw new WorkflowError(`${name} is not valid JSON`);
       }
     default:
-      return String(raw);
+      return spec.samMaxPerCategory ? samTextPrompt(String(raw), spec.samMaxPerCategory) : String(raw);
   }
 }
 
