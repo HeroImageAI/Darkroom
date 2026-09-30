@@ -125,26 +125,31 @@ export function Library() {
     setSelected(it.id);
   };
 
+  // one stable listener reading the latest state through a ref: re-subscribing per render missed a Delete pressed
+  // right after a click (the new listener was not attached yet)
+  const keys = useRef({ targets, trash, confirm, picked, items, remove });
+  keys.current = { targets, trash, confirm, picked, items, remove };
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
+      const st = keys.current;
       const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName ?? '');
       if (e.key === '/' && !typing) {
         e.preventDefault();
         searchRef.current?.focus();
-      } else if (e.key === 'Delete' && !typing && targets.length && !confirm) {
+      } else if (e.key === 'Delete' && !typing && st.targets.length && !st.confirm) {
         e.preventDefault();
-        if (trash) setConfirm({ ids: targets });
-        else void remove(targets);
-      } else if (e.key === 'Escape' && picked.length && !confirm) {
+        if (st.trash) setConfirm({ ids: st.targets });
+        else void st.remove(st.targets);
+      } else if (e.key === 'Escape' && st.picked.length && !st.confirm) {
         setPicked([]);
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !typing) {
         e.preventDefault();
-        setPicked(items.map((i) => i.id));
+        setPicked(st.items.map((i) => i.id));
       }
     };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
-  });
+  }, []);
 
   const confirmText =
     confirm && 'all' in confirm
@@ -453,7 +458,17 @@ function Detail({
           {item.kind === 'video' ? (
             <video key={item.id} src={fileUrl(item.id)} poster={item.poster ? fileUrl(item.id, 'poster') : undefined} controls loop style={{ width: '100%', height: 360, objectFit: 'contain', display: 'block' }} />
           ) : (
-            <img src={fileUrl(item.id)} alt={item.prompt} style={{ width: '100%', height: 360, objectFit: 'contain', display: 'block' }} />
+            <img
+              key={item.id}
+              src={fileUrl(item.id)}
+              alt={item.prompt}
+              // full file comes through ComfyUI; while it is offline show Darkroom's cached thumbnail instead of alt text
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (!img.src.includes('/thumb')) img.src = thumbUrl(item.id);
+              }}
+              style={{ width: '100%', height: 360, objectFit: 'contain', display: 'block' }}
+            />
           )}
         </div>
         {trash ? (
