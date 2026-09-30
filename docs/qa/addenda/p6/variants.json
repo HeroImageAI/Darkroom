@@ -1,0 +1,42 @@
+{
+  "presets-angles": [
+    {
+      "id": "klein",
+      "label": "Klein 9B (Klein wording)"
+    },
+    {
+      "id": "qwen",
+      "label": "Qwen-Image 2.1 (Qwen wording)"
+    }
+  ],
+  "presets-relight": [
+    {
+      "id": "klein",
+      "label": "Klein 9B (Klein wording)"
+    },
+    {
+      "id": "qwen",
+      "label": "Qwen-Image 2.1 (Qwen wording)"
+    }
+  ],
+  "presets-styles": [
+    {
+      "id": "klein",
+      "label": "Klein 9B (Klein wording)"
+    },
+    {
+      "id": "qwen",
+      "label": "Qwen-Image 2.1 (Qwen wording)"
+    }
+  ],
+  "presets-other": [
+    {
+      "id": "klein",
+      "label": "Klein 9B (Klein wording)"
+    },
+    {
+      "id": "qwen",
+      "label": "Qwen-Image 2.1 (Qwen wording)"
+    }
+  ]
+}

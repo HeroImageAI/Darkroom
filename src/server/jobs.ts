@@ -291,6 +291,8 @@ export class JobManager {
           model: req.meta.model,
           prompt: req.meta.prompt,
           params: req.params,
+          // the screen's own settings, so "Restore settings from image" works on a file outside the library
+          ui: req.meta.ui ?? null,
           parent: req.meta.parentId ?? null,
           job: id,
         },
@@ -329,8 +331,9 @@ export class JobManager {
       return;
     }
     if (spec.kind === 'text') {
-      const text = cleanVlmOutput(textFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.text ?? 'DR_OUTPUT')).join('\n'));
-      this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, text } });
+      const raw = textFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.text ?? 'DR_OUTPUT')).join('\n');
+      // raw kept alongside: structured answers (PE-T2I JSON) must be parsed before any prose clean-up
+      this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, text: cleanVlmOutput(raw), raw } });
       // Auto-unload the VLM when nothing else is waiting, so the next image/video job gets the whole GPU.
       if (this.store.activeJobs().length === 0) void this.comfy.free(true, true).catch(() => undefined);
       return;

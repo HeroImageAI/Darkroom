@@ -13,11 +13,12 @@ import { maskBBox, planCrop, type Box, type CropPlan } from '../src/shared/crops
 import { buildOutpaintCanvas } from '../src/server/outpaint.js';
 import { snapPad, type Pad } from '../src/shared/outpaint.js';
 import sharp from 'sharp';
+import { buildVlm2Request, type Vlm2Prompts, type Vlm2Task } from '../src/shared/vlm.js';
 
 const TSX = path.join(ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs');
 const g = (id: string) => path.join('tests', 'golden', `${id}.png`);
 
-interface Case { key: string; set: Record<string, string | number>; images?: Record<string, string>; caption?: string }
+interface Case { key: string; set: Record<string, string | number>; images?: Record<string, string>; caption?: string; workflow?: string }
 interface Variant {
   id: string;
   label: string;
@@ -28,7 +29,7 @@ interface Variant {
   build?: (c: Case) => { set?: Record<string, string | number>; images?: Record<string, string> };
 }
 interface Group { id: string; variants: Variant[]; cases: Case[] }
-interface Row { group: string; key: string; variant: string; ok: boolean; seconds?: number; peak?: number; file_out?: string; error?: string; set: Record<string, string | number> }
+interface Row { group: string; key: string; variant: string; ok: boolean; seconds?: number; peak?: number; file_out?: string; error?: string; set: Record<string, string | number>; text?: string }
 
 // One Node T2I templates (config.json "t2i_templates"), credited: github.com/yanokusnir-ai/one-node-flux-2-klein
 const ONE_NODE_FOX = 'A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.';
@@ -98,6 +99,12 @@ const INPAINT_CASES: InpaintCase[] = [
   { key: 'teapot-ref-car', mask: 'teapot', fill: 'a small toy model of the red car from the reference picture', ref: '09_car', set: { seed: 66 } },
 ].map((c) => ({ ...c, images: { image_1: g(MASKS[c.mask][0]), mask: maskPath(c.mask), ...(c.ref ? { image_2: g(c.ref) } : {}) } }));
 
+// Circle quick edit (Addendum 2 C): a red ellipse drawn round the mask's box stands in for the user's annotation.
+// Built by `setup.p3c` into bench/annot (not committed).
+const annotPath = (k: string) => path.join('bench', 'annot', `${k}.png`);
+const ANNOT_CASES = INPAINT_CASES.filter((c) => !c.ref && !c.denoise).map((c) => ({ ...c, images: { image_1: annotPath(c.mask) } }));
+const annotOrig = (c: Case) => g(MASKS[(c as InpaintCase).mask][0]);
+
 // Outpaint (Phase 4). One Node's outpaint preset, verbatim (config.json autofill_prompts.outpaint), credited:
 // github.com/yanokusnir-ai/one-node-flux-2-klein. Its "[briefly describe …]" slot is filled with the caption.
 const ONE_NODE_OUTPAINT = 'Extend the composition of this image. Replace all black or empty spaces with a logical continuation of the background and foreground. Ensure the transition is invisible and the new elements perfectly match the perspective and color palette of the original image. Scene description: ';
@@ -125,7 +132,84 @@ const padSet = (p: Pad) => ({ pad_left: p.left, pad_top: p.top, pad_right: p.rig
 const QWEN_REMOVE_BG = 'Remove the background, and output a PNG image';
 const extract = (what: string) => `Extract ${what} from <image1> onto a transparent background, and output a PNG image`;
 
+// Phase 6: every built-in preset on both models (fixed seeds). Source picture per category; slots filled for Text edit.
+const EDIT_PRESETS = (JSON.parse(fs.readFileSync(path.join(ROOT, 'presets', 'edit_presets.json'), 'utf8')) as { presets: { id: string; category: string; klein: string; qwen: string; images?: 2 }[] }).presets;
+const presetSource: Record<string, string> = { Angles: '10_interior', Relight: '01_portrait', Styles: '09_car' };
+const presetCases = (category: string): Case[] =>
+  EDIT_PRESETS.filter((p) => p.category === category).map((p, i) => {
+    const fill = (t: string) => t.replace('[OLD TEXT]', 'SUNRISE BAKERY').replace('[NEW TEXT]', 'MOONLIGHT BAKERY');
+    const src = p.id === 'enhance' ? '11_lens_blur' : p.id === 'text-edit' ? '03_text_scene' : p.id === 'try-on' ? '01_portrait' : p.id === 'texture-transfer' ? '09_car' : presetSource[category];
+    const ref = p.id === 'try-on' ? '16_outfit' : p.id === 'texture-transfer' ? '06_fur' : undefined;
+    return { key: p.id, set: { seed: 500 + i, klein_prompt: fill(p.klein), qwen_prompt: fill(p.qwen) }, images: { image_1: g(src), ...(ref ? { image_2: g(ref) } : {}) } };
+  });
+const presetVariants: Variant[] = [
+  { id: 'klein', label: 'Klein 9B (Klein wording)', workflow: 'klein_edit', build: (c) => ({ set: { prompt: String(c.set.klein_prompt), klein_prompt: '', qwen_prompt: '' } }) },
+  { id: 'qwen', label: 'Qwen-Image 2.1 (Qwen wording)', workflow: 'qwen_edit', build: (c) => ({ set: { prompt: String(c.set.qwen_prompt), klein_prompt: '', qwen_prompt: '' } }) },
+];
+
+// Phase 7: the general VLM (captions, reverse prompts, Klein prompts). Same requests as production (buildVlm2Request on
+// presets/vlm_prompts.json), only the model file differs. JP chose "A/B first" before any 19 GB download.
+const VP = JSON.parse(fs.readFileSync(path.join(ROOT, 'presets', 'vlm_prompts.json'), 'utf8')) as Vlm2Prompts;
+const readPreset = (rel: string) => fs.readFileSync(path.join(ROOT, 'presets', rel), 'utf8');
+function vlmCase(key: string, task: Vlm2Task, variant: string, text: string, image?: string): Case {
+  const r = buildVlm2Request(VP, task, variant, text, readPreset);
+  return { key, workflow: r.workflow, set: { ...(r.params as Record<string, string | number>) }, ...(image ? { images: { image_1: g(image) } } : {}) };
+}
+const VLM_CASES: Case[] = [
+  ...['01_portrait', '03_text_scene', '04_busy_street'].flatMap((img) => ['short', 'detailed', 'klein'].map((v) => vlmCase(`caption-${v}-${img}`, 'caption', v, '', img))),
+  ...['03_text_scene', '04_busy_street'].flatMap((img) => ['klein', 'qwen'].map((v) => vlmCase(`reverse-${v}-${img}`, 'reverse', v, '', img))),
+  ...['a lighthouse in a storm', 'poster for a jazz night called "Blue Hour" on Friday', 'a cat wearing a tiny crown'].map((idea, i) => vlmCase(`klein-enhance-${i + 1}`, 'enhance', 'klein', idea)),
+  vlmCase('klein-edit-night', 'edit_enhance', 'klein', 'make it night', '09_car'),
+  vlmCase('klein-edit-sign', 'edit_enhance', 'klein', 'change the sign to MOONLIGHT BAKERY', '03_text_scene'),
+];
+const vlmVariant = (id: string, label: string, file: string): Variant => ({
+  id, label, workflow: 'vlm2_image',
+  set: { model: file },
+});
+
 const PHASES: Record<string, Group[]> = {
+  // Phase 6 follow-up: the Qwen style wording barely restyled some looks and texture transfer copied the reference's subject.
+  p6b: [
+    {
+      id: 'qwen-style-wording',
+      variants: [
+        { id: 'current', label: 'Qwen: current wording', workflow: 'qwen_edit', build: (c) => ({ set: { prompt: String(c.set.qwen_prompt), qwen_prompt: '', strong: '' } }) },
+        { id: 'strong', label: 'Qwen: transform every surface, short keep clause', workflow: 'qwen_edit', build: (c) => ({ set: { prompt: String(c.set.strong), qwen_prompt: '', strong: '' } }) },
+      ],
+      cases: presetCases('Styles').filter((c) => ['style-3d-render', 'style-embroidery', 'style-low-poly', 'style-claymation', 'style-16-bit-pixel', 'style-natgeo'].includes(c.key)).map((c) => {
+        const look = String(c.set.qwen_prompt).replace(/^Restyle <image1> as /, '').replace(/. Keep .*$/, '');
+        return { ...c, set: { seed: c.set.seed, qwen_prompt: c.set.qwen_prompt, strong: `Transform <image1> completely into ${look}, re-rendering every surface, object and the background in that style. Keep only the composition and the layout.` } };
+      }).concat(presetCases('Other').filter((c) => c.key === 'texture-transfer').map((c) => ({ ...c, set: { seed: c.set.seed, qwen_prompt: c.set.qwen_prompt, strong: 'Cover the subject of <image1> in the material and surface texture shown in <image2>, following its contours and the lighting of <image1>. Use only the material of <image2>; do not add any object or animal from <image2>. Keep the shape and the background of <image1> unchanged.' } }))),
+    },
+  ],
+  p3c: [
+    {
+      id: 'circle-edit',
+      variants: [
+        { id: 'klein-annot', label: 'Klein edit on the annotated picture', workflow: 'klein_edit',
+          build: (c) => ({ set: { prompt: `Replace the object circled in red with ${(c as InpaintCase).fill}. Remove the red circle completely and keep everything else exactly the same.` } }) },
+        { id: 'qwen-annot', label: 'Qwen edit on the annotated picture', workflow: 'qwen_edit',
+          build: (c) => ({ set: { prompt: `In <image1>, replace the object circled in red with ${(c as InpaintCase).fill}. Remove the red circle completely and keep everything else exactly the same.` } }) },
+        { id: 'qwen-guide', label: 'Qwen: clean picture + annotated copy as <image2>', workflow: 'qwen_edit',
+          build: (c) => ({ images: { image_1: annotOrig(c), image_2: annotPath((c as InpaintCase).mask) }, set: { prompt: `<image2> is a copy of <image1> with a red circle drawn on it. In <image1>, replace the object that is circled in red in <image2> with ${(c as InpaintCase).fill}. Keep everything else in <image1> exactly the same.` } }) },
+        { id: 'klein-guide', label: 'Klein: clean picture + annotated copy as image 2', workflow: 'klein_edit',
+          build: (c) => ({ images: { image_1: annotOrig(c), image_2: annotPath((c as InpaintCase).mask) }, set: { prompt: `Image 2 is a copy of image 1 with a red circle drawn on it. In image 1, replace the object that is circled in red in image 2 with ${(c as InpaintCase).fill}. Keep everything else in image 1 exactly the same.` } }) },
+      ],
+      cases: ANNOT_CASES,
+    },
+  ],
+  p7: [
+    {
+      id: 'vlm-general',
+      variants: [
+        vlmVariant('qwen3vl8b', 'Qwen3-VL 8B int8 (current, 9.4 GB)', 'qwen3vl_8b_int8_convrot.safetensors'),
+        vlmVariant('pe_i2i', 'Qwen3.5-VL 9B PE-I2I as a general VLM (int8, 9.5 GB)', 'qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors'),
+        vlmVariant('qwen35_4b', 'Qwen3.5 4B bf16 (9.3 GB)', 'qwen3.5_4b_bf16.safetensors'),
+      ],
+      cases: VLM_CASES,
+    },
+  ],
+  p6:['Angles', 'Relight', 'Styles', 'Other'].map((cat) => ({ id: `presets-${cat.toLowerCase()}`, variants: presetVariants, cases: presetCases(cat) })),
   p5: [
     {
       id: 'upscale-colour',
@@ -351,10 +435,10 @@ function run(v: Variant, c: Case, out: string, free: boolean) {
   const b = v.build?.(c) ?? {};
   const set = { ...c.set, ...(v.set ?? {}), ...(b.set ?? {}) };
   const images = { ...(c.images ?? {}), ...(b.images ?? {}) };
-  const args = [TSX, 'scripts/run-workflow.ts', v.workflow, '--out', out, '--label', `addenda ${path.basename(out)}`];
+  const args = [TSX, 'scripts/run-workflow.ts', c.workflow ?? v.workflow, '--out', out, '--label', `addenda ${path.basename(out)}`];
   if (v.file) args.push('--file', v.file);
   if (free) args.push('--free');
-  for (const [k, val] of Object.entries(set)) args.push('--set', `${k}=${val}`);
+  for (const [k, val] of Object.entries(set)) if (val !== '') args.push('--set', `${k}=${val}`); // '' = helper key blanked by a variant
   for (const [k, val] of Object.entries(images)) args.push('--image', `${k}=${val}`);
   fs.rmSync(out, { recursive: true, force: true });
   const r = spawnSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 25 * 60 * 1000 });
@@ -370,6 +454,19 @@ function run(v: Variant, c: Case, out: string, free: boolean) {
 
 /** Per-phase preparation before any run. */
 const SETUP: Record<string, () => Promise<void>> = {
+  p6: async () => {
+    const outfit = path.join(ROOT, g('16_outfit'));
+    if (fs.existsSync(outfit)) return;
+    const r = run(
+      { id: 'outfit', label: 'outfit', workflow: 'klein_t2i' },
+      { key: 'outfit', set: { prompt: 'A mustard yellow double-breasted wool coat with large horn buttons, laid flat on a plain white background, clean product photograph.', seed: 600, width: 1024, height: 1024 } },
+      path.join(ROOT, 'bench', 'golden', '16_outfit'),
+      true,
+    );
+    if (!r.ok || !r.file) throw new Error(`outfit: ${r.error}`);
+    fs.copyFileSync(r.file, outfit);
+    console.log('golden 16_outfit');
+  },
   p4: async () => {
     const dir = path.join(ROOT, 'tests', 'golden', 'outpaint');
     fs.mkdirSync(dir, { recursive: true });
@@ -394,6 +491,20 @@ const SETUP: Record<string, () => Promise<void>> = {
         CANVAS[k] = { image, mask, w: cv.width, h: cv.height, pad: cv.pad, bbox };
         console.log('canvas', k, cv.width, cv.height, 'feather', cv.feather, 'bbox', JSON.stringify(bbox));
       }
+    }
+  },
+  p3c: async () => {
+    fs.mkdirSync(path.join(ROOT, 'bench', 'annot'), { recursive: true });
+    for (const k of new Set(ANNOT_CASES.map((c) => c.mask))) {
+      const src = path.join(ROOT, g(MASKS[k][0]));
+      const meta = await sharp(src).metadata();
+      const raw = await sharp(path.join(ROOT, maskPath(k))).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      const b = maskBBox(raw.data, raw.info.width, raw.info.height, 0, 127)!;
+      const sw = Math.max(5, Math.round(Math.min(meta.width!, meta.height!) / 150));
+      const cx = b.x + b.w / 2, cy = b.y + b.h / 2, rx = b.w * 0.62 + sw, ry = b.h * 0.62 + sw;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${meta.width}" height="${meta.height}"><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#ff1a1a" stroke-width="${sw}"/></svg>`;
+      await sharp(src).composite([{ input: Buffer.from(svg) }]).png().toFile(path.join(ROOT, annotPath(k)));
+      console.log('annot', k, JSON.stringify(b));
     }
   },
   p3: async () => {
@@ -479,7 +590,8 @@ for (const gr of groups) {
       if (rows.some((r) => r.group === gr.id && r.key === c.key && r.variant === v.id && r.ok)) continue;
       const out = path.join(dir, gr.id, `${c.key}-${v.id}`);
       const r = run(v, c, out, first);
-      const row: Row = { group: gr.id, key: c.key, variant: v.id, ok: r.ok, seconds: r.seconds, peak: r.peak, error: r.error, set: r.set, file_out: r.file ? path.relative(ROOT, r.file) : undefined };
+      const txt = path.join(out, 'output.txt');
+      const row: Row = { group: gr.id, key: c.key, variant: v.id, ok: r.ok, seconds: r.seconds, peak: r.peak, error: r.error, set: r.set, file_out: r.file ? path.relative(ROOT, r.file) : undefined, ...(fs.existsSync(txt) ? { text: fs.readFileSync(txt, 'utf8') } : {}) };
       if (first) (row as any).cold = true;
       first = false;
       const i = rows.findIndex((x) => x.group === gr.id && x.key === c.key && x.variant === v.id);

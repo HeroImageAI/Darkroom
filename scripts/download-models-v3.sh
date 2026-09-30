@@ -22,3 +22,8 @@ get text_encoders/qwen3.5_9b_qwen_image_2.1_pe_t2i.int8_convrot.safetensors text
 get text_encoders/qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors text_encoders 9471072252
 get model_patches/qwen_image_2.1_fun_controlnet_union_int8_convrot.safetensors model_patches 3779298944
 echo ALL_DONE
+
+# Phase 7 A/B candidate for the general VLM (JP: "A/B first"; the 9B is bf16 19.3 GB and stays optional)
+R=https://huggingface.co/Comfy-Org/Qwen3.5/resolve/main
+get text_encoders/qwen3.5_4b_bf16.safetensors text_encoders 9319828320
+echo ALL_DONE_4B

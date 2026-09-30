@@ -13,7 +13,9 @@ import {
   Lasso,
   Maximize,
   Monitor,
+  Loader2,
   Redo2,
+  Sparkles,
   ScanSearch,
   Trash2,
   Undo2,
@@ -33,6 +35,7 @@ import { planEnhance } from '../../shared/enhance';
 import { maskBBox, planCrop } from '../../shared/cropstitch';
 import { snapPad } from '../../shared/outpaint';
 import { detectPixelBlock } from '../../shared/pixelblock';
+import { PresetPicker } from '../components/PresetPicker';
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
@@ -118,6 +121,9 @@ function Editor({ item }: { item: Item }) {
   const [upShrink, setUpShrink] = useState(0); // "Scale by longer side" first: 0 = off, else the target long side
   const [upTile, setUpTile] = useState(512);
   const [upBlock, setUpBlock] = useState(1); // detected pixel-block size of the current picture
+  const promptBox = useRef<HTMLTextAreaElement>(null);
+  const [instrBusy, setInstrBusy] = useState(false);
+  const [instrUndo, setInstrUndo] = useState<string | null>(null);
   const [prompt, setPrompt] = useState(() => sessionStorage.getItem('dr.edit.prompt') ?? '');
   const [onlyMasked, setOnlyMasked] = useState(true);
   const [ref, setRef] = useState<{ name: string } | null>(null);
@@ -643,6 +649,34 @@ function Editor({ item }: { item: Item }) {
     }
   };
 
+  // Ctrl+V with a picture open: the first empty slot is the Reference slot (Addendum 1 H)
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT') return;
+      const f = [...(e.clipboardData?.files ?? [])].find((x) => x.type.startsWith('image/'));
+      if (!f) return;
+      if (ref) return toast('The Reference slot is already filled. Clear it first to paste a new one.', 'info');
+      void addRef(f).then(() => toast('Pasted into the Reference slot.', 'ok'));
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  });
+
+  // Library "Use as… > Edit reference": remember which picture is open, and pick up a reference sent over from there
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('dr.edit.last', item.id);
+      const pending = sessionStorage.getItem('dr.edit.ref');
+      if (pending) {
+        sessionStorage.removeItem('dr.edit.ref');
+        void addRef(undefined, pending).then(() => toast('Added as the reference picture.', 'ok'));
+      }
+    } catch {
+      /* storage blocked */
+    }
+  }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const parent = lineage.find((x) => x.id === item.parent_id) ?? null;
   const hasPad = pad.left + pad.right + pad.top + pad.bottom > 0;
   const applyLabel =
@@ -863,6 +897,7 @@ function Editor({ item }: { item: Item }) {
             <label className="field">
               <span>{mode === 'instruct' ? 'Instruction' : mode === 'inpaint' ? 'What should fill the masked area?' : 'Describe the surroundings (optional)'}</span>
               <textarea
+                ref={promptBox}
                 className="input"
                 rows={4}
                 value={prompt}
@@ -872,6 +907,38 @@ function Editor({ item }: { item: Item }) {
                 }
               />
             </label>
+          )}
+          {mode === 'instruct' && (
+            <>
+              <PresetPicker model={editModel as 'klein' | 'qwen'} textarea={promptBox} value={prompt} onApply={setPrompt} hasReference={!!ref} />
+              <div className="field-row" style={{ marginTop: 6, gap: 6 }}>
+                <button
+                  className="btn sm ghost"
+                  disabled={!prompt.trim() || !!instrBusy || !online}
+                  title={editModel === 'qwen' ? 'Rewrite the instruction with the official Qwen-Image 2.1 edit prompt enhancer (looks at the picture)' : 'Rewrite the instruction for Klein: exact change + what stays identical (looks at the picture)'}
+                  onClick={async () => {
+                    setInstrBusy(true);
+                    try {
+                      const r = await api.vlm({ task: 'edit_enhance', variant: editModel, text: prompt, itemId: item.id });
+                      setInstrUndo(prompt);
+                      setPrompt(r.text);
+                      toast(`Instruction rewritten by ${r.model ?? 'the local model'} in ${r.seconds}s. Edit it freely; Undo brings yours back.`, 'ok', 7000);
+                    } catch (e) {
+                      toast((e as Error).message, 'error');
+                    } finally {
+                      setInstrBusy(false);
+                    }
+                  }}
+                >
+                  {instrBusy ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Enhance instruction
+                </button>
+                {instrUndo !== null && (
+                  <button className="btn sm ghost" onClick={() => (setPrompt(instrUndo), setInstrUndo(null))}>
+                    Undo
+                  </button>
+                )}
+              </div>
+            </>
           )}
 
           {(mode === 'instruct' || mode === 'inpaint') && (

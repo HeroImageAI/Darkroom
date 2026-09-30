@@ -1,0 +1,89 @@
+{
+  "1": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "stable_diffusion",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "DR_MODEL"
+    }
+  },
+  "2": {
+    "class_type": "PrimitiveStringMultiline",
+    "inputs": {
+      "value": ""
+    },
+    "_meta": {
+      "title": "DR_SYSTEM"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_1"
+    }
+  },
+  "4": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": [
+        "3",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 0.6,
+      "resolution_steps": 32
+    },
+    "_meta": {
+      "title": "Vision size"
+    }
+  },
+  "5": {
+    "class_type": "TextGenerate",
+    "inputs": {
+      "clip": [
+        "1",
+        0
+      ],
+      "prompt": "",
+      "max_length": 512,
+      "sampling_mode": "on",
+      "sampling_mode.temperature": 0.7,
+      "sampling_mode.top_k": 20,
+      "sampling_mode.top_p": 0.8,
+      "sampling_mode.min_p": 0.0,
+      "sampling_mode.repetition_penalty": 1.05,
+      "sampling_mode.seed": 0,
+      "thinking": false,
+      "use_default_template": true,
+      "system_prompt": [
+        "2",
+        0
+      ],
+      "image": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_PROMPT"
+    }
+  },
+  "6": {
+    "class_type": "PreviewAny",
+    "inputs": {
+      "source": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  }
+}

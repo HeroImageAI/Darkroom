@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildVlmRequest, cleanVlmOutput, VLM_VARIANTS, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
+import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, VLM_VARIANTS, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
 
 const P = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'presets', 'vlm_prompts.json'), 'utf8')) as VlmPrompts;
 
@@ -62,5 +62,41 @@ describe('cleanVlmOutput', () => {
   it('strips a stray closing quote on its own line', () => {
     expect(cleanVlmOutput('An elderly woman smiles by a window.\n\n"')).toBe('An elderly woman smiles by a window.');
     expect(cleanVlmOutput('A sign reads "OPEN"')).toBe('A sign reads "OPEN"');
+  });
+});
+
+describe('v2 routing (Addenda Phase 7)', () => {
+  const P: any = {
+    models: { general: { file: 'general.safetensors', label: 'General' }, pe_t2i: { file: 't2i.safetensors', label: 'PE-T2I' }, pe_i2i: { file: 'i2i.safetensors', label: 'PE-I2I', loader: 'stable_diffusion' } },
+    enhance: { qwen: { engine: 'pe_t2i', system_file: 'pe/t2i.txt', output: 'json_ratio', temperature: 1, top_p: 0.95 }, klein: { system: 'KLEIN SYS', user: 'User input: {text}', max_tokens: 300 } },
+    edit_enhance: { qwen: { engine: 'pe_i2i', system_file: 'pe/i2i.txt', image: true } },
+  };
+  const files = (rel: string) => `FILE:${rel}`;
+  it('Qwen prompt enhance goes to PE-T2I with its system prompt file and the raw user words', () => {
+    const r = buildVlm2Request(P, 'enhance', 'qwen', ' a cat ', files);
+    expect(r).toMatchObject({ workflow: 'vlm2_text', output: 'json_ratio', modelLabel: 'PE-T2I' });
+    expect(r.params).toMatchObject({ model: 't2i.safetensors', system: 'FILE:pe/t2i.txt', prompt: 'a cat', temperature: 1, top_p: 0.95 });
+  });
+  it('Klein enhance uses the general model with a real system prompt and the user template', () => {
+    expect(buildVlm2Request(P, 'enhance', 'klein', 'a cat').params).toMatchObject({ model: 'general.safetensors', system: 'KLEIN SYS', prompt: 'User input: a cat', max_tokens: 300 });
+  });
+  it('Qwen edit instructions go to PE-I2I with the picture', () => {
+    expect(buildVlm2Request(P, 'edit_enhance', 'qwen', 'make it night', files)).toMatchObject({ workflow: 'vlm2_image', modelLabel: 'PE-I2I' });
+    expect(() => buildVlm2Request(P, 'edit_enhance', 'qwen', ' ', files)).toThrow(/instruction/);
+  });
+  it('parsePeJson reads rewritten_prompt + wh_ratio, and falls back to plain text', () => {
+    expect(parsePeJson('</think>\n{"rewritten_prompt": "A fox.", "wh_ratio": "2:3"}')).toEqual({ text: 'A fox.', ratio: '2:3' });
+    expect(parsePeJson('A fox in snow.')).toEqual({ text: 'A fox in snow.', ratio: null });
+  });
+  it('nearestAspect snaps PE ratios to Darkroom aspects', () => {
+    expect(nearestAspect('3:2')).toBe('3:2');
+    expect(nearestAspect('2:3')).toBe('4:5');
+    expect(nearestAspect('21:9')).toBe('16:9');
+    expect(nearestAspect('1:2')).toBe('9:16');
+    expect(nearestAspect('nonsense')).toBeNull();
+  });
+  it('cleanVlmOutput drops a lone opening quote but keeps quoted text', () => {
+    expect(cleanVlmOutput('</think>\n\n"Change the sign "A" to "B". Keep the rest.')).toBe('Change the sign "A" to "B". Keep the rest.');
+    expect(cleanVlmOutput('"OPEN" is painted on the door.')).toBe('"OPEN" is painted on the door.');
   });
 });

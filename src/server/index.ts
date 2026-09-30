@@ -14,13 +14,15 @@ import { Store, type FileRef, type LibraryQuery } from './db.js';
 import { desktopRunning, launchDesktop, tailDesktopLog } from './desktop.js';
 import { discoverComfy } from './discovery.js';
 import { JobManager, publicJob, VramWarning, type SubmitRequest } from './jobs.js';
-import { buildVlmRequest, type VlmPrompts, type VlmTask } from '../shared/vlm.js';
+import { buildVlm2Request, nearestAspect, parsePeJson, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
 import { validateTemplates } from '../shared/prompts.js';
 import { samPointsJson } from '../shared/workflow.js';
 import { layersToPsd, layersToZip, type LayerInput } from './layers.js';
 import { buildOutpaintCanvas } from './outpaint.js';
 import { maskBBox } from '../shared/cropstitch.js';
 import type { Pad } from '../shared/outpaint.js';
+import { mergePresets, upsertUserPreset, type EditPreset, type UserPreset } from '../shared/presets.js';
+import { readDarkroomMeta } from '../shared/pngmeta.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -205,17 +207,18 @@ app.post('/api/items/:id/as-input', async (req, reply) => {
  * body: { task, variant, text?, itemId?, input?, which? }  -> { text, seconds }
  */
 app.post('/api/vlm', async (req, reply) => {
-  const b = (req.body ?? {}) as { task: VlmTask; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean };
+  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean };
   if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
   let request;
   try {
-    const prompts = readJson<VlmPrompts>(path.join(cfg.paths.presets, 'vlm_prompts.json'));
-    request = buildVlmRequest(prompts, b.task, b.variant, b.text ?? '');
+    // Addenda Phase 7: per-task engine routing (general VLM / Qwen-Image 2.1 PE-T2I / PE-I2I) with real system prompts
+    const prompts = readJson<Vlm2Prompts>(path.join(cfg.paths.presets, 'vlm_prompts.json'));
+    request = buildVlm2Request(prompts, b.task, b.variant, b.text ?? '', (rel) => fs.readFileSync(path.join(cfg.paths.presets, rel), 'utf8'));
   } catch (e) {
     return reply.code(400).send({ error: (e as Error).message });
   }
-  const params: Record<string, string | number> = { prompt: request.prompt, max_tokens: request.maxTokens, seed: b.seed ?? Math.floor(Math.random() * 2 ** 31) };
-  if (request.workflow === 'vlm_image') {
+  const params: Record<string, string | number | boolean> = { ...request.params, seed: b.seed ?? Math.floor(Math.random() * 2 ** 31) };
+  if (request.workflow === 'vlm2_image') {
     let name = b.input;
     if (!name && b.itemId) {
       const item = store.getItem(b.itemId);
@@ -227,15 +230,63 @@ app.post('/api/vlm', async (req, reply) => {
   }
   const t0 = Date.now();
   try {
-    const job = await jobs.submit({ workflow: request.workflow, params, meta: { mode: `vlm:${b.task}`, model: 'Qwen3-VL 8B', prompt: b.text ?? '' } });
+    const job = await jobs.submit({ workflow: request.workflow, params, meta: { mode: `vlm:${b.task}`, model: request.modelLabel, prompt: b.text ?? '' } });
     const done = await jobs.waitFor(job.id);
     if (done.status !== 'done') return reply.code(500).send({ error: done.error ?? 'The model did not answer.' });
-    const text = String((done.meta as Record<string, unknown>).text ?? '');
+    const meta = done.meta as Record<string, unknown>;
+    let text = String(meta.text ?? '');
+    let ratio: string | null = null;
+    if (request.output === 'json_ratio') ({ text, ratio } = parsePeJson(String(meta.raw ?? text)));
     if (b.save && b.itemId && b.task === 'caption') store.updateItem(b.itemId, { caption: text });
-    return { text, seconds: Math.round((Date.now() - t0) / 100) / 10 };
+    return { text, seconds: Math.round((Date.now() - t0) / 100) / 10, model: request.modelLabel, ...(ratio ? { ratio, aspect: nearestAspect(ratio) } : {}) };
   } catch (e) {
     return reply.code(500).send({ error: (e as Error).message });
   }
+});
+
+/**
+ * "Restore settings from image" (Addendum 1 H): read the darkroom tEXt chunk from a dropped PNG, or a settings JSON
+ * sidecar. Works on files that are no longer in the library.
+ */
+app.post('/api/restore', async (req, reply) => {
+  const part = await req.file();
+  if (!part) return reply.code(400).send({ error: 'No file' });
+  const meta = readDarkroomMeta(new Uint8Array(await part.toBuffer()));
+  if (!meta) return reply.code(404).send({ error: 'No Darkroom settings found in that file. Only pictures saved by Darkroom (or their settings JSON) can be restored.' });
+  return meta;
+});
+
+/** Settings of a library item as JSON (the sidecar: also for videos, and for PNGs whose chunks were stripped). */
+app.get('/api/items/:id/settings', async (req, reply) => {
+  const item = store.getItem((req.params as { id: string }).id);
+  if (!item) return reply.code(404).send({ error: 'Not found' });
+  const body = { darkroom: { app: 'Darkroom', mode: item.mode, model: item.model, prompt: item.prompt, seed: item.seed, ui: item.ui ?? null, parent: item.parent_id ?? null, item: item.id } };
+  reply.header('content-disposition', `attachment; filename="darkroom-${item.id}.json"`);
+  return body;
+});
+
+/** Edit presets: read-only built-ins merged with the user's own file by label (Addendum 1 F). */
+const userPresetsFile = () => path.join(cfg.paths.data, 'user_presets.json');
+const readUserPresets = (): UserPreset[] => {
+  try {
+    const j = JSON.parse(fs.readFileSync(userPresetsFile(), 'utf8'));
+    return Array.isArray(j.presets) ? j.presets : [];
+  } catch {
+    return [];
+  }
+};
+app.get('/api/presets', async () => {
+  const builtin = readJson<{ presets: EditPreset[] }>(path.join(cfg.paths.presets, 'edit_presets.json')).presets;
+  return { presets: mergePresets(builtin, readUserPresets()) };
+});
+app.put('/api/presets/mine', async (req, reply) => {
+  const p = (req.body ?? {}) as UserPreset;
+  if (!p.label?.trim()) return reply.code(400).send({ error: 'Give the preset a name.' });
+  if (!p.hidden && !p.klein?.trim() && !p.qwen?.trim()) return reply.code(400).send({ error: 'The preset has no text.' });
+  const next = upsertUserPreset(readUserPresets(), p);
+  fs.mkdirSync(path.dirname(userPresetsFile()), { recursive: true });
+  fs.writeFileSync(userPresetsFile(), JSON.stringify({ presets: next }, null, 2));
+  return { ok: true };
 });
 
 /**

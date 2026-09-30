@@ -156,6 +156,59 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(item.width).toBe(it.width * 2);
   });
 
+  // Addenda Phase 2 (no rendering needed)
+  test('Edit: Enhance defaults to Restore; the strength slider lives only under Subtle', async () => {
+    const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto(`/#/edit/${it.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Enhance' }).click();
+    const kinds = page.getByRole('group', { name: 'Enhance strength' });
+    await expect(kinds.getByRole('button', { name: 'Restore', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByLabel('Advanced')).toHaveCount(0);
+    await kinds.getByRole('button', { name: 'Restore + upscale' }).click();
+    await expect(page.getByLabel('Advanced')).toHaveCount(0);
+    await kinds.getByRole('button', { name: 'Subtle' }).click();
+    await page.getByLabel('Advanced').check();
+    await expect(page.getByText(/Strength \(denoise\)/)).toBeVisible();
+    await kinds.getByRole('button', { name: 'Restore', exact: true }).click();
+    await expect(page.getByText(/Strength \(denoise\)/)).toHaveCount(0);
+  });
+
+  // Addenda Phase 6 (no rendering needed)
+  test('Edit: presets fill the instruction, select the [SLOT] and follow the model', async () => {
+    const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto(`/#/edit/${it.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByLabel('Presets').selectOption({ label: 'Text edit' });
+    const box = page.getByLabel('Instruction');
+    await expect(box).toHaveValue(/^Replace the existing text "\[OLD TEXT\]"/);
+    const sel = await box.evaluate((el: HTMLTextAreaElement) => el.value.slice(el.selectionStart, el.selectionEnd));
+    expect(sel).toBe('[OLD TEXT]');
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await expect(box).toHaveValue(/^In <image1>, replace the text "\[OLD TEXT\]"/);
+    await shot(page, 'edit-presets');
+  });
+
+  test('Library: right-click "Use as…" sends a picture to the video end frame', async () => {
+    await page.goto('/#/library');
+    const tile = page.getByRole('listitem').filter({ has: page.locator('img') }).first();
+    await tile.click({ button: 'right' });
+    await expect(page.getByRole('menu', { name: 'Use as' })).toBeVisible();
+    await shot(page, 'library-use-as');
+    await page.getByRole('menuitem', { name: 'Video end frame' }).click();
+    await expect(page.getByAltText('End frame (optional)')).toBeVisible({ timeout: 30_000 });
+  });
+
+  test('Generate: restore settings from a Darkroom PNG', async () => {
+    const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && !!i.prompt);
+    const png = Buffer.from(await (await page.request.get(`/api/items/${it.id}/file`)).body());
+    await page.goto('/#/generate');
+    await page.getByLabel('Prompt').fill('');
+    await page.locator('input[type=file][accept*="application/json"]').setInputFiles({ name: 'darkroom.png', mimeType: 'image/png', buffer: png });
+    await expect(page.getByText(/restored/i)).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByLabel('Prompt')).not.toHaveValue('');
+  });
+
   test('Edit: compare follows the cursor', async () => {
     const it = await firstItem(page, (i) => i.kind === 'image' && !!i.parent_id);
     await page.goto(`/#/edit/${it.id}`);

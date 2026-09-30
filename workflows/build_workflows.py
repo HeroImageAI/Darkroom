@@ -604,6 +604,28 @@ def vlm_text(with_image=True):
 
 
 
+def vlm2(with_image=True):
+    """Addenda Phase 7: one text-generation graph for every Qwen3.x VLM / prompt enhancer. Parameterised model file and
+    loader type (DR_MODEL), a real system prompt (DR_SYSTEM -> TextGenerate.system_prompt, which ComfyUI 0.38 applies
+    through the model's own chat template when use_default_template is on), thinking and sampling. Replaces the v1
+    graphs' "system + user glued into one prompt" once the A/B picks the models."""
+    g = G()
+    clip = g.add("CLIPLoader", "DR_MODEL", clip_name=VLM_TE, type="stable_diffusion", device="default")
+    system = g.add("PrimitiveStringMultiline", "DR_SYSTEM", value="")
+    inputs = dict(clip=o(clip), prompt="", max_length=512, sampling_mode="on",
+                  **{"sampling_mode.temperature": 0.7, "sampling_mode.top_k": 20, "sampling_mode.top_p": 0.8,
+                     "sampling_mode.min_p": 0.0, "sampling_mode.repetition_penalty": 1.05, "sampling_mode.seed": 0},
+                  thinking=False, use_default_template=True, system_prompt=o(system))
+    if with_image:
+        img = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+        scaled = g.add("ImageScaleToTotalPixels", "Vision size", image=o(img), upscale_method="lanczos",
+                       megapixels=0.6, resolution_steps=32)
+        inputs["image"] = o(scaled)
+    gen = g.add("TextGenerate", "DR_PROMPT", **inputs)
+    g.add("PreviewAny", "DR_OUTPUT", source=o(gen))
+    return g
+
+
 def qwen_enhance():
     """Qwen-Image 2.1 enhance: 2.1 edit conditioning on the source, sampling from the encoded source
     with denoise < 1 (KSampler), so composition is kept and detail is re-rendered."""
@@ -959,6 +981,8 @@ if __name__ == "__main__":
     video_frame().save("video_frame.json")
     vlm_text(True).save("vlm_image.json")
     vlm_text(False).save("vlm_text.json")
+    vlm2(True).save("vlm2_image.json")
+    vlm2(False).save("vlm2_text.json")
     # Addenda Phase 1: One Node sampling for distilled Klein (A/B in docs/qa/addenda/p1: equal or better on
     # 10 of 12 cases). v1 graphs above stay for rollback; the manifest points at these.
     klein_t2i(0, style="onenode").save("klein_t2i.v2.json")

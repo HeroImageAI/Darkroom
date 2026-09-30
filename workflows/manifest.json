@@ -3870,6 +3870,258 @@
       "outputs": {
         "image": "DR_OUTPUT"
       }
+    },
+    "vlm2_image": {
+      "file": "vlm2_image.json",
+      "family": "vlm",
+      "kind": "text",
+      "label": "VLM v2 (picture + text)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "max_tokens": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "max_length"
+            }
+          ],
+          "default": 512,
+          "min": 32,
+          "max": 2048
+        },
+        "temperature": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.temperature"
+            }
+          ],
+          "default": 0.7,
+          "min": 0.05,
+          "max": 1.5
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 4294967295
+        },
+        "model": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MODEL",
+              "input": "clip_name"
+            }
+          ],
+          "default": "qwen3vl_8b_int8_convrot.safetensors"
+        },
+        "loader": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MODEL",
+              "input": "type"
+            }
+          ],
+          "default": "stable_diffusion"
+        },
+        "system": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_SYSTEM",
+              "input": "value"
+            }
+          ],
+          "default": ""
+        },
+        "thinking": {
+          "type": "bool",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "thinking"
+            }
+          ],
+          "default": false
+        },
+        "top_p": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.top_p"
+            }
+          ],
+          "default": 0.8,
+          "min": 0,
+          "max": 1
+        },
+        "top_k": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.top_k"
+            }
+          ],
+          "default": 20,
+          "min": 0,
+          "max": 1000
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "text": "DR_OUTPUT"
+      }
+    },
+    "vlm2_text": {
+      "file": "vlm2_text.json",
+      "family": "vlm",
+      "kind": "text",
+      "label": "VLM v2 (text)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "max_tokens": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "max_length"
+            }
+          ],
+          "default": 512,
+          "min": 32,
+          "max": 2048
+        },
+        "temperature": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.temperature"
+            }
+          ],
+          "default": 0.7,
+          "min": 0.05,
+          "max": 1.5
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 4294967295
+        },
+        "model": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MODEL",
+              "input": "clip_name"
+            }
+          ],
+          "default": "qwen3vl_8b_int8_convrot.safetensors"
+        },
+        "loader": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MODEL",
+              "input": "type"
+            }
+          ],
+          "default": "stable_diffusion"
+        },
+        "system": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_SYSTEM",
+              "input": "value"
+            }
+          ],
+          "default": ""
+        },
+        "thinking": {
+          "type": "bool",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "thinking"
+            }
+          ],
+          "default": false
+        },
+        "top_p": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.top_p"
+            }
+          ],
+          "default": 0.8,
+          "min": 0,
+          "max": 1
+        },
+        "top_k": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.top_k"
+            }
+          ],
+          "default": 20,
+          "min": 0,
+          "max": 1000
+        }
+      },
+      "outputs": {
+        "text": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {

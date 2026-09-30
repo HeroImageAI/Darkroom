@@ -5,6 +5,7 @@ import {
   Download,
   Film,
   Heart,
+  History,
   ImagePlus,
   Layers,
   Lock,
@@ -78,6 +79,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const [vlmBusy, setVlmBusy] = useState<null | 'enhance' | 'reverse'>(null);
   const [promptUndo, setPromptUndo] = useState<string[]>([]);
   const reverseInput = useRef<HTMLInputElement>(null);
+  const restoreInput = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const selectedItem = useItem(selected);
 
@@ -145,7 +147,14 @@ export function Generate({ query }: { query: URLSearchParams }) {
     try {
       const r = await api.vlm({ task: 'enhance', variant: s.model, text: s.prompt });
       replacePrompt(r.text);
-      toast(`Prompt enhanced for ${m?.models[s.model]?.label} in ${r.seconds}s. Edit it freely; Undo brings back yours.`, 'ok');
+      // Qwen: the official PE-T2I also picks the frame (wh_ratio); follow it, snapped to Darkroom's aspects
+      const aspect = r.aspect as Aspect | null | undefined;
+      if (aspect && aspect !== s.aspect && ASPECTS.includes(aspect)) update({ aspect });
+      toast(
+        `Prompt enhanced by ${r.model ?? 'the local model'} in ${r.seconds}s${aspect && r.ratio ? `; frame set to ${aspect} (suggested ${r.ratio})` : ''}. Edit it freely; Undo brings back yours.`,
+        'ok',
+        8000,
+      );
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
@@ -215,6 +224,13 @@ export function Generate({ query }: { query: URLSearchParams }) {
       toast((e as Error).message, 'error');
     }
   };
+
+  // ?ref=<item> from the Library's "Use as… > Generate reference"
+  const refParam = query.get('ref');
+  useEffect(() => {
+    if (!refParam) return;
+    void addRefItem(refParam).then(() => go('generate'));
+  }, [refParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Paste an image anywhere on this screen → reference.
   useEffect(() => {
@@ -365,6 +381,44 @@ export function Generate({ query }: { query: URLSearchParams }) {
                     if (!f) return;
                     const up = await api.upload(f, f.name);
                     void reverseFrom({ input: up.name });
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  title="Load the exact settings from a picture Darkroom saved (or its settings JSON), even one that is no longer in the Library"
+                  onClick={() => restoreInput.current?.click()}
+                >
+                  <History size={14} /> Restore
+                </button>
+                <input
+                  ref={restoreInput}
+                  className="sr"
+                  type="file"
+                  accept="image/png,application/json,.json"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!f) return;
+                    try {
+                      const fd = new FormData();
+                      fd.append('file', f, f.name);
+                      const r = await fetch('/api/restore', { method: 'POST', body: fd });
+                      const meta = await r.json();
+                      if (!r.ok) return toast(meta.error ?? 'Could not read that file.', 'error');
+                      const ui = meta.ui as Partial<GenSettings> | null;
+                      if (meta.mode === 'generate' && ui?.model) {
+                        setS((p) => ({ ...p, ...ui, seedLocked: true, refs: ui.refs ?? [] }));
+                        toast('Settings restored from the file. Seed is locked so you get the same picture.', 'ok');
+                      } else {
+                        const seed = Number((meta.params as Record<string, unknown> | undefined)?.seed ?? NaN);
+                        update({ prompt: String(meta.prompt ?? ''), ...(Number.isFinite(seed) ? { seed, seedLocked: true } : {}) });
+                        toast(meta.mode && meta.mode !== 'generate' ? `That picture was made in ${meta.mode.replace('edit:', 'Edit › ')}; its prompt${Number.isFinite(seed) ? ' and seed were' : ' was'} loaded.` : 'Prompt and seed restored.', 'ok');
+                      }
+                      promptRef.current?.focus();
+                    } catch (err) {
+                      toast((err as Error).message, 'error');
+                    }
                   }}
                 />
                 <button
