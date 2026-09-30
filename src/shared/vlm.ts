@@ -149,9 +149,29 @@ export function parsePeJson(raw: string): { text: string; ratio: string | null }
   return { text: cleanVlmOutput(s), ratio: null };
 }
 
+const FINAL_MARKER = /(?:^|\n)\s*\**(?:final (?:version|answer|instruction|rewrite|prompt)|rewritten (?:instruction|prompt))\**\s*:\**\s*/gi;
+const REASONING_START = /^(?:the user'?s? (?:instruction|request|prompt)|intent\s*:|step 1|let me|okay[,.]|we need|first,|i need|analy[sz]ing)/i;
+
+/**
+ * PE-I2I sometimes reasons in the open even with thinking off ("The user's instruction is …", checks, "Final version:").
+ * Keep only the answer: the text after the last "Final version:"-style marker, else the last paragraph.
+ */
+export function stripLeakedReasoning(s: string): string {
+  const marks = [...s.matchAll(FINAL_MARKER)];
+  if (marks.length) {
+    const last = marks[marks.length - 1];
+    const after = s.slice(last.index! + last[0].length).trim();
+    if (after) return after;
+  }
+  if (!REASONING_START.test(s.trim())) return s;
+  const paras = s.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
+  return paras.length > 1 ? paras[paras.length - 1] : s;
+}
+
 /** Strip reasoning blocks, labels, fences and wrapping quotes from model output. */
 export function cleanVlmOutput(raw: string): string {
   let s = raw.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<\/?think>/gi, '');
+  s = stripLeakedReasoning(s.trim());
   s = s.replace(/^```[a-z]*\s*|\s*```$/gi, '').trim();
   s = s.replace(/^(rewritten prompt|video prompt|prompt|caption|description|output)\s*:\s*/i, '');
   s = s.replace(/^\*\*[^*]+\*\*\s*:?\s*/, '');

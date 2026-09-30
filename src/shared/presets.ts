@@ -12,6 +12,8 @@ export interface EditPreset {
   klein: string;
   qwen: string;
   images?: 2;
+  /** The model that did clearly better on this preset in the A/B. */
+  best?: 'klein' | 'qwen';
   /** Merged result only: where it came from. */
   source?: 'built-in' | 'mine' | 'edited';
 }

@@ -100,3 +100,18 @@ describe('v2 routing (Addenda Phase 7)', () => {
     expect(cleanVlmOutput('"OPEN" is painted on the door.')).toBe('"OPEN" is painted on the door.');
   });
 });
+
+describe('stripLeakedReasoning', () => {
+  it('keeps the text after the last "Final version:" marker', () => {
+    const raw = 'The user\'s instruction is "make it night."\n\nIntent: change to night.\n\nFinal version:\n\nChange the scene to night: darken the sky.';
+    expect(cleanVlmOutput(raw)).toBe('Change the scene to night: darken the sky.');
+  });
+  it('falls back to the last paragraph when the answer starts with reasoning and has no marker', () => {
+    const raw = "The user's instruction is to add snow.\n\nCheck the rules: no negations.\n\nCover the roofs and the street in fresh snow.";
+    expect(cleanVlmOutput(raw)).toBe('Cover the roofs and the street in fresh snow.');
+  });
+  it('leaves normal multi-paragraph answers alone', () => {
+    const raw = 'A lighthouse on a cliff.\n\nWaves crash below.';
+    expect(cleanVlmOutput(raw)).toBe(raw);
+  });
+});

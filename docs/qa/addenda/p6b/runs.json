@@ -1,0 +1,214 @@
+[
+  {
+    "group": "qwen-style-wording",
+    "key": "style-natgeo",
+    "variant": "current",
+    "ok": true,
+    "seconds": 28.5,
+    "peak": 20.9,
+    "set": {
+      "seed": 502,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Restyle <image1> as a raw documentary photograph with natural sunlight and rich, true-to-life texture. Keep the composition, the subject, the pose and any existing text unchanged."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-natgeo-current\\edit_00174_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-3d-render",
+    "variant": "current",
+    "ok": true,
+    "seconds": 22.9,
+    "peak": 21.4,
+    "set": {
+      "seed": 503,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Restyle <image1> as a clean isometric 3D render with soft clay-like materials, a pastel palette and soft studio light. Keep the composition, the subject, the pose and any existing text unchanged."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-3d-render-current\\edit_00175_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-embroidery",
+    "variant": "current",
+    "ok": true,
+    "seconds": 22.9,
+    "peak": 21.4,
+    "set": {
+      "seed": 517,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Restyle <image1> as detailed needlepoint embroidery with textured silk threads and hand-stitched patterns on fabric. Keep the composition, the subject, the pose and any existing text unchanged."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-embroidery-current\\edit_00176_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-claymation",
+    "variant": "current",
+    "ok": true,
+    "seconds": 39.9,
+    "peak": 20.9,
+    "set": {
+      "seed": 518,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Restyle <image1> as a stop-motion claymation scene with handmade plasticine textures, thumbprint details and macro studio light. Keep the composition, the subject, the pose and any existing text unchanged."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-claymation-current\\edit_00177_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-low-poly",
+    "variant": "current",
+    "ok": true,
+    "seconds": 58.1,
+    "peak": 20.9,
+    "set": {
+      "seed": 519,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Restyle <image1> as low-poly geometric art with sharp triangular facets, flat shading and a minimalist 3D look. Keep the composition, the subject, the pose and any existing text unchanged."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-low-poly-current\\edit_00178_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-16-bit-pixel",
+    "variant": "current",
+    "ok": true,
+    "seconds": 59,
+    "peak": 20.9,
+    "set": {
+      "seed": 521,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Restyle <image1> as 16-bit retro pixel art with a limited palette and clean sprites, like a SNES game. Keep the composition, the subject, the pose and any existing text unchanged."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-16-bit-pixel-current\\edit_00179_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "texture-transfer",
+    "variant": "current",
+    "ok": true,
+    "seconds": 34.6,
+    "peak": 23,
+    "set": {
+      "seed": 503,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Replace the surface material of the subject in <image1> with the exact texture, pattern and material shown in <image2>, following its contours and the lighting of <image1>. Keep the shape, the pose and the background of <image1> unchanged."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\texture-transfer-current\\edit_00180_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-natgeo",
+    "variant": "strong",
+    "ok": true,
+    "seconds": 38.5,
+    "peak": 20.9,
+    "set": {
+      "seed": 502,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Transform <image1> completely into a raw documentary photograph with natural sunlight and rich, true-to-life texture, re-rendering every surface, object and the background in that style. Keep only the composition and the layout."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-natgeo-strong\\edit_00181_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-3d-render",
+    "variant": "strong",
+    "ok": true,
+    "seconds": 27.3,
+    "peak": 20.9,
+    "set": {
+      "seed": 503,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Transform <image1> completely into a clean isometric 3D render with soft clay-like materials, a pastel palette and soft studio light, re-rendering every surface, object and the background in that style. Keep only the composition and the layout."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-3d-render-strong\\edit_00182_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-embroidery",
+    "variant": "strong",
+    "ok": true,
+    "seconds": 23.2,
+    "peak": 21.3,
+    "set": {
+      "seed": 517,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Transform <image1> completely into detailed needlepoint embroidery with textured silk threads and hand-stitched patterns on fabric, re-rendering every surface, object and the background in that style. Keep only the composition and the layout."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-embroidery-strong\\edit_00183_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-claymation",
+    "variant": "strong",
+    "ok": true,
+    "seconds": 23.1,
+    "peak": 21.3,
+    "set": {
+      "seed": 518,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Transform <image1> completely into a stop-motion claymation scene with handmade plasticine textures, thumbprint details and macro studio light, re-rendering every surface, object and the background in that style. Keep only the composition and the layout."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-claymation-strong\\edit_00184_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-low-poly",
+    "variant": "strong",
+    "ok": true,
+    "seconds": 23.2,
+    "peak": 21.3,
+    "set": {
+      "seed": 519,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Transform <image1> completely into low-poly geometric art with sharp triangular facets, flat shading and a minimalist 3D look, re-rendering every surface, object and the background in that style. Keep only the composition and the layout."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-low-poly-strong\\edit_00185_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "style-16-bit-pixel",
+    "variant": "strong",
+    "ok": true,
+    "seconds": 23.1,
+    "peak": 21.3,
+    "set": {
+      "seed": 521,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Transform <image1> completely into 16-bit retro pixel art with a limited palette and clean sprites, like a SNES game, re-rendering every surface, object and the background in that style. Keep only the composition and the layout."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\style-16-bit-pixel-strong\\edit_00186_.png"
+  },
+  {
+    "group": "qwen-style-wording",
+    "key": "texture-transfer",
+    "variant": "strong",
+    "ok": true,
+    "seconds": 31.8,
+    "peak": 23.5,
+    "set": {
+      "seed": 503,
+      "qwen_prompt": "",
+      "strong": "",
+      "prompt": "Cover the subject of <image1> in the material and surface texture shown in <image2>, following its contours and the lighting of <image1>. Use only the material of <image2>; do not add any object or animal from <image2>. Keep the shape and the background of <image1> unchanged."
+    },
+    "file_out": "docs\\qa\\addenda\\p6b\\qwen-style-wording\\texture-transfer-strong\\edit_00187_.png"
+  }
+]

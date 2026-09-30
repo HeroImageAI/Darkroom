@@ -1,0 +1,12 @@
+{
+  "qwen-style-wording": [
+    {
+      "id": "current",
+      "label": "Qwen: current wording"
+    },
+    {
+      "id": "strong",
+      "label": "Qwen: transform every surface, short keep clause"
+    }
+  ]
+}

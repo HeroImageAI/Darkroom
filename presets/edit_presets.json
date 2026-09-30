@@ -237,7 +237,8 @@
       "label": "3D Render",
       "category": "Styles",
       "klein": "Change the style to a clean isometric 3D render with soft clay-like materials, a pastel palette and soft studio light. Keep the composition, the subject and the pose identical.",
-      "qwen": "Restyle <image1> as a clean isometric 3D render with soft clay-like materials, a pastel palette and soft studio light. Keep the composition, the subject, the pose and any existing text unchanged."
+      "qwen": "Restyle <image1> as a clean isometric 3D render with soft clay-like materials, a pastel palette and soft studio light. Keep the composition, the subject, the pose and any existing text unchanged.",
+      "best": "klein"
     },
     {
       "id": "style-oil-paint",
@@ -335,21 +336,24 @@
       "label": "Embroidery",
       "category": "Styles",
       "klein": "Change the style to detailed needlepoint embroidery with textured silk threads and hand-stitched patterns on fabric. Keep the composition, the subject and the pose identical.",
-      "qwen": "Restyle <image1> as detailed needlepoint embroidery with textured silk threads and hand-stitched patterns on fabric. Keep the composition, the subject, the pose and any existing text unchanged."
+      "qwen": "Restyle <image1> as detailed needlepoint embroidery with textured silk threads and hand-stitched patterns on fabric. Keep the composition, the subject, the pose and any existing text unchanged.",
+      "best": "klein"
     },
     {
       "id": "style-claymation",
       "label": "Claymation",
       "category": "Styles",
       "klein": "Change the style to a stop-motion claymation scene with handmade plasticine textures, thumbprint details and macro studio light. Keep the composition, the subject and the pose identical.",
-      "qwen": "Restyle <image1> as a stop-motion claymation scene with handmade plasticine textures, thumbprint details and macro studio light. Keep the composition, the subject, the pose and any existing text unchanged."
+      "qwen": "Restyle <image1> as a stop-motion claymation scene with handmade plasticine textures, thumbprint details and macro studio light. Keep the composition, the subject, the pose and any existing text unchanged.",
+      "best": "klein"
     },
     {
       "id": "style-low-poly",
       "label": "Low Poly",
       "category": "Styles",
       "klein": "Change the style to low-poly geometric art with sharp triangular facets, flat shading and a minimalist 3D look. Keep the composition, the subject and the pose identical.",
-      "qwen": "Restyle <image1> as low-poly geometric art with sharp triangular facets, flat shading and a minimalist 3D look. Keep the composition, the subject, the pose and any existing text unchanged."
+      "qwen": "Restyle <image1> as low-poly geometric art with sharp triangular facets, flat shading and a minimalist 3D look. Keep the composition, the subject, the pose and any existing text unchanged.",
+      "best": "klein"
     },
     {
       "id": "style-vector-art",
@@ -363,7 +367,8 @@
       "label": "16-Bit Pixel",
       "category": "Styles",
       "klein": "Change the style to 16-bit retro pixel art with a limited palette and clean sprites, like a SNES game. Keep the composition, the subject and the pose identical.",
-      "qwen": "Restyle <image1> as 16-bit retro pixel art with a limited palette and clean sprites, like a SNES game. Keep the composition, the subject, the pose and any existing text unchanged."
+      "qwen": "Restyle <image1> as 16-bit retro pixel art with a limited palette and clean sprites, like a SNES game. Keep the composition, the subject, the pose and any existing text unchanged.",
+      "best": "klein"
     },
     {
       "id": "enhance",
@@ -385,7 +390,8 @@
       "category": "Other",
       "images": 2,
       "klein": "Using image 1 as the person and image 2 as the outfit: dress the person from image 1 in the exact outfit from image 2, with the same style, materials, textures and colours, fitted naturally to their body and to the lighting of image 1. Keep the face, identity, hair, expression, pose, background and camera framing of image 1 identical.",
-      "qwen": "Dress the person in <image1> in the outfit from <image2>, with the same style, materials, textures and colours, fitted naturally to their body and lit like <image1>. Keep the face, identity, hair, expression, pose, background and framing of <image1> unchanged."
+      "qwen": "Dress the person in <image1> in the outfit from <image2>, with the same style, materials, textures and colours, fitted naturally to their body and lit like <image1>. Keep the face, identity, hair, expression, pose, background and framing of <image1> unchanged.",
+      "best": "qwen"
     },
     {
       "id": "texture-transfer",
@@ -393,7 +399,8 @@
       "category": "Other",
       "images": 2,
       "klein": "Using image 1 as the subject and shape and image 2 as the material: replace the surface of the subject in image 1 with the exact texture, pattern and material of image 2, following every contour, curve and the lighting of image 1. Keep the shape, the pose and the background of image 1 identical.",
-      "qwen": "Replace the surface material of the subject in <image1> with the exact texture, pattern and material shown in <image2>, following its contours and the lighting of <image1>. Keep the shape, the pose and the background of <image1> unchanged."
+      "qwen": "Replace the surface material of the subject in <image1> with the exact texture, pattern and material shown in <image2>, following its contours and the lighting of <image1>. Keep the shape, the pose and the background of <image1> unchanged.",
+      "best": "klein"
     }
   ]
 }

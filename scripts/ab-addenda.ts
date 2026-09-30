@@ -168,6 +168,24 @@ const vlmVariant = (id: string, label: string, file: string): Variant => ({
 });
 
 const PHASES: Record<string, Group[]> = {
+  // Phase 7 follow-up: the Klein "Enhance instruction" rewrite turned "make it night" into warm light (relight rule bias).
+  p7b: [
+    {
+      id: 'klein-edit-enhance',
+      variants: [
+        vlmVariant('qwen3vl8b', 'Qwen3-VL 8B, revised Klein edit prompt', 'qwen3vl_8b_int8_convrot.safetensors'),
+        vlmVariant('pe_i2i', 'PE-I2I with the same Klein edit prompt', 'qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors'),
+      ],
+      cases: [
+        vlmCase('night', 'edit_enhance', 'klein', 'make it night', '09_car'),
+        vlmCase('sign', 'edit_enhance', 'klein', 'change the sign to MOONLIGHT BAKERY', '03_text_scene'),
+        vlmCase('winter', 'edit_enhance', 'klein', 'make it winter', '10_interior'),
+        vlmCase('remove-car', 'edit_enhance', 'klein', 'remove the car', '09_car'),
+        vlmCase('cat-roof', 'edit_enhance', 'klein', 'add a cat sleeping on the car roof', '09_car'),
+        vlmCase('side-light', 'edit_enhance', 'klein', 'light her from the side', '01_portrait'),
+      ],
+    },
+  ],
   // Phase 6 follow-up: the Qwen style wording barely restyled some looks and texture transfer copied the reference's subject.
   p6b: [
     {

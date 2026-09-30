@@ -1,0 +1,12 @@
+{
+  "klein-edit-enhance": [
+    {
+      "id": "qwen3vl8b",
+      "label": "Qwen3-VL 8B, revised Klein edit prompt"
+    },
+    {
+      "id": "pe_i2i",
+      "label": "PE-I2I with the same Klein edit prompt"
+    }
+  ]
+}

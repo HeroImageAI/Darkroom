@@ -51,6 +51,7 @@ export function PresetPicker({
     setApplied({ id: p.id, text });
     onApply(text);
     if (p.images === 2 && !hasReference) toast(`"${p.label}" uses two pictures: add the second one in the Reference slot.`, 'info', 7000);
+    else if (p.best && p.best !== model) toast(`"${p.label}" works best with ${p.best === 'klein' ? 'Klein 9B' : 'Qwen-Image 2.1'} (A/B tested).`, 'info', 7000);
     // select the first [BRACKET] slot once React has written the text
     requestAnimationFrame(() => {
       const s = firstSlot(text);
@@ -85,6 +86,7 @@ export function PresetPicker({
                 <option key={p.id} value={p.id}>
                   {p.label}
                   {p.images === 2 ? ' (2 pictures)' : ''}
+                  {p.best && p.best !== model ? ` · best on ${p.best === 'klein' ? 'Klein' : 'Qwen'}` : ''}
                   {p.source === 'edited' ? ' *' : ''}
                 </option>
               ))}

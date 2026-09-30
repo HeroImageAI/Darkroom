@@ -309,3 +309,30 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     Qwen's wording is too timid** — 3D render, embroidery, low-poly, claymation and 16-bit pixel barely change — and
     Qwen's texture transfer copies the reference's cat onto the car. A follow-up A/B on stronger Qwen wording is queued
     (`p6b`). Recommended default for Styles: Klein.
+73. **Circle quick edit (Addendum 2 C).** Edit > Instruct > "Point at it with a red circle": paint over (or smart-select)
+    the object, and Qwen gets the picture with a red ellipse drawn round the mask's box (`src/shared/annotate.ts`) plus
+    `instruct_circled` ("change only the object circled in red: … Remove the red circle completely"). **A/B
+    (docs/qa/addenda/p3c, 5 golden masks × 4 routes):** Qwen on the circled picture 5/5 — right object replaced, no
+    circle left, right scale (the small taxi too). Qwen with the clean picture + a circled copy as `<image2>` added the
+    scooter next to the car instead of replacing it and drew the van too large. Klein failed both ways (kept the
+    teapot, ghosted the scooter over the car, missed the chalkboard text), so the option is Qwen-only and disabled
+    for Klein. Mask-based inpaint (crop and stitch) stays the precise tool; the circle is the quick one — no feathering,
+    no strength, whole-picture edit.
+74. **General VLM: Qwen3-VL 8B stays (Addendum 2 Qwen3.5 routing, JP's "A/B first").** docs/qa/addenda/p7: the
+    production requests (captions short / detailed / Klein, reverse prompts, Klein Enhance, Klein edit rewrite) on
+    three models, 18 cases each, all ran. **Qwen3-VL 8B** 2.7 s average, accurate, keeps to the length asked for.
+    **PE-I2I as a general model** 5.6 s, the richest detail (reads number plates, lettering) but ignores length ("short"
+    comes back as a paragraph), leaks `</think>`, and once degenerated into `{"a": 1, "b": 2, …}` on a reverse prompt.
+    **Qwen3.5 4B** 3.6 s but invents things ("Hong Kong", a "TOKYO" sign, a "double-decker tram"). So no 19 GB download;
+    the Qwen-Image 2.1 PE models stay on the two jobs they were trained for — PE-T2I for Qwen Enhance (live: "portrait
+    poster" → wh_ratio 2:3 → the 4:5 aspect, 22 s) and PE-I2I for the Qwen "Enhance instruction".
+    Two fixes from the A/B: the Klein edit-rewrite system prompt put its relight rule first, so "make it night" came
+    back as warm light; it now puts the user's intent first and names the preserved things actually in the picture
+    (p7b: night, sign, winter, remove, add, side light all correct at ~2 s). PE-I2I sometimes reasons in the open even
+    with thinking off (50 s, 6.9 k characters ending in "Final version: …"); `stripLeakedReasoning` keeps the text after
+    the last "Final version:"-style marker, else the last paragraph when the answer opens with reasoning.
+75. **Preset model hints.** Stronger Qwen style wording ("Transform <image1> completely into …, re-rendering every
+    surface") changed nothing on 3D render, embroidery, claymation, low-poly and 16-bit pixel, and the explicit "do
+    not add any object or animal from <image2>" still left the cat on the car (docs/qa/addenda/p6b). Qwen-Image 2.1's
+    edit stays conservative there, so instead of rewording, presets carry `best` (from `scripts/build_presets.ts`): the
+    picker labels those "· best on Klein" when Qwen is selected and says so in a toast; Try-on is marked best on Qwen.

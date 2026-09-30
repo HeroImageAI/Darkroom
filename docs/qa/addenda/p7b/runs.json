@@ -1,0 +1,244 @@
+[
+  {
+    "group": "klein-edit-enhance",
+    "key": "night",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 4.7,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: make it night\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Make it night: darken the scene, add ambient streetlight glow from out of frame left, and cast soft shadows. Keep the red car, blue house, white door, potted palm, and license plate text exactly as shown.",
+    "cold": true
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "sign",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2.3,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: change the sign to MOONLIGHT BAKERY\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Change the sign to \"MOONLIGHT BAKERY\" in bold, gold letters on a black background. Keep the bakery’s windows, cobblestone street, and chalkboard sign with \"Fresh bread daily\" exactly as they are."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "winter",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2.3,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: make it winter\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Make the scene winter by adding snow on the floor and windowsill, changing the wall color to icy blue, and replacing the artwork with a snowy landscape. Keep the green sofa, brass lamp, monstera plant, wooden furniture, and bookshelf exactly as they are."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "remove-car",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 1.7,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: remove the car\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Remove the red Chevrolet car. Keep the light blue house, white door and window frames, potted palm tree, and pavement exactly as they are."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "cat-roof",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 1.7,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: add a cat sleeping on the car roof\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Add a fluffy orange tabby cat sleeping curled on the red car’s roof. Keep the car, blue house, potted palm, and license plate exactly as they are."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "side-light",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: light her from the side\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Light her from the side with soft, directional light coming from the left, casting gentle shadows on her right cheek and hair. Keep her white hair, green scarf, and warm smile exactly as they are."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "night",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 8.4,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: make it night\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Transform the scene from bright daytime to night: replace the daylight with a dark night sky and deep blue-black ambient light, turn the pale blue house wall into a dimly lit night-time surface, let the windows glow with warm interior light, add a soft warm pool of light around the black wall lantern beside the door, cast the potted palm's shadow as a faint cool-toned silhouette against the wall, and render the red classic car with glossy reflections of the window and lantern light on its paint and chrome while keeping its shape and position unchanged. Keep the composition, the house structure, the white door and window frames, the green leaf mural, the terracotta pot with the palm, the street and sidewalk, and the license plate text \"2091 8Q45\" exactly as in the original image.",
+    "cold": true
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "sign",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4.9,
+    "peak": 11.3,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: change the sign to MOONLIGHT BAKERY\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Change the cream-colored serif sign text \"SUNRISE BAKERY\" on the dark storefront fascia to \"MOONLIGHT BAKERY\", rendered in the same large cream serif capital letters, same size, same letter-spacing, and same horizontal alignment along the fascia. Keep the chalkboard sign reading \"Fresh bread daily\" unchanged, and preserve all other visual elements exactly as they are: the dark window frames with white decorative flourishes, the bread displays in the windows, the open dark door, the weathered white and brick building walls, the cobblestone street, and the overall photographic lighting and perspective."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "winter",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 5.3,
+    "peak": 11.3,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: make it winter\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Transform the cozy living room scene into a winter atmosphere: replace the soft neutral wall light with cool, dim winter daylight entering from the left, cast soft blue-toned shadows across the walls and floor, add a faint breath of cold air visible near the window side, and keep the warm glow of the brass floor lamp as the single warm accent against the cool winter light. Keep every object exactly as it is — the green velvet sofa with its beige cushion, the wooden coffee table with the ceramic teapot on the round tray and the glass of water, the potted monstera plant in the speckled grey pot, the brass arc floor lamp, the framed cloud print on the wall, the wooden bookshelf filled with books on the right, the herringbone wood floor, and the fringed rug — all unchanged in position, shape, and material."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "remove-car",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4.3,
+    "peak": 11.3,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: remove the car\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Remove the red classic car parked in front of the light-blue house, and fill the vacated area with a seamless continuation of the surrounding scene: the gray asphalt street, the concrete sidewalk and curb, and the base of the white wall and potted palm behind it. Keep the light-blue house with its white door, white-framed windows, wall-mounted lantern, green leaf mural, the terracotta potted palm plant, the neighboring white wall and foliage on the left, the palm fronds in the upper left, and the bright daylight lighting with the palm shadow cast on the wall completely unchanged."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "cat-roof",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 3.7,
+    "peak": 11.3,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: add a cat sleeping on the car roof\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Add a cat sleeping on the roof of the red classic car parked in front of the light-blue house. The cat lies curled up on the red roof, body relaxed and head resting, with its fur color and details rendered consistently with the scene's bright daylight. Keep the red car itself, the light-blue house facade with white door and windows, the potted palm plant, the wall-mounted lantern, the green leaf mural, the street and sidewalk, and the overall lighting completely unchanged."
+  },
+  {
+    "group": "klein-edit-enhance",
+    "key": "side-light",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4.2,
+    "peak": 11.3,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: light her from the side\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Light the elderly woman from the side by introducing a strong directional key light coming from the left edge of the frame (her right side), so that bright highlights fall on one side of her forehead, cheekbone, nose bridge and white hair while the opposite side of her face falls into soft open shadow, with a gentle warm fill keeping the shadow side readable; keep the existing window-side setting and overall exposure consistent with this single side light source. Preserve exactly her facial features, wrinkles and skin texture, her gentle smile and gaze, her white hair, the green knitted scarf and every other element of the portrait unchanged."
+  }
+]
