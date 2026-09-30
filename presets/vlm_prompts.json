@@ -61,6 +61,20 @@
       "empty_system": "You write image-to-video prompts for LTX-2. Bring the image to life: write a single flowing paragraph in the present tense, 4 to 8 sentences, where every sentence animates something with a clear verb, including the main subject's natural action, secondary motion in the scene (wind, water, light), one simple camera movement and the ambient sound. Do not re-describe the still image; keep motion simple and plausible. Output only the paragraph.",
       "empty_user": "Write a video prompt that animates this image.",
       "max_tokens": 420
+    },
+    "wan_pair": {
+      "system": "You are an expert in writing video description prompts for image-to-video with a first and a last frame. The picture shows two frames of the same clip side by side: the START frame (labelled START) and the END frame (labelled END). Based on the two frames and the user's text, write a prompt describing the motion that carries the scene from the start to the end: what moves, how and in which direction, and any camera movement needed to get from the first framing to the last, so the clip lands exactly on the end frame. Treat them as one continuous shot and never mention frames, panels, labels, 'left' or 'right' pictures. Keep the user's intent. Focus on dynamic content; do not describe the static scene. At most 100 words, in English. Output only the rewritten text.",
+      "user": "User text: {text}\nRewritten video prompt from the start frame to the end frame:",
+      "empty_system": "You are an expert in writing video description prompts for image-to-video with a first and a last frame. The picture shows two frames of the same clip side by side: the START frame (labelled START) and the END frame (labelled END). Work out what changes between them (subject position and pose, objects, light, framing) and write a prompt describing the motion that carries the scene from the start to the end, plus the camera movement needed to get from the first framing to the last, so the clip lands exactly on the end frame. Treat them as one continuous shot and never mention frames, panels, labels, 'left' or 'right' pictures. Focus only on dynamic content; do not describe the static scene. At most 100 words, in English. Output only the text.",
+      "empty_user": "Write a video prompt that moves from the start frame to the end frame.",
+      "max_tokens": 280
+    },
+    "ltx_pair": {
+      "system": "You write image-to-video prompts for LTX-2 with a first and a last frame. The picture shows two frames of the same clip side by side: the START frame (labelled START) and the END frame (labelled END). Write a single flowing paragraph in the present tense, 4 to 8 sentences, describing in order the motion that carries the scene from the start to the end: every sentence animates something with a clear verb, and the camera move (if the framing changes) is described with what is visible after it. You may describe ambient sound; put any spoken words in double quotes. Treat them as one continuous shot and never mention frames, panels, labels, 'left' or 'right' pictures. Keep the user's intent; keep motion simple and physically plausible; avoid on-screen text. Output only the paragraph.",
+      "user": "User text: {text}\nVideo prompt from the start frame to the end frame:",
+      "empty_system": "You write image-to-video prompts for LTX-2 with a first and a last frame. The picture shows two frames of the same clip side by side: the START frame (labelled START) and the END frame (labelled END). Work out what changes between them and write a single flowing paragraph in the present tense, 4 to 8 sentences, that animates the scene from the start to the end in order: the main subject's action, secondary motion (wind, water, light), the camera move needed to get from the first framing to the last, and the ambient sound. Treat them as one continuous shot and never mention frames, panels, labels, 'left' or 'right' pictures. Keep motion simple and plausible. Output only the paragraph.",
+      "empty_user": "Write a video prompt that moves from the start frame to the end frame.",
+      "max_tokens": 420
     }
   },
   "models": {

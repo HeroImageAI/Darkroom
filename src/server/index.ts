@@ -24,6 +24,7 @@ import type { Pad } from '../shared/outpaint.js';
 import { mergePresets, upsertUserPreset, type EditPreset, type UserPreset } from '../shared/presets.js';
 import { readDarkroomMeta } from '../shared/pngmeta.js';
 import { outputDirFromArgv, outputPath, recycle } from './trash.js';
+import { framePair } from './framepair.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -208,13 +209,16 @@ app.post('/api/items/:id/as-input', async (req, reply) => {
  * body: { task, variant, text?, itemId?, input?, which? }  -> { text, seconds }
  */
 app.post('/api/vlm', async (req, reply) => {
-  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean };
+  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string };
   if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
   let request;
+  let pair = false;
   try {
     // Addenda Phase 7: per-task engine routing (general VLM / Qwen-Image 2.1 PE-T2I / PE-I2I) with real system prompts
     const prompts = readJson<Vlm2Prompts>(path.join(cfg.paths.presets, 'vlm_prompts.json'));
-    request = buildVlm2Request(prompts, b.task, b.variant, b.text ?? '', (rel) => fs.readFileSync(path.join(cfg.paths.presets, rel), 'utf8'));
+    // Video motion with an end frame: the "<variant>_pair" prompt, which asks for the motion from START to END
+    pair = b.task === 'motion' && !!b.input2 && !!(prompts.motion as Record<string, unknown> | undefined)?.[`${b.variant}_pair`];
+    request = buildVlm2Request(prompts, b.task, pair ? `${b.variant}_pair` : b.variant, b.text ?? '', (rel) => fs.readFileSync(path.join(cfg.paths.presets, rel), 'utf8'));
   } catch (e) {
     return reply.code(400).send({ error: (e as Error).message });
   }
@@ -227,6 +231,20 @@ app.post('/api/vlm', async (req, reply) => {
       name = await jobs.asInput(item, b.which ?? (item.kind === 'video' ? 'poster' : 'main'));
     }
     if (!name) return reply.code(400).send({ error: 'This needs a picture.' });
+    if (pair && b.input2) {
+      // start and end frame side by side, labelled, as one picture (the vision graph takes a single image)
+      const asRef = (n: string) => {
+        const i = n.lastIndexOf('/');
+        return { filename: n.slice(i + 1), subfolder: i >= 0 ? n.slice(0, i) : '', type: 'input' };
+      };
+      try {
+        const sheet = await framePair(await jobs.comfy.view(asRef(name)), await jobs.comfy.view(asRef(b.input2)));
+        const up = await jobs.comfy.upload('image', new Blob([new Uint8Array(sheet)]), `motion_pair_${Date.now().toString(36)}.png`, { subfolder: 'darkroom' });
+        name = inputName(up);
+      } catch (e) {
+        return reply.code(400).send({ error: 'Could not read the end frame: ' + (e as Error).message });
+      }
+    }
     params.image_1 = name;
   }
   const t0 = Date.now();
