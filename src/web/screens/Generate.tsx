@@ -175,6 +175,20 @@ export function Generate({ query }: { query: URLSearchParams }) {
     }
   };
 
+  /** "From references": a prompt that combines every reference (with your text as the idea), using the model's tokens. */
+  const composeFromRefs = async () => {
+    setVlmBusy('reverse');
+    try {
+      const r = await api.vlm({ task: 'compose', variant: s.model, text: s.prompt, inputs: s.refs.map((x) => x.name) });
+      replacePrompt(r.text);
+      toast(`Prompt written from ${s.refs.length === 1 ? 'the reference' : `${s.refs.length} references`} for ${m?.models[s.model]?.label} in ${r.seconds}s. Undo puts your text back.`, 'ok');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setVlmBusy(null);
+    }
+  };
+
   const reuseId = query.get('reuse');
   useEffect(() => {
     if (!reuseId) return;
@@ -366,10 +380,14 @@ export function Generate({ query }: { query: URLSearchParams }) {
                   type="button"
                   className="btn ghost sm"
                   disabled={!!vlmBusy || !online}
-                  title={`Write a prompt from a picture for ${model.label} (uses reference 1 if present, otherwise asks for a picture)`}
-                  onClick={() => (s.refs[0] ? void reverseFrom({ input: s.refs[0].name }) : reverseInput.current?.click())}
+                  title={
+                    s.refs.length
+                      ? `Write a ${model.label} prompt that combines your references (and your text, if any), naming what to take from each`
+                      : `Write a ${model.label} prompt that recreates a picture you pick`
+                  }
+                  onClick={() => (s.refs.length ? void composeFromRefs() : reverseInput.current?.click())}
                 >
-                  {vlmBusy === 'reverse' ? <Loader2 size={14} className="spin" /> : <ScanText size={14} />} From picture
+                  {vlmBusy === 'reverse' ? <Loader2 size={14} className="spin" /> : <ScanText size={14} />} {s.refs.length ? 'From references' : 'From picture'}
                 </button>
                 <input
                   ref={reverseInput}
