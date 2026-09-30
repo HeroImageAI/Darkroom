@@ -365,3 +365,16 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     job and also polls, so a fast import is never missed. Checked: a 12 MP phone JPEG stored sideways with an EXIF
     rotation comes in upright at full size in ~1 s. iPhone HEIC can't be decoded here (codec licence), so it gets a
     clear "save as JPEG" message instead of a failure. Everything stays on this PC (ComfyUI's input/output folders).
+79. **Large photos keep their resolution.** Klein and Qwen draw at about 1 MP. Measured on a 12 MP photo: Inpaint,
+    masked Instruct and fast Remove BG kept 100% of the untouched pixels; whole-picture edits kept the size but every
+    pixel was a lanczos blow-up of ~1 MP (detail score 30 vs 319 for the original); **Restore handed back 1184×880**.
+    Two fixes (`src/shared/fullsize.ts`, from 2 MP up):
+    - **Enhance** (Restore and Subtle) on a large photo chains SeedVR2 to the photo's **exact** size (Restore +
+      upscale: twice that, capped at 8192 px). `upscale.v3.json` = v2 + an optional exact final size (DR_EXACT,
+      bypassed when unset): the models' working size never has quite the photo's aspect. The server works out the
+      factor from the size Restore actually produced. 4032×2304 photo: full size back in 57 s.
+    - A **whole-picture** Instruct result (or Qwen best-quality background removal) on a large photo shows a banner
+      with **Sharpen to full resolution**: the soft result is shrunk back to the size it was drawn at, then SeedVR2
+      rebuilds it at full size. Detail score 30 → 426 (original 319) in 18 s; crops show crisp vents, wiper and trim
+      without halos. Transparency survives (alpha kept, exact size hit). The banner goes once a sharpened version
+      exists. Masked edits never need it.
