@@ -30,7 +30,8 @@
     "enhance_subtle": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged.{caption}",
     "enhance_strong": "Re-render this image at higher quality with rich, realistic detail and texture and accurate lighting. Keep the composition, the identity of people and all text unchanged.{caption}",
     "inpaint_remove": "Perform inpainting on this image. Fill the marked area with {fill}.{caption}",
-    "enhance_restore": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new."
+    "enhance_restore": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new.",
+    "inpaint_masked": "In <image1>, replace the area marked white in <image2> with {fill}. Keep everything outside that area unchanged."
   },
   "wan": {
     "motion": "{motion} {camera}",

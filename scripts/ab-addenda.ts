@@ -72,7 +72,7 @@ const MASKS: Record<string, [string, string]> = {
   car: ['09_car', 'car'],
   chalkboard: ['03_text_scene', 'chalkboard sign'],
   scarf: ['01_portrait', 'scarf'],
-  taxi: ['04_busy_street', 'taxi:1'],
+  taxi: ['04_busy_street', 'yellow car:1'], // "taxi" matched nothing on this picture; one yellow car = the same small target
 };
 const maskPath = (k: string) => path.join('tests', 'golden', 'masks', `${k}.png`);
 const PLANS: Record<string, CropPlan> = {};

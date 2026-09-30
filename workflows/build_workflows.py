@@ -887,8 +887,10 @@ if __name__ == "__main__":
     klein_masked(False, prefix="darkroom/edit", style="onenode").save("klein_edit.v2.json")
     klein_enhance_edit().save("klein_enhance_edit.json")
     klein_inpaint_cs().save("klein_inpaint_cs.json")
-    qwen_inpaint_cs("native").save("qwen_inpaint_cs.json")
-    qwen_inpaint_cs("maskref").save("experiments/qwen_inpaint_cs.maskref.json")
+    # Phase 3 A/B (docs/qa/addenda/p3): showing Qwen the mask as <image2> won 6/6; native added instead of replacing,
+    # the Fun ControlNet kept structure and recoloured instead. Shipped = maskref; the others stay as experiments.
+    qwen_inpaint_cs("maskref").save("qwen_inpaint_cs.json")
+    qwen_inpaint_cs("native").save("experiments/qwen_inpaint_cs.native.json")
     qwen_inpaint_cs("controlnet").save("experiments/qwen_inpaint_cs.controlnet.json")
     qwen_enhance_edit().save("qwen_enhance_edit.json")
     # Addenda A/B candidates (same DR_* titles as the shipped graphs, run with run-workflow --file)

@@ -66,6 +66,28 @@ test.describe.serial('Darkroom v2 features', () => {
     await shot(page, 'edit-smart-select');
   });
 
+  // Addenda Phase 3: inpaint runs crop-and-stitch on both models (klein_inpaint_cs / qwen_inpaint_cs with the mask
+  // shown as <image2>); this exercises the real Edit wiring: mask -> crop plan -> params -> ComfyUI -> new version.
+  for (const model of ['Klein 9B', 'Qwen-Image 2.1']) {
+    test(`Edit: inpaint with crop and stitch (${model})`, async () => {
+      const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && /lighthouse/i.test(i.prompt));
+      await page.goto(`/#/edit/${it.id}`);
+      await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Inpaint' }).click();
+      await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: new RegExp(`^${model}`) }).click();
+      await page.keyboard.press('s');
+      await page.getByLabel('Select by text').fill('person');
+      await page.getByRole('button', { name: 'Find' }).click();
+      await expect(page.getByText(/Selection added to the mask/)).toBeVisible({ timeout: 240_000 });
+      await expect(page.getByText('Change strength')).toBeVisible();
+      await page.getByLabel('What should fill the masked area?').fill('a lighthouse keeper in a bright red raincoat');
+      const before = page.url();
+      await page.getByRole('button', { name: /Fill masked area/ }).click();
+      await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
+      expect(page.url()).not.toBe(before);
+      await shot(page, `edit-inpaint-cs-${model.startsWith('Klein') ? 'klein' : 'qwen'}`);
+    });
+  }
+
   test('Edit: compare follows the cursor', async () => {
     const it = await firstItem(page, (i) => i.kind === 'image' && !!i.parent_id);
     await page.goto(`/#/edit/${it.id}`);

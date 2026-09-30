@@ -275,6 +275,19 @@ export class ComfyClient {
     if (!r.ok) throw new Error(`view ${f.filename} → HTTP ${r.status}`);
     return new Uint8Array(await r.arrayBuffer());
   }
+
+  /** Whether an input-folder file (LoadImage name, e.g. "darkroom/x.png") still exists. */
+  async inputExists(name: string): Promise<boolean> {
+    const i = name.lastIndexOf('/');
+    const f = { filename: i >= 0 ? name.slice(i + 1) : name, subfolder: i >= 0 ? name.slice(0, i) : '', type: 'input' };
+    try {
+      const r = await this.fetchImpl(this.viewUrl(f));
+      await r.body?.cancel().catch(() => undefined);
+      return r.ok;
+    } catch {
+      return false;
+    }
+  }
 }
 
 /** Input name to use in LoadImage for an upload result. */

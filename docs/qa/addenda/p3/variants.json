@@ -1,0 +1,30 @@
+{
+  "inpaint-klein": [
+    {
+      "id": "current",
+      "label": "Darkroom v2: whole picture at 1 MP + composite"
+    },
+    {
+      "id": "cropstitch",
+      "label": "Crop and stitch (core nodes, One Node rules)"
+    }
+  ],
+  "inpaint-qwen": [
+    {
+      "id": "current",
+      "label": "Darkroom v2: whole picture + composite"
+    },
+    {
+      "id": "native",
+      "label": "Crop and stitch, native (crop = <image1>)"
+    },
+    {
+      "id": "maskref",
+      "label": "Native + mask shown as <image2>"
+    },
+    {
+      "id": "controlnet",
+      "label": "Fun ControlNet Union, inpaint mode"
+    }
+  ]
+}

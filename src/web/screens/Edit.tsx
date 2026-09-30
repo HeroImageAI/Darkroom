@@ -30,6 +30,7 @@ import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
 import { go } from '../router';
 import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
 import { planEnhance } from '../../shared/enhance';
+import { maskBBox, planCrop } from '../../shared/cropstitch';
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
@@ -108,6 +109,8 @@ function Editor({ item }: { item: Item }) {
   const effDenoise = denoise ?? enhanceDefaults?.subtle ?? 0.3;
   const [brush, setBrush] = useState(64);
   const [feather, setFeather] = useState(8);
+  const [strength, setStrength] = useState(1); // inpaint "Change strength" (denoise)
+  const [seam, setSeam] = useState(0); // inpaint "Seam feather": 0 = Auto (the A/B-tested grow 8 / blur 6)
   const [prompt, setPrompt] = useState(() => sessionStorage.getItem('dr.edit.prompt') ?? '');
   const [onlyMasked, setOnlyMasked] = useState(true);
   const [ref, setRef] = useState<{ name: string } | null>(null);
@@ -356,8 +359,9 @@ function Editor({ item }: { item: Item }) {
   );
   useHotkey((e) => e.key === '[' || e.key === ']', (e) => setBrush((b) => Math.max(4, Math.min(400, b + (e.key === ']' ? 8 : -8)))), []);
 
-  const uploadMask = async () => {
-    const blob = await layer.current!.exportPng(feather);
+  /** Mask PNG; `blur` defaults to the Feather slider (crop-and-stitch passes 0 and feathers in the graph). */
+  const uploadMask = async (blur = feather) => {
+    const blob = await layer.current!.exportPng(blur);
     return (await api.upload(blob, 'mask.png')).name;
   };
 
@@ -415,10 +419,25 @@ function Editor({ item }: { item: Item }) {
     if (mode === 'inpaint') {
       if (maskEmpty) return toast('Paint over the area to replace first (B for brush).', 'info');
       if (!prompt.trim()) return toast('Describe what should appear in the masked area.', 'info');
+      // Crop and stitch (Addenda Phase 3): sample only the mask's surroundings at a higher resolution, then composite
+      // back. The plan comes from the painted mask (src/shared/cropstitch.ts).
+      const mc = layer.current!.mask;
+      const bb = maskBBox(mc.getContext('2d')!.getImageData(0, 0, mc.width, mc.height).data, mc.width, mc.height);
+      if (!bb) return toast('Paint over the area to replace first (B for brush).', 'info');
+      const plan = planCrop(bb, mc.width, mc.height);
+      // seam 0 = Auto: the A/B defaults (grow 8, blur 6); otherwise split between grow and blur (ImageBlur caps at 31)
       const params: Record<string, string | number> = {
-        prompt: composeImagePrompt(T, { model: em, mode: 'inpaint', text: prompt, caption }),
-        mask: await uploadMask(),
-        feather: Math.round(feather),
+        prompt: composeImagePrompt(T, { model: em, mode: 'inpaint', text: prompt, caption, maskShown: em === 'qwen' }),
+        mask: await uploadMask(0),
+        denoise: strength,
+        grow: seam ? Math.round(seam / 4) : 8,
+        feather: seam ? Math.min(31, Math.max(1, Math.round(seam / 2))) : 6,
+        crop_x: plan.crop.x,
+        crop_y: plan.crop.y,
+        crop_w: plan.crop.w,
+        crop_h: plan.crop.h,
+        target_w: plan.target.w,
+        target_h: plan.target.h,
       };
       if (ref) params.image_2 = ref.name;
       return submit(wfFor('inpaint'), params, 'edit:inpaint', `${modelLabel} fill`, prompt.trim());
@@ -794,12 +813,29 @@ function Editor({ item }: { item: Item }) {
                 </span>
                 <input type="range" min={4} max={400} value={brush} onChange={(e) => setBrush(Number(e.target.value))} />
               </label>
-              <label className="field">
-                <span>
-                  Feather <b className="mono">{feather}px</b>
-                </span>
-                <input type="range" min={0} max={64} value={feather} onChange={(e) => setFeather(Number(e.target.value))} />
-              </label>
+              {mode === 'inpaint' ? (
+                <label className="field" title="How far the new content blends into the original around the mask. Auto suits most edits.">
+                  <span>
+                    Seam feather <b className="mono">{seam === 0 ? 'Auto' : `${seam}px`}</b>
+                  </span>
+                  <input type="range" min={0} max={64} step={4} value={seam} onChange={(e) => setSeam(Number(e.target.value))} />
+                </label>
+              ) : (
+                <label className="field">
+                  <span>
+                    Feather <b className="mono">{feather}px</b>
+                  </span>
+                  <input type="range" min={0} max={64} value={feather} onChange={(e) => setFeather(Number(e.target.value))} />
+                </label>
+              )}
+              {mode === 'inpaint' && (
+                <label className="field" title="100% repaints the masked area completely. Lower keeps more of what is there; below about 80% colour and shape changes may not take.">
+                  <span>
+                    Change strength <b className="mono">{Math.round(strength * 100)}%</b>
+                  </span>
+                  <input type="range" min={50} max={100} step={5} value={Math.round(strength * 100)} onChange={(e) => setStrength(Number(e.target.value) / 100)} />
+                </label>
+              )}
               <div className="field-row" style={{ marginTop: 6 }}>
                 <button className="btn sm" onClick={() => (layer.current?.invert(), setMaskEmpty(!!layer.current?.isEmpty()))}>
                   <FlipHorizontal2 size={14} /> Invert

@@ -227,6 +227,18 @@ export class JobManager {
     const m = this.manifest();
     const spec = m.workflows[req.workflow];
     if (!spec) throw new Error(`Unknown workflow ${req.workflow}`);
+    // An optional picture that has since disappeared from ComfyUI's input folder (e.g. a reference kept in the UI
+    // across sessions) would fail the whole job at LoadImage; drop it and run without it, as One Node does for its
+    // inpaint reference (Addendum 1 C). Required pictures still fail loudly.
+    for (const [name, p] of Object.entries(spec.params)) {
+      const v = req.params[name];
+      if (p.type !== 'image' || !p.whenMissing || typeof v !== 'string' || !v) continue;
+      if (!(await this.comfy.inputExists(v))) {
+        req = { ...req, params: { ...req.params } };
+        delete req.params[name];
+        this.broadcast({ type: 'toast', kind: 'info', text: `The ${(p.label ?? name).toLowerCase()} picture is no longer available, so it was left out.` });
+      }
+    }
     const prompt = buildPrompt(this.template(spec.file), spec, req.params);
 
     const active = this.store.activeJobs();

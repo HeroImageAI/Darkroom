@@ -24,6 +24,8 @@ export interface ImageTemplates {
   transparent?: string;
   /** Qwen: official restoration wording, used when removing something (background plate). */
   inpaint_remove?: string;
+  /** Qwen: inpaint wording when the mask is shown to the model as <image2>. */
+  inpaint_masked?: string;
   enhance_subtle?: string;
   enhance_strong?: string;
   enhance_default_caption?: string;
@@ -115,6 +117,8 @@ export interface ComposeImageArgs {
   strength?: 'subtle' | 'strong' | 'restore';
   /** Inpaint only: the fill removes something (background plate) rather than adding content. */
   remove?: boolean;
+  /** Inpaint only: the graph shows the model the mask as <image2> (Qwen crop-and-stitch, Addenda Phase 3). */
+  maskShown?: boolean;
 }
 
 export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): string {
@@ -130,6 +134,10 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
       return fill(a.masked ? tpl.instruct_masked : tpl.instruct, { instruction: sentence(text) });
     }
     case 'inpaint': {
+      if (a.maskShown && !a.remove && tpl.inpaint_masked) {
+        // the mask itself is <image2>, so a reference picture the user calls <image2> is sent as <image3>
+        return fill(tpl.inpaint_masked, { fill: fragment(text.replace(/<image2>/g, '<image3>')) });
+      }
       const caption = a.caption && tpl.caption ? sub(tpl.caption, { text: sentence(a.caption) }) : '';
       return fill(a.remove && tpl.inpaint_remove ? tpl.inpaint_remove : tpl.inpaint, { fill: a.remove || a.model === 'klein' ? fragment(text) : text.trim().replace(/\.+$/, ''), caption });
     }

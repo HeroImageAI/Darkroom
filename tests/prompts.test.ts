@@ -176,6 +176,23 @@ describe('enhance', () => {
   });
 });
 
+describe('Qwen inpaint with the mask shown as <image2> (Addenda Phase 3 winner)', () => {
+  it('names the mask and asks for a replacement', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'A small glass vase of yellow tulips', maskShown: true })).toBe(
+      'In <image1>, replace the area marked white in <image2> with a small glass vase of yellow tulips. Keep everything outside that area unchanged.',
+    );
+  });
+  it('moves the reference to <image3> because the mask takes <image2>', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'a toy model of the car in <image2>', maskShown: true })).toContain('the car in <image3>');
+  });
+  it('keeps quoted text exactly', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: '"Open 7 till 7" chalk lettering', maskShown: true })).toContain('with "Open 7 till 7" chalk lettering.');
+  });
+  it('the background plate keeps the official removal wording', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'the background', remove: true, maskShown: true })).toMatch(/^Perform inpainting/);
+  });
+});
+
 describe('qwen fill keeps quoted text intact', () => {
   it('does not strip a closing quote', () => {
     expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'a sign reading "OPEN"' })).toBe('a sign reading "OPEN".');

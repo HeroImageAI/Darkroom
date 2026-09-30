@@ -235,3 +235,20 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     - Restore needs no SeedVR2 pre-upscale (DECISIONS 55 now applies to Subtle only). Modes: Restore (default),
       Restore + upscale (SeedVR2 2x after), Subtle (old img2img; the only mode with the Advanced denoise slider).
       "Strong" is gone: Restore does its job better.
+67. **Inpaint = crop and stitch on both models (core nodes only).** The app plans the crop from the painted mask
+    (`src/shared/cropstitch.ts`, One Node's rules: mask box × 1.5 context, long side × 1.5 rounded up to 64, clamped
+    512–1536), samples only that region, scales back and composites into the untouched original through a grown and
+    blurred mask. A/B on 7 cases (docs/qa/addenda/p3):
+    - Klein: the v2 whole-picture inpaint **left small masks unchanged** (teapot, one car in a crowd — too few pixels
+      at 1 MP) and garbled chalk text ("Open Open till 7"); crop and stitch got every case right, text included, and
+      is faster on small masks (6–9 s vs 14–17 s).
+    - Qwen, four options: whole picture (fails on small masks), native crop (adds the new object *next to* the old one),
+      **crop with the mask shown as `<image2>`** (6/6, clean replacements), and the Qwen-Image 2.1 Fun ControlNet Union
+      in inpaint mode (keeps the structure and recolours instead — worst for inpainting). Shipped: the mask-shown graph,
+      prompt "In <image1>, replace the area marked white in <image2> with …"; a reference picture moves to `<image3>`
+      and the composer remaps the user's `<image2>`. Native and ControlNet graphs are kept in `workflows/experiments/`.
+    - Change strength (denoise) works on both but a colour swap does not take below ~80 %, so the slider runs 50–100 %,
+      default 100 %. Seam feather: Auto = the tested grow 8 / blur 6; a manual value splits into grow and blur.
+    - Reference-guided fills can copy a chunk of the reference (Klein pasted the reference's house with the car); the
+      prompt should say what to take from it.
+    - Optional pictures that vanished from ComfyUI's input folder are dropped with a notice instead of failing the job.
