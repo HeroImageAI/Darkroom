@@ -1,0 +1,72 @@
+{
+  "01_portrait": {
+    "model": "klein",
+    "w": 896,
+    "h": 1120,
+    "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+    "seed": 1000
+  },
+  "02_product": {
+    "model": "klein",
+    "w": 1024,
+    "h": 1024,
+    "prompt": "A pair of brown leather hiking boots with red laces on a pale wooden bench, studio product photograph on a seamless light-grey backdrop, softbox lighting.",
+    "seed": 1001
+  },
+  "03_text_scene": {
+    "model": "qwen",
+    "w": 1584,
+    "h": 1056,
+    "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+    "seed": 1002
+  },
+  "04_busy_street": {
+    "model": "qwen",
+    "w": 1664,
+    "h": 928,
+    "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+    "seed": 1003
+  },
+  "05_hair": {
+    "model": "klein",
+    "w": 896,
+    "h": 1120,
+    "prompt": "A woman with long curly red hair blowing in the wind, backlit against a plain mid-grey studio backdrop, individual strands catching the light, three-quarter view.",
+    "seed": 1004
+  },
+  "06_fur": {
+    "model": "klein",
+    "w": 1024,
+    "h": 1024,
+    "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
+    "seed": 1005
+  },
+  "07_transparent": {
+    "model": "qwen",
+    "w": 1328,
+    "h": 1328,
+    "prompt": "A clear glass water carafe and two empty drinking glasses on a light linen tablecloth, sunlight refracting through the glass and casting caustic light patterns, realistic photography.",
+    "seed": 1006
+  },
+  "08_lowres_src": {
+    "model": "klein",
+    "w": 1248,
+    "h": 832,
+    "prompt": "A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+    "seed": 1007
+  },
+  "09_car": {
+    "model": "klein",
+    "w": 1344,
+    "h": 768,
+    "prompt": "A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+    "seed": 1008
+  },
+  "10_interior": {
+    "model": "qwen",
+    "w": 1328,
+    "h": 1328,
+    "prompt": "A cozy living room with a green velvet sofa, a brass floor lamp, a potted monstera plant, a wooden coffee table with a teapot, and a tall bookshelf, warm evening light.",
+    "seed": 1009
+  }
+}

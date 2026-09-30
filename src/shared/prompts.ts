@@ -15,6 +15,8 @@ export interface ImageTemplates {
   ref_hint: string;
   instruct: string;
   instruct_masked: string;
+  /** Qwen: circle quick edit — the picture carries a red circle round the target (Addenda Phase 3). */
+  instruct_circled?: string;
   inpaint: string;
   outpaint: string;
   outpaint_surroundings: string;
@@ -24,9 +26,17 @@ export interface ImageTemplates {
   transparent?: string;
   /** Qwen: official restoration wording, used when removing something (background plate). */
   inpaint_remove?: string;
+  /** Qwen: inpaint wording when the mask is shown to the model as <image2>. */
+  inpaint_masked?: string;
+  /** Outpaint on a pre-padded black canvas; {scene} gets outpaint_scene. */
+  outpaint_canvas?: string;
+  outpaint_scene?: string;
   enhance_subtle?: string;
   enhance_strong?: string;
   enhance_default_caption?: string;
+  /** Edit-style Enhance ("Restore"): instruction with preservation clauses; {scene} gets enhance_scene if set. */
+  enhance_restore?: string;
+  enhance_scene?: string;
 }
 
 export interface VideoTemplates {
@@ -104,14 +114,20 @@ export interface ComposeImageArgs {
   text: string;
   style?: StylePreset | null;
   masked?: boolean;
+  /** Instruct only: image_1 carries a red circle round the target (circle quick edit). */
+  circled?: boolean;
   /** Description of the original picture (for Qwen inpaint/outpaint). Never an edit instruction. */
   caption?: string | null;
   /** Generate only, Qwen only: ask for a transparent background (real alpha). */
   transparent?: boolean;
-  /** Enhance only. */
-  strength?: 'subtle' | 'strong';
+  /** Enhance only. "restore" = edit-style (Addenda Phase 2); subtle/strong = img2img touch-up. */
+  strength?: 'subtle' | 'strong' | 'restore';
   /** Inpaint only: the fill removes something (background plate) rather than adding content. */
   remove?: boolean;
+  /** Inpaint only: the graph shows the model the mask as <image2> (Qwen crop-and-stitch, Addenda Phase 3). */
+  maskShown?: boolean;
+  /** Outpaint only: the picture was pre-padded on a black canvas (Addenda Phase 4); use the canvas templates. */
+  canvas?: boolean;
 }
 
 export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): string {
@@ -123,14 +139,26 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
       return a.transparent && tpl.transparent ? fill(tpl.transparent, { prompt: sentence(body) }) : body;
     }
     case 'instruct': {
+      // the circle must always be asked away, even when the user already said what to keep
+      if (a.circled && tpl.instruct_circled) return fill(tpl.instruct_circled, { instruction: sentence(text) });
       if (PRESERVE_WORDS.test(text)) return tidy(sentence(text)); // the user already said what to keep
       return fill(a.masked ? tpl.instruct_masked : tpl.instruct, { instruction: sentence(text) });
     }
     case 'inpaint': {
+      if (a.maskShown && !a.remove && tpl.inpaint_masked) {
+        // the mask itself is <image2>, so a reference picture the user calls <image2> is sent as <image3>
+        return fill(tpl.inpaint_masked, { fill: fragment(text.replace(/<image2>/g, '<image3>')) });
+      }
       const caption = a.caption && tpl.caption ? sub(tpl.caption, { text: sentence(a.caption) }) : '';
       return fill(a.remove && tpl.inpaint_remove ? tpl.inpaint_remove : tpl.inpaint, { fill: a.remove || a.model === 'klein' ? fragment(text) : text.trim().replace(/\.+$/, ''), caption });
     }
     case 'enhance': {
+      if (a.strength === 'restore') {
+        if (!tpl.enhance_restore) throw new Error(`No restore template for ${a.model}`);
+        const cap = (a.caption ?? '').trim().replace(/[.!?]+$/, '');
+        const scene = cap && tpl.enhance_scene ? sub(tpl.enhance_scene, { text: cap }) : '';
+        return fill(tpl.enhance_restore, { scene });
+      }
       const tplText = a.strength === 'strong' ? tpl.enhance_strong : tpl.enhance_subtle;
       if (!tplText) throw new Error(`No enhance template for ${a.model}`);
       if (a.model === 'klein') {
@@ -141,6 +169,11 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
       return fill(tplText, { caption });
     }
     case 'outpaint': {
+      if (a.canvas && tpl.outpaint_canvas) {
+        // the user's description of the new areas wins over the caption of the old picture
+        const scene = (text || (a.caption ?? '')).trim().replace(/[.!?]+$/, '');
+        return fill(tpl.outpaint_canvas, { scene: scene && tpl.outpaint_scene ? sub(tpl.outpaint_scene, { text: a.model === 'qwen' ? fragment(scene) : scene }) : '' });
+      }
       if (!text && !a.caption && tpl.outpaint_default) return tidy(tpl.outpaint_default);
       const caption = a.caption && tpl.caption ? sub(tpl.caption, { text: sentence(a.caption) }) : '';
       const sur = text ? sub(tpl.outpaint_surroundings, { text: fragment(text) }) : '';

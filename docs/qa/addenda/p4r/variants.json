@@ -1,0 +1,12 @@
+{
+  "outpaint-3rounds": [
+    {
+      "id": "klein",
+      "label": "Klein 9B, 3 rounds of +256 px"
+    },
+    {
+      "id": "qwen",
+      "label": "Qwen-Image 2.1, 3 rounds of +256 px"
+    }
+  ]
+}

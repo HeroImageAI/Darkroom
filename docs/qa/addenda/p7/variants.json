@@ -1,0 +1,16 @@
+{
+  "vlm-general": [
+    {
+      "id": "qwen3vl8b",
+      "label": "Qwen3-VL 8B int8 (current, 9.4 GB)"
+    },
+    {
+      "id": "pe_i2i",
+      "label": "Qwen3.5-VL 9B PE-I2I as a general VLM (int8, 9.5 GB)"
+    },
+    {
+      "id": "qwen35_4b",
+      "label": "Qwen3.5 4B bf16 (9.3 GB)"
+    }
+  ]
+}

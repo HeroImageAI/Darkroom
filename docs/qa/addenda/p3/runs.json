@@ -1,0 +1,750 @@
+[
+  {
+    "group": "inpaint-klein",
+    "key": "teapot-tulips",
+    "variant": "current",
+    "ok": true,
+    "seconds": 17.4,
+    "peak": 20.4,
+    "set": {
+      "seed": 61,
+      "prompt": "a small glass vase of yellow tulips, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\teapot-tulips-current\\inpaint_00012_.png",
+    "cold": true
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "car-scooter",
+    "variant": "current",
+    "ok": true,
+    "seconds": 14.3,
+    "peak": 20.6,
+    "set": {
+      "seed": 62,
+      "prompt": "a vintage pale blue Vespa scooter parked at the kerb, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\car-scooter-current\\inpaint_00013_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "chalkboard-text",
+    "variant": "current",
+    "ok": true,
+    "seconds": 14.3,
+    "peak": 20.3,
+    "set": {
+      "seed": 63,
+      "prompt": "a chalkboard sign that reads \"Open 7 till 7\" in white chalk, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\chalkboard-text-current\\inpaint_00014_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "scarf-silk-100",
+    "variant": "current",
+    "ok": true,
+    "seconds": 14.6,
+    "peak": 21.1,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\scarf-silk-100-current\\inpaint_00015_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "scarf-silk-60",
+    "variant": "current",
+    "ok": true,
+    "seconds": 0.1,
+    "peak": 0,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\scarf-silk-60-current\\inpaint_00015_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "taxi-van-small",
+    "variant": "current",
+    "ok": true,
+    "seconds": 14.5,
+    "peak": 21.2,
+    "set": {
+      "seed": 65,
+      "prompt": "a red delivery van, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\taxi-van-small-current\\inpaint_00016_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "teapot-ref-car",
+    "variant": "current",
+    "ok": true,
+    "seconds": 21.3,
+    "peak": 21.6,
+    "set": {
+      "seed": 66,
+      "prompt": "a small toy model of the red car from the reference picture, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\teapot-ref-car-current\\inpaint_00017_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "teapot-tulips",
+    "variant": "cropstitch",
+    "ok": true,
+    "seconds": 9.3,
+    "peak": 20.2,
+    "set": {
+      "seed": 61,
+      "prompt": "a small glass vase of yellow tulips, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
+      "denoise": 1,
+      "crop_x": 6,
+      "crop_y": 931,
+      "crop_w": 282,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 464
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\teapot-tulips-cropstitch\\inpaint_00018_.png",
+    "cold": true
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "car-scooter",
+    "variant": "cropstitch",
+    "ok": true,
+    "seconds": 17.1,
+    "peak": 21.3,
+    "set": {
+      "seed": 62,
+      "prompt": "a vintage pale blue Vespa scooter parked at the kerb, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
+      "denoise": 1,
+      "crop_x": 0,
+      "crop_y": 216,
+      "crop_w": 1068,
+      "crop_h": 552,
+      "target_w": 1536,
+      "target_h": 800
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\car-scooter-cropstitch\\inpaint_00019_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "chalkboard-text",
+    "variant": "cropstitch",
+    "ok": true,
+    "seconds": 6.6,
+    "peak": 20.5,
+    "set": {
+      "seed": 63,
+      "prompt": "a chalkboard sign that reads \"Open 7 till 7\" in white chalk, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
+      "denoise": 1,
+      "crop_x": 816,
+      "crop_y": 615,
+      "crop_w": 256,
+      "crop_h": 441,
+      "target_w": 416,
+      "target_h": 704
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\chalkboard-text-cropstitch\\inpaint_00020_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "scarf-silk-100",
+    "variant": "cropstitch",
+    "ok": true,
+    "seconds": 20.2,
+    "peak": 21.5,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
+      "denoise": 1,
+      "crop_x": 0,
+      "crop_y": 419,
+      "crop_w": 896,
+      "crop_h": 701,
+      "target_w": 1344,
+      "target_h": 1056
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\scarf-silk-100-cropstitch\\inpaint_00021_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "scarf-silk-60",
+    "variant": "cropstitch",
+    "ok": true,
+    "seconds": 17.1,
+    "peak": 20.3,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
+      "denoise": 0.6,
+      "crop_x": 0,
+      "crop_y": 419,
+      "crop_w": 896,
+      "crop_h": 701,
+      "target_w": 1344,
+      "target_h": 1056
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\scarf-silk-60-cropstitch\\inpaint_00022_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "taxi-van-small",
+    "variant": "cropstitch",
+    "ok": true,
+    "seconds": 6.2,
+    "peak": 20.5,
+    "set": {
+      "seed": 65,
+      "prompt": "a red delivery van, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
+      "denoise": 1,
+      "crop_x": 401,
+      "crop_y": 480,
+      "crop_w": 256,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 512
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\taxi-van-small-cropstitch\\inpaint_00023_.png"
+  },
+  {
+    "group": "inpaint-klein",
+    "key": "teapot-ref-car",
+    "variant": "cropstitch",
+    "ok": true,
+    "seconds": 11.2,
+    "peak": 20.9,
+    "set": {
+      "seed": 66,
+      "prompt": "a small toy model of the red car from the reference picture, blending seamlessly into the surrounding scene with matching lighting, perspective, colour and texture.",
+      "denoise": 1,
+      "crop_x": 6,
+      "crop_y": 931,
+      "crop_w": 282,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 464
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-klein\\teapot-ref-car-cropstitch\\inpaint_00024_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "teapot-tulips",
+    "variant": "current",
+    "ok": true,
+    "seconds": 27.7,
+    "peak": 20.8,
+    "set": {
+      "seed": 61,
+      "prompt": "a small glass vase of yellow tulips."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\teapot-tulips-current\\inpaint_00025_.png",
+    "cold": true
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "car-scooter",
+    "variant": "current",
+    "ok": true,
+    "seconds": 24.1,
+    "peak": 21.2,
+    "set": {
+      "seed": 62,
+      "prompt": "a vintage pale blue Vespa scooter parked at the kerb."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\car-scooter-current\\inpaint_00026_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "chalkboard-text",
+    "variant": "current",
+    "ok": true,
+    "seconds": 24.5,
+    "peak": 21.2,
+    "set": {
+      "seed": 63,
+      "prompt": "a chalkboard sign that reads \"Open 7 till 7\" in white chalk."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\chalkboard-text-current\\inpaint_00027_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "scarf-silk-100",
+    "variant": "current",
+    "ok": true,
+    "seconds": 25,
+    "peak": 21.3,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\scarf-silk-100-current\\inpaint_00028_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "scarf-silk-60",
+    "variant": "current",
+    "ok": true,
+    "seconds": 0.1,
+    "peak": 0,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\scarf-silk-60-current\\inpaint_00028_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "taxi-van-small",
+    "variant": "current",
+    "ok": true,
+    "seconds": 25.4,
+    "peak": 21.2,
+    "set": {
+      "seed": 65,
+      "prompt": "a red delivery van."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\taxi-van-small-current\\inpaint_00029_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "teapot-ref-car",
+    "variant": "current",
+    "ok": true,
+    "seconds": 33.2,
+    "peak": 23.2,
+    "set": {
+      "seed": 66,
+      "prompt": "a small toy model of the red car from the reference picture."
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\teapot-ref-car-current\\inpaint_00030_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "teapot-tulips",
+    "variant": "native",
+    "ok": true,
+    "seconds": 12.4,
+    "peak": 18.4,
+    "set": {
+      "seed": 61,
+      "prompt": "a small glass vase of yellow tulips.",
+      "denoise": 1,
+      "crop_x": 6,
+      "crop_y": 931,
+      "crop_w": 282,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 464
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\teapot-tulips-native\\inpaint_00031_.png",
+    "cold": true
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "car-scooter",
+    "variant": "native",
+    "ok": true,
+    "seconds": 30.6,
+    "peak": 21.6,
+    "set": {
+      "seed": 62,
+      "prompt": "a vintage pale blue Vespa scooter parked at the kerb.",
+      "denoise": 1,
+      "crop_x": 0,
+      "crop_y": 216,
+      "crop_w": 1068,
+      "crop_h": 552,
+      "target_w": 1536,
+      "target_h": 800
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\car-scooter-native\\inpaint_00032_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "chalkboard-text",
+    "variant": "native",
+    "ok": true,
+    "seconds": 8.2,
+    "peak": 19,
+    "set": {
+      "seed": 63,
+      "prompt": "a chalkboard sign that reads \"Open 7 till 7\" in white chalk.",
+      "denoise": 1,
+      "crop_x": 816,
+      "crop_y": 615,
+      "crop_w": 256,
+      "crop_h": 441,
+      "target_w": 416,
+      "target_h": 704
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\chalkboard-text-native\\inpaint_00033_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "scarf-silk-100",
+    "variant": "native",
+    "ok": true,
+    "seconds": 37.8,
+    "peak": 22.2,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf.",
+      "denoise": 1,
+      "crop_x": 0,
+      "crop_y": 419,
+      "crop_w": 896,
+      "crop_h": 701,
+      "target_w": 1344,
+      "target_h": 1056
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\scarf-silk-100-native\\inpaint_00034_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "scarf-silk-60",
+    "variant": "native",
+    "ok": true,
+    "seconds": 30.4,
+    "peak": 22.2,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf.",
+      "denoise": 0.6,
+      "crop_x": 0,
+      "crop_y": 419,
+      "crop_w": 896,
+      "crop_h": 701,
+      "target_w": 1344,
+      "target_h": 1056
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\scarf-silk-60-native\\inpaint_00035_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "taxi-van-small",
+    "variant": "native",
+    "ok": true,
+    "seconds": 7.9,
+    "peak": 18.9,
+    "set": {
+      "seed": 65,
+      "prompt": "a red delivery van.",
+      "denoise": 1,
+      "crop_x": 401,
+      "crop_y": 480,
+      "crop_w": 256,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 512
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\taxi-van-small-native\\inpaint_00036_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "teapot-ref-car",
+    "variant": "native",
+    "ok": true,
+    "seconds": 12.3,
+    "peak": 21.4,
+    "set": {
+      "seed": 66,
+      "prompt": "a small toy model of the red car from <image2>.",
+      "denoise": 1,
+      "crop_x": 6,
+      "crop_y": 931,
+      "crop_w": 282,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 464
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\teapot-ref-car-native\\inpaint_00037_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "teapot-tulips",
+    "variant": "maskref",
+    "ok": true,
+    "seconds": 13.1,
+    "peak": 18.9,
+    "set": {
+      "seed": 61,
+      "prompt": "In <image1>, replace the area marked white in <image2> with a small glass vase of yellow tulips. Keep everything outside that area unchanged.",
+      "denoise": 1,
+      "crop_x": 6,
+      "crop_y": 931,
+      "crop_w": 282,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 464
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\teapot-tulips-maskref\\inpaint_00038_.png",
+    "cold": true
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "car-scooter",
+    "variant": "maskref",
+    "ok": true,
+    "seconds": 41.2,
+    "peak": 24.1,
+    "set": {
+      "seed": 62,
+      "prompt": "In <image1>, replace the area marked white in <image2> with a vintage pale blue Vespa scooter parked at the kerb. Keep everything outside that area unchanged.",
+      "denoise": 1,
+      "crop_x": 0,
+      "crop_y": 216,
+      "crop_w": 1068,
+      "crop_h": 552,
+      "target_w": 1536,
+      "target_h": 800
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\car-scooter-maskref\\inpaint_00039_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "chalkboard-text",
+    "variant": "maskref",
+    "ok": true,
+    "seconds": 9.5,
+    "peak": 20,
+    "set": {
+      "seed": 63,
+      "prompt": "In <image1>, replace the area marked white in <image2> with a chalkboard sign that reads \"Open 7 till 7\" in white chalk. Keep everything outside that area unchanged.",
+      "denoise": 1,
+      "crop_x": 816,
+      "crop_y": 615,
+      "crop_w": 256,
+      "crop_h": 441,
+      "target_w": 416,
+      "target_h": 704
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\chalkboard-text-maskref\\inpaint_00040_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "scarf-silk-100",
+    "variant": "maskref",
+    "ok": true,
+    "seconds": 52.2,
+    "peak": 25.1,
+    "set": {
+      "seed": 64,
+      "prompt": "In <image1>, replace the area marked white in <image2> with a mustard yellow silk scarf. Keep everything outside that area unchanged.",
+      "denoise": 1,
+      "crop_x": 0,
+      "crop_y": 419,
+      "crop_w": 896,
+      "crop_h": 701,
+      "target_w": 1344,
+      "target_h": 1056
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\scarf-silk-100-maskref\\inpaint_00041_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "scarf-silk-60",
+    "variant": "maskref",
+    "ok": true,
+    "seconds": 38.8,
+    "peak": 23.9,
+    "set": {
+      "seed": 64,
+      "prompt": "In <image1>, replace the area marked white in <image2> with a mustard yellow silk scarf. Keep everything outside that area unchanged.",
+      "denoise": 0.6,
+      "crop_x": 0,
+      "crop_y": 419,
+      "crop_w": 896,
+      "crop_h": 701,
+      "target_w": 1344,
+      "target_h": 1056
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\scarf-silk-60-maskref\\inpaint_00042_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "taxi-van-small",
+    "variant": "maskref",
+    "ok": true,
+    "seconds": 9.6,
+    "peak": 19.9,
+    "set": {
+      "seed": 65,
+      "prompt": "In <image1>, replace the area marked white in <image2> with a red delivery van. Keep everything outside that area unchanged.",
+      "denoise": 1,
+      "crop_x": 401,
+      "crop_y": 480,
+      "crop_w": 256,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 512
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\taxi-van-small-maskref\\inpaint_00043_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "teapot-ref-car",
+    "variant": "maskref",
+    "ok": true,
+    "seconds": 13.6,
+    "peak": 22,
+    "set": {
+      "seed": 66,
+      "prompt": "In <image1>, replace the area marked white in <image2> with a small toy model of the red car from <image3>. Keep everything outside that area unchanged.",
+      "denoise": 1,
+      "crop_x": 6,
+      "crop_y": 931,
+      "crop_w": 282,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 464
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\teapot-ref-car-maskref\\inpaint_00044_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "teapot-tulips",
+    "variant": "controlnet",
+    "ok": true,
+    "seconds": 15.8,
+    "peak": 21.4,
+    "set": {
+      "seed": 61,
+      "prompt": "a small glass vase of yellow tulips.",
+      "denoise": 1,
+      "crop_x": 6,
+      "crop_y": 931,
+      "crop_w": 282,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 464
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\teapot-tulips-controlnet\\inpaint_00045_.png",
+    "cold": true
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "car-scooter",
+    "variant": "controlnet",
+    "ok": true,
+    "seconds": 29.2,
+    "peak": 22.1,
+    "set": {
+      "seed": 62,
+      "prompt": "a vintage pale blue Vespa scooter parked at the kerb.",
+      "denoise": 1,
+      "crop_x": 0,
+      "crop_y": 216,
+      "crop_w": 1068,
+      "crop_h": 552,
+      "target_w": 1536,
+      "target_h": 800
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\car-scooter-controlnet\\inpaint_00046_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "chalkboard-text",
+    "variant": "controlnet",
+    "ok": true,
+    "seconds": 10.3,
+    "peak": 21.4,
+    "set": {
+      "seed": 63,
+      "prompt": "a chalkboard sign that reads \"Open 7 till 7\" in white chalk.",
+      "denoise": 1,
+      "crop_x": 816,
+      "crop_y": 615,
+      "crop_w": 256,
+      "crop_h": 441,
+      "target_w": 416,
+      "target_h": 704
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\chalkboard-text-controlnet\\inpaint_00047_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "scarf-silk-100",
+    "variant": "controlnet",
+    "ok": true,
+    "seconds": 35.3,
+    "peak": 22.1,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf.",
+      "denoise": 1,
+      "crop_x": 0,
+      "crop_y": 419,
+      "crop_w": 896,
+      "crop_h": 701,
+      "target_w": 1344,
+      "target_h": 1056
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\scarf-silk-100-controlnet\\inpaint_00048_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "scarf-silk-60",
+    "variant": "controlnet",
+    "ok": true,
+    "seconds": 32.8,
+    "peak": 22.1,
+    "set": {
+      "seed": 64,
+      "prompt": "a mustard yellow silk scarf.",
+      "denoise": 0.6,
+      "crop_x": 0,
+      "crop_y": 419,
+      "crop_w": 896,
+      "crop_h": 701,
+      "target_w": 1344,
+      "target_h": 1056
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\scarf-silk-60-controlnet\\inpaint_00049_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "taxi-van-small",
+    "variant": "controlnet",
+    "ok": true,
+    "seconds": 10.3,
+    "peak": 21.4,
+    "set": {
+      "seed": 65,
+      "prompt": "a red delivery van.",
+      "denoise": 1,
+      "crop_x": 401,
+      "crop_y": 480,
+      "crop_w": 256,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 512
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\taxi-van-small-controlnet\\inpaint_00050_.png"
+  },
+  {
+    "group": "inpaint-qwen",
+    "key": "teapot-ref-car",
+    "variant": "controlnet",
+    "ok": true,
+    "seconds": 32.1,
+    "peak": 23.2,
+    "set": {
+      "seed": 66,
+      "prompt": "a small toy model of the red car from <image1>.",
+      "denoise": 1,
+      "crop_x": 6,
+      "crop_y": 931,
+      "crop_w": 282,
+      "crop_h": 256,
+      "target_w": 512,
+      "target_h": 464
+    },
+    "file_out": "docs\\qa\\addenda\\p3\\inpaint-qwen\\teapot-ref-car-controlnet\\inpaint_00051_.png"
+  }
+]

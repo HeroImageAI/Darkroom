@@ -79,6 +79,19 @@ export function Video({ query }: { query: URLSearchParams }) {
       .catch((e) => toast((e as Error).message, 'error'));
   }, [startParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ?end=<item> from the Library's "Use as… > Video end frame"
+  const endParam = query.get('end');
+  useEffect(() => {
+    if (!endParam) return;
+    api
+      .asInput(endParam)
+      .then((r) => {
+        update({ end: { name: r.name, width: r.width ?? 1024, height: r.height ?? 1024, itemId: endParam } });
+        go('video');
+      })
+      .catch((e) => toast((e as Error).message, 'error'));
+  }, [endParam]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const reuseParam = query.get('reuse');
   useEffect(() => {
     if (!reuseParam) return;

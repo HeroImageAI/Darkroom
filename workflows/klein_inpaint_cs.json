@@ -1,0 +1,649 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "flux-2-klein-9b-fp8mixed.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "DR_MODEL"
+    }
+  },
+  "2": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "DR_TEXT_ENCODER"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "_meta": {
+      "title": "DR_VAE"
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_PROMPT"
+    }
+  },
+  "5": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Negative (zero)"
+    }
+  },
+  "6": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_1"
+    }
+  },
+  "7": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "darkroom_placeholder.png",
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "DR_MASK"
+    }
+  },
+  "8": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
+        "7",
+        0
+      ],
+      "expand": 8,
+      "tapered_corners": true
+    },
+    "_meta": {
+      "title": "DR_MASK_GROW"
+    }
+  },
+  "9": {
+    "class_type": "PrimitiveInt",
+    "inputs": {
+      "value": 0
+    },
+    "_meta": {
+      "title": "DR_CROP_X"
+    }
+  },
+  "10": {
+    "class_type": "PrimitiveInt",
+    "inputs": {
+      "value": 0
+    },
+    "_meta": {
+      "title": "DR_CROP_Y"
+    }
+  },
+  "11": {
+    "class_type": "PrimitiveInt",
+    "inputs": {
+      "value": 1024
+    },
+    "_meta": {
+      "title": "DR_CROP_W"
+    }
+  },
+  "12": {
+    "class_type": "PrimitiveInt",
+    "inputs": {
+      "value": 1024
+    },
+    "_meta": {
+      "title": "DR_CROP_H"
+    }
+  },
+  "13": {
+    "class_type": "PrimitiveInt",
+    "inputs": {
+      "value": 1024
+    },
+    "_meta": {
+      "title": "DR_TARGET_W"
+    }
+  },
+  "14": {
+    "class_type": "PrimitiveInt",
+    "inputs": {
+      "value": 1024
+    },
+    "_meta": {
+      "title": "DR_TARGET_H"
+    }
+  },
+  "15": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": [
+        "6",
+        0
+      ],
+      "x": [
+        "9",
+        0
+      ],
+      "y": [
+        "10",
+        0
+      ],
+      "width": [
+        "11",
+        0
+      ],
+      "height": [
+        "12",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Crop source"
+    }
+  },
+  "16": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "15",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": [
+        "13",
+        0
+      ],
+      "height": [
+        "14",
+        0
+      ],
+      "crop": "disabled"
+    },
+    "_meta": {
+      "title": "Crop to target"
+    }
+  },
+  "17": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "8",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Crop mask as image"
+    }
+  },
+  "18": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": [
+        "17",
+        0
+      ],
+      "x": [
+        "9",
+        0
+      ],
+      "y": [
+        "10",
+        0
+      ],
+      "width": [
+        "11",
+        0
+      ],
+      "height": [
+        "12",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Crop mask"
+    }
+  },
+  "19": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "18",
+        0
+      ],
+      "upscale_method": "bilinear",
+      "width": [
+        "13",
+        0
+      ],
+      "height": [
+        "14",
+        0
+      ],
+      "crop": "disabled"
+    },
+    "_meta": {
+      "title": "Mask to target"
+    }
+  },
+  "20": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "19",
+        0
+      ],
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "Work mask"
+    }
+  },
+  "21": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "16",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Encode crop (reference)"
+    }
+  },
+  "22": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": [
+        "4",
+        0
+      ],
+      "latent": [
+        "21",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Ref pos"
+    }
+  },
+  "23": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": [
+        "5",
+        0
+      ],
+      "latent": [
+        "21",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Ref neg"
+    }
+  },
+  "24": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_2"
+    }
+  },
+  "25": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": [
+        "24",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.0,
+      "resolution_steps": 16
+    },
+    "_meta": {
+      "title": "Ref 2 scale"
+    }
+  },
+  "26": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "25",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Ref 2 encode"
+    }
+  },
+  "27": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": [
+        "22",
+        0
+      ],
+      "latent": [
+        "26",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_REF_2_POS"
+    }
+  },
+  "28": {
+    "class_type": "ReferenceLatent",
+    "inputs": {
+      "conditioning": [
+        "23",
+        0
+      ],
+      "latent": [
+        "26",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_REF_2_NEG"
+    }
+  },
+  "29": {
+    "class_type": "InpaintModelConditioning",
+    "inputs": {
+      "positive": [
+        "27",
+        0
+      ],
+      "negative": [
+        "28",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "pixels": [
+        "16",
+        0
+      ],
+      "mask": [
+        "20",
+        0
+      ],
+      "noise_mask": true
+    },
+    "_meta": {
+      "title": "Inpaint conditioning"
+    }
+  },
+  "30": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "shift": 3.0
+    },
+    "_meta": {
+      "title": "Shift"
+    }
+  },
+  "31": {
+    "class_type": "BasicScheduler",
+    "inputs": {
+      "model": [
+        "30",
+        0
+      ],
+      "scheduler": "simple",
+      "steps": 4,
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "DR_STEPS"
+    }
+  },
+  "32": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "er_sde"
+    },
+    "_meta": {
+      "title": "Sampler"
+    }
+  },
+  "33": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 0
+    },
+    "_meta": {
+      "title": "DR_SEED"
+    }
+  },
+  "34": {
+    "class_type": "CFGGuider",
+    "inputs": {
+      "model": [
+        "30",
+        0
+      ],
+      "positive": [
+        "29",
+        0
+      ],
+      "negative": [
+        "29",
+        1
+      ],
+      "cfg": 1.0
+    },
+    "_meta": {
+      "title": "DR_CFG"
+    }
+  },
+  "35": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": [
+        "33",
+        0
+      ],
+      "guider": [
+        "34",
+        0
+      ],
+      "sampler": [
+        "32",
+        0
+      ],
+      "sigmas": [
+        "31",
+        0
+      ],
+      "latent_image": [
+        "29",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "Sample"
+    }
+  },
+  "36": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+      "samples": [
+        "35",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "tile_size": 1024,
+      "overlap": 128,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+    },
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "37": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "36",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": [
+        "11",
+        0
+      ],
+      "height": [
+        "12",
+        0
+      ],
+      "crop": "disabled"
+    },
+    "_meta": {
+      "title": "Back to crop size"
+    }
+  },
+  "38": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "18",
+        0
+      ],
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "Crop mask (full res)"
+    }
+  },
+  "39": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "38",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Mask to image (feather)"
+    }
+  },
+  "40": {
+    "class_type": "ImageBlur",
+    "inputs": {
+      "image": [
+        "39",
+        0
+      ],
+      "blur_radius": 6,
+      "sigma": 4.0
+    },
+    "_meta": {
+      "title": "DR_FEATHER"
+    }
+  },
+  "41": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "40",
+        0
+      ],
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "Feathered mask"
+    }
+  },
+  "42": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": [
+        "6",
+        0
+      ],
+      "source": [
+        "37",
+        0
+      ],
+      "x": [
+        "9",
+        0
+      ],
+      "y": [
+        "10",
+        0
+      ],
+      "resize_source": false,
+      "mask": [
+        "41",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_MASK_COMPOSITE"
+    }
+  },
+  "43": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "42",
+        0
+      ],
+      "filename_prefix": "darkroom/inpaint"
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  }
+}

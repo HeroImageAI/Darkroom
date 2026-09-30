@@ -199,3 +199,140 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     reads on light and dark backgrounds alike. The filter works in the canvas's on-screen pixels, so the outline is the
     same thickness at every zoom; display only, the stored/exported mask is unchanged. Repaint cost measured in Edge
     while painting: 16.7 ms per frame with or without the outline, at fit, 288 % and 800 % zoom.
+
+### Addenda 1+2 (One Node patterns, Qwen-Image 2.1 parity) — plan and decisions in docs/ADDENDA_PLAN.md
+
+62. **Klein sampling = One Node's distilled defaults.** `ModelSamplingAuraFlow` shift 3 + `simple` schedule + `er_sde`,
+    4 steps, CFG 1 (github.com/yanokusnir-ai/one-node-flux-2-klein). A/B against Darkroom's Flux2Scheduler + euler on
+    8 text-to-image and 4 edit cases, fixed seeds (docs/qa/addenda/p1): equal or better on 10 of 12 — finer skin and
+    stone/rigging detail; the cat's fur was marginally crisper with euler; edits equal. Same speed (7.5–8 s at 1 MP).
+    Shipped as `klein_t2i/klein_ref/inpaint/outpaint/klein_edit.v2.json` with identical DR_* titles; v1 files kept.
+    Enhance keeps its own graph until its Phase 2 redesign.
+63. **No KV toggle for Klein on this machine.** `flux-2-klein-9b-kv` is bf16 (18.2 GB) vs the 9.4 GB fp8mixed model;
+    with 2–3 references it filled the 24 GiB card and ran 168 s / 59 s against 21 s / 29 s, with no quality gain (one
+    3-reference result had a worse pose). `FluxKVCache` and the KV graphs remain in `workflows/experiments/` for a card
+    with more memory or an fp8 KV release.
+64. **Klein base-model rules not wired.** No Klein *base* model is installed and Darkroom's model file is fixed, so the
+    base defaults (20 steps, CFG 5, real negatives) would be unreachable code; recorded here instead.
+65. **Qwen-Image 2.1 tiers: Draft and Native 2K.** Official pipeline: ~40–50 Euler steps (template note); ComfyUI
+    template: 25. A/B (docs/qa/addenda/p1): at 25 steps a busy crowd shows smeared, half-formed pedestrians that 40 steps
+    resolves; text and single subjects are the same. Cost +45 % (Draft 16 → 23 s, 2K 105 → 160 s). So **Draft** =
+    ~1 MP (1024², 928×1152, 1248×832, 1376×768 — all multiples of 32; the old "Standard" used Qwen-Image v1 sizes such as
+    1328², which are not) at 25 steps for iterating, and **Native 2K** = the official size table at 40 steps for finals.
+    Peak VRAM: 18.5 GB (decimal) at 2K text-to-image; with references 20–24.8 GB (2 refs at 2K is the maximum seen,
+    still no stall); identity held with 1–3 references at both tiers.
+66. **Enhance = Restore (edit-style) on both models; img2img kept only as "Subtle".** A/B on five inputs (320 px JPEG,
+    the same after SeedVR2 4x, lens blur, motion blur, a clean portrait; docs/qa/addenda/p2): Darkroom v2's img2img
+    Enhance at denoise 0.3/0.35 did **not fix blur at all** (the lens-blurred car came out as blurry as it went in;
+    Phase 6 had only tested low resolution). Edit-style Enhance restored every case on both models.
+    - Klein: source as `ReferenceLatent` (lanczos ~1 MP), empty latent at the source aspect, denoise 1, One Node
+      sampler. One Node's prompt ("…increase clarity and micro-contrast…") over-processed clean pictures (HDR crunch,
+      neon greens); a toned-down prompt that lists what to keep (colours, contrast, skin and fabric texture) restored
+      just as well without it. A "Scene: <caption>" line is appended (Addendum 1 B).
+    - Qwen: its own path — source as `image_1` of `TextEncodeQwenImage21`, the encoder's empty latent, denoise 1,
+      25 steps. Natural colours, faithful faces, even from the raw 320 px JPEG. The caption line changed nothing
+      visible, so Qwen Restore skips the VLM call.
+    - Restore needs no SeedVR2 pre-upscale (DECISIONS 55 now applies to Subtle only). Modes: Restore (default),
+      Restore + upscale (SeedVR2 2x after), Subtle (old img2img; the only mode with the Advanced denoise slider).
+      "Strong" is gone: Restore does its job better.
+67. **Inpaint = crop and stitch on both models (core nodes only).** The app plans the crop from the painted mask
+    (`src/shared/cropstitch.ts`, One Node's rules: mask box × 1.5 context, long side × 1.5 rounded up to 64, clamped
+    512–1536), samples only that region, scales back and composites into the untouched original through a grown and
+    blurred mask. A/B on 7 cases (docs/qa/addenda/p3):
+    - Klein: the v2 whole-picture inpaint **left small masks unchanged** (teapot, one car in a crowd — too few pixels
+      at 1 MP) and garbled chalk text ("Open Open till 7"); crop and stitch got every case right, text included, and
+      is faster on small masks (6–9 s vs 14–17 s).
+    - Qwen, four options: whole picture (fails on small masks), native crop (adds the new object *next to* the old one),
+      **crop with the mask shown as `<image2>`** (6/6, clean replacements), and the Qwen-Image 2.1 Fun ControlNet Union
+      in inpaint mode (keeps the structure and recolours instead — worst for inpainting). Shipped: the mask-shown graph,
+      prompt "In <image1>, replace the area marked white in <image2> with …"; a reference picture moves to `<image3>`
+      and the composer remaps the user's `<image2>`. Native and ControlNet graphs are kept in `workflows/experiments/`.
+    - Change strength (denoise) works on both but a colour swap does not take below ~80 %, so the slider runs 50–100 %,
+      default 100 %. Seam feather: Auto = the tested grow 8 / blur 6; a manual value splits into grow and blur.
+    - Reference-guided fills can copy a chunk of the reference (Klein pasted the reference's house with the car); the
+      prompt should say what to take from it.
+    - Optional pictures that vanished from ComfyUI's input folder are dropped with a notice instead of failing the job.
+68. **Outpaint: One Node's canvas prep for Klein; Qwen keeps its own route.** A/B on 5 cases incl. a 2528×1696 picture
+    (docs/qa/addenda/p4):
+    - Klein: server-side prep (`src/server/outpaint.ts`: black pad, mask with a gradient INTO the original — Auto =
+      min(48, short side / 6), override ≤ 256 — multiples of 8) + the crop-and-stitch graph over the **whole canvas**
+      at denoise 1.0 (locked; the inpaint Change strength never reaches outpaint). Seamless on every case. Darkroom v2's
+      in-graph padding duplicated content (a second band of hills in the harbour sky, a second chalkboard on the big
+      picture). Sampling only the new strip + context ("extend_for_outpainting") was barely faster on the large
+      picture (17.3 vs 19.4 s) and duplicated content (a second red car) because the model lacks the whole picture.
+    - Qwen: the same prep with the mask shown as `<image2>` made Qwen paint the "marked" area literally white or leave
+      the black bars; the native aspect change (image_1 + a larger empty latent) extends well but redraws the whole
+      picture (not pixel-faithful) and took 224 s on the large one. Darkroom v2's Qwen outpaint (model sees the
+      original, samples the padded canvas) was clean and exact on every case in ~27 s, so it stays; padding now
+      rounds to multiples of 32.
+    - Leftover black from earlier rounds: only near-black regions **connected to an extended edge** are re-masked (One
+      Node re-masks every dark pixel, which would regenerate night skies and black clothing; unit-tested).
+      Three rounds of +256 px in a row stayed seamless on both models (docs/qa/addenda/p4r).
+69. **Upscale v2 (SeedVR2, One Node's graph).** `upscale.v2.json`: alpha kept (`JoinImageWithAlpha` with LoadImage's own
+    mask; SeedVR2 post-processing re-applies it — a cutout's mean alpha 83.4 came out 83.3 at 4×), 2/4/6/8×, tile size
+    as the VRAM setting (256 / 512 / 1024, overlap = tile/4), optional "scale by longer side" pre-shrink. Measured on a
+    320 px source: even 8× peaks at ~10.5 GB (7.9–11.2 s depending on tile), so all factors are safe on 24 GB.
+    LAB vs wavelet colour matching: near-identical (wavelet slightly more saturated) — LAB stays (SeedVR2's "most
+    faithful"). **Pixelated sources:** SeedVR2 keeps nearest-neighbour blocks as detail at any factor, and a pre-shrink
+    only helps when it reaches the picture's real resolution (a 96 px cat blown up to 384 px came back as a realistic cat
+    only when shrunk to 96 px first). So ticking "Scale by longer side" detects the block size
+    (`src/shared/pixelblock.ts`) and pre-fills the real size. One-click Upscale 2× is on every Generate result and in the
+    Library; Edit > Upscale has the full options.
+70. **Transparency and background removal.** Every library picture shows transparency on a checkerboard (one CSS rule on
+    `/api/items/…` images; layer stacks opt out so lower layers show through). Background removal benchmarked three ways on
+    hair, fur, glass and a product (docs/qa/addenda/p5): BiRefNet one-click (1 s) matched SAM + BiRefNet, so it stays the
+    fast default; Lucida left an orange glow under the product; **Qwen-Image 2.1 native extraction** (official template
+    wording, ~25 s) gave real alpha, the most convincing see-through glass and pixel-faithful stray hairs → added as
+    "Best quality (Qwen)". Layer decomposition: Qwen 2.1 per-object extraction (+ a background plate with the objects
+    removed) gave transparent layers at full resolution (1344×768, ~24 s per layer); Qwen-Image-Layered returned 640×360
+    in 86 s. Added as Layers > "Objects (Qwen 2.1)"; **Qwen-Image-Layered is kept only as the no-names "Automatic"
+    option**. Addendum 2's premise "Qwen can't produce real alpha" never applied to Darkroom (DECISIONS 46).
+71. **Edit presets.** One Node's Discover presets (Angles 4, Relight 26, Styles 22, Enhance, Text edit, Try-on,
+    Texture transfer; Head swap left out) imported as `presets/edit_presets.json`, generated by `scripts/build_presets.ts`
+    from a compact table so every preset follows the rules — imperative verb first, a preservation clause, relights name
+    the direction and "source out of frame", two-picture presets name each picture's role, `[BRACKET]` slots, no filler
+    ("8k professional photography" and "Octane Render" were dropped from One Node's Portrait and 3D Render). The script
+    refuses to write a preset that breaks a rule. Each preset has separate Klein wording (prose, "image 1 / image 2")
+    and Qwen wording (instruction on `<image1>` / `<image2>`, explicit "unchanged" list). Built-ins are read-only; the
+    user's presets live in `data/user_presets.json`, merged by label (override single fields, hide, or add), so updates
+    never wipe them. In Edit > Instruct, a preset fills the instruction for the selected model, selects the first
+    `[SLOT]`, follows a model switch while the text is untouched, and reminds you to add the second picture when needed.
+72. **Reproducibility.** Every saved PNG's `darkroom` chunk now also carries the screen settings (`ui`), so
+    Generate > Restore rebuilds the exact settings from a file outside the library (or from its settings JSON, which the
+    Library offers per item — the sidecar, also for videos). Library right-click "Use as…": Edit, Inpaint, Outpaint,
+    Enhance, Upscale, Generate reference, Edit reference (for the picture open in Edit), Video start / end frame.
+    Ctrl+V fills the first empty slot everywhere: Generate references, Video start then end, and — new — the Edit
+    Reference slot when a picture is open.
+    **A/B (docs/qa/addenda/p6, all 56 presets on both models, fixed seeds, 112/112 rendered):** Angles work on both
+    (Qwen does wide-angle better); Relight is more dramatic on Klein, more faithful to the face on Qwen; Text edit is
+    exact on both; Try-on is better on Qwen (buttons, fit); Enhance is equal. **Styles: Klein restyles decisively;
+    Qwen's wording is too timid** — 3D render, embroidery, low-poly, claymation and 16-bit pixel barely change — and
+    Qwen's texture transfer copies the reference's cat onto the car. A follow-up A/B on stronger Qwen wording is queued
+    (`p6b`). Recommended default for Styles: Klein.
+73. **Circle quick edit (Addendum 2 C).** Edit > Instruct > "Point at it with a red circle": paint over (or smart-select)
+    the object, and Qwen gets the picture with a red ellipse drawn round the mask's box (`src/shared/annotate.ts`) plus
+    `instruct_circled` ("change only the object circled in red: … Remove the red circle completely"). **A/B
+    (docs/qa/addenda/p3c, 5 golden masks × 4 routes):** Qwen on the circled picture 5/5 — right object replaced, no
+    circle left, right scale (the small taxi too). Qwen with the clean picture + a circled copy as `<image2>` added the
+    scooter next to the car instead of replacing it and drew the van too large. Klein failed both ways (kept the
+    teapot, ghosted the scooter over the car, missed the chalkboard text), so the option is Qwen-only and disabled
+    for Klein. Mask-based inpaint (crop and stitch) stays the precise tool; the circle is the quick one — no feathering,
+    no strength, whole-picture edit.
+74. **General VLM: Qwen3-VL 8B stays (Addendum 2 Qwen3.5 routing, JP's "A/B first").** docs/qa/addenda/p7: the
+    production requests (captions short / detailed / Klein, reverse prompts, Klein Enhance, Klein edit rewrite) on
+    three models, 18 cases each, all ran. **Qwen3-VL 8B** 2.7 s average, accurate, keeps to the length asked for.
+    **PE-I2I as a general model** 5.6 s, the richest detail (reads number plates, lettering) but ignores length ("short"
+    comes back as a paragraph), leaks `</think>`, and once degenerated into `{"a": 1, "b": 2, …}` on a reverse prompt.
+    **Qwen3.5 4B** 3.6 s but invents things ("Hong Kong", a "TOKYO" sign, a "double-decker tram"). So no 19 GB download;
+    the Qwen-Image 2.1 PE models stay on the two jobs they were trained for — PE-T2I for Qwen Enhance (live: "portrait
+    poster" → wh_ratio 2:3 → the 4:5 aspect, 22 s) and PE-I2I for the Qwen "Enhance instruction".
+    Two fixes from the A/B: the Klein edit-rewrite system prompt put its relight rule first, so "make it night" came
+    back as warm light; it now puts the user's intent first and names the preserved things actually in the picture
+    (p7b: night, sign, winter, remove, add, side light all correct at ~2 s). PE-I2I sometimes reasons in the open even
+    with thinking off (50 s, 6.9 k characters ending in "Final version: …"); `stripLeakedReasoning` keeps the text after
+    the last "Final version:"-style marker, else the last paragraph when the answer opens with reasoning.
+75. **Preset model hints.** Stronger Qwen style wording ("Transform <image1> completely into …, re-rendering every
+    surface") changed nothing on 3D render, embroidery, claymation, low-poly and 16-bit pixel, and the explicit "do
+    not add any object or animal from <image2>" still left the cat on the car (docs/qa/addenda/p6b). Qwen-Image 2.1's
+    edit stays conservative there, so instead of rewording, presets carry `best` (from `scripts/build_presets.ts`): the
+    picker labels those "· best on Klein" when Qwen is selected and says so in a toast; Try-on is marked best on Qwen.

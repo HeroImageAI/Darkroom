@@ -227,6 +227,18 @@ export class JobManager {
     const m = this.manifest();
     const spec = m.workflows[req.workflow];
     if (!spec) throw new Error(`Unknown workflow ${req.workflow}`);
+    // An optional picture that has since disappeared from ComfyUI's input folder (e.g. a reference kept in the UI
+    // across sessions) would fail the whole job at LoadImage; drop it and run without it, as One Node does for its
+    // inpaint reference (Addendum 1 C). Required pictures still fail loudly.
+    for (const [name, p] of Object.entries(spec.params)) {
+      const v = req.params[name];
+      if (p.type !== 'image' || !p.whenMissing || typeof v !== 'string' || !v) continue;
+      if (!(await this.comfy.inputExists(v))) {
+        req = { ...req, params: { ...req.params } };
+        delete req.params[name];
+        this.broadcast({ type: 'toast', kind: 'info', text: `The ${(p.label ?? name).toLowerCase()} picture is no longer available, so it was left out.` });
+      }
+    }
     const prompt = buildPrompt(this.template(spec.file), spec, req.params);
 
     const active = this.store.activeJobs();
@@ -279,6 +291,8 @@ export class JobManager {
           model: req.meta.model,
           prompt: req.meta.prompt,
           params: req.params,
+          // the screen's own settings, so "Restore settings from image" works on a file outside the library
+          ui: req.meta.ui ?? null,
           parent: req.meta.parentId ?? null,
           job: id,
         },
@@ -317,8 +331,9 @@ export class JobManager {
       return;
     }
     if (spec.kind === 'text') {
-      const text = cleanVlmOutput(textFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.text ?? 'DR_OUTPUT')).join('\n'));
-      this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, text } });
+      const raw = textFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.text ?? 'DR_OUTPUT')).join('\n');
+      // raw kept alongside: structured answers (PE-T2I JSON) must be parsed before any prose clean-up
+      this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, text: cleanVlmOutput(raw), raw } });
       // Auto-unload the VLM when nothing else is waiting, so the next image/video job gets the whole GPU.
       if (this.store.activeJobs().length === 0) void this.comfy.free(true, true).catch(() => undefined);
       return;

@@ -23,16 +23,23 @@
 | **v2:** sam3.1_multiplex_fp16.safetensors | checkpoints | 1.7 GB (SAM 3.1: smart select, Remove BG v2, SAM layers) |
 | **v2:** qwen_image_layered_fp8mixed.safetensors | diffusion_models | 19.1 GB (Qwen-Image-Layered: Layers mode B) |
 | **v2:** qwen_image_layered_vae.safetensors | vae | 0.24 GB |
+| **addenda:** qwen3.5_9b_qwen_image_2.1_pe_t2i.int8_convrot.safetensors | text_encoders | 9.5 GB (official Qwen-Image 2.1 prompt enhancer: Qwen Enhance + aspect ratio) |
+| **addenda:** qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors | text_encoders | 9.5 GB (official edit-instruction enhancer: Qwen "Enhance instruction") |
+| **addenda:** qwen_image_2.1_fun_controlnet_union_int8_convrot.safetensors | model_patches | 3.8 GB (tested for inpaint and rejected; used only by `workflows/experiments/` — safe to delete) |
+| **addenda:** qwen3.5_4b_bf16.safetensors | text_encoders | 9.3 GB (A/B candidate for the general VLM, not chosen — safe to delete) |
 
 The v2 VLM (Qwen3-VL 8B, `qwen3vl_8b_int8_convrot`) and Lucida matting were **already installed**. All three v2 downloads
-were fetched by `scripts/download-models-v2.sh`, which only adds files.
+were fetched by `scripts/download-models-v2.sh`, the four addenda files by `scripts/download-models-v3.sh`; both only
+add files (sizes checked, resumable).
 
 Klein 9B, Qwen-Image 2.1, Qwen-Image-Edit-2511, SeedVR2, BiRefNet and their encoders were **already installed** and are used
 as they are.
 
 ### Custom nodes / Python packages
 
-**None.** Everything runs on core ComfyUI 0.37.4 nodes, so the Desktop `.venv` was not modified and nothing needs
+**None.** Everything runs on core ComfyUI nodes (0.37.4 for v2; the addenda use 0.38.0 core nodes such as
+`TextEncodeQwenImage21`, `TextGenerate`, `SeedVR2*` and `ImageCompositeMasked` — crop and stitch is built from core
+nodes, as decided), so the Desktop `.venv` was not modified and nothing needs
 reinstalling after a Desktop update. (`backup/pip-freeze.txt` records the environment as found.)
 Comfy Desktop has since updated ComfyUI to **0.38.0** on its own (noticed 2026-09-30); all 13 end-to-end tests pass on
 it unchanged.
@@ -58,8 +65,12 @@ BENCHMARKS.md.
   start + end frames, camera chips, draft → final, takes, Extend, Smooth, Save frame, notifications, survives reloads),
   and Library (search, filters, hover-play, full metadata, reuse, open graph).
 - Each output also embeds its settings in the PNG (`darkroom` text chunk plus the exact API `prompt`).
-- `npm test`: 203 unit tests. `npm run e2e`: 13 end-to-end tests in Edge against ComfyUI (7 from v1, 6 for the v2
-  features; about 4 minutes). If Darkroom is already open from the desktop shortcut, run the test stack beside it on
+- **Addenda** (One Node patterns + Qwen-Image 2.1 parity): Klein One Node sampler, Qwen Draft / Native 2K, Enhance
+  = Restore, crop-and-stitch inpaint, red-circle quick edit (Qwen), canvas-prep outpaint, Upscale v2 with alpha,
+  Qwen background removal and layers, 56 edit presets with your own presets file, PNG settings + Restore + Use as…,
+  official Qwen prompt enhancers. Per-feature model advice: `docs/qa/ADDENDA_REPORT.md`; A/B grids per phase in
+  `docs/qa/addenda/` (re-run with `npx tsx scripts/ab-addenda.ts <phase>`).
+- `npm test`: 269 unit tests. `npm run e2e`: 25 end-to-end tests in Edge against ComfyUI (v1, v2 and the addenda). If Darkroom is already open from the desktop shortcut, run the test stack beside it on
   another port with its own library: `DR_SERVER_PORT=5179 DR_DATA_DIR=data/e2e npm run dev`, then `npx playwright test`.
 - `docs/QA_REPORT.md`: every feature run on the golden test pictures (`tests/golden/`), with grids, timings, peak memory,
   a model-switching stress test and the remaining known issues. Re-run with `npx tsx scripts/qa-phase6.ts features`.

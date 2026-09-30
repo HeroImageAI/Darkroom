@@ -13,7 +13,9 @@ import {
   Lasso,
   Maximize,
   Monitor,
+  Loader2,
   Redo2,
+  Sparkles,
   ScanSearch,
   Trash2,
   Undo2,
@@ -30,12 +32,19 @@ import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
 import { go } from '../router';
 import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
 import { planEnhance } from '../../shared/enhance';
+import { maskBBox, planCrop } from '../../shared/cropstitch';
+import { snapPad } from '../../shared/outpaint';
+import { detectPixelBlock } from '../../shared/pixelblock';
+import { CIRCLE_COLOUR, circleFor } from '../../shared/annotate';
+import { PresetPicker } from '../components/PresetPicker';
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
 type Tool = 'move' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
 type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
-type EnhanceKind = 'subtle' | 'strong' | 'upscale';
+/** restore = edit-style (default; fixes blur and low resolution), restore_upscale = restore then SeedVR2 2x,
+ *  subtle = low-denoise img2img touch-up for pictures that are already clean (Addenda Phase 2, DECISIONS 66). */
+type EnhanceKind = 'restore' | 'restore_upscale' | 'subtle';
 interface Pad {
   left: number;
   top: number;
@@ -88,7 +97,7 @@ function Editor({ item }: { item: Item }) {
   const [mode, setMode] = useState<Mode>(() => (sessionStorage.getItem('dr.edit.mode') as Mode) || 'instruct');
   const boot = useApp((s) => s.boot);
   const [editModel, setEditModel] = useState<string>(() => localStorage.getItem('dr.edit.model') || 'qwen');
-  const [enhanceKind, setEnhanceKind] = useState<EnhanceKind>('subtle');
+  const [enhanceKind, setEnhanceKind] = useState<EnhanceKind>('restore');
   const [enhanceAdv, setEnhanceAdv] = useState(false);
   const [denoise, setDenoise] = useState<number | null>(null); // null = model default for the chosen strength
   useEffect(() => {
@@ -99,14 +108,27 @@ function Editor({ item }: { item: Item }) {
     }
   }, [editModel]);
   const modelLabel = boot?.manifest.models[editModel]?.label ?? editModel;
-  const wfFor = (m: 'instruct' | 'inpaint' | 'outpaint' | 'enhance') =>
-    boot?.manifest.edit?.[m]?.[editModel] ?? { instruct: 'qwen_edit', inpaint: 'inpaint', outpaint: 'outpaint', enhance: 'qwen_enhance' }[m];
+  const wfFor = (m: 'instruct' | 'inpaint' | 'outpaint' | 'enhance' | 'enhance_subtle') =>
+    boot?.manifest.edit?.[m]?.[editModel] ??
+    { instruct: 'qwen_edit', inpaint: 'inpaint', outpaint: 'outpaint', enhance: 'qwen_enhance_edit', enhance_subtle: 'qwen_enhance' }[m];
   const enhanceDefaults = (boot?.manifest as any)?.enhance?.[editModel] as { subtle: number; strong: number } | undefined;
-  const effDenoise = denoise ?? (enhanceKind === 'strong' ? enhanceDefaults?.strong : enhanceDefaults?.subtle) ?? 0.3;
+  const effDenoise = denoise ?? enhanceDefaults?.subtle ?? 0.3;
   const [brush, setBrush] = useState(64);
   const [feather, setFeather] = useState(8);
+  const [strength, setStrength] = useState(1); // inpaint "Change strength" (denoise)
+  const [seam, setSeam] = useState(0); // inpaint "Seam feather": 0 = Auto (the A/B-tested grow 8 / blur 6)
+  const [opFeather, setOpFeather] = useState(0); // outpaint "Seam feather" into the original: 0 = Auto
+  const [upScale, setUpScale] = useState(2);
+  const [upShrink, setUpShrink] = useState(0); // "Scale by longer side" first: 0 = off, else the target long side
+  const [upTile, setUpTile] = useState(512);
+  const [upBlock, setUpBlock] = useState(1); // detected pixel-block size of the current picture
+  const promptBox = useRef<HTMLTextAreaElement>(null);
+  const [instrBusy, setInstrBusy] = useState(false);
+  const [instrUndo, setInstrUndo] = useState<string | null>(null);
   const [prompt, setPrompt] = useState(() => sessionStorage.getItem('dr.edit.prompt') ?? '');
   const [onlyMasked, setOnlyMasked] = useState(true);
+  /** Circle quick edit (Qwen): send the picture with a red circle round the masked object instead of a mask. */
+  const [circled, setCircled] = useState(false);
   const [ref, setRef] = useState<{ name: string } | null>(null);
   const [pad, setPad] = useState<Pad>(ZERO_PAD);
   const [crop, setCrop] = useState<Rect | null>(null);
@@ -126,8 +148,9 @@ function Editor({ item }: { item: Item }) {
   const [bgMatte, setBgMatte] = useState('birefnet.safetensors');
   const [bgEdge, setBgEdge] = useState(0);
   const [bgPlate, setBgPlate] = useState(false);
+  const [bgMethod, setBgMethod] = useState<'matte' | 'qwen'>('matte'); // Fast (BiRefNet/SAM) or Best quality (Qwen 2.1)
   // Layers
-  const [layerMode, setLayerMode] = useState<'sam' | 'qwen'>('sam');
+  const [layerMode, setLayerMode] = useState<'sam' | 'qwen21' | 'qwen'>('sam');
   const [layerText, setLayerText] = useState('');
   const [layerCount, setLayerCount] = useState(4);
   const [layerFill, setLayerFill] = useState(true);
@@ -193,8 +216,8 @@ function Editor({ item }: { item: Item }) {
         if (j.status === 'done' && (chainKind === 'upscale' || chainKind === 'enhance')) return; // wait for the follow-up
         if (j.status === 'done' && (j.meta as any).layers) {
           sessionStorage.removeItem('dr.edit.job');
-          setLayerGroup(j.id);
-          toast(`${j.result_ids.length} layers ready. Toggle, reorder, rename and export them on the right.`, 'ok');
+          setLayerGroup(((j.meta as any).groupId as string | undefined) ?? j.id);
+          toast('Layers ready. Toggle, reorder, rename and export them on the right.', 'ok');
           return;
         }
         if (j.status === 'done' && j.result_ids[0]) {
@@ -353,9 +376,35 @@ function Editor({ item }: { item: Item }) {
   );
   useHotkey((e) => e.key === '[' || e.key === ']', (e) => setBrush((b) => Math.max(4, Math.min(400, b + (e.key === ']' ? 8 : -8)))), []);
 
-  const uploadMask = async () => {
-    const blob = await layer.current!.exportPng(feather);
+  /** Mask PNG; `blur` defaults to the Feather slider (crop-and-stitch passes 0 and feathers in the graph). */
+  const uploadMask = async (blur = feather) => {
+    const blob = await layer.current!.exportPng(blur);
     return (await api.upload(blob, 'mask.png')).name;
+  };
+
+  /** The picture with a red circle round the painted mask (circle quick edit, DECISIONS 73); null when nothing is painted. */
+  const uploadCircled = async () => {
+    const mc = layer.current!.mask;
+    const bb = maskBBox(mc.getContext('2d')!.getImageData(0, 0, mc.width, mc.height).data, mc.width, mc.height);
+    if (!bb) return null;
+    const img = new Image();
+    img.src = fileUrl(item.id);
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const g = c.getContext('2d')!;
+    g.drawImage(img, 0, 0);
+    const sx = c.width / mc.width;
+    const sy = c.height / mc.height;
+    const e = circleFor({ x: bb.x * sx, y: bb.y * sy, w: bb.w * sx, h: bb.h * sy }, c.width, c.height);
+    g.strokeStyle = CIRCLE_COLOUR;
+    g.lineWidth = e.stroke;
+    g.beginPath();
+    g.ellipse(e.cx, e.cy, e.rx, e.ry, 0, 0, Math.PI * 2);
+    g.stroke();
+    const blob = await new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not draw the circle'))), 'image/png'));
+    return (await api.upload(blob, 'circled.png')).name;
   };
 
   const submit = async (workflow: string, params: Record<string, string | number>, modeKey: string, model: string, promptText = '') => {
@@ -403,19 +452,40 @@ function Editor({ item }: { item: Item }) {
     };
     if (mode === 'instruct') {
       if (!prompt.trim()) return toast('Type an instruction first, e.g. “make it night time”.', 'info');
-      const masked = onlyMasked && !maskEmpty;
-      const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt, masked }) };
+      const circle = circled && em === 'qwen' && !maskEmpty;
+      const masked = onlyMasked && !maskEmpty && !circle;
+      const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt, masked, circled: circle }) };
       if (ref) params.image_2 = ref.name;
       if (masked) params.mask = await uploadMask();
+      if (circle) {
+        const name = await uploadCircled();
+        if (!name) return toast('Paint over the object to circle first (B for brush).', 'info');
+        params.image_1 = name;
+      }
       return submit(wfFor('instruct'), params, 'edit:instruct', `${modelLabel} edit`, prompt.trim());
     }
     if (mode === 'inpaint') {
       if (maskEmpty) return toast('Paint over the area to replace first (B for brush).', 'info');
       if (!prompt.trim()) return toast('Describe what should appear in the masked area.', 'info');
+      // Crop and stitch (Addenda Phase 3): sample only the mask's surroundings at a higher resolution, then composite
+      // back. The plan comes from the painted mask (src/shared/cropstitch.ts).
+      const mc = layer.current!.mask;
+      const bb = maskBBox(mc.getContext('2d')!.getImageData(0, 0, mc.width, mc.height).data, mc.width, mc.height);
+      if (!bb) return toast('Paint over the area to replace first (B for brush).', 'info');
+      const plan = planCrop(bb, mc.width, mc.height);
+      // seam 0 = Auto: the A/B defaults (grow 8, blur 6); otherwise split between grow and blur (ImageBlur caps at 31)
       const params: Record<string, string | number> = {
-        prompt: composeImagePrompt(T, { model: em, mode: 'inpaint', text: prompt, caption }),
-        mask: await uploadMask(),
-        feather: Math.round(feather),
+        prompt: composeImagePrompt(T, { model: em, mode: 'inpaint', text: prompt, caption, maskShown: em === 'qwen' }),
+        mask: await uploadMask(0),
+        denoise: strength,
+        grow: seam ? Math.round(seam / 4) : 8,
+        feather: seam ? Math.min(31, Math.max(1, Math.round(seam / 2))) : 6,
+        crop_x: plan.crop.x,
+        crop_y: plan.crop.y,
+        crop_w: plan.crop.w,
+        crop_h: plan.crop.h,
+        target_w: plan.target.w,
+        target_h: plan.target.h,
       };
       if (ref) params.image_2 = ref.name;
       return submit(wfFor('inpaint'), params, 'edit:inpaint', `${modelLabel} fill`, prompt.trim());
@@ -423,46 +493,87 @@ function Editor({ item }: { item: Item }) {
     if (mode === 'outpaint') {
       if (!pad.left && !pad.right && !pad.top && !pad.bottom) return toast('Choose how far to extend: drag an edge with the frame tool (O) or use a preset.', 'info');
       const text = prompt.trim();
+      if (em === 'qwen') {
+        // Qwen keeps its v2 route (it sees the original and samples the padded canvas): in the Phase 4 A/B the shared
+        // black-canvas prep made Qwen paint the "marked" area white or leave the black bars (DECISIONS 68).
+        const p = snapPad(W, H, pad, 32);
+        const params: Record<string, string | number> = {
+          prompt: composeImagePrompt(T, { model: em, mode: 'outpaint', text, caption }),
+          pad_left: p.left,
+          pad_top: p.top,
+          pad_right: p.right,
+          pad_bottom: p.bottom,
+        };
+        if (ref) params.image_2 = ref.name;
+        return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text || 'Outpaint');
+      }
+      // Klein (Addenda Phase 4): the server pads the picture on black and builds the mask (gradient into the original,
+      // leftover black at the extended edges); the whole canvas is sampled through crop-and-stitch at full strength.
+      let prep;
+      try {
+        prep = await api.outpaintPrepare({ itemId: item.id, pad, feather: opFeather, step: 8 });
+      } catch (e) {
+        return toast((e as Error).message, 'error');
+      }
+      const plan = planCrop({ x: 0, y: 0, w: prep.width, h: prep.height }, prep.width, prep.height);
       const params: Record<string, string | number> = {
-        prompt: composeImagePrompt(T, { model: em, mode: 'outpaint', text, caption }),
-        pad_left: pad.left,
-        pad_top: pad.top,
-        pad_right: pad.right,
-        pad_bottom: pad.bottom,
+        prompt: composeImagePrompt(T, { model: em, mode: 'outpaint', text, caption, canvas: true }),
+        image_1: prep.image,
+        mask: prep.mask,
+        denoise: 1, // never less: the new area starts as black padding
+        grow: 0, // the prepared mask already reaches into the original
+        feather: 6,
+        crop_x: 0,
+        crop_y: 0,
+        crop_w: prep.width,
+        crop_h: prep.height,
+        target_w: plan.target.w,
+        target_h: plan.target.h,
+        output: 'darkroom/outpaint',
       };
       if (ref) params.image_2 = ref.name;
       return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text || 'Outpaint');
     }
     if (mode === 'enhance') {
-      const cap = await ensureCaption(em === 'klein' ? 'klein' : 'short');
-      const strength = enhanceKind === 'strong' ? 'strong' : 'subtle';
+      const restore = enhanceKind !== 'subtle';
+      // Qwen's Restore prompt ignores the caption (no measurable effect in the A/B), so skip the VLM call for it
+      const cap = restore && em === 'qwen' ? null : await ensureCaption(em === 'klein' ? 'klein' : 'short');
       const plan = planEnhance(W, H);
       const params: Record<string, string | number> = {
-        prompt: composeImagePrompt(T, { model: em, mode: 'enhance', text: '', caption: cap, strength }),
-        denoise: effDenoise,
+        prompt: composeImagePrompt(T, { model: em, mode: 'enhance', text: '', caption: cap, strength: restore ? 'restore' : 'subtle' }),
         megapixels: plan.megapixels,
       };
-      if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
-      const label = `${modelLabel} enhance (${enhanceKind === 'upscale' ? 'upscale + enhance' : strength})`;
-      const ui = { ...item.ui, caption: cap ?? undefined };
-      const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain: enhanceKind === 'upscale' ? { kind: 'upscale' } : undefined };
+      if (!restore) {
+        params.denoise = effDenoise;
+        if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
+      }
+      const workflow = wfFor(restore ? 'enhance' : 'enhance_subtle');
+      // Restore rebuilds detail itself; only the img2img touch-up needs a SeedVR2 pre-upscale for small sources
+      const preScale = restore ? null : plan.preScale;
+      const label = `${modelLabel} ${{ restore: 'restore', restore_upscale: 'restore + upscale', subtle: 'subtle enhance' }[enhanceKind]}`;
+      const ui = { ...item.ui, caption: cap ?? (item.ui as any)?.caption };
+      const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain: enhanceKind === 'restore_upscale' ? { kind: 'upscale' } : undefined };
       try {
         const inp = await api.asInput(item.id);
-        const j = plan.preScale
-          ? // small source: SeedVR2 first, then the enhance pass runs on its result (server chain)
+        const j = preScale
+          ? // small source: SeedVR2 first, then the touch-up runs on its result (server chain)
             await api.submit({
               workflow: 'upscale',
-              params: { image_1: inp.name, scale: plan.preScale, seed: randomSeed() },
-              meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: item.prompt, parentId: item.id, ui, chain: { kind: 'enhance', workflow: wfFor('enhance'), params, meta: enhanceMeta } },
+              params: { image_1: inp.name, scale: preScale, seed: randomSeed() },
+              meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: item.prompt, parentId: item.id, ui, chain: { kind: 'enhance', workflow, params, meta: enhanceMeta } },
             })
-          : await api.submit({ workflow: wfFor('enhance'), params: { image_1: inp.name, seed: randomSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
+          : await api.submit({ workflow, params: { image_1: inp.name, seed: randomSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
         setJobId(j.id);
-        if (plan.preScale) toast(`Small picture: upscaling ${plan.preScale}× with SeedVR2 first, then enhancing — the enhanced version opens when it is ready.`, 'info', 7000);
-        else if (enhanceKind === 'upscale') toast('Enhancing, then upscaling 2× with SeedVR2 — the upscaled version opens when it is ready.', 'info', 7000);
+        if (preScale) toast(`Small picture: upscaling ${preScale}× with SeedVR2 first, then enhancing — the enhanced version opens when it is ready.`, 'info', 7000);
+        else if (enhanceKind === 'restore_upscale') toast('Restoring, then upscaling 2× with SeedVR2 — the upscaled version opens when it is ready.', 'info', 7000);
       } catch (err) {
         toast((err as Error).message, 'error');
       }
       return;
+    }
+    if (mode === 'remove_bg' && bgMethod === 'qwen') {
+      // Addenda Phase 5: Qwen-Image 2.1 native extraction (official template wording), scaled back to the source size
+      return submit('qwen_remove_bg', {}, 'edit:remove_bg', 'Qwen-Image 2.1 extraction');
     }
     if (mode === 'remove_bg') {
       const params: Record<string, string | number> = { matte: bgMatte, edge: bgEdge };
@@ -495,6 +606,32 @@ function Editor({ item }: { item: Item }) {
     if (mode === 'layers') {
       try {
         const inp = await api.asInput(item.id);
+        if (layerMode === 'qwen21') {
+          // Addenda Phase 5: Qwen-Image 2.1 extracts each object as a transparent layer (full resolution) and paints the
+          // background without them; beat Qwen-Image-Layered (640 px) in the A/B. Jobs share a group; ComfyUI runs them in
+          // order, so the last one finishing means the whole group is ready.
+          const objects = layerText.split(',').map((s) => s.replace(/:\s*\d+\s*$/, '').trim()).filter(Boolean);
+          if (!objects.length) return toast('List the objects to separate, e.g. "the red car, the potted palm".', 'info');
+          const groupId = `qwen21-${Date.now().toString(36)}`;
+          const list = objects.length === 1 ? objects[0] : `${objects.slice(0, -1).join(', ')} and ${objects[objects.length - 1]}`;
+          const layers = [
+            { name: 'Background', prompt: `Remove ${list} from <image1> and fill in what is behind them naturally. Keep everything else exactly as it is.` },
+            ...objects.map((o) => ({ name: o, prompt: `Extract ${o} from <image1> onto a transparent background, and output a PNG image` })),
+          ];
+          let last = '';
+          for (const l of layers) {
+            const j = await api.submit({
+              workflow: 'qwen_remove_bg',
+              params: { image_1: inp.name, prompt: l.prompt, seed: randomSeed(), output: 'darkroom/layers/qwen21' },
+              // the background is tagged as a plate so the Layers panel keeps it at the bottom of the stack
+              meta: { mode: l.name === 'Background' ? 'edit:plate' : 'edit:layers', model: 'Qwen-Image 2.1 layer', prompt: l.name, parentId: item.id, ui: item.ui, groupId, layers: true },
+            });
+            last = j.id;
+          }
+          setJobId(last);
+          toast(`Making ${layers.length} layers with Qwen-Image 2.1 (about ${layers.length * 25} s). You can keep working.`, 'info', 8000);
+          return;
+        }
         if (layerMode === 'sam') {
           if (!layerText.trim()) return toast('List the objects to separate, e.g. "person, dog, car:2".', 'info');
           const j = await api.submit({
@@ -529,10 +666,13 @@ function Editor({ item }: { item: Item }) {
       }
       return;
     }
-    return submit('upscale', { scale: 2 }, 'upscale', 'SeedVR2 7B');
+    // Addenda Phase 5: 2-8x, optional "scale by longer side" pre-shrink, tile size as the VRAM setting (overlap = tile/4)
+    const up: Record<string, string | number> = { scale: upScale, tile: upTile, tile_overlap: upTile / 4 };
+    if (upShrink) up.preshrink = upShrink;
+    return submit('upscale', up, 'upscale', `SeedVR2 7B ${upScale}×`);
   };
 
-  useHotkey((e) => (e.ctrlKey || e.metaKey) && e.key === 'Enter', () => void apply(), [mode, prompt, pad, onlyMasked, ref, maskEmpty, crop, tool, running, feather], true);
+  useHotkey((e) => (e.ctrlKey || e.metaKey) && e.key === 'Enter', () => void apply(), [mode, prompt, pad, onlyMasked, circled, editModel, ref, maskEmpty, crop, tool, running, feather], true);
 
   const addRef = async (file?: File, itemId?: string) => {
     try {
@@ -543,12 +683,40 @@ function Editor({ item }: { item: Item }) {
     }
   };
 
+  // Ctrl+V with a picture open: the first empty slot is the Reference slot (Addendum 1 H)
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT') return;
+      const f = [...(e.clipboardData?.files ?? [])].find((x) => x.type.startsWith('image/'));
+      if (!f) return;
+      if (ref) return toast('The Reference slot is already filled. Clear it first to paste a new one.', 'info');
+      void addRef(f).then(() => toast('Pasted into the Reference slot.', 'ok'));
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  });
+
+  // Library "Use as… > Edit reference": remember which picture is open, and pick up a reference sent over from there
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('dr.edit.last', item.id);
+      const pending = sessionStorage.getItem('dr.edit.ref');
+      if (pending) {
+        sessionStorage.removeItem('dr.edit.ref');
+        void addRef(undefined, pending).then(() => toast('Added as the reference picture.', 'ok'));
+      }
+    } catch {
+      /* storage blocked */
+    }
+  }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const parent = lineage.find((x) => x.id === item.parent_id) ?? null;
   const hasPad = pad.left + pad.right + pad.top + pad.bottom > 0;
   const applyLabel =
     tool === 'crop'
       ? 'Apply crop'
-      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', enhance: 'Enhance', remove_bg: 'Remove background', layers: 'Make layers', upscale: 'Upscale 2×' }[mode];
+      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', enhance: 'Enhance', remove_bg: 'Remove background', layers: 'Make layers', upscale: `Upscale ${upScale}×` }[mode];
 
   return (
     <div className="screen" style={{ gridTemplateColumns: '68px 1fr 392px' }}>
@@ -763,6 +931,7 @@ function Editor({ item }: { item: Item }) {
             <label className="field">
               <span>{mode === 'instruct' ? 'Instruction' : mode === 'inpaint' ? 'What should fill the masked area?' : 'Describe the surroundings (optional)'}</span>
               <textarea
+                ref={promptBox}
                 className="input"
                 rows={4}
                 value={prompt}
@@ -772,6 +941,38 @@ function Editor({ item }: { item: Item }) {
                 }
               />
             </label>
+          )}
+          {mode === 'instruct' && (
+            <>
+              <PresetPicker model={editModel as 'klein' | 'qwen'} textarea={promptBox} value={prompt} onApply={setPrompt} hasReference={!!ref} />
+              <div className="field-row" style={{ marginTop: 6, gap: 6 }}>
+                <button
+                  className="btn sm ghost"
+                  disabled={!prompt.trim() || !!instrBusy || !online}
+                  title={editModel === 'qwen' ? 'Rewrite the instruction with the official Qwen-Image 2.1 edit prompt enhancer (looks at the picture)' : 'Rewrite the instruction for Klein: exact change + what stays identical (looks at the picture)'}
+                  onClick={async () => {
+                    setInstrBusy(true);
+                    try {
+                      const r = await api.vlm({ task: 'edit_enhance', variant: editModel, text: prompt, itemId: item.id });
+                      setInstrUndo(prompt);
+                      setPrompt(r.text);
+                      toast(`Instruction rewritten by ${r.model ?? 'the local model'} in ${r.seconds}s. Edit it freely; Undo brings yours back.`, 'ok', 7000);
+                    } catch (e) {
+                      toast((e as Error).message, 'error');
+                    } finally {
+                      setInstrBusy(false);
+                    }
+                  }}
+                >
+                  {instrBusy ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Enhance instruction
+                </button>
+                {instrUndo !== null && (
+                  <button className="btn sm ghost" onClick={() => (setPrompt(instrUndo), setInstrUndo(null))}>
+                    Undo
+                  </button>
+                )}
+              </div>
+            </>
           )}
 
           {(mode === 'instruct' || mode === 'inpaint') && (
@@ -785,12 +986,29 @@ function Editor({ item }: { item: Item }) {
                 </span>
                 <input type="range" min={4} max={400} value={brush} onChange={(e) => setBrush(Number(e.target.value))} />
               </label>
-              <label className="field">
-                <span>
-                  Feather <b className="mono">{feather}px</b>
-                </span>
-                <input type="range" min={0} max={64} value={feather} onChange={(e) => setFeather(Number(e.target.value))} />
-              </label>
+              {mode === 'inpaint' ? (
+                <label className="field" title="How far the new content blends into the original around the mask. Auto suits most edits.">
+                  <span>
+                    Seam feather <b className="mono">{seam === 0 ? 'Auto' : `${seam}px`}</b>
+                  </span>
+                  <input type="range" min={0} max={64} step={4} value={seam} onChange={(e) => setSeam(Number(e.target.value))} />
+                </label>
+              ) : (
+                <label className="field">
+                  <span>
+                    Feather <b className="mono">{feather}px</b>
+                  </span>
+                  <input type="range" min={0} max={64} value={feather} onChange={(e) => setFeather(Number(e.target.value))} />
+                </label>
+              )}
+              {mode === 'inpaint' && (
+                <label className="field" title="100% repaints the masked area completely. Lower keeps more of what is there; below about 80% colour and shape changes may not take.">
+                  <span>
+                    Change strength <b className="mono">{Math.round(strength * 100)}%</b>
+                  </span>
+                  <input type="range" min={50} max={100} step={5} value={Math.round(strength * 100)} onChange={(e) => setStrength(Number(e.target.value) / 100)} />
+                </label>
+              )}
               <div className="field-row" style={{ marginTop: 6 }}>
                 <button className="btn sm" onClick={() => (layer.current?.invert(), setMaskEmpty(!!layer.current?.isEmpty()))}>
                   <FlipHorizontal2 size={14} /> Invert
@@ -803,10 +1021,19 @@ function Editor({ item }: { item: Item }) {
                 B brush · E eraser · L lasso (hold Shift on release to subtract) · [ ] size · V or Alt-drag pans · wheel zooms
               </p>
               {mode === 'instruct' && (
-                <label className="check">
-                  <input type="checkbox" checked={onlyMasked} onChange={(e) => setOnlyMasked(e.target.checked)} disabled={maskEmpty} />
-                  Only change the masked area {maskEmpty && <span className="muted">(paint a mask first)</span>}
-                </label>
+                <>
+                  <label className="check">
+                    <input type="checkbox" checked={onlyMasked && !(circled && editModel === 'qwen')} onChange={(e) => setOnlyMasked(e.target.checked)} disabled={maskEmpty || (circled && editModel === 'qwen')} />
+                    Only change the masked area {maskEmpty && <span className="muted">(paint a mask first)</span>}
+                  </label>
+                  <label
+                    className="check"
+                    title="Qwen sees the picture with a red circle round what you painted, edits that object and removes the circle. Won 5 of 5 in the A/B; Klein is not reliable with circles."
+                  >
+                    <input type="checkbox" checked={circled && editModel === 'qwen'} onChange={(e) => setCircled(e.target.checked)} disabled={maskEmpty || editModel !== 'qwen'} />
+                    Point at it with a red circle {editModel !== 'qwen' ? <span className="muted">(Qwen only)</span> : maskEmpty && <span className="muted">(paint over the object first)</span>}
+                  </label>
+                </>
               )}
             </div>
           )}
@@ -846,8 +1073,16 @@ function Editor({ item }: { item: Item }) {
                   Reset
                 </button>
               </div>
+              {editModel === 'klein' && (
+                <label className="field" style={{ marginTop: 8 }} title="How far the new area blends back into the original picture. Auto = the smaller of 48 px and a sixth of the short side.">
+                  <span>
+                    Seam feather <b className="mono">{opFeather === 0 ? 'Auto' : `${opFeather}px`}</b>
+                  </span>
+                  <input type="range" min={0} max={256} step={8} value={opFeather} onChange={(e) => setOpFeather(Number(e.target.value))} />
+                </label>
+              )}
               <p className="note" style={{ marginTop: 6 }}>
-                Frame tool (O): drag any edge of the picture outwards. Press Fit to see the whole frame.
+                Frame tool (O): drag any edge of the picture outwards. Press Fit to see the whole frame. Extending again later works: any black left at the edges is filled too.
               </p>
             </div>
           )}
@@ -865,9 +1100,9 @@ function Editor({ item }: { item: Item }) {
               <div className="segmented" role="group" aria-label="Enhance strength">
                 {(
                   [
-                    ['subtle', 'Subtle', 'More detail and clarity, same picture'],
-                    ['strong', 'Strong', 'Re-render with much more detail; can change or add small things, especially near the edges'],
-                    ['upscale', 'Upscale + enhance', 'Subtle enhance, then SeedVR2 2x'],
+                    ['restore', 'Restore', 'Removes blur, noise and compression, rebuilds fine detail; keeps the picture as it is'],
+                    ['restore_upscale', 'Restore + upscale', 'Restore, then SeedVR2 2x'],
+                    ['subtle', 'Subtle', 'Light touch-up for pictures that are already sharp'],
                   ] as [EnhanceKind, string, string][]
                 ).map(([k, l, t]) => (
                   <button key={k} type="button" aria-pressed={enhanceKind === k} title={t} onClick={() => { setEnhanceKind(k); setDenoise(null); }}>
@@ -876,12 +1111,16 @@ function Editor({ item }: { item: Item }) {
                 ))}
               </div>
               <p className="note" style={{ marginTop: 6 }}>
-                The picture is described by the local Qwen3-VL, then re-rendered at low strength. Composition, faces and text are kept.
+                {enhanceKind === 'subtle'
+                  ? 'Re-renders the picture at low strength. Best on pictures that are already sharp; it does not fix blur.'
+                  : 'Redraws the picture from itself as an edit: fixes motion blur, lens blur, noise and low resolution while keeping the composition, faces and colours.'}
               </p>
-              <label className="check">
-                <input type="checkbox" checked={enhanceAdv} onChange={(ev) => setEnhanceAdv(ev.target.checked)} /> Advanced
-              </label>
-              {enhanceAdv && (
+              {enhanceKind === 'subtle' && (
+                <label className="check">
+                  <input type="checkbox" checked={enhanceAdv} onChange={(ev) => setEnhanceAdv(ev.target.checked)} /> Advanced
+                </label>
+              )}
+              {enhanceKind === 'subtle' && enhanceAdv && (
                 <label className="field">
                   <span>
                     Strength (denoise) <b className="mono">{effDenoise.toFixed(2)}</b>
@@ -925,7 +1164,21 @@ function Editor({ item }: { item: Item }) {
           )}
           {mode === 'remove_bg' && (
             <div>
-              <p className="note" style={{ marginTop: 0 }}>
+              <div className="segmented" role="group" aria-label="Background removal method">
+                <button type="button" aria-pressed={bgMethod === 'matte'} onClick={() => setBgMethod('matte')} title="BiRefNet or Lucida matting, optionally SAM 3.1 to pick the subject. About 1-5 s.">
+                  Fast
+                </button>
+                <button type="button" aria-pressed={bgMethod === 'qwen'} onClick={() => setBgMethod('qwen')} title="Qwen-Image 2.1 extracts the subject itself. About 25 s. Best on glass, smoke and fine hair.">
+                  Best quality (Qwen)
+                </button>
+              </div>
+              {bgMethod === 'qwen' ? (
+                <p className="note">
+                  Qwen-Image 2.1 draws the subject again with real transparency: see-through glass stays see-through and stray hairs keep their soft edges. About 25 seconds.
+                </p>
+              ) : (
+                <>
+              <p className="note" style={{ marginTop: 6 }}>
                 Real transparency (PNG with alpha). The soft edge comes from a matting model (good on hair and fur); naming the subject lets SAM 3.1 pick which object to keep.
               </p>
               <label className="field">
@@ -949,6 +1202,8 @@ function Editor({ item }: { item: Item }) {
                 <input type="checkbox" checked={bgPlate} onChange={(ev) => setBgPlate(ev.target.checked)} />
                 Also make a clean background plate (Qwen-Image 2.1)
               </label>
+                </>
+              )}
             </div>
           )}
           {mode === 'layers' && (
@@ -958,11 +1213,23 @@ function Editor({ item }: { item: Item }) {
                 <button type="button" aria-pressed={layerMode === 'sam'} onClick={() => setLayerMode('sam')} title="One layer per named object, cut with SAM 3.1">
                   Objects (SAM)
                 </button>
-                <button type="button" aria-pressed={layerMode === 'qwen'} onClick={() => setLayerMode('qwen')} title="Native RGBA layers from Qwen-Image-Layered (slow)">
+                <button type="button" aria-pressed={layerMode === 'qwen21'} onClick={() => setLayerMode('qwen21')} title="Qwen-Image 2.1 extracts each named object as a transparent layer at full resolution, plus a clean background. About 25 s per layer.">
+                  Objects (Qwen 2.1)
+                </button>
+                <button type="button" aria-pressed={layerMode === 'qwen'} onClick={() => setLayerMode('qwen')} title="Native RGBA layers from Qwen-Image-Layered: no names needed, but 640 px and slow">
                   Automatic (Qwen-Layered)
                 </button>
               </div>
-              {layerMode === 'sam' ? (
+              {layerMode === 'qwen21' && (
+                <>
+                  <label className="field" style={{ marginTop: 8 }}>
+                    <span>Objects</span>
+                    <input className="input" placeholder='e.g. "the red car, the potted palm"' value={layerText} onChange={(ev) => setLayerText(ev.target.value)} />
+                  </label>
+                  <p className="note">One transparent layer per object at full resolution, plus the background with them removed. Best quality; about 25 seconds per layer.</p>
+                </>
+              )}
+              {layerMode === 'qwen21' ? null : layerMode === 'sam' ? (
                 <>
                   <label className="field" style={{ marginTop: 8 }}>
                     <span>Objects</span>
@@ -986,7 +1253,65 @@ function Editor({ item }: { item: Item }) {
               </div>
             </div>
           )}
-          {mode === 'upscale' && <p className="note">Doubles the resolution, adding real detail (SeedVR2, a dedicated upscaler, not an image model). About 20 seconds for a 1 MP picture.</p>}
+          {mode === 'upscale' && (
+            <div>
+              <p className="section-label">
+                Upscale <span className="mono">{Math.round((upShrink ? Math.min(1, upShrink / Math.max(W, H)) : 1) * W * upScale)} × {Math.round((upShrink ? Math.min(1, upShrink / Math.max(W, H)) : 1) * H * upScale)}</span>
+              </p>
+              <div className="segmented" role="group" aria-label="Upscale factor">
+                {[2, 4, 6, 8].map((f) => (
+                  <button key={f} type="button" aria-pressed={upScale === f} onClick={() => setUpScale(f)}>
+                    {f}×
+                  </button>
+                ))}
+              </div>
+              <label className="check" title="Shrinks the picture before upscaling. Sounds backwards, but SeedVR2 restores small and pixelated pictures best, so this often gives cleaner results on them.">
+                <input
+                  type="checkbox"
+                  checked={upShrink > 0}
+                  onChange={(e) => {
+                    if (!e.target.checked) return (setUpShrink(0), setUpBlock(1));
+                    // a blown-up pixelated picture only de-pixelates when shrunk back to its real size (Phase 5 A/B)
+                    let block = 1;
+                    try {
+                      const im = imgRef.current;
+                      if (im && im.naturalWidth) {
+                        const cv = document.createElement('canvas');
+                        cv.width = im.naturalWidth;
+                        cv.height = im.naturalHeight;
+                        const cx = cv.getContext('2d', { willReadFrequently: true })!;
+                        cx.drawImage(im, 0, 0);
+                        block = detectPixelBlock(cx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height);
+                      }
+                    } catch {
+                      /* keep the default */
+                    }
+                    setUpBlock(block);
+                    setUpShrink(block > 1 ? Math.max(64, Math.round(Math.max(W, H) / block)) : 512);
+                  }}
+                />{' '}
+                Scale by longer side first
+              </label>
+              {upShrink > 0 && upBlock > 1 && <p className="note">Pixelated picture: blocks of {upBlock} px, so its real size is about {Math.round(Math.max(W, H) / upBlock)} px. Shrinking to that lets SeedVR2 rebuild real detail.</p>}
+              {upShrink > 0 && (
+                <label className="field">
+                  <span>
+                    Longer side <b className="mono">{upShrink}px</b>
+                  </span>
+                  <input type="range" min={64} max={1024} step={16} value={upShrink} onChange={(e) => setUpShrink(Number(e.target.value))} />
+                </label>
+              )}
+              <label className="field" title="Smaller tiles use less graphics memory and take a little longer. Lower it if a large upscale runs out of memory.">
+                <span>Tile size (graphics memory)</span>
+                <select className="input" value={upTile} onChange={(e) => setUpTile(Number(e.target.value))}>
+                  <option value={256}>256 - least memory</option>
+                  <option value={512}>512 - default</option>
+                  <option value={1024}>1024 - fastest, most memory</option>
+                </select>
+              </label>
+              <p className="note">Adds real detail with SeedVR2, a dedicated upscaler. Transparent pictures keep their transparency.</p>
+            </div>
+          )}
           {tool === 'crop' && <p className="note warn">Crop: drag a box on the picture. {crop ? `${Math.round(crop.w)} × ${Math.round(crop.h)} at ${Math.round(crop.x)}, ${Math.round(crop.y)}` : ''}</p>}
           <p className="note">Every apply saves a new version; nothing is overwritten.</p>
         </div>

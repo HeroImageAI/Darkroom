@@ -1,0 +1,20 @@
+{
+  "circle-edit": [
+    {
+      "id": "klein-annot",
+      "label": "Klein edit on the annotated picture"
+    },
+    {
+      "id": "qwen-annot",
+      "label": "Qwen edit on the annotated picture"
+    },
+    {
+      "id": "qwen-guide",
+      "label": "Qwen: clean picture + annotated copy as <image2>"
+    },
+    {
+      "id": "klein-guide",
+      "label": "Klein: clean picture + annotated copy as image 2"
+    }
+  ]
+}

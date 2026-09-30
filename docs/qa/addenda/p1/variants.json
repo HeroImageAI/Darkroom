@@ -1,0 +1,62 @@
+{
+  "klein-t2i-sampler": [
+    {
+      "id": "flux2",
+      "label": "Darkroom: Flux2Scheduler + euler"
+    },
+    {
+      "id": "onenode",
+      "label": "One Node: AuraFlow shift 3 + er_sde/simple"
+    }
+  ],
+  "klein-edit-sampler": [
+    {
+      "id": "flux2",
+      "label": "Darkroom: Flux2Scheduler + euler"
+    },
+    {
+      "id": "onenode",
+      "label": "One Node: AuraFlow shift 3 + er_sde/simple"
+    }
+  ],
+  "klein-kv": [
+    {
+      "id": "fp8",
+      "label": "Darkroom: klein-9b fp8mixed"
+    },
+    {
+      "id": "kv",
+      "label": "klein-9b-kv bf16 + FluxKVCache"
+    }
+  ],
+  "qwen-steps-draft": [
+    {
+      "id": "s25",
+      "label": "25 steps (ComfyUI template, Darkroom)"
+    },
+    {
+      "id": "s40",
+      "label": "40 steps (official pipeline)"
+    }
+  ],
+  "qwen-native-2k": [
+    {
+      "id": "s25",
+      "label": "Native 2K, 25 steps"
+    },
+    {
+      "id": "s40",
+      "label": "Native 2K, 40 steps"
+    }
+  ],
+  "qwen-refs-vram": [
+    {
+      "id": "draft",
+      "label": "Draft 1 MP"
+    },
+    {
+      "id": "native2k",
+      "label": "Native 2K"
+    }
+  ]
+}

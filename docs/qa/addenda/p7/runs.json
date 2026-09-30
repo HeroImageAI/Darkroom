@@ -1,0 +1,1085 @@
+[
+  {
+    "group": "vlm-general",
+    "key": "caption-short-01_portrait",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 4.4,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "An elderly woman with white hair smiles warmly while wearing a green knitted scarf, seated near a window.",
+    "cold": true
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-01_portrait",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 3.8,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "An elderly woman with short, wavy white hair smiles gently at the camera. Her face is deeply lined with wrinkles around her eyes and mouth, revealing a warm, content expression. She wears a thick, bright green knitted scarf with a visible openwork pattern that drapes around her neck. The lighting comes from the left, softly illuminating her features and casting subtle shadows. Behind her, a window frame is visible on the left, suggesting natural light. The background is softly blurred, keeping focus entirely on her. The image is a close-up portrait shot, capturing her from the shoulders up, emphasizing her serene and welcoming demeanor.\n\nThe color palette is dominated by the vibrant green of the scarf against her pale skin and the muted tones of the background. The photograph has a naturalistic, intimate quality, likely taken indoors during daytime."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-01_portrait",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2.1,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A close-up portrait of an elderly woman with silver hair and warm, crinkled eyes smiling gently at the viewer, wearing a textured green knitted scarf; captured with soft natural light from a window using a 50mm lens, creating a candid, intimate feel with shallow depth of field and rich skin tones."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-short-03_text_scene",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 1.9,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Sunrise Bakery displays fresh bread through its windows on a cobblestone street, inviting passersby with a chalkboard sign promising daily offerings."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-03_text_scene",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 4.2,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A charming, corner bakery named \"SUNRISE BAKERY\" in gold lettering on a black sign above its entrance. The shopfront features two large, multi-paned windows with ornate white scrollwork along their dark frames, displaying an inviting array of golden-brown loaves and rolls. A dark blue door stands slightly ajar, revealing warm interior lighting. Outside, a small chalkboard sign reads \"Fresh bread daily.\" The building’s facade is weathered white plaster, contrasting with the cobblestone street that curves away into a narrow alley lined with older buildings. The scene is bathed in soft, natural daylight, highlighting textures from the stone to the baked goods.\n\nThe camera angle is eye-level, capturing the bakery as the central focus with a shallow depth of field that blurs the background buildings slightly. The color palette is muted, dominated by earthy tones, deep blues, and creamy whites, evoking a cozy, rustic atmosphere."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-03_text_scene",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2.3,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A charming corner bakery named \"SUNRISE BAKERY\" in bold gold letters, its dark-framed windows display golden loaves of bread under warm interior light, inviting passersby on a cobblestone street; captured with a wide-angle lens, natural daylight illuminates weathered stone walls and a chalkboard sign reading \"Fresh bread daily\" leaning beside the open door."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-short-04_busy_street",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 1.9,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A bustling city street teems with pedestrians, yellow taxis, a red tram, and cyclists navigating between tall buildings under bright sunlight."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-04_busy_street",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 3.6,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle view captures a bustling urban street, framed by the dark wooden edges of a window. The asphalt road is filled with traffic: bright yellow taxis, silver sedans, and a prominent red tram glide along embedded tracks. Cyclists navigate between vehicles, while pedestrians crowd sidewalks lined with shops featuring awnings in orange, green, and blue. Buildings on either side are multi-story, showing signs of age with weathered facades and visible balconies. Bright sunlight illuminates the scene, casting sharp shadows and highlighting the vibrant colors of the vehicles and storefronts. Overhead wires crisscross above the street, adding to the dense, layered feel of city life.\n\nThe image is a photograph, conveying the energy and density of daily urban activity from an elevated perspective."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-04_busy_street",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2.1,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A bustling city street teeming with pedestrians, yellow taxis, a red tram, and cyclists moving along embedded tracks under bright daylight, captured from an elevated window view with a wide-angle lens; buildings line both sides with awnings and signs, including \"Pacific\" on a red banner, conveying dense urban energy and daily life."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-klein-03_text_scene",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2.8,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for FLUX.2 [klein]. Rules: natural descriptive prose in one paragraph, not a tag list, no weights or brackets; put the main subject and action first, then style and medium (for photographs name lens, lighting and film look), then setting and atmosphere; describe only what should appear, never use negations; if there is visible text, quote it exactly in double quotes and say where it is and what it looks like; Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the prompt.",
+      "prompt": "Write a FLUX.2 [klein] prompt that recreates this image as closely as possible.",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A charming corner bakery with a black sign reading \"SUNRISE BAKERY\" in gold letters, its windows displaying golden loaves of bread under warm interior light; a small chalkboard sign outside reads \"Fresh bread daily\" in white script. The cobblestone street stretches into a quiet alley lined with weathered buildings, captured with soft natural daylight and a wide-angle lens that emphasizes the inviting storefront."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-qwen-03_text_scene",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 3.8,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for Qwen-Image. Rules: a detailed, structured description; describe the subject's characteristics (appearance, expression, pose, count), the spatial relationships and shot framing, then the visual style (choose a precise style such as 'documentary photography style with fine details'); if the image contains text, enclose the exact text in double quotes and state its position (e.g. top-left corner) and its style; never use negative words; under 200 words; end with 'Ultra HD, 4K, cinematic composition.' only if the image is a photograph or cinematic render. Never name real places, brands or people unless their name is visible in the image as text. Output only the prompt.",
+      "prompt": "Write a Qwen-Image prompt that recreates this image as closely as possible.",
+      "max_tokens": 520,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A charming, historic corner bakery named \"SUNRISE BAKERY\" in bold gold lettering on a black sign above the entrance. The building has weathered white and dark gray walls with ornate white scrollwork framing the large, multi-paned windows displaying golden-brown loaves of bread. A dark blue wooden door stands slightly ajar, revealing warm interior lighting. A small chalkboard sign on the sidewalk reads \"Fresh bread daily\" in neat cursive script. The bakery sits on a cobblestone street that curves gently into the background, flanked by traditional stone buildings with aged facades. Soft morning light illuminates the scene, casting gentle shadows. Shot from a low angle, capturing the inviting storefront and the quiet street ambiance. Documentary photography style with fine details. Ultra HD, 4K, cinematic composition."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-klein-04_busy_street",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2.4,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for FLUX.2 [klein]. Rules: natural descriptive prose in one paragraph, not a tag list, no weights or brackets; put the main subject and action first, then style and medium (for photographs name lens, lighting and film look), then setting and atmosphere; describe only what should appear, never use negations; if there is visible text, quote it exactly in double quotes and say where it is and what it looks like; Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the prompt.",
+      "prompt": "Write a FLUX.2 [klein] prompt that recreates this image as closely as possible.",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A bustling city street teeming with pedestrians, yellow taxis, a red tram, and cyclists moving along embedded tracks under bright daylight. Tall buildings line both sides, their facades adorned with colorful awnings and signs. The scene is viewed from an elevated window frame, capturing the vibrant energy of urban life."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-qwen-04_busy_street",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 3.1,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for Qwen-Image. Rules: a detailed, structured description; describe the subject's characteristics (appearance, expression, pose, count), the spatial relationships and shot framing, then the visual style (choose a precise style such as 'documentary photography style with fine details'); if the image contains text, enclose the exact text in double quotes and state its position (e.g. top-left corner) and its style; never use negative words; under 200 words; end with 'Ultra HD, 4K, cinematic composition.' only if the image is a photograph or cinematic render. Never name real places, brands or people unless their name is visible in the image as text. Output only the prompt.",
+      "prompt": "Write a Qwen-Image prompt that recreates this image as closely as possible.",
+      "max_tokens": 520,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "High-angle view from a window overlooking a bustling urban street filled with pedestrians, yellow taxis, cars, and a red tram on embedded tracks. Buildings line both sides of the street, featuring storefronts with awnings and signage; one prominent red vertical sign is visible on the right. People are walking, cycling, and gathering near shops under bright daylight. The scene captures dense city life with varied architecture, including older concrete structures and modern high-rises in the distance. Shot framed by wooden window edges on left and right. Documentary photography style with fine details, natural lighting, and authentic textures. Ultra HD, 4K, cinematic composition."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-1",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: a lighthouse in a storm\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A towering stone lighthouse stands defiant against a howling storm, its beacon pulsing through driving rain and churning gray seas. Waves crash violently at its base, spray arcing into the wind as lightning fractures the sky behind it. Shot on a wide-angle lens with shallow depth of field, the scene glows under dramatic, diffused twilight light, emphasizing the lighthouse’s weathered texture and resilient glow."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-2",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 1.8,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: poster for a jazz night called \"Blue Hour\" on Friday\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A vibrant poster for a Friday jazz night titled \"Blue Hour,\" featuring a smoky bar scene with warm amber lights reflecting off polished wood and glass, a saxophonist mid-performance under a deep blue spotlight, framed by vintage typography and subtle neon accents, evoking 1950s New Orleans nightlife through rich textures and cinematic depth."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-3",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 1.8,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: a cat wearing a tiny crown\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A regal cat, its fur soft and sunlit, wears a miniature golden crown perched delicately on its head, catching the light like polished metal. Shot with a shallow depth-of-field lens, the scene is warm and intimate, set against a blurred wooden floor and a velvet cushion, evoking quiet majesty in a cozy indoor space."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-edit-night",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 1.9,
+    "peak": 11,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light direction); end with one preservation clause that names what stays identical (the subject, face, pose, composition, background); for relighting, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: make it night\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Relight the scene with warm artificial light from the upper left, casting soft shadows. Keep the red car, blue house, palm tree, and white door identical in pose and composition."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-edit-sign",
+    "variant": "qwen3vl8b",
+    "ok": true,
+    "seconds": 2,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3vl_8b_int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light direction); end with one preservation clause that names what stays identical (the subject, face, pose, composition, background); for relighting, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: change the sign to MOONLIGHT BAKERY\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Change the sign to \"MOONLIGHT BAKERY\" in white serif letters on a black background. Keep the subject, face, pose, composition, and background identical."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-short-01_portrait",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 6.3,
+    "peak": 11,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "An elderly woman with short white hair and a warm smile faces the camera in a close-up portrait, wearing a green knitted scarf around her neck, lit by soft natural window light from the left against a softly blurred indoor background.",
+    "cold": true
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-01_portrait",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4.9,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "</think>\n\nAn elderly woman with short, softly tousled white hair is captured in a close-up head-and-shoulders portrait, smiling warmly toward the camera with gently crinkled eyes and visible laugh lines. Her face shows natural age features — forehead wrinkles, crow's feet, and a few small moles — rendered with realistic skin texture. She wears a chunky green pointelle-knit scarf wrapped around her neck, its openwork pattern clearly visible, with a hint of gray garment at the shoulder. The background is a softly blurred indoor setting with a bright window on the left and warm neutral tones on the right. Soft natural daylight from the left window illuminates her face evenly, creating gentle highlights on her hair and soft shadows on the right side of her face. The image is a real photograph with shallow depth of field, warm natural color palette, centered framing, and an intimate, serene mood."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-01_portrait",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 5.1,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A warm, natural indoor portrait photograph of an elderly woman with short white hair, smiling gently toward the camera, her face framed by soft window light coming from the left side of the frame. She wears a chunky green open-knit scarf wrapped around her neck and shoulders, with a hint of gray knitwear visible at the shoulder. Her expression is warm and content, with natural age lines, freckles, and a gentle smile showing teeth. The background is a softly blurred interior with a bright window edge on the left and muted warm brown tones on the right, rendered with shallow depth of field and soft directional daylight that models her facial features with gentle highlights on the forehead, nose bridge, and cheekbones. Recreate this as a realistic photographic portrait with natural skin texture, fine hair strands, and coherent lighting, keeping the same composition: head-and-shoulders close-up, subject centered, facing forward."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-short-03_text_scene",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A street-level view of a corner bakery on a cobblestone lane, with the main subject being the \"SUNRISE BAKERY\" storefront featuring cream lettering on a black fascia board, black-framed display windows filled with loaves of bread, an open dark blue door revealing the lit interior, and a chalkboard sign reading \"Fresh bread daily\" leaning against the wall beside the entrance."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-03_text_scene",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 6.6,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "The image is a real photograph of a street-side bakery storefront on a narrow cobblestone lane. The main subject is the \"SUNRISE BAKERY\" shop, with its name painted in large cream serif capitals on a black fascia board above the windows. The facade has weathered white plaster walls with peeling paint and dark black-painted trim; two large multi-pane glass display windows with black frames show rows of golden breads and pastries on shelves inside, and between them an open dark teal door reveals a dim interior with warm hanging lights and shelved goods. To the right of the door stands a small A-frame chalkboard sign with handwritten white text reading \"Fresh bread daily\". The cobblestone pavement runs diagonally into the background on the right, lined with older buildings of cream and brick facades, receding windows, hanging flower baskets, and a blank dark signboard. Lighting is soft overcast daylight, even and diffuse, with gentle shadows; the color palette is muted creams, grays, and blacks with warm golden bread tones and cream lettering as accents. The camera views the storefront from across the street at eye level, with the shop occupying the left two-thirds and the lane receding to the right, deep depth of field keeping both foreground and background fairly sharp. Visible text: \"SUNRISE BAKERY\" on the fascia, \"Fresh bread daily\" on the chalkboard."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-03_text_scene",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 5.3,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A photorealistic street photograph of a historic European bakery storefront on a narrow cobblestone lane. The main subject is the corner bakery with a black fascia board bearing the cream serif lettering \"SUNRISE BAKERY\", two large black-framed multi-pane display windows filled with golden loaves and rolls, and an open dark teal door revealing a warmly lit interior with shelves of bread. Beside the door stands a wooden A-frame chalkboard sign with handwritten white text reading \"Fresh bread daily\". The building facade shows weathered whitewashed plaster with peeling paint and darkened stone base, while the adjacent buildings recede down the lane with cream and brick walls, hanging flower baskets, and wrought-iron details. The foreground is a wet-looking grey cobblestone pavement stretching into the distance under soft overcast daylight, with gentle reflections on the stones. Render as a natural, realistic photograph with a medium focal length, eye-level viewpoint, soft diffused daylight, muted warm tones, and fine film-like grain."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-short-04_busy_street",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 3.3,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle view looking down a crowded city street, with a red tram traveling along the tracks in the middle of the road, yellow taxis and cars driving toward the camera, cyclists riding on the street, dense crowds of pedestrians on both sidewalks lined with shops and awnings, tall aged buildings rising on both sides under bright daylight."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-04_busy_street",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 5.9,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle view looking down a crowded urban street canyon, framed by dark window-edge borders on the left and right. The street runs straight toward the horizon between densely packed mid-rise buildings in beige, gray, and tan tones, with numerous windows, air-conditioning units, and signage attached to the facades. A red tram travels toward the camera on rails embedded in the asphalt road, flanked by yellow taxis, silver and gray sedans, motorcycles, and cyclists riding along the lane. Pedestrians fill both sidewalks, walking past storefronts shaded by green, orange, red, and blue awnings; overhead wires and street lamps line the street, and a red vertical banner sign hangs on the right-side building. Bright daylight casts short shadows, with a clear sky visible at the far end of the street where distant skyscrapers rise. The color palette is dominated by warm beige and gray concrete tones punctuated by the red tram, yellow taxis, and colorful awnings, rendered as a realistic photograph with deep perspective convergence and a sharp focus throughout the street."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-04_busy_street",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 5.7,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle daytime street photograph looking down a dense urban canyon, with the most prominent element being a wide asphalt road running from the bottom center of the frame toward the distant skyline, carrying a red tram on its rails in the middle distance, yellow taxis, white and gray sedans, cyclists riding along the lanes, and crowds of pedestrians filling both sidewalks beneath rows of aged mid-rise buildings with weathered facades, awnings, shop signs, air-conditioner units, and tangled utility lines. The scene is rendered as a realistic photograph taken from an elevated vantage point between two dark window-frame edges at the left and right borders, under bright clear daylight that casts short crisp shadows on the pavement, with a medium-wide lens compressing the receding street into a deep one-point perspective, saturated natural colors, and fine documentary detail throughout. Visible signage includes a vertical red banner on the right reading \"CITY\" and a yellow storefront sign on the right reading \"中華茶館\", both preserved exactly as legible text at their positions. The overall look is a sharp, high-resolution urban documentary photograph with natural film-like color rendering."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-klein-03_text_scene",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 7.6,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for FLUX.2 [klein]. Rules: natural descriptive prose in one paragraph, not a tag list, no weights or brackets; put the main subject and action first, then style and medium (for photographs name lens, lighting and film look), then setting and atmosphere; describe only what should appear, never use negations; if there is visible text, quote it exactly in double quotes and say where it is and what it looks like; Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the prompt.",
+      "prompt": "Write a FLUX.2 [klein] prompt that recreates this image as closely as possible.",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A photorealistic street photograph of a small corner bakery on a narrow cobblestone lane, recreating the scene exactly as seen. The main subject is a weathered two-story building housing \"SUNRISE BAKERY\", with cream serif capital letters painted on a black fascia board above the entrance, and beside the doorway a small wooden A-frame chalkboard sign reading \"Fresh bread daily\" in white handwritten chalk lettering. The shopfront has a dark teal-painted door standing open toward the viewer, flanked by two large multi-pane windows with black frames decorated with white ornamental scrollwork painted along their edges; inside the left window a wooden display shelf holds rows of golden crusty loaves and rolls, and the right window likewise shows stacked breads under warm interior light. Through the open door the dim bakery interior reveals shelves and a counter with a small white cup. The building's walls are aged plaster in off-white and grey tones with peeling paint and dark damp patches at the base, and the black window frames and door show worn paint. To the right the lane recedes past adjacent old buildings of cream, brick and stone with hanging flower baskets and a blank dark sign, all rendered in soft focus. The ground is uneven grey cobblestone stretching into the distance. Natural overcast daylight with warm interior glow from the shop windows, gentle shadows, realistic photographic texture, slight depth of field keeping the bakery sharp while the far end of the street softens. Preserve every"
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-qwen-03_text_scene",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 10.7,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for Qwen-Image. Rules: a detailed, structured description; describe the subject's characteristics (appearance, expression, pose, count), the spatial relationships and shot framing, then the visual style (choose a precise style such as 'documentary photography style with fine details'); if the image contains text, enclose the exact text in double quotes and state its position (e.g. top-left corner) and its style; never use negative words; under 200 words; end with 'Ultra HD, 4K, cinematic composition.' only if the image is a photograph or cinematic render. Never name real places, brands or people unless their name is visible in the image as text. Output only the prompt.",
+      "prompt": "Write a Qwen-Image prompt that recreates this image as closely as possible.",
+      "max_tokens": 520,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "{\"a\": 1, \"b\": 2, \"c\": 3, \"d\": 4, \"e\": 5, \"f\": 6, \"g\": 7, \"h\": 8, \"i\": 9, \"j\": 10, \"k\": 11, \"l\": 12, \"m\": 13, \"n\": 14, \"o\": 15, \"p\": 16, \"q\": 17, \"r\": 18, \"s\": 19, \"t\": 20, \"u\": 21, \"v\": 22, \"w\": 23, \"x\": 24, \"y\": 25, \"z\": 26, \"aa\": 27, \"ab\": 28, \"ac\": 29, \"ad\": 30, \"ae\": 31, \"af\": 32, \"ag\": 33, \"ah\": 34, \"ai\": 35, \"aj\": 36, \"ak\": 37, \"al\": 38, \"am\": 39, \"an\": 40, \"ao\": 41, \"ap\": 42, \"aq\": 43, \"ar\": 44, \"as\": 45, \"at\": 46, \"au\": 47, \"av\": 48, \"aw\": 49, \"ax\": 50, \"ay\": 51, \"az\": 52, \"ba\": 53, \"bb\": 54, \"bc\": 55, \"bd\": 56, \"be\": 57, \"bf\": 58, \"bg\": 59, \"bh\": 60, \"bi\": 61, \"bj\": 62, \"bk\": 63, \"bl\": 64, \"bm\": 65, \"bn\": 66, \"bo\": 67, \"bp\": 68, \"bq\": 69, \"br\": 70, \"bs\": 71, \"bt\": 72, \"bu\": 73, \"bv\": 74, \"bw\": 75, \"bx\":"
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-klein-04_busy_street",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 5.6,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for FLUX.2 [klein]. Rules: natural descriptive prose in one paragraph, not a tag list, no weights or brackets; put the main subject and action first, then style and medium (for photographs name lens, lighting and film look), then setting and atmosphere; describe only what should appear, never use negations; if there is visible text, quote it exactly in double quotes and say where it is and what it looks like; Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the prompt.",
+      "prompt": "Write a FLUX.2 [klein] prompt that recreates this image as closely as possible.",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle daytime street view looking down a busy urban canyon, with the main subject being the wide asphalt road running from the bottom center of the frame toward the distant skyline, carrying a red tram in the middle distance, yellow taxis, white and gray sedans, cyclists riding along the tracks, and dense crowds of pedestrians on both sidewalks. On the left side, multi-story aged buildings with weathered facades line the street, with shop awnings in green, orange, and blue stretching over the sidewalk crowds; on the right side, similar tall buildings rise with a vertical red signboard bearing white lettering, a red flag, and a blue canopy sheltering pedestrians. The street is embedded with tram rails, and the far end opens to bright sky and distant skyscrapers. Bright midday sunlight casts short shadows beneath vehicles and people, with warm neutral daylight and a clear, crisp photographic look rendered through a medium-wide lens from an elevated vantage point, preserving the original composition, perspective, and color palette exactly."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-qwen-04_busy_street",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 5.5,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for Qwen-Image. Rules: a detailed, structured description; describe the subject's characteristics (appearance, expression, pose, count), the spatial relationships and shot framing, then the visual style (choose a precise style such as 'documentary photography style with fine details'); if the image contains text, enclose the exact text in double quotes and state its position (e.g. top-left corner) and its style; never use negative words; under 200 words; end with 'Ultra HD, 4K, cinematic composition.' only if the image is a photograph or cinematic render. Never name real places, brands or people unless their name is visible in the image as text. Output only the prompt.",
+      "prompt": "Write a Qwen-Image prompt that recreates this image as closely as possible.",
+      "max_tokens": 520,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "{\"a bustling elevated-view street scene of a dense urban canyon, shot from a high vantage point looking down the avenue: a wide asphalt road with embedded tram rails runs through the center, flanked on both sides by tall aged apartment buildings in beige, gray and cream tones with weathered facades, air-conditioning units, windows and balconies; shopfronts line the sidewalks with colorful awnings — green, orange, red and blue canopies — and vertical signage, including a red vertical banner on the right reading \"24\" and a yellow signboard with Chinese characters; the street is crowded with pedestrians walking along the sidewalks, yellow taxis, white and dark sedans driving toward the camera, cyclists riding along the road, and a red tram approaching in the middle distance under bright midday sunlight casting short shadows; preserve the exact composition, camera angle, traffic layout, crowd density, building arrangement and signage positions of the original photo, rendered as a realistic documentary-style city photograph with fine detail, natural daylight and high clarity.\"}"
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-1",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4.6,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: a lighthouse in a storm\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A weathered stone lighthouse standing on a rocky cliff, its black-painted iron railing and glass lantern room gleaming under the storm's light, as fierce waves crash against the rocks below and spray white foam into the air. The sky is filled with heavy churning clouds, and wind-driven rain streaks diagonally across the frame, while a single beam of warm light cuts through the darkness from the lantern room, illuminating drifting mist and raindrops. The sea surges in deep blue-green tones with whitecaps rising, and the wet stone surface of the cliff reflects the cold ambient light and the warm glow of the lamp. Rendered as a cinematic dramatic photograph with a medium-telephoto lens at eye level relative to the tower, shallow depth of field softening the distant horizon, rich contrast between the cold storm blues and the warm golden light, evoking a moody, atmospheric night scene."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-2",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 5.9,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: poster for a jazz night called \"Blue Hour\" on Friday\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A cinematic jazz-night poster titled \"Blue Hour\" set for Friday. The main subject is a saxophonist in a dark navy suit standing center stage, silhouetted against a deep indigo-to-teal gradient night sky, playing a tenor saxophone with warm golden light catching the rim of the instrument and his profile. Behind him, a softly blurred live band with double bass and drums on a dim wooden stage, faint haze drifting through cool blue spotlights. Typography: at the top center, the title \"Blue Hour\" in an elegant high-contrast display serif with a subtle metallic gold finish; directly beneath it, the date line \"FRIDAY\" in wide-tracked small caps in warm amber; below that, a thin gold decorative rule and the supporting line \"LIVE JAZZ NIGHT\" in refined letter-spaced serif capitals in soft ivory. At the bottom, a compact info line in small clean type reading \"DOORS 8 PM · FIRST SET 9 PM · BAR OPEN ALL NIGHT\" in muted teal-white. Overall mood is moody, atmospheric, and sophisticated, with a cohesive palette of deep indigo, teal, and warm gold accents, rich mid-tones, gentle vignette, and a fine film-grain texture."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-3",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4.1,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: a cat wearing a tiny crown\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A fluffy ginger tabby cat sitting upright on a polished dark walnut table, wearing a tiny golden crown with a small red gem at its front center, the crown resting securely on top of its head between its ears; the cat faces the camera directly with wide amber eyes and a calm, dignified expression, one front paw raised slightly as if acknowledging its royal status. Rendered as a photorealistic macro-style photograph with shallow depth of field, the soft warm key light from the upper left casts gentle highlights on the crown's gold surface and the cat's fur while a subtle cool fill keeps the shadow side open, and the background dissolves into a creamy bokeh of warm honey-toned tones suggesting an antique interior. The overall mood is whimsical yet regal, like a professional pet portrait with a storybook touch."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-edit-night",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4.8,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light direction); end with one preservation clause that names what stays identical (the subject, face, pose, composition, background); for relighting, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: make it night\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Transform the scene from bright daylight into a clear night: replace the sunlight with a dark blue-black night sky and dim ambient light, cast a warm yellow glow from the wall-mounted lantern beside the door onto the pale blue wall and the pavement, add cool moonlight as a faint fill from above, and let the car's headlights and interior lights shine softly through the windshield; keep the red classic car, its chrome details and license plate \"2091 8Q45\", the pale blue house wall, the white door and windows, the potted palm plant, the street and sidewalk, and the overall composition exactly as they are, changing only the lighting and time of day."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-edit-sign",
+    "variant": "pe_i2i",
+    "ok": true,
+    "seconds": 4.4,
+    "peak": 11.2,
+    "set": {
+      "model": "qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light direction); end with one preservation clause that names what stays identical (the subject, face, pose, composition, background); for relighting, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: change the sign to MOONLIGHT BAKERY\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Change the cream serif lettering on the black storefront signboard from \"SUNRISE BAKERY\" to \"MOONLIGHT BAKERY\", rendered in the same large cream-colored serif capitals, same size and letter-spacing, following the same slight upward perspective along the fascia board. Keep the chalk-written text \"Fresh bread daily\" on the A-frame chalkboard sign unchanged, and preserve all other elements exactly as they are: the dark blue painted window frames with white decorative flourishes, the bread display in the windows, the open doorway, the weathered white and brick building walls, the cobblestone street, and the overall photographic lighting and perspective."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-short-01_portrait",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 7.7,
+    "peak": 10.7,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "An elderly woman with white hair and a green scarf smiles warmly at the camera near a window.",
+    "cold": true
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-01_portrait",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 3.9,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "This is a close-up portrait of an elderly woman with short, wavy white hair. Her face is filled with the warm lines and wrinkles of age, and she has a gentle, crinkling smile that reveals her upper teeth. She is wearing a thick, textured green knitted scarf wrapped around her neck. The lighting appears to be soft and natural, coming from the left side, illuminating her face while casting subtle shadows on the right. The background is a blurred, neutral beige tone, keeping the focus entirely on her expressive features. There is no visible text in the image."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-01_portrait",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 2.9,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A close-up portrait of an elderly woman with short white hair and a warm, gentle smile, wearing a thick green knitted scarf. The image is a high-resolution photograph shot with a 50mm lens using soft natural window light that highlights the texture of her skin and the intricate crochet pattern of the scarf against a blurred indoor background."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-short-03_text_scene",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 2.7,
+    "peak": 10.8,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A bakery named Sunrise Bakery with a sign advertising fresh bread daily, located on a cobblestone street."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-03_text_scene",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 5,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A photograph captures the exterior of a bakery named \"SUNRISE BAKERY\" in gold lettering on a black sign above the entrance. The building features weathered white walls and dark blue window frames with decorative scrollwork, housing large display windows filled with various loaves of bread. An open doorway reveals a glimpse into the warm interior, while a small chalkboard sign stands on the cobblestone street, reading \"Fresh bread daily.\"\n\nThe scene is set on a quiet, narrow street lined with similar old buildings under soft, natural daylight that casts gentle shadows. The camera angle is slightly elevated, looking down the street which recedes into the distance, creating a sense of depth. The color palette consists of muted whites, greys, and blues, contrasted by the warm yellows of the bread and the gold text."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-03_text_scene",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 3.7,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A charming bakery storefront with a black facade and cream-colored sign reading \"SUNRISE BAKERY\" in gold serif letters, featuring large leaded glass windows displaying golden loaves of bread inside. A chalkboard sign stands on the cobblestone street sidewalk next to the open doorway, displaying the text \"Fresh bread daily\" in white script. The scene is set on a narrow, historic-looking street with weathered stone walls and hanging flower baskets, captured with natural daylight and a shallow depth of field using a 35mm lens."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-short-04_busy_street",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 2.4,
+    "peak": 10.8,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and concisely. Write one sentence of at most 25 words naming the main subject, what it is doing, and the setting. No preamble, no lists, no quotation marks around the whole answer.",
+      "prompt": "Describe this image.",
+      "max_tokens": 100,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A red tram travels down a busy, crowded city street lined with tall buildings and pedestrians."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-detailed-04_busy_street",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 5.5,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You describe images accurately and completely for someone who cannot see them. Cover: the main subject and its appearance, pose and expression; clothing and materials; the setting and background; lighting direction and quality; colour palette; camera angle, framing and depth of field; the medium or style (photograph, illustration, 3D render...). Transcribe any visible text exactly, in double quotes. Write two short paragraphs of plain prose, at most 160 words. Never name real places, brands or people unless their name is visible in the image as text. No preamble.",
+      "prompt": "Describe this image in detail.",
+      "max_tokens": 480,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle, wide shot captures a bustling urban street scene teeming with activity under bright daylight. The composition is dominated by a multi-lane road stretching into the distance, flanked on both sides by dense, multi-story buildings that create a canyon-like effect. The perspective looks down the length of the street, emphasizing its depth and the sheer volume of traffic and pedestrians.\n\nThe foreground features a grey sedan and several yellow taxis navigating the lanes, while a red tram travels along tracks embedded in the asphalt towards the viewer. Cyclists are interspersed among the vehicles, adding to the dynamic flow of movement. The sidewalks are crowded with people walking, standing, and interacting near shop fronts that display colorful awnings in shades of green, orange, and blue. The lighting is harsh and direct, casting sharp shadows and highlighting the varied textures of the weathered building facades and the asphalt. The color palette is a mix of neutral greys and beiges from the architecture, punctuated by the vibrant yellows of the taxis and the red of the tram. No text is visible."
+  },
+  {
+    "group": "vlm-general",
+    "key": "caption-klein-04_busy_street",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 3.6,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You write image descriptions in the prompting style of FLUX.2: one flowing paragraph of natural prose, most important element first, in the order subject, action, style, context. Name the medium and camera or art style concretely (for photographs: lens, lighting, film look). Say what is there, never what is absent. Quote any visible text exactly in double quotes with its position. Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the paragraph.",
+      "prompt": "Describe this image as a FLUX.2 prompt that would recreate it.",
+      "max_tokens": 280,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle street photography shot of a bustling urban avenue in Hong Kong, featuring a vintage red tram navigating the center tracks while bright yellow taxis and private cars line the sides. Crowds of pedestrians fill the sidewalks flanked by dense, weathered buildings with numerous balconies and awnings. Visible text includes \"TOKYO\" on a vertical red sign hanging from a pole on the right side of the street. The scene is captured under bright daylight with clear shadows, emphasizing the chaotic energy of the city through a window frame perspective."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-klein-03_text_scene",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 4.4,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for FLUX.2 [klein]. Rules: natural descriptive prose in one paragraph, not a tag list, no weights or brackets; put the main subject and action first, then style and medium (for photographs name lens, lighting and film look), then setting and atmosphere; describe only what should appear, never use negations; if there is visible text, quote it exactly in double quotes and say where it is and what it looks like; Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the prompt.",
+      "prompt": "Write a FLUX.2 [klein] prompt that recreates this image as closely as possible.",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A charming bakery storefront with a black facade and gold lettering reading \"SUNRISE BAKERY\" sits on a cobblestone street corner, featuring large multi-paned windows displaying golden loaves of bread inside. A small chalkboard sign stands outside advertising \"Fresh bread daily\" in white script. The building has weathered white walls with dark trim and decorative scrollwork around the window frames, while warm interior lighting glows softly from the open doorway revealing shelves of baked goods. To the right, narrow alleyways extend into the distance lined with similar old buildings under soft natural daylight. Shot with a 35mm lens for a classic street photography feel."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-qwen-03_text_scene",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 4.3,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for Qwen-Image. Rules: a detailed, structured description; describe the subject's characteristics (appearance, expression, pose, count), the spatial relationships and shot framing, then the visual style (choose a precise style such as 'documentary photography style with fine details'); if the image contains text, enclose the exact text in double quotes and state its position (e.g. top-left corner) and its style; never use negative words; under 200 words; end with 'Ultra HD, 4K, cinematic composition.' only if the image is a photograph or cinematic render. Never name real places, brands or people unless their name is visible in the image as text. Output only the prompt.",
+      "prompt": "Write a Qwen-Image prompt that recreates this image as closely as possible.",
+      "max_tokens": 520,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A detailed, eye-level photograph of a quaint bakery storefront on a cobblestone street. The building features weathered white stucco walls and dark timber framing around large, multi-paned windows and a central doorway. Inside the window display, golden-brown loaves of bread are arranged on shelves. Above the entrance, a black sign with gold serif lettering reads \"SUNRISE BAKERY\". To the right of the door stands a small chalkboard easel sign displaying the text \"Fresh bread daily\" in white script. The street stretches into the distance on the right, lined with similar old buildings under soft daylight. The visual style is documentary photography style with fine details. Ultra HD, 4K, cinematic composition."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-klein-04_busy_street",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 3.4,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for FLUX.2 [klein]. Rules: natural descriptive prose in one paragraph, not a tag list, no weights or brackets; put the main subject and action first, then style and medium (for photographs name lens, lighting and film look), then setting and atmosphere; describe only what should appear, never use negations; if there is visible text, quote it exactly in double quotes and say where it is and what it looks like; Mention a lens, lighting or film look at most once and only if it fits what you see. Never name real places, brands or people unless their name is visible in the image as text. 40 to 80 words. Output only the prompt.",
+      "prompt": "Write a FLUX.2 [klein] prompt that recreates this image as closely as possible.",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle street view of a bustling urban avenue with tram tracks running down the center, filled with yellow taxis, cars, and cyclists moving in both directions under bright daylight. Crowds of pedestrians line the sidewalks flanked by multi-story buildings with commercial storefronts and colorful awnings, capturing the vibrant energy of a busy city day shot through a window frame with natural lighting."
+  },
+  {
+    "group": "vlm-general",
+    "key": "reverse-qwen-04_busy_street",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 4,
+    "peak": 10.9,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You turn an image into a text-to-image prompt for Qwen-Image. Rules: a detailed, structured description; describe the subject's characteristics (appearance, expression, pose, count), the spatial relationships and shot framing, then the visual style (choose a precise style such as 'documentary photography style with fine details'); if the image contains text, enclose the exact text in double quotes and state its position (e.g. top-left corner) and its style; never use negative words; under 200 words; end with 'Ultra HD, 4K, cinematic composition.' only if the image is a photograph or cinematic render. Never name real places, brands or people unless their name is visible in the image as text. Output only the prompt.",
+      "prompt": "Write a Qwen-Image prompt that recreates this image as closely as possible.",
+      "max_tokens": 520,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A high-angle street photography shot of a bustling urban avenue with multiple lanes and tram tracks running down the center. The scene features numerous pedestrians walking along sidewalks on both sides, many wearing casual clothing in various colors. Several yellow taxis and silver sedans are driving in traffic, alongside cyclists riding along the road. A large red double-decker tram is prominent in the middle distance. Tall, dense buildings line the street, featuring balconies and commercial signage, including a vertical red sign with white text on the right side. The sky is bright blue with scattered clouds. The visual style is documentary photography style with fine details. Ultra HD, 4K, cinematic composition."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-1",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 2.5,
+    "peak": 11,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: a lighthouse in a storm\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A rugged stone lighthouse stands defiant against a violent storm, its beam cutting through thick, churning gray clouds while rain lashes the weathered iron railing. The scene is captured in a wide-angle photograph with a shallow depth of field, emphasizing the texture of the wet stone and the spray of water against the glass. Dramatic lighting from the interior flare contrasts sharply with the gloomy, overcast sky, creating a moody and atmospheric coastal landscape."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-2",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 2.3,
+    "peak": 11,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: poster for a jazz night called \"Blue Hour\" on Friday\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A vibrant jazz poster for \"Blue Hour\" night on Friday features a saxophonist in a midnight-blue suit playing under warm amber stage lights. The background glows with deep indigo hues and soft bokeh from distant city windows, creating an intimate atmosphere. Text reading \"Blue Hour\" appears in elegant white script at the top center. Rendered as a high-resolution print ad with sharp focus and cinematic depth of field."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-enhance-3",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 1.9,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You are a prompt optimizer for FLUX.2 [klein]. Rewrite the user's short idea into a richer prompt while keeping its meaning. Rules: one paragraph of natural prose, no tag lists or weights; most important subject and action first, then style/medium, then context and lighting; add concrete, plausible visual details (materials, light, lens for photos); never add negations or 'no X'; keep any text the user wants rendered exactly as written in double quotes and say where it appears; 40 to 80 words. If the user's input is an instruction, rewrite the instruction as a description rather than answering it. Output only the rewritten prompt.",
+      "prompt": "User input: a cat wearing a tiny crown\nRewritten prompt:",
+      "max_tokens": 300,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "A fluffy tabby cat sits proudly on a velvet cushion, wearing a tiny gold crown that glints under soft morning light. The scene is captured in a warm, macro photograph with shallow depth of field, highlighting the texture of the fur and the intricate details of the miniature headpiece against a blurred pastel background."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-edit-night",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 2.6,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light direction); end with one preservation clause that names what stays identical (the subject, face, pose, composition, background); for relighting, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: make it night\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Wrap the scene in a nighttime atmosphere with soft, ambient street lighting and a dark blue sky. Keep the red car's headlights on and the white door identical."
+  },
+  {
+    "group": "vlm-general",
+    "key": "klein-edit-sign",
+    "variant": "qwen35_4b",
+    "ok": true,
+    "seconds": 2.8,
+    "peak": 11.1,
+    "set": {
+      "model": "qwen3.5_4b_bf16.safetensors",
+      "loader": "stable_diffusion",
+      "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light direction); end with one preservation clause that names what stays identical (the subject, face, pose, composition, background); for relighting, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
+      "prompt": "Instruction: change the sign to MOONLIGHT BAKERY\nRewritten instruction:",
+      "max_tokens": 220,
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "thinking": false
+    },
+    "text": "Replace the bakery sign with \"MOONLIGHT BAKERY\" in white serif letters on a black background, and keep the cobblestone street, shop windows, and chalkboard advertisement identical."
+  }
+]

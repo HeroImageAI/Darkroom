@@ -125,4 +125,18 @@ describe('ComfyClient', () => {
     await new ComfyClient('http://h', fetchMock).free();
     expect(JSON.parse(String((fetchMock.mock.calls[0] as any)[1].body))).toEqual({ unload_models: true, free_memory: true });
   });
+  it('inputExists checks the input folder with the subfolder split off (stale reference guard)', async () => {
+    const fetchMock = vi.fn(async (url: string) => new Response('x', { status: url.includes('gone.png') ? 404 : 200 }));
+    const c = new ComfyClient('http://h', fetchMock as any);
+    expect(await c.inputExists('darkroom/here.png')).toBe(true);
+    expect(await c.inputExists('darkroom/gone.png')).toBe(false);
+    const url = String(fetchMock.mock.calls[0][0]);
+    expect(url).toContain('filename=here.png');
+    expect(url).toContain('subfolder=darkroom');
+    expect(url).toContain('type=input');
+  });
+  it('inputExists is false when ComfyUI cannot be reached', async () => {
+    const c = new ComfyClient('http://h', (async () => { throw new Error('down'); }) as any);
+    expect(await c.inputExists('x.png')).toBe(false);
+  });
 });

@@ -91,35 +91,35 @@
       },
       "quality": {
         "standard": {
-          "label": "Standard",
-          "note": "25 steps, ~1.8 MP",
+          "label": "Draft",
+          "note": "25 steps, ~1 MP (fast iteration)",
           "steps": 25,
           "aspects": {
             "1:1": [
-              1328,
-              1328
+              1024,
+              1024
             ],
             "4:5": [
-              1184,
-              1472
+              928,
+              1152
             ],
             "3:2": [
-              1584,
-              1056
+              1248,
+              832
             ],
             "16:9": [
-              1664,
-              928
+              1376,
+              768
             ],
             "9:16": [
-              928,
-              1664
+              768,
+              1376
             ]
           }
         },
         "high": {
-          "label": "High",
-          "note": "40 steps, ~4 MP (model-card sizes)",
+          "label": "Native 2K",
+          "note": "40 steps, ~4 MP (official sizes, finals)",
           "steps": 40,
           "aspects": {
             "1:1": [
@@ -257,7 +257,7 @@
   },
   "workflows": {
     "klein_t2i": {
-      "file": "klein_t2i.json",
+      "file": "klein_t2i.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Klein 9B text to image",
@@ -362,7 +362,7 @@
       }
     },
     "klein_ref": {
-      "file": "klein_ref.json",
+      "file": "klein_ref.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Klein 9B with reference images",
@@ -783,7 +783,7 @@
       }
     },
     "inpaint": {
-      "file": "inpaint.json",
+      "file": "inpaint.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Masked fill (Klein 9B)",
@@ -907,7 +907,7 @@
       }
     },
     "outpaint": {
-      "file": "outpaint.json",
+      "file": "outpaint.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Outpaint (Klein 9B)",
@@ -1161,7 +1161,7 @@
       }
     },
     "upscale": {
-      "file": "upscale.json",
+      "file": "upscale.v2.json",
       "family": "seedvr2",
       "kind": "image",
       "label": "Upscale 2x (SeedVR2 7B)",
@@ -1186,7 +1186,7 @@
           ],
           "default": 2,
           "min": 1,
-          "max": 4
+          "max": 8
         },
         "seed": {
           "type": "int",
@@ -1209,6 +1209,70 @@
             }
           ],
           "default": "darkroom/upscale"
+        },
+        "preshrink": {
+          "type": "int",
+          "label": "Scale by longer side first",
+          "targets": [
+            {
+              "title": "DR_PRESHRINK",
+              "input": "largest_size"
+            }
+          ],
+          "min": 64,
+          "max": 4096,
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_PRESHRINK",
+                "input": "image"
+              }
+            ]
+          }
+        },
+        "colour": {
+          "type": "string",
+          "label": "Colour correction",
+          "targets": [
+            {
+              "title": "DR_COLOUR",
+              "input": "color_correction_method"
+            }
+          ],
+          "default": "lab"
+        },
+        "tile": {
+          "type": "int",
+          "label": "Tile size",
+          "targets": [
+            {
+              "title": "DR_TILE_ENC",
+              "input": "tile_size"
+            },
+            {
+              "title": "DR_TILE_DEC",
+              "input": "tile_size"
+            }
+          ],
+          "default": 512,
+          "min": 256,
+          "max": 1024
+        },
+        "tile_overlap": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TILE_ENC",
+              "input": "overlap"
+            },
+            {
+              "title": "DR_TILE_DEC",
+              "input": "overlap"
+            }
+          ],
+          "default": 128,
+          "min": 32,
+          "max": 256
         }
       },
       "outputs": {
@@ -1881,7 +1945,7 @@
       }
     },
     "klein_edit": {
-      "file": "klein_edit.json",
+      "file": "klein_edit.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Klein 9B instruction edit",
@@ -3035,6 +3099,1029 @@
       "outputs": {
         "image": "DR_OUTPUT"
       }
+    },
+    "klein_enhance_edit": {
+      "file": "klein_enhance_edit.json",
+      "family": "klein",
+      "kind": "image",
+      "label": "Enhance as edit (Klein 9B)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_STEPS",
+              "input": "steps"
+            }
+          ],
+          "default": 4,
+          "min": 1,
+          "max": 12
+        },
+        "megapixels": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_WORK",
+              "input": "megapixels"
+            }
+          ],
+          "default": 1,
+          "min": 0.5,
+          "max": 2
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/enhance"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "qwen_enhance_edit": {
+      "file": "qwen_enhance_edit.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Enhance as edit (Qwen-Image 2.1)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "megapixels": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_WORK",
+              "input": "megapixels"
+            }
+          ],
+          "default": 1,
+          "min": 0.5,
+          "max": 2
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/enhance"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "klein_inpaint_cs": {
+      "file": "klein_inpaint_cs.json",
+      "family": "klein",
+      "kind": "image",
+      "label": "Inpaint, crop and stitch (Klein 9B)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_STEPS",
+              "input": "steps"
+            }
+          ],
+          "default": 4,
+          "min": 1,
+          "max": 12
+        },
+        "denoise": {
+          "type": "float",
+          "label": "Change strength",
+          "targets": [
+            {
+              "title": "DR_STEPS",
+              "input": "denoise"
+            }
+          ],
+          "default": 1,
+          "min": 0.5,
+          "max": 1
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "mask": {
+          "type": "image",
+          "label": "Mask",
+          "targets": [
+            {
+              "title": "DR_MASK",
+              "input": "image"
+            }
+          ]
+        },
+        "image_2": {
+          "type": "image",
+          "label": "Reference",
+          "targets": [
+            {
+              "title": "DR_IMAGE_2",
+              "input": "image"
+            }
+          ],
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_REF_2_POS",
+                "input": "conditioning"
+              },
+              {
+                "title": "DR_REF_2_NEG",
+                "input": "conditioning"
+              }
+            ],
+            "remove": [
+              "DR_IMAGE_2"
+            ]
+          }
+        },
+        "crop_x": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_X",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 16384
+        },
+        "crop_y": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_Y",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 16384
+        },
+        "crop_w": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_W",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 16,
+          "max": 16384
+        },
+        "crop_h": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_H",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 16,
+          "max": 16384
+        },
+        "target_w": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TARGET_W",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 64,
+          "max": 1536
+        },
+        "target_h": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TARGET_H",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 64,
+          "max": 1536
+        },
+        "grow": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_MASK_GROW",
+              "input": "expand"
+            }
+          ],
+          "default": 8,
+          "min": 0,
+          "max": 64
+        },
+        "feather": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_FEATHER",
+              "input": "blur_radius"
+            }
+          ],
+          "default": 6,
+          "min": 1,
+          "max": 31
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/inpaint"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "qwen_inpaint_cs": {
+      "file": "qwen_inpaint_cs.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Inpaint, crop and stitch (Qwen-Image 2.1)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "denoise": {
+          "type": "float",
+          "label": "Change strength",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "denoise"
+            }
+          ],
+          "default": 1,
+          "min": 0.5,
+          "max": 1
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "mask": {
+          "type": "image",
+          "label": "Mask",
+          "targets": [
+            {
+              "title": "DR_MASK",
+              "input": "image"
+            }
+          ]
+        },
+        "image_2": {
+          "type": "image",
+          "label": "Reference",
+          "targets": [
+            {
+              "title": "DR_IMAGE_2",
+              "input": "image"
+            }
+          ],
+          "whenMissing": {
+            "remove": [
+              "DR_IMAGE_2"
+            ]
+          }
+        },
+        "crop_x": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_X",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 16384
+        },
+        "crop_y": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_Y",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 16384
+        },
+        "crop_w": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_W",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 16,
+          "max": 16384
+        },
+        "crop_h": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_H",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 16,
+          "max": 16384
+        },
+        "target_w": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TARGET_W",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 64,
+          "max": 1536
+        },
+        "target_h": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TARGET_H",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 64,
+          "max": 1536
+        },
+        "grow": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_MASK_GROW",
+              "input": "expand"
+            }
+          ],
+          "default": 8,
+          "min": 0,
+          "max": 64
+        },
+        "feather": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_FEATHER",
+              "input": "blur_radius"
+            }
+          ],
+          "default": 6,
+          "min": 1,
+          "max": 31
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/inpaint"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "qwen_outpaint_native": {
+      "file": "experiments/qwen_outpaint_native.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Outpaint by aspect change (Qwen-Image 2.1, experiment)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "width": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_WIDTH",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 256,
+          "max": 2816
+        },
+        "height": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_HEIGHT",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 256,
+          "max": 2816
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/outpaint"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "upscale_v1": {
+      "file": "upscale.json",
+      "family": "seedvr2",
+      "kind": "image",
+      "label": "Upscale 2x (SeedVR2 7B) (v1)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "scale": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_SCALE",
+              "input": "resize_type.multiplier"
+            }
+          ],
+          "default": 2,
+          "min": 1,
+          "max": 4
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/upscale"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "qwen_remove_bg": {
+      "file": "qwen_remove_bg.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Remove background (Qwen-Image 2.1)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": "Remove the background, and output a PNG image"
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/cutout"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "vlm2_image": {
+      "file": "vlm2_image.json",
+      "family": "vlm",
+      "kind": "text",
+      "label": "VLM v2 (picture + text)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "max_tokens": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "max_length"
+            }
+          ],
+          "default": 512,
+          "min": 32,
+          "max": 2048
+        },
+        "temperature": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.temperature"
+            }
+          ],
+          "default": 0.7,
+          "min": 0.05,
+          "max": 1.5
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 4294967295
+        },
+        "model": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MODEL",
+              "input": "clip_name"
+            }
+          ],
+          "default": "qwen3vl_8b_int8_convrot.safetensors"
+        },
+        "loader": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MODEL",
+              "input": "type"
+            }
+          ],
+          "default": "stable_diffusion"
+        },
+        "system": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_SYSTEM",
+              "input": "value"
+            }
+          ],
+          "default": ""
+        },
+        "thinking": {
+          "type": "bool",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "thinking"
+            }
+          ],
+          "default": false
+        },
+        "top_p": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.top_p"
+            }
+          ],
+          "default": 0.8,
+          "min": 0,
+          "max": 1
+        },
+        "top_k": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.top_k"
+            }
+          ],
+          "default": 20,
+          "min": 0,
+          "max": 1000
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        }
+      },
+      "outputs": {
+        "text": "DR_OUTPUT"
+      }
+    },
+    "vlm2_text": {
+      "file": "vlm2_text.json",
+      "family": "vlm",
+      "kind": "text",
+      "label": "VLM v2 (text)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "max_tokens": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "max_length"
+            }
+          ],
+          "default": 512,
+          "min": 32,
+          "max": 2048
+        },
+        "temperature": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.temperature"
+            }
+          ],
+          "default": 0.7,
+          "min": 0.05,
+          "max": 1.5
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 4294967295
+        },
+        "model": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MODEL",
+              "input": "clip_name"
+            }
+          ],
+          "default": "qwen3vl_8b_int8_convrot.safetensors"
+        },
+        "loader": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MODEL",
+              "input": "type"
+            }
+          ],
+          "default": "stable_diffusion"
+        },
+        "system": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_SYSTEM",
+              "input": "value"
+            }
+          ],
+          "default": ""
+        },
+        "thinking": {
+          "type": "bool",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "thinking"
+            }
+          ],
+          "default": false
+        },
+        "top_p": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.top_p"
+            }
+          ],
+          "default": 0.8,
+          "min": 0,
+          "max": 1
+        },
+        "top_k": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.top_k"
+            }
+          ],
+          "default": 20,
+          "min": 0,
+          "max": 1000
+        }
+      },
+      "outputs": {
+        "text": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {
@@ -3048,14 +4135,18 @@
       "qwen": "qwen_edit"
     },
     "inpaint": {
-      "klein": "inpaint",
-      "qwen": "qwen_inpaint"
+      "klein": "klein_inpaint_cs",
+      "qwen": "qwen_inpaint_cs"
     },
     "outpaint": {
-      "klein": "outpaint",
+      "klein": "klein_inpaint_cs",
       "qwen": "qwen_outpaint"
     },
     "enhance": {
+      "klein": "klein_enhance_edit",
+      "qwen": "qwen_enhance_edit"
+    },
+    "enhance_subtle": {
       "klein": "klein_enhance",
       "qwen": "qwen_enhance"
     }

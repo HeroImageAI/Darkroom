@@ -1,0 +1,864 @@
+[
+  {
+    "group": "klein-t2i-sampler",
+    "key": "01_portrait",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 11.1,
+    "peak": 20.4,
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 3000,
+      "width": 896,
+      "height": 1120
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\01_portrait-flux2\\klein_00074_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "02_product",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 7.8,
+    "peak": 20.9,
+    "set": {
+      "prompt": "A pair of brown leather hiking boots with red laces on a pale wooden bench, studio product photograph on a seamless light-grey backdrop, softbox lighting.",
+      "seed": 3001,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\02_product-flux2\\klein_00075_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "05_hair",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 7.7,
+    "peak": 20.6,
+    "set": {
+      "prompt": "A woman with long curly red hair blowing in the wind, backlit against a plain mid-grey studio backdrop, individual strands catching the light, three-quarter view.",
+      "seed": 3002,
+      "width": 896,
+      "height": 1120
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\05_hair-flux2\\klein_00076_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "06_fur",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 7.7,
+    "peak": 20.8,
+    "set": {
+      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
+      "seed": 3003,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\06_fur-flux2\\klein_00077_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "08_lowres_src",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 7.7,
+    "peak": 20.8,
+    "set": {
+      "prompt": "A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "seed": 3004,
+      "width": 1248,
+      "height": 832
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\08_lowres_src-flux2\\klein_00078_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "09_car",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 7.8,
+    "peak": 20.8,
+    "set": {
+      "prompt": "A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "seed": 3005,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\09_car-flux2\\klein_00079_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "onenode-fox",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 7.5,
+    "peak": 20.4,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 3010,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\onenode-fox-flux2\\klein_00080_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "onenode-church",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 7.7,
+    "peak": 20.4,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 3011,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\onenode-church-flux2\\klein_00081_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "01_portrait",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 11,
+    "peak": 20.7,
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 3000,
+      "width": 896,
+      "height": 1120
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\01_portrait-onenode\\klein_00082_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "02_product",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 7.5,
+    "peak": 20.4,
+    "set": {
+      "prompt": "A pair of brown leather hiking boots with red laces on a pale wooden bench, studio product photograph on a seamless light-grey backdrop, softbox lighting.",
+      "seed": 3001,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\02_product-onenode\\klein_00083_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "05_hair",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 7.5,
+    "peak": 20.3,
+    "set": {
+      "prompt": "A woman with long curly red hair blowing in the wind, backlit against a plain mid-grey studio backdrop, individual strands catching the light, three-quarter view.",
+      "seed": 3002,
+      "width": 896,
+      "height": 1120
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\05_hair-onenode\\klein_00084_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "06_fur",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 7.6,
+    "peak": 20.4,
+    "set": {
+      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
+      "seed": 3003,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\06_fur-onenode\\klein_00085_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "08_lowres_src",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 7.6,
+    "peak": 20.3,
+    "set": {
+      "prompt": "A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "seed": 3004,
+      "width": 1248,
+      "height": 832
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\08_lowres_src-onenode\\klein_00086_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "09_car",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 7.7,
+    "peak": 20.7,
+    "set": {
+      "prompt": "A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "seed": 3005,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\09_car-onenode\\klein_00087_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "onenode-fox",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 7.6,
+    "peak": 20.3,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 3010,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\onenode-fox-onenode\\klein_00088_.png"
+  },
+  {
+    "group": "klein-t2i-sampler",
+    "key": "onenode-church",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 7.7,
+    "peak": 20.3,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 3011,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-t2i-sampler\\onenode-church-onenode\\klein_00089_.png"
+  },
+  {
+    "group": "klein-edit-sampler",
+    "key": "scarf-red",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 17.2,
+    "peak": 20.6,
+    "set": {
+      "prompt": "Change the scarf to a deep red wool scarf. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 11
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-edit-sampler\\scarf-red-flux2\\edit_00034_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-edit-sampler",
+    "key": "sign-text",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 14.3,
+    "peak": 21.3,
+    "set": {
+      "prompt": "Change the sign text to \"MOONLIGHT BAKERY\". Keep the composition, the people and all other details exactly as they are.",
+      "seed": 11
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-edit-sampler\\sign-text-flux2\\edit_00035_.png"
+  },
+  {
+    "group": "klein-edit-sampler",
+    "key": "relight-amber",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 14,
+    "peak": 21.3,
+    "set": {
+      "prompt": "Relight the scene with warm amber late-afternoon light from the right side, source out of frame. Keep the car, the house and the composition identical.",
+      "seed": 11
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-edit-sampler\\relight-amber-flux2\\edit_00036_.png"
+  },
+  {
+    "group": "klein-edit-sampler",
+    "key": "style-oil",
+    "variant": "flux2",
+    "ok": true,
+    "seconds": 13.8,
+    "peak": 21.4,
+    "set": {
+      "prompt": "Change the style to a classical oil painting with thick impasto brushstrokes and rich canvas texture. Keep the cat, its pose and the window identical.",
+      "seed": 11
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-edit-sampler\\style-oil-flux2\\edit_00037_.png"
+  },
+  {
+    "group": "klein-edit-sampler",
+    "key": "scarf-red",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 17.3,
+    "peak": 21.3,
+    "set": {
+      "prompt": "Change the scarf to a deep red wool scarf. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 11
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-edit-sampler\\scarf-red-onenode\\edit_00038_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-edit-sampler",
+    "key": "sign-text",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 14.1,
+    "peak": 20.4,
+    "set": {
+      "prompt": "Change the sign text to \"MOONLIGHT BAKERY\". Keep the composition, the people and all other details exactly as they are.",
+      "seed": 11
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-edit-sampler\\sign-text-onenode\\edit_00039_.png"
+  },
+  {
+    "group": "klein-edit-sampler",
+    "key": "relight-amber",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 13.8,
+    "peak": 20.4,
+    "set": {
+      "prompt": "Relight the scene with warm amber late-afternoon light from the right side, source out of frame. Keep the car, the house and the composition identical.",
+      "seed": 11
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-edit-sampler\\relight-amber-onenode\\edit_00040_.png"
+  },
+  {
+    "group": "klein-edit-sampler",
+    "key": "style-oil",
+    "variant": "onenode",
+    "ok": true,
+    "seconds": 13.7,
+    "peak": 20.4,
+    "set": {
+      "prompt": "Change the style to a classical oil painting with thick impasto brushstrokes and rich canvas texture. Keep the cat, its pose and the window identical.",
+      "seed": 11
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-edit-sampler\\style-oil-onenode\\edit_00041_.png"
+  },
+  {
+    "group": "klein-kv",
+    "key": "texture-2ref",
+    "variant": "fp8",
+    "ok": true,
+    "seconds": 24,
+    "peak": 22,
+    "set": {
+      "prompt": "Using image 1 as the subject and geometry reference and image 2 as the texture reference, replace the paint of the car in image 1 with the long grey fur of the cat in image 2. Keep the car shape, the house and the lighting from image 1 identical.",
+      "seed": 21,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-kv\\texture-2ref-fp8\\klein_ref_00003_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-kv",
+    "key": "room-2ref",
+    "variant": "fp8",
+    "ok": true,
+    "seconds": 21.2,
+    "peak": 21.8,
+    "set": {
+      "prompt": "Using image 1 as the person reference and image 2 as the room reference, show the woman from image 1 sitting on the green velvet sofa in the room from image 2, reading a book in warm evening light. Keep her face, hair and green scarf identical to image 1.",
+      "seed": 21,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-kv\\room-2ref-fp8\\klein_ref_00004_.png"
+  },
+  {
+    "group": "klein-kv",
+    "key": "scene-3ref",
+    "variant": "fp8",
+    "ok": true,
+    "seconds": 28.7,
+    "peak": 22,
+    "set": {
+      "prompt": "Using image 1 as the person, image 2 as the car and image 3 as the location, show the woman from image 1 leaning on the red car from image 2, parked in the harbour from image 3 on an overcast afternoon. Keep her face and scarf identical to image 1 and the car identical to image 2.",
+      "seed": 21,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-kv\\scene-3ref-fp8\\klein_ref_00005_.png"
+  },
+  {
+    "group": "klein-kv",
+    "key": "texture-2ref",
+    "variant": "kv",
+    "ok": true,
+    "seconds": 25.6,
+    "peak": 24.4,
+    "set": {
+      "prompt": "Using image 1 as the subject and geometry reference and image 2 as the texture reference, replace the paint of the car in image 1 with the long grey fur of the cat in image 2. Keep the car shape, the house and the lighting from image 1 identical.",
+      "seed": 21,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-kv\\texture-2ref-kv\\klein_ref_00006_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-kv",
+    "key": "room-2ref",
+    "variant": "kv",
+    "ok": true,
+    "seconds": 168.4,
+    "peak": 25.5,
+    "set": {
+      "prompt": "Using image 1 as the person reference and image 2 as the room reference, show the woman from image 1 sitting on the green velvet sofa in the room from image 2, reading a book in warm evening light. Keep her face, hair and green scarf identical to image 1.",
+      "seed": 21,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-kv\\room-2ref-kv\\klein_ref_00007_.png"
+  },
+  {
+    "group": "klein-kv",
+    "key": "scene-3ref",
+    "variant": "kv",
+    "ok": true,
+    "seconds": 59.2,
+    "peak": 25.2,
+    "set": {
+      "prompt": "Using image 1 as the person, image 2 as the car and image 3 as the location, show the woman from image 1 leaning on the red car from image 2, parked in the harbour from image 3 on an overcast afternoon. Keep her face and scarf identical to image 1 and the car identical to image 2.",
+      "seed": 21,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\klein-kv\\scene-3ref-kv\\klein_ref_00008_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "bakery-text",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 24.7,
+    "peak": 17.6,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 4000,
+      "width": 1248,
+      "height": 832,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\bakery-text-s25\\qwen_00052_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "busy-street",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 16.1,
+    "peak": 17.6,
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 4001,
+      "width": 1376,
+      "height": 768,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\busy-street-s25\\qwen_00053_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "glass",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 16,
+    "peak": 17.4,
+    "set": {
+      "prompt": "A clear glass water carafe and two empty drinking glasses on a light linen tablecloth, sunlight refracting through the glass and casting caustic light patterns, realistic photography.",
+      "seed": 4002,
+      "width": 1024,
+      "height": 1024,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\glass-s25\\qwen_00054_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "interior",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 15.7,
+    "peak": 17.3,
+    "set": {
+      "prompt": "A cozy living room with a green velvet sofa, a brass floor lamp, a potted monstera plant, a wooden coffee table with a teapot, and a tall bookshelf, warm evening light.",
+      "seed": 4003,
+      "width": 1152,
+      "height": 864,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\interior-s25\\qwen_00055_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "onenode-fox",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 15.7,
+    "peak": 17.9,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 4010,
+      "width": 1024,
+      "height": 1024,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\onenode-fox-s25\\qwen_00056_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "onenode-church",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 15.9,
+    "peak": 17.7,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 4011,
+      "width": 1376,
+      "height": 768,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\onenode-church-s25\\qwen_00057_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "bakery-text",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 27.1,
+    "peak": 18,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 4000,
+      "width": 1248,
+      "height": 832,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\bakery-text-s40\\qwen_00058_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "busy-street",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 23,
+    "peak": 17.7,
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 4001,
+      "width": 1376,
+      "height": 768,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\busy-street-s40\\qwen_00059_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "glass",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 22.4,
+    "peak": 17.9,
+    "set": {
+      "prompt": "A clear glass water carafe and two empty drinking glasses on a light linen tablecloth, sunlight refracting through the glass and casting caustic light patterns, realistic photography.",
+      "seed": 4002,
+      "width": 1024,
+      "height": 1024,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\glass-s40\\qwen_00060_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "interior",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 21.5,
+    "peak": 17.7,
+    "set": {
+      "prompt": "A cozy living room with a green velvet sofa, a brass floor lamp, a potted monstera plant, a wooden coffee table with a teapot, and a tall bookshelf, warm evening light.",
+      "seed": 4003,
+      "width": 1152,
+      "height": 864,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\interior-s40\\qwen_00061_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "onenode-fox",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 22.4,
+    "peak": 17.9,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 4010,
+      "width": 1024,
+      "height": 1024,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\onenode-fox-s40\\qwen_00062_.png"
+  },
+  {
+    "group": "qwen-steps-draft",
+    "key": "onenode-church",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 22.7,
+    "peak": 17.6,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 4011,
+      "width": 1376,
+      "height": 768,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-steps-draft\\onenode-church-s40\\qwen_00063_.png"
+  },
+  {
+    "group": "qwen-native-2k",
+    "key": "bakery-text",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 110.6,
+    "peak": 18,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 4000,
+      "width": 2528,
+      "height": 1696,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-native-2k\\bakery-text-s25\\qwen_00064_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-native-2k",
+    "key": "busy-street",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 104.8,
+    "peak": 18.5,
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 4001,
+      "width": 2752,
+      "height": 1536,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-native-2k\\busy-street-s25\\qwen_00065_.png"
+  },
+  {
+    "group": "qwen-native-2k",
+    "key": "glass",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 102.9,
+    "peak": 18.5,
+    "set": {
+      "prompt": "A clear glass water carafe and two empty drinking glasses on a light linen tablecloth, sunlight refracting through the glass and casting caustic light patterns, realistic photography.",
+      "seed": 4002,
+      "width": 2048,
+      "height": 2048,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-native-2k\\glass-s25\\qwen_00066_.png"
+  },
+  {
+    "group": "qwen-native-2k",
+    "key": "interior",
+    "variant": "s25",
+    "ok": true,
+    "seconds": 109.3,
+    "peak": 18.5,
+    "set": {
+      "prompt": "A cozy living room with a green velvet sofa, a brass floor lamp, a potted monstera plant, a wooden coffee table with a teapot, and a tall bookshelf, warm evening light.",
+      "seed": 4003,
+      "width": 2400,
+      "height": 1792,
+      "steps": 25
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-native-2k\\interior-s25\\qwen_00067_.png"
+  },
+  {
+    "group": "qwen-native-2k",
+    "key": "bakery-text",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 171.3,
+    "peak": 18.2,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 4000,
+      "width": 2528,
+      "height": 1696,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-native-2k\\bakery-text-s40\\qwen_00068_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-native-2k",
+    "key": "busy-street",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 157,
+    "peak": 18.5,
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 4001,
+      "width": 2752,
+      "height": 1536,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-native-2k\\busy-street-s40\\qwen_00069_.png"
+  },
+  {
+    "group": "qwen-native-2k",
+    "key": "glass",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 155.9,
+    "peak": 18.5,
+    "set": {
+      "prompt": "A clear glass water carafe and two empty drinking glasses on a light linen tablecloth, sunlight refracting through the glass and casting caustic light patterns, realistic photography.",
+      "seed": 4002,
+      "width": 2048,
+      "height": 2048,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-native-2k\\glass-s40\\qwen_00070_.png"
+  },
+  {
+    "group": "qwen-native-2k",
+    "key": "interior",
+    "variant": "s40",
+    "ok": true,
+    "seconds": 166.3,
+    "peak": 18.5,
+    "set": {
+      "prompt": "A cozy living room with a green velvet sofa, a brass floor lamp, a potted monstera plant, a wooden coffee table with a teapot, and a tall bookshelf, warm evening light.",
+      "seed": 4003,
+      "width": 2400,
+      "height": 1792,
+      "steps": 40
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-native-2k\\interior-s40\\qwen_00071_.png"
+  },
+  {
+    "group": "qwen-refs-vram",
+    "key": "1ref",
+    "variant": "draft",
+    "ok": true,
+    "seconds": 26.4,
+    "peak": 20.7,
+    "set": {
+      "prompt": "The woman from <image1> sits in a sunlit café, holding a cup of coffee. Keep her face, hair and green scarf identical.",
+      "seed": 31,
+      "steps": 25,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-refs-vram\\1ref-draft\\qwen_ref_00003_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-refs-vram",
+    "key": "2ref",
+    "variant": "draft",
+    "ok": true,
+    "seconds": 31,
+    "peak": 23.3,
+    "set": {
+      "prompt": "The woman from <image1> sits on the green velvet sofa in the room from <image2>, reading a book. Keep her face, hair and green scarf identical.",
+      "seed": 31,
+      "steps": 25,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-refs-vram\\2ref-draft\\qwen_ref_00004_.png"
+  },
+  {
+    "group": "qwen-refs-vram",
+    "key": "3ref",
+    "variant": "draft",
+    "ok": true,
+    "seconds": 45,
+    "peak": 20,
+    "set": {
+      "prompt": "The woman from <image1> leans on the red car from <image2>, parked in the harbour from <image3> on an overcast afternoon. Keep her face and scarf identical.",
+      "seed": 31,
+      "steps": 25,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-refs-vram\\3ref-draft\\qwen_ref_00005_.png"
+  },
+  {
+    "group": "qwen-refs-vram",
+    "key": "1ref",
+    "variant": "native2k",
+    "ok": true,
+    "seconds": 121.7,
+    "peak": 21.9,
+    "set": {
+      "prompt": "The woman from <image1> sits in a sunlit café, holding a cup of coffee. Keep her face, hair and green scarf identical.",
+      "seed": 31,
+      "steps": 25,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-refs-vram\\1ref-native2k\\qwen_ref_00006_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-refs-vram",
+    "key": "2ref",
+    "variant": "native2k",
+    "ok": true,
+    "seconds": 136.8,
+    "peak": 24.8,
+    "set": {
+      "prompt": "The woman from <image1> sits on the green velvet sofa in the room from <image2>, reading a book. Keep her face, hair and green scarf identical.",
+      "seed": 31,
+      "steps": 25,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-refs-vram\\2ref-native2k\\qwen_ref_00007_.png"
+  },
+  {
+    "group": "qwen-refs-vram",
+    "key": "3ref",
+    "variant": "native2k",
+    "ok": true,
+    "seconds": 158.3,
+    "peak": 21,
+    "set": {
+      "prompt": "The woman from <image1> leans on the red car from <image2>, parked in the harbour from <image3> on an overcast afternoon. Keep her face and scarf identical.",
+      "seed": 31,
+      "steps": 25,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\p1\\qwen-refs-vram\\3ref-native2k\\qwen_ref_00008_.png"
+  }
+]

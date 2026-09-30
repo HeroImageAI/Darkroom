@@ -209,3 +209,11 @@ a.btn.primary { color: var(--on-accent); }
 .panel-scroll > * { flex-shrink: 0; }
 .pill[aria-pressed='true']:hover:not(:disabled) { color: var(--bg); }
 .pill.accent[aria-pressed='true']:hover:not(:disabled) { color: var(--on-accent); }
+
+/* Transparent pictures read as transparent everywhere (Addendum 2: alpha must survive the whole app). Every library
+   picture - thumbnails, previews, compare, pickers, versions - is served from /api/items/..., so one rule covers them;
+   opaque pictures cover the pattern completely. Same subtle checkerboard as the Edit canvas. */
+img[src*="/api/items/"] {
+  background-color: #222;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='8' height='8' fill='%232b2b2b'/%3E%3Crect x='8' y='8' width='8' height='8' fill='%232b2b2b'/%3E%3C/svg%3E");
+}

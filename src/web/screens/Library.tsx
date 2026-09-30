@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Copy, Download, ExternalLink, Film, Heart, Layers, Search, Share2, Sparkles } from 'lucide-react';
+import { Copy, Download, ExternalLink, Film, Heart, Layers, Maximize2, Search, Share2, Sparkles } from 'lucide-react';
 import { api, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { formatDuration, Pills } from '../components/common';
 import { usePersistent } from '../lib/hooks';
@@ -116,13 +116,75 @@ export function Library() {
   );
 }
 
+/** Right-click "Use as…" (Addendum 1 H): send a picture straight to a slot or mode on another screen. */
+function UseAsMenu({ item, x, y, onClose }: { item: Item; x: number; y: number; onClose: () => void }) {
+  useEffect(() => {
+    const close = () => onClose();
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('click', close);
+    window.addEventListener('keydown', esc);
+    return () => {
+      window.removeEventListener('click', close);
+      window.removeEventListener('keydown', esc);
+    };
+  }, [onClose]);
+  const editIn = (mode: string) => {
+    sessionStorage.setItem('dr.edit.mode', mode);
+    go('edit', item.id);
+  };
+  const lastEdit = (() => {
+    try {
+      return sessionStorage.getItem('dr.edit.last');
+    } catch {
+      return null;
+    }
+  })();
+  const entries: [string, () => void, boolean?][] = [
+    ['Edit', () => go('edit', item.id)],
+    ['Inpaint', () => editIn('inpaint')],
+    ['Outpaint', () => editIn('outpaint')],
+    ['Enhance', () => editIn('enhance')],
+    ['Upscale', () => editIn('upscale')],
+    ['Generate reference', () => go('generate', undefined, { ref: item.id })],
+    [
+      'Edit reference (for the picture open in Edit)',
+      () => {
+        sessionStorage.setItem('dr.edit.ref', item.id);
+        go('edit', lastEdit!);
+      },
+      !lastEdit || lastEdit === item.id,
+    ],
+    ['Video start frame', () => go('video', undefined, { start: item.id })],
+    ['Video end frame', () => go('video', undefined, { end: item.id })],
+  ];
+  return (
+    <div role="menu" aria-label="Use as" className="menu" style={{ position: 'fixed', left: Math.min(x, window.innerWidth - 280), top: Math.min(y, window.innerHeight - 340), zIndex: 50, width: 270, background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 10, padding: 6, boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
+      <div className="section-label" style={{ padding: '4px 8px' }}>Use as…</div>
+      {entries.map(([label, run, disabled]) => (
+        <button key={label} role="menuitem" type="button" className="btn ghost sm" disabled={!!disabled} style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => (onClose(), run())}>
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function Tile({ item, selected, onSelect }: { item: Item; selected: boolean; onSelect: () => void }) {
   const vid = useRef<HTMLVideoElement>(null);
   const [hover, setHover] = useState(false);
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   return (
+    <>
+    {menu && <UseAsMenu item={item} x={menu.x} y={menu.y} onClose={() => setMenu(null)} />}
     <button
       role="listitem"
       className="tile"
+      onContextMenu={(e) => {
+        if (item.kind !== 'image') return;
+        e.preventDefault();
+        onSelect();
+        setMenu({ x: e.clientX, y: e.clientY });
+      }}
       onClick={onSelect}
       onDoubleClick={() => (item.kind === 'video' ? go('video', undefined, { take: item.id }) : go('edit', item.id))}
       onMouseEnter={() => setHover(true)}
@@ -160,6 +222,7 @@ function Tile({ item, selected, onSelect }: { item: Item; selected: boolean; onS
       </span>
       {item.favourite && <Heart size={16} fill="#F0B44C" color="#F0B44C" style={{ position: 'absolute', right: 8, top: 8 }} />}
     </button>
+    </>
   );
 }
 
@@ -238,12 +301,36 @@ function Detail({ item, comfyUrl }: { item: Item; comfyUrl: string | null }) {
             </button>
           )}
           {item.kind === 'image' && (
+            <button
+              className="btn sm"
+              title="SeedVR2 2x. More options (4-8x, tile size) in Edit > Upscale."
+              onClick={async () => {
+                try {
+                  const inp = await api.asInput(item.id);
+                  await api.submit({
+                    workflow: 'upscale',
+                    params: { image_1: inp.name, scale: 2, seed: Math.floor(Math.random() * 2 ** 31) },
+                    meta: { mode: 'upscale', model: 'SeedVR2 7B 2×', prompt: item.prompt, parentId: item.id, ui: item.ui },
+                  });
+                  toast('Upscaling 2× with SeedVR2 — the new version appears in the Library when it is ready.', 'info');
+                } catch (e) {
+                  toast((e as Error).message, 'error');
+                }
+              }}
+            >
+              <Maximize2 size={14} /> Upscale 2×
+            </button>
+          )}
+          {item.kind === 'image' && (
             <button className="btn sm" onClick={() => go('video', undefined, { start: item.id })}>
               <Film size={14} /> Animate
             </button>
           )}
           <a className="btn sm" href={downloadUrl(item.id)} download>
             <Download size={14} /> Download
+          </a>
+          <a className="btn sm ghost" href={`/api/items/${item.id}/settings`} download title="The settings as a JSON file (also works for videos); load it in Generate > Restore">
+            Settings (JSON)
           </a>
           <button
             className={`btn sm ${fav ? 'on' : ''}`}

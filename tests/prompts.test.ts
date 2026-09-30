@@ -162,10 +162,67 @@ describe('enhance', () => {
       'Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: a red car.',
     );
   });
+  // Addenda Phase 2 A/B (docs/qa/addenda/p2): edit-style "Restore" won on blur for both models
+  it('Klein Restore adds a Scene line from the caption, and drops it when there is none', () => {
+    const withScene = composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', caption: 'A red vintage car in front of a blue house.', strength: 'restore' });
+    expect(withScene).toMatch(/^Restore this photograph: /);
+    expect(withScene).toMatch(/not a processed one\. Scene: A red vintage car in front of a blue house\.$/);
+    expect(composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', strength: 'restore' })).toMatch(/not a processed one\.$/);
+  });
+  it('Qwen Restore names the edit target the official way and ignores the caption', () => {
+    const p = composeImagePrompt(T, { model: 'qwen', mode: 'enhance', text: '', caption: 'a red car', strength: 'restore' });
+    expect(p).toMatch(/^Enhance the overall quality of <image1>: /);
+    expect(p).not.toContain('red car');
+  });
+});
+
+describe('Qwen inpaint with the mask shown as <image2> (Addenda Phase 3 winner)', () => {
+  it('names the mask and asks for a replacement', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'A small glass vase of yellow tulips', maskShown: true })).toBe(
+      'In <image1>, replace the area marked white in <image2> with a small glass vase of yellow tulips. Keep everything outside that area unchanged.',
+    );
+  });
+  it('moves the reference to <image3> because the mask takes <image2>', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'a toy model of the car in <image2>', maskShown: true })).toContain('the car in <image3>');
+  });
+  it('keeps quoted text exactly', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: '"Open 7 till 7" chalk lettering', maskShown: true })).toContain('with "Open 7 till 7" chalk lettering.');
+  });
+  it('the background plate keeps the official removal wording', () => {
+    expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'the background', remove: true, maskShown: true })).toMatch(/^Perform inpainting/);
+  });
+});
+
+describe('outpaint on a pre-padded canvas (Addenda Phase 4)', () => {
+  it('Klein uses One Node wording with the caption as scene description', () => {
+    const p = composeImagePrompt(T, { model: 'klein', mode: 'outpaint', text: '', caption: 'A red car in front of a blue house.', canvas: true });
+    expect(p).toMatch(/^Extend the composition of this image\./);
+    expect(p).toMatch(/Scene description: A red car in front of a blue house\.$/);
+  });
+  it("the user's surroundings text wins over the caption", () => {
+    expect(composeImagePrompt(T, { model: 'klein', mode: 'outpaint', text: 'a quiet beach', caption: 'A car.', canvas: true })).toMatch(/Scene description: a quiet beach\.$/);
+  });
+  it('Qwen names the mask and describes the picture', () => {
+    const p = composeImagePrompt(T, { model: 'qwen', mode: 'outpaint', text: '', caption: 'A cozy living room.', canvas: true });
+    expect(p).toMatch(/^In <image1>, the area marked white in <image2> is empty canvas/);
+    expect(p).toMatch(/The picture shows a cozy living room\.$/);
+  });
 });
 
 describe('qwen fill keeps quoted text intact', () => {
   it('does not strip a closing quote', () => {
     expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'a sign reading "OPEN"' })).toBe('a sign reading "OPEN".');
+  });
+});
+
+describe('circle quick edit', () => {
+  it('Qwen asks for the circled object and for the circle to be removed, even with a keep clause', () => {
+    const p = composeImagePrompt(T, { model: 'qwen', mode: 'instruct', text: 'replace it with a red van, keep the rest', circled: true });
+    expect(p).toMatch(/^In <image1>, change only the object circled in red: replace it with a red van, keep the rest\./);
+    expect(p).toMatch(/Remove the red circle completely/);
+  });
+  it('Klein has no circle wording and falls back to the plain instruction', () => {
+    const p = composeImagePrompt(T, { model: 'klein', mode: 'instruct', text: 'make it night', circled: true });
+    expect(p).not.toMatch(/circle/);
   });
 });

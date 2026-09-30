@@ -1,0 +1,80 @@
+[
+  {
+    "group": "outpaint-3rounds",
+    "key": "round1",
+    "variant": "klein",
+    "ok": true,
+    "seconds": 18.8,
+    "peak": 20.7,
+    "set": {
+      "width": 1600,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p4r\\klein-round1\\inpaint_00076_.png"
+  },
+  {
+    "group": "outpaint-3rounds",
+    "key": "round2",
+    "variant": "klein",
+    "ok": true,
+    "seconds": 13.4,
+    "peak": 21.2,
+    "set": {
+      "width": 1856,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p4r\\klein-round2\\inpaint_00077_.png"
+  },
+  {
+    "group": "outpaint-3rounds",
+    "key": "round3",
+    "variant": "klein",
+    "ok": true,
+    "seconds": 12,
+    "peak": 20.3,
+    "set": {
+      "width": 2112,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p4r\\klein-round3\\inpaint_00078_.png"
+  },
+  {
+    "group": "outpaint-3rounds",
+    "key": "round1",
+    "variant": "qwen",
+    "ok": true,
+    "seconds": 28.2,
+    "peak": 20.8,
+    "set": {
+      "width": 1600,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p4r\\qwen-round1\\outpaint_00029_.png"
+  },
+  {
+    "group": "outpaint-3rounds",
+    "key": "round2",
+    "variant": "qwen",
+    "ok": true,
+    "seconds": 26.2,
+    "peak": 21.3,
+    "set": {
+      "width": 1856,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p4r\\qwen-round2\\outpaint_00030_.png"
+  },
+  {
+    "group": "outpaint-3rounds",
+    "key": "round3",
+    "variant": "qwen",
+    "ok": true,
+    "seconds": 26.3,
+    "peak": 21.3,
+    "set": {
+      "width": 2112,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\p4r\\qwen-round3\\outpaint_00031_.png"
+  }
+]
