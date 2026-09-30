@@ -40,6 +40,8 @@ export interface Item {
   input_name: string | null;
   /** Layers from one decomposition share a group id. */
   group_id?: string | null;
+  /** Set while the item is in the Library's "Recently deleted"; null for live items. */
+  deleted_at?: number | null;
 }
 
 export type JobStatus = 'queued' | 'running' | 'done' | 'error' | 'cancelled' | 'lost';
@@ -132,7 +134,7 @@ function decode<T>(row: Record<string, any> | undefined, jsonCols: readonly stri
 }
 
 export interface LibraryQuery {
-  filter?: 'all' | 'favourites' | 'klein' | 'qwen' | 'edits' | 'videos';
+  filter?: 'all' | 'favourites' | 'klein' | 'qwen' | 'edits' | 'videos' | 'deleted';
   q?: string;
   limit?: number;
   offset?: number;
@@ -149,10 +151,12 @@ export class Store {
     // additive migrations
     const cols = (this.db.prepare('PRAGMA table_info(items)').all() as { name: string }[]).map((c) => c.name);
     if (!cols.includes('group_id')) this.db.exec('ALTER TABLE items ADD COLUMN group_id TEXT');
+    // Library delete: items first go to "Recently deleted" (deleted_at set) and can be restored from there
+    if (!cols.includes('deleted_at')) this.db.exec('ALTER TABLE items ADD COLUMN deleted_at INTEGER');
   }
 
   groupItems(groupId: string): Item[] {
-    const rows = this.db.prepare('SELECT * FROM items WHERE group_id = ? ORDER BY created_at, id').all(groupId) as any[];
+    const rows = this.db.prepare('SELECT * FROM items WHERE group_id = ? AND deleted_at IS NULL ORDER BY created_at, id').all(groupId) as any[];
     return rows.map((r) => decode<Item>(r, JSON_ITEM)!);
   }
 
@@ -182,7 +186,7 @@ export class Store {
   }
 
   listItems(q: LibraryQuery = {}): { items: Item[]; total: number } {
-    const where: string[] = [];
+    const where: string[] = [q.filter === 'deleted' ? 'deleted_at IS NOT NULL' : 'deleted_at IS NULL'];
     const args: any[] = [];
     switch (q.filter) {
       case 'favourites':
@@ -214,15 +218,57 @@ export class Store {
     const w = where.length ? 'WHERE ' + where.join(' AND ') : '';
     const total = (this.db.prepare(`SELECT COUNT(*) AS n FROM items ${w}`).get(...args) as any).n as number;
     const rows = this.db
-      .prepare(`SELECT * FROM items ${w} ORDER BY created_at DESC LIMIT ? OFFSET ?`)
+      .prepare(`SELECT * FROM items ${w} ORDER BY ${q.filter === 'deleted' ? 'deleted_at DESC, ' : ''}created_at DESC LIMIT ? OFFSET ?`)
       .all(...args, q.limit ?? 60, q.offset ?? 0) as any[];
     return { items: rows.map((r) => decode<Item>(r, JSON_ITEM)!), total };
   }
 
   /** Versions in the same lineage as an item, oldest first. */
   lineage(rootId: string): Item[] {
-    const rows = this.db.prepare('SELECT * FROM items WHERE id = ? OR root_id = ? ORDER BY version, created_at').all(rootId, rootId) as any[];
+    const rows = this.db.prepare('SELECT * FROM items WHERE (id = ? OR root_id = ?) AND deleted_at IS NULL ORDER BY version, created_at').all(rootId, rootId) as any[];
     return rows.map((r) => decode<Item>(r, JSON_ITEM)!);
+  }
+
+  /** Move items to "Recently deleted". Returns the ids that were live. */
+  softDelete(ids: string[], now = Date.now()): string[] {
+    const done: string[] = [];
+    for (const id of ids) if (this.db.prepare('UPDATE items SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL').run(now, id).changes) done.push(id);
+    return done;
+  }
+
+  restoreItems(ids: string[]): string[] {
+    const done: string[] = [];
+    for (const id of ids) if (this.db.prepare('UPDATE items SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL').run(id).changes) done.push(id);
+    return done;
+  }
+
+  deletedIds(): string[] {
+    return (this.db.prepare('SELECT id FROM items WHERE deleted_at IS NOT NULL').all() as { id: string }[]).map((r) => r.id);
+  }
+
+  /** Remove rows for good (only items already in "Recently deleted"). Returns the removed items. */
+  purgeItems(ids: string[]): Item[] {
+    const out: Item[] = [];
+    for (const id of ids) {
+      const it = this.getItem(id);
+      if (!it?.deleted_at) continue;
+      this.db.prepare('DELETE FROM items WHERE id = ?').run(id);
+      out.push(it);
+    }
+    return out;
+  }
+
+  /** True when a remaining item still points at this output file (a shared file is never recycled). */
+  fileInUse(f: FileRef): boolean {
+    const like = `%${JSON.stringify(f.filename).slice(1, -1)}%`;
+    const rows = this.db.prepare('SELECT file, poster, last_frame FROM items WHERE file LIKE ? OR poster LIKE ? OR last_frame LIKE ?').all(like, like, like) as Record<string, string | null>[];
+    return rows.some((r) =>
+      [r.file, r.poster, r.last_frame].some((c) => {
+        if (!c) return false;
+        const g = JSON.parse(c) as FileRef;
+        return g.filename === f.filename && (g.subfolder ?? '') === (f.subfolder ?? '') && (g.type ?? 'output') === (f.type ?? 'output');
+      }),
+    );
   }
 
   maxVersion(rootId: string): number {
