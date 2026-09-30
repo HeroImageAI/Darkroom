@@ -214,3 +214,15 @@ describe('qwen fill keeps quoted text intact', () => {
     expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'a sign reading "OPEN"' })).toBe('a sign reading "OPEN".');
   });
 });
+
+describe('circle quick edit', () => {
+  it('Qwen asks for the circled object and for the circle to be removed, even with a keep clause', () => {
+    const p = composeImagePrompt(T, { model: 'qwen', mode: 'instruct', text: 'replace it with a red van, keep the rest', circled: true });
+    expect(p).toMatch(/^In <image1>, change only the object circled in red: replace it with a red van, keep the rest\./);
+    expect(p).toMatch(/Remove the red circle completely/);
+  });
+  it('Klein has no circle wording and falls back to the plain instruction', () => {
+    const p = composeImagePrompt(T, { model: 'klein', mode: 'instruct', text: 'make it night', circled: true });
+    expect(p).not.toMatch(/circle/);
+  });
+});

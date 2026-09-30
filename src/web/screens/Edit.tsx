@@ -35,6 +35,7 @@ import { planEnhance } from '../../shared/enhance';
 import { maskBBox, planCrop } from '../../shared/cropstitch';
 import { snapPad } from '../../shared/outpaint';
 import { detectPixelBlock } from '../../shared/pixelblock';
+import { CIRCLE_COLOUR, circleFor } from '../../shared/annotate';
 import { PresetPicker } from '../components/PresetPicker';
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
@@ -126,6 +127,8 @@ function Editor({ item }: { item: Item }) {
   const [instrUndo, setInstrUndo] = useState<string | null>(null);
   const [prompt, setPrompt] = useState(() => sessionStorage.getItem('dr.edit.prompt') ?? '');
   const [onlyMasked, setOnlyMasked] = useState(true);
+  /** Circle quick edit (Qwen): send the picture with a red circle round the masked object instead of a mask. */
+  const [circled, setCircled] = useState(false);
   const [ref, setRef] = useState<{ name: string } | null>(null);
   const [pad, setPad] = useState<Pad>(ZERO_PAD);
   const [crop, setCrop] = useState<Rect | null>(null);
@@ -379,6 +382,31 @@ function Editor({ item }: { item: Item }) {
     return (await api.upload(blob, 'mask.png')).name;
   };
 
+  /** The picture with a red circle round the painted mask (circle quick edit, DECISIONS 73); null when nothing is painted. */
+  const uploadCircled = async () => {
+    const mc = layer.current!.mask;
+    const bb = maskBBox(mc.getContext('2d')!.getImageData(0, 0, mc.width, mc.height).data, mc.width, mc.height);
+    if (!bb) return null;
+    const img = new Image();
+    img.src = fileUrl(item.id);
+    await img.decode();
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const g = c.getContext('2d')!;
+    g.drawImage(img, 0, 0);
+    const sx = c.width / mc.width;
+    const sy = c.height / mc.height;
+    const e = circleFor({ x: bb.x * sx, y: bb.y * sy, w: bb.w * sx, h: bb.h * sy }, c.width, c.height);
+    g.strokeStyle = CIRCLE_COLOUR;
+    g.lineWidth = e.stroke;
+    g.beginPath();
+    g.ellipse(e.cx, e.cy, e.rx, e.ry, 0, 0, Math.PI * 2);
+    g.stroke();
+    const blob = await new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not draw the circle'))), 'image/png'));
+    return (await api.upload(blob, 'circled.png')).name;
+  };
+
   const submit = async (workflow: string, params: Record<string, string | number>, modeKey: string, model: string, promptText = '') => {
     try {
       const inp = await api.asInput(item.id);
@@ -424,10 +452,16 @@ function Editor({ item }: { item: Item }) {
     };
     if (mode === 'instruct') {
       if (!prompt.trim()) return toast('Type an instruction first, e.g. “make it night time”.', 'info');
-      const masked = onlyMasked && !maskEmpty;
-      const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt, masked }) };
+      const circle = circled && em === 'qwen' && !maskEmpty;
+      const masked = onlyMasked && !maskEmpty && !circle;
+      const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt, masked, circled: circle }) };
       if (ref) params.image_2 = ref.name;
       if (masked) params.mask = await uploadMask();
+      if (circle) {
+        const name = await uploadCircled();
+        if (!name) return toast('Paint over the object to circle first (B for brush).', 'info');
+        params.image_1 = name;
+      }
       return submit(wfFor('instruct'), params, 'edit:instruct', `${modelLabel} edit`, prompt.trim());
     }
     if (mode === 'inpaint') {
@@ -638,7 +672,7 @@ function Editor({ item }: { item: Item }) {
     return submit('upscale', up, 'upscale', `SeedVR2 7B ${upScale}×`);
   };
 
-  useHotkey((e) => (e.ctrlKey || e.metaKey) && e.key === 'Enter', () => void apply(), [mode, prompt, pad, onlyMasked, ref, maskEmpty, crop, tool, running, feather], true);
+  useHotkey((e) => (e.ctrlKey || e.metaKey) && e.key === 'Enter', () => void apply(), [mode, prompt, pad, onlyMasked, circled, editModel, ref, maskEmpty, crop, tool, running, feather], true);
 
   const addRef = async (file?: File, itemId?: string) => {
     try {
@@ -987,10 +1021,19 @@ function Editor({ item }: { item: Item }) {
                 B brush · E eraser · L lasso (hold Shift on release to subtract) · [ ] size · V or Alt-drag pans · wheel zooms
               </p>
               {mode === 'instruct' && (
-                <label className="check">
-                  <input type="checkbox" checked={onlyMasked} onChange={(e) => setOnlyMasked(e.target.checked)} disabled={maskEmpty} />
-                  Only change the masked area {maskEmpty && <span className="muted">(paint a mask first)</span>}
-                </label>
+                <>
+                  <label className="check">
+                    <input type="checkbox" checked={onlyMasked && !(circled && editModel === 'qwen')} onChange={(e) => setOnlyMasked(e.target.checked)} disabled={maskEmpty || (circled && editModel === 'qwen')} />
+                    Only change the masked area {maskEmpty && <span className="muted">(paint a mask first)</span>}
+                  </label>
+                  <label
+                    className="check"
+                    title="Qwen sees the picture with a red circle round what you painted, edits that object and removes the circle. Won 5 of 5 in the A/B; Klein is not reliable with circles."
+                  >
+                    <input type="checkbox" checked={circled && editModel === 'qwen'} onChange={(e) => setCircled(e.target.checked)} disabled={maskEmpty || editModel !== 'qwen'} />
+                    Point at it with a red circle {editModel !== 'qwen' ? <span className="muted">(Qwen only)</span> : maskEmpty && <span className="muted">(paint over the object first)</span>}
+                  </label>
+                </>
               )}
             </div>
           )}

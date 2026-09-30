@@ -88,6 +88,34 @@ test.describe.serial('Darkroom v2 features', () => {
     });
   }
 
+  // Addenda Phase 3, circle quick edit: Qwen gets the picture with a red circle round the painted mask (DECISIONS 73)
+  test('Edit: point at an object with a red circle (Qwen)', async () => {
+    const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && /lighthouse/i.test(i.prompt));
+    await page.goto(`/#/edit/${it.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await expect(page.getByLabel(/Point at it with a red circle/)).toBeDisabled();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await page.keyboard.press('s');
+    await page.getByLabel('Select by text').fill('person');
+    await page.getByRole('button', { name: 'Find' }).click();
+    await expect(page.getByText(/Selection added to the mask/)).toBeVisible({ timeout: 240_000 });
+    await page.getByLabel(/Point at it with a red circle/).check();
+    await expect(page.getByLabel(/Only change the masked area/)).toBeDisabled();
+    await page.getByLabel('Instruction').fill('Replace them with a lighthouse keeper in a bright red raincoat.');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    const before = page.url();
+    await page.getByRole('button', { name: /Apply instruction/ }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.workflow).toBe('qwen_edit');
+    expect(body.params.image_1).toMatch(/(^|\/)dr_/); // the circled upload, not the library picture (lib_<id>_main)
+    expect(body.params.mask).toBeUndefined();
+    expect(body.params.prompt).toMatch(/circled in red.*Remove the red circle/);
+    await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
+    expect(page.url()).not.toBe(before);
+    await shot(page, 'edit-circle-qwen');
+  });
+
   // Addenda Phase 4: Klein outpaints via the server's black-canvas prep + crop-and-stitch; Qwen via its own graph
   for (const model of ['Klein 9B', 'Qwen-Image 2.1']) {
     test(`Edit: outpaint to 16:9 (${model})`, async () => {

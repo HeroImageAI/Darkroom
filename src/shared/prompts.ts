@@ -15,6 +15,8 @@ export interface ImageTemplates {
   ref_hint: string;
   instruct: string;
   instruct_masked: string;
+  /** Qwen: circle quick edit — the picture carries a red circle round the target (Addenda Phase 3). */
+  instruct_circled?: string;
   inpaint: string;
   outpaint: string;
   outpaint_surroundings: string;
@@ -112,6 +114,8 @@ export interface ComposeImageArgs {
   text: string;
   style?: StylePreset | null;
   masked?: boolean;
+  /** Instruct only: image_1 carries a red circle round the target (circle quick edit). */
+  circled?: boolean;
   /** Description of the original picture (for Qwen inpaint/outpaint). Never an edit instruction. */
   caption?: string | null;
   /** Generate only, Qwen only: ask for a transparent background (real alpha). */
@@ -135,6 +139,8 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
       return a.transparent && tpl.transparent ? fill(tpl.transparent, { prompt: sentence(body) }) : body;
     }
     case 'instruct': {
+      // the circle must always be asked away, even when the user already said what to keep
+      if (a.circled && tpl.instruct_circled) return fill(tpl.instruct_circled, { instruction: sentence(text) });
       if (PRESERVE_WORDS.test(text)) return tidy(sentence(text)); // the user already said what to keep
       return fill(a.masked ? tpl.instruct_masked : tpl.instruct, { instruction: sentence(text) });
     }

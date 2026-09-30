@@ -24,6 +24,7 @@
     "ref_hint": "Refer to references as <image1>, <image2>, <image3> in the prompt.",
     "instruct": "{instruction} Keep everything else unchanged.",
     "instruct_masked": "{instruction} Keep the rest of the image unchanged.",
+    "instruct_circled": "In <image1>, change only the object circled in red: {instruction} Remove the red circle completely and keep everything else exactly the same.",
     "inpaint": "{fill}.",
     "outpaint": "Extend the image beyond its boundaries using outpainting.{caption}{surroundings}",
     "caption": " The original caption is: {text}",

@@ -1,0 +1,266 @@
+[
+  {
+    "group": "circle-edit",
+    "key": "teapot-tulips",
+    "variant": "klein-annot",
+    "ok": true,
+    "seconds": 16.6,
+    "peak": 20.5,
+    "set": {
+      "seed": 61,
+      "prompt": "Replace the object circled in red with a small glass vase of yellow tulips. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\teapot-tulips-klein-annot\\edit_00154_.png",
+    "cold": true
+  },
+  {
+    "group": "circle-edit",
+    "key": "car-scooter",
+    "variant": "klein-annot",
+    "ok": true,
+    "seconds": 13.6,
+    "peak": 21,
+    "set": {
+      "seed": 62,
+      "prompt": "Replace the object circled in red with a vintage pale blue Vespa scooter parked at the kerb. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\car-scooter-klein-annot\\edit_00155_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "chalkboard-text",
+    "variant": "klein-annot",
+    "ok": true,
+    "seconds": 14.1,
+    "peak": 21.2,
+    "set": {
+      "seed": 63,
+      "prompt": "Replace the object circled in red with a chalkboard sign that reads \"Open 7 till 7\" in white chalk. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\chalkboard-text-klein-annot\\edit_00156_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "scarf-silk-100",
+    "variant": "klein-annot",
+    "ok": true,
+    "seconds": 13.8,
+    "peak": 21.3,
+    "set": {
+      "seed": 64,
+      "prompt": "Replace the object circled in red with a mustard yellow silk scarf. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\scarf-silk-100-klein-annot\\edit_00157_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "taxi-van-small",
+    "variant": "klein-annot",
+    "ok": true,
+    "seconds": 14,
+    "peak": 21.3,
+    "set": {
+      "seed": 65,
+      "prompt": "Replace the object circled in red with a red delivery van. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\taxi-van-small-klein-annot\\edit_00158_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "teapot-tulips",
+    "variant": "qwen-annot",
+    "ok": true,
+    "seconds": 27.4,
+    "peak": 20.9,
+    "set": {
+      "seed": 61,
+      "prompt": "In <image1>, replace the object circled in red with a small glass vase of yellow tulips. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\teapot-tulips-qwen-annot\\edit_00159_.png",
+    "cold": true
+  },
+  {
+    "group": "circle-edit",
+    "key": "car-scooter",
+    "variant": "qwen-annot",
+    "ok": true,
+    "seconds": 23.9,
+    "peak": 21.2,
+    "set": {
+      "seed": 62,
+      "prompt": "In <image1>, replace the object circled in red with a vintage pale blue Vespa scooter parked at the kerb. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\car-scooter-qwen-annot\\edit_00160_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "chalkboard-text",
+    "variant": "qwen-annot",
+    "ok": true,
+    "seconds": 23.6,
+    "peak": 21.3,
+    "set": {
+      "seed": 63,
+      "prompt": "In <image1>, replace the object circled in red with a chalkboard sign that reads \"Open 7 till 7\" in white chalk. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\chalkboard-text-qwen-annot\\edit_00161_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "scarf-silk-100",
+    "variant": "qwen-annot",
+    "ok": true,
+    "seconds": 24.5,
+    "peak": 21.3,
+    "set": {
+      "seed": 64,
+      "prompt": "In <image1>, replace the object circled in red with a mustard yellow silk scarf. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\scarf-silk-100-qwen-annot\\edit_00162_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "taxi-van-small",
+    "variant": "qwen-annot",
+    "ok": true,
+    "seconds": 24.7,
+    "peak": 21.4,
+    "set": {
+      "seed": 65,
+      "prompt": "In <image1>, replace the object circled in red with a red delivery van. Remove the red circle completely and keep everything else exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\taxi-van-small-qwen-annot\\edit_00163_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "teapot-tulips",
+    "variant": "qwen-guide",
+    "ok": true,
+    "seconds": 42,
+    "peak": 22.5,
+    "set": {
+      "seed": 61,
+      "prompt": "<image2> is a copy of <image1> with a red circle drawn on it. In <image1>, replace the object that is circled in red in <image2> with a small glass vase of yellow tulips. Keep everything else in <image1> exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\teapot-tulips-qwen-guide\\edit_00164_.png",
+    "cold": true
+  },
+  {
+    "group": "circle-edit",
+    "key": "car-scooter",
+    "variant": "qwen-guide",
+    "ok": true,
+    "seconds": 32.2,
+    "peak": 23.4,
+    "set": {
+      "seed": 62,
+      "prompt": "<image2> is a copy of <image1> with a red circle drawn on it. In <image1>, replace the object that is circled in red in <image2> with a vintage pale blue Vespa scooter parked at the kerb. Keep everything else in <image1> exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\car-scooter-qwen-guide\\edit_00165_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "chalkboard-text",
+    "variant": "qwen-guide",
+    "ok": true,
+    "seconds": 38.3,
+    "peak": 24.5,
+    "set": {
+      "seed": 63,
+      "prompt": "<image2> is a copy of <image1> with a red circle drawn on it. In <image1>, replace the object that is circled in red in <image2> with a chalkboard sign that reads \"Open 7 till 7\" in white chalk. Keep everything else in <image1> exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\chalkboard-text-qwen-guide\\edit_00166_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "scarf-silk-100",
+    "variant": "qwen-guide",
+    "ok": true,
+    "seconds": 32.7,
+    "peak": 23.4,
+    "set": {
+      "seed": 64,
+      "prompt": "<image2> is a copy of <image1> with a red circle drawn on it. In <image1>, replace the object that is circled in red in <image2> with a mustard yellow silk scarf. Keep everything else in <image1> exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\scarf-silk-100-qwen-guide\\edit_00167_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "taxi-van-small",
+    "variant": "qwen-guide",
+    "ok": true,
+    "seconds": 47.3,
+    "peak": 24.5,
+    "set": {
+      "seed": 65,
+      "prompt": "<image2> is a copy of <image1> with a red circle drawn on it. In <image1>, replace the object that is circled in red in <image2> with a red delivery van. Keep everything else in <image1> exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\taxi-van-small-qwen-guide\\edit_00168_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "teapot-tulips",
+    "variant": "klein-guide",
+    "ok": true,
+    "seconds": 23.6,
+    "peak": 20.3,
+    "set": {
+      "seed": 61,
+      "prompt": "Image 2 is a copy of image 1 with a red circle drawn on it. In image 1, replace the object that is circled in red in image 2 with a small glass vase of yellow tulips. Keep everything else in image 1 exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\teapot-tulips-klein-guide\\edit_00169_.png",
+    "cold": true
+  },
+  {
+    "group": "circle-edit",
+    "key": "car-scooter",
+    "variant": "klein-guide",
+    "ok": true,
+    "seconds": 20.6,
+    "peak": 21.6,
+    "set": {
+      "seed": 62,
+      "prompt": "Image 2 is a copy of image 1 with a red circle drawn on it. In image 1, replace the object that is circled in red in image 2 with a vintage pale blue Vespa scooter parked at the kerb. Keep everything else in image 1 exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\car-scooter-klein-guide\\edit_00170_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "chalkboard-text",
+    "variant": "klein-guide",
+    "ok": true,
+    "seconds": 20.6,
+    "peak": 21.6,
+    "set": {
+      "seed": 63,
+      "prompt": "Image 2 is a copy of image 1 with a red circle drawn on it. In image 1, replace the object that is circled in red in image 2 with a chalkboard sign that reads \"Open 7 till 7\" in white chalk. Keep everything else in image 1 exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\chalkboard-text-klein-guide\\edit_00171_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "scarf-silk-100",
+    "variant": "klein-guide",
+    "ok": true,
+    "seconds": 20.8,
+    "peak": 21.7,
+    "set": {
+      "seed": 64,
+      "prompt": "Image 2 is a copy of image 1 with a red circle drawn on it. In image 1, replace the object that is circled in red in image 2 with a mustard yellow silk scarf. Keep everything else in image 1 exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\scarf-silk-100-klein-guide\\edit_00172_.png"
+  },
+  {
+    "group": "circle-edit",
+    "key": "taxi-van-small",
+    "variant": "klein-guide",
+    "ok": true,
+    "seconds": 21,
+    "peak": 21.7,
+    "set": {
+      "seed": 65,
+      "prompt": "Image 2 is a copy of image 1 with a red circle drawn on it. In image 1, replace the object that is circled in red in image 2 with a red delivery van. Keep everything else in image 1 exactly the same."
+    },
+    "file_out": "docs\\qa\\addenda\\p3c\\circle-edit\\taxi-van-small-klein-guide\\edit_00173_.png"
+  }
+]
