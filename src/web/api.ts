@@ -73,7 +73,7 @@ export const api = {
   deleteItems: (ids: string[]) => api.post<{ deleted: string[] }>('/api/items/delete', { ids }),
   restoreItems: (ids: string[]) => api.post<{ restored: string[] }>('/api/items/restore', { ids }),
   purgeItems: (body: { ids: string[] } | { all: true }) => api.post<{ purged: number; recycled: number; failed: string[] }>('/api/items/purge', body),
-  vlm: (body: { task: 'caption' | 'reverse' | 'enhance' | 'motion' | 'edit_enhance'; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; save?: boolean }) =>
+  vlm: (body: { task: 'caption' | 'reverse' | 'enhance' | 'motion' | 'edit_enhance'; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; save?: boolean; input2?: string }) =>
     api.post<{ text: string; seconds: number; model?: string; ratio?: string; aspect?: string | null }>('/api/vlm', body),
   outpaintPrepare: (body: { itemId: string; pad: { left: number; top: number; right: number; bottom: number }; feather?: number; step: 8 | 32 }) =>
     api.post<{

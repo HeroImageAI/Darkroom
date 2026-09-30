@@ -267,6 +267,21 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(await page.getByAltText('End frame (optional)').getAttribute('src')).toBe(before);
     await shot(page, 'video-frames');
   });
+
+  test('Video: Suggest motion looks at the end frame too', async () => {
+    // continues from the previous test: start and end frames are set
+    await page.getByLabel('Motion prompt').fill('');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Suggest motion' }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.task).toBe('motion');
+    expect(body.input).toBeTruthy();
+    expect(body.input2).toBeTruthy();
+    expect(body.input2).not.toBe(body.input);
+    await expect(page.getByLabel('Motion prompt')).not.toHaveValue('', { timeout: 120_000 });
+    expect((await page.getByLabel('Motion prompt').inputValue()).split(/s+/).length).toBeGreaterThan(15);
+    await shot(page, 'video-motion-endframe');
+  });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
     await page.goto('/#/generate');

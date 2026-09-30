@@ -336,3 +336,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     not add any object or animal from <image2>" still left the cat on the car (docs/qa/addenda/p6b). Qwen-Image 2.1's
     edit stays conservative there, so instead of rewording, presets carry `best` (from `scripts/build_presets.ts`): the
     picker labels those "· best on Klein" when Qwen is selected and says so in a toast; Try-on is marked best on Qwen.
+76. **Motion prompts see the end frame.** Video > Suggest / Improve motion only sent the start frame, so with an end
+    frame the prompt could describe motion that never reaches it (LTX, asked "he turns to the camera", had him "turn
+    away again"). With an end frame, the server builds one sheet — start and end side by side at the same height,
+    labelled START and END (`src/server/framepair.ts`; the vision graph takes a single picture) — and uses the
+    `motion.wan_pair` / `ltx_pair` prompts, which ask for the motion that carries the scene from the start to the end
+    and forbid mentioning frames or panels. Live check on the test library: the prompts now describe what actually
+    changes (night sky → golden light; a side profile turning to face the lens; the coat going from yellow to red).
+    Without an end frame nothing changed.

@@ -363,11 +363,11 @@ export function Video({ query }: { query: URLSearchParams }) {
                 type="button"
                 className="btn sm"
                 disabled={!s.start || suggesting || !online}
-                title={s.start ? `Let the local Qwen3-VL write a ${vm.label} motion prompt from the start frame (and your text, if any)` : 'Add a start frame first'}
+                title={s.start ? `Let the local Qwen3-VL write a ${vm.label} motion prompt from the start frame${s.end ? ' to the end frame' : ''} (and your text, if any)` : 'Add a start frame first'}
                 onClick={async () => {
                   setSuggesting(true);
                   try {
-                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name });
+                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name, ...(s.end ? { input2: s.end.name } : {}) });
                     setMotionUndo((u) => [...u.slice(-19), s.motion]);
                     update({ motion: r.text });
                     toast(`Motion prompt written for ${vm.label} in ${r.seconds}s.`, 'ok');
