@@ -25,11 +25,11 @@
 | **v2:** qwen_image_layered_vae.safetensors | vae | 0.24 GB |
 | **addenda:** qwen3.5_9b_qwen_image_2.1_pe_t2i.int8_convrot.safetensors | text_encoders | 9.5 GB (official Qwen-Image 2.1 prompt enhancer: Qwen Enhance + aspect ratio) |
 | **addenda:** qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors | text_encoders | 9.5 GB (official edit-instruction enhancer: Qwen "Enhance instruction") |
-| **addenda:** qwen_image_2.1_fun_controlnet_union_int8_convrot.safetensors | model_patches | 3.8 GB (tested for inpaint and rejected; used only by `workflows/experiments/` — safe to delete) |
-| **addenda:** qwen3.5_4b_bf16.safetensors | text_encoders | 9.3 GB (A/B candidate for the general VLM, not chosen — safe to delete) |
 
 The v2 VLM (Qwen3-VL 8B, `qwen3vl_8b_int8_convrot`) and Lucida matting were **already installed**. All three v2 downloads
-were fetched by `scripts/download-models-v2.sh`, the four addenda files by `scripts/download-models-v3.sh`; both only
+were fetched by `scripts/download-models-v2.sh`, the addenda files by `scripts/download-models-v3.sh`. Two addenda downloads that lost their A/B tests (the Qwen-Image 2.1 Fun
+ControlNet, 3.8 GB, and Qwen3.5 4B, 9.3 GB) were removed again at JP's request on 2026-09-30; the script has them commented
+out; both only
 add files (sizes checked, resumable).
 
 Klein 9B, Qwen-Image 2.1, Qwen-Image-Edit-2511, SeedVR2, BiRefNet and their encoders were **already installed** and are used
