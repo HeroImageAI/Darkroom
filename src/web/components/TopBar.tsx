@@ -14,13 +14,13 @@ const TABS: { id: Screen; label: string; icon: typeof ImageIcon }[] = [
 
 export function Logo() {
   return (
-    <div className="logo">
+    <button type="button" className="logo" onClick={() => go('home')} title="Home" aria-label="Darkroom — Home">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
         <circle cx="12" cy="12" r="9" />
         <circle cx="12" cy="12" r="3.5" />
       </svg>
       Darkroom
-    </div>
+    </button>
   );
 }
 

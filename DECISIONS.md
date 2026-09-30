@@ -354,3 +354,14 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     "image 3"), and quoted text is only allowed when asked for or clearly readable (Qwen had invented a number plate).
     Rendered check with portrait + coat + living room: both models put the woman in the coat inside the room. Without
     references the button is unchanged (pick a picture, get a prompt that recreates it). ~5 s.
+78. **Home screen and your own pictures.** Darkroom now opens on **Home** (JP's request) instead of jumping to the last
+    screen (DECISIONS UX review #2): four cards (Generate, Edit, Video, Library), an "Edit your own picture" upload
+    area (drop, paste or browse, several at once), a **Continue where you left off** card for the last screen (with
+    the picture's thumbnail when there is one) and one row of recent work. The logo goes Home from anywhere.
+    Bringing pictures in was only possible from Edit's empty state, which you rarely saw; there is now **Upload** on
+    Home, in Edit (also with a picture open, or drop a file on the canvas) and in the Library (button or drop on the
+    grid). One shared importer (`src/web/lib/importer.ts`) uploads each file and saves it through the existing
+    `import` workflow, so it becomes an ordinary library item (v1) that every Edit tool works on; it listens for the
+    job and also polls, so a fast import is never missed. Checked: a 12 MP phone JPEG stored sideways with an EXIF
+    rotation comes in upright at full size in ~1 s. iPhone HEIC can't be decoded here (codec licence), so it gets a
+    clear "save as JPEG" message instead of a failure. Everything stays on this PC (ComfyUI's input/output folders).

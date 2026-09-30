@@ -38,7 +38,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(box).not.toHaveValue('poster for a jazz night called "Blue Hour"', { timeout: 240_000 });
     const enhanced = await box.inputValue();
     expect(enhanced.length).toBeGreaterThan(80);
-    expect(enhanced).toContain('Blue Hour');
+    expect(enhanced).toMatch(/blue hour/i); // the enhancer may set a poster title in capitals
     await shot(page, 'generate-enhanced');
     await page.getByRole('button', { name: /^Undo/ }).click();
     await expect(box).toHaveValue('poster for a jazz night called "Blue Hour"');
@@ -83,7 +83,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.keyboard.press('s');
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
-    await expect(page.getByText(/Selection added to the mask|Nothing was found/)).toBeVisible({ timeout: 240_000 });
+    await expect(page.getByText(/Selection added to the mask|Nothing was found/).last()).toBeVisible({ timeout: 240_000 });
     // the overlay draws a two-tone outline so the selection reads on any colour (the amber tint alone vanished on a yellow coat)
     expect(await page.getByTestId('mask-overlay').evaluate((el) => getComputedStyle(el).filter)).toContain('dr-mask-outline');
     await expect(page.locator('filter#dr-mask-outline')).toHaveCount(1);
@@ -101,7 +101,7 @@ test.describe.serial('Darkroom v2 features', () => {
       await page.keyboard.press('s');
       await page.getByLabel('Select by text').fill('person');
       await page.getByRole('button', { name: 'Find' }).click();
-      await expect(page.getByText(/Selection added to the mask/)).toBeVisible({ timeout: 240_000 });
+      await expect(page.getByText(/Selection added to the mask/).last()).toBeVisible({ timeout: 240_000 });
       await expect(page.getByText('Change strength')).toBeVisible();
       await page.getByLabel('What should fill the masked area?').fill('a lighthouse keeper in a bright red raincoat');
       const before = page.url();
@@ -123,7 +123,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.keyboard.press('s');
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
-    await expect(page.getByText(/Selection added to the mask/)).toBeVisible({ timeout: 240_000 });
+    await expect(page.getByText(/Selection added to the mask/).last()).toBeVisible({ timeout: 240_000 });
     await page.getByLabel(/Point at it with a red circle/).check();
     await expect(page.getByLabel(/Only change the masked area/)).toBeDisabled();
     await page.getByLabel('Instruction').fill('Replace them with a lighthouse keeper in a bright red raincoat.');
@@ -303,7 +303,7 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(body.input2).toBeTruthy();
     expect(body.input2).not.toBe(body.input);
     await expect(page.getByLabel('Motion prompt')).not.toHaveValue('', { timeout: 120_000 });
-    expect((await page.getByLabel('Motion prompt').inputValue()).split(/s+/).length).toBeGreaterThan(15);
+    expect((await page.getByLabel('Motion prompt').inputValue()).split(/\s+/).length).toBeGreaterThan(15);
     await shot(page, 'video-motion-endframe');
   });
   // UX review (2026-09-30)
@@ -316,11 +316,49 @@ test.describe.serial('Darkroom v2 features', () => {
     }
   });
 
-  test('UX: Darkroom reopens on the screen you used last', async () => {
+  test('Home: Darkroom opens on Home, with the four screens and "Continue where you left off"', async () => {
     await page.goto('/#/library');
     await expect(page.getByRole('region', { name: 'Library' })).toBeVisible();
     await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
+    const start = page.getByRole('navigation', { name: 'Start' });
+    for (const name of ['Generate', 'Edit', 'Video', 'Library']) await expect(start.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
+    await shot(page, 'home');
+    await page.getByRole('button', { name: /Continue where you left off/ }).click();
     await expect(page).toHaveURL(/#\/library$/);
+    await page.getByRole('button', { name: 'Darkroom — Home' }).click();
+    await start.getByRole('button', { name: /^Generate/ }).click();
+    await expect(page).toHaveURL(/#\/generate$/);
+  });
+
+  test('Home: upload your own picture and it opens in Edit', async () => {
+    await page.goto('/');
+    await page.getByLabel('Upload pictures', { exact: true }).setInputFiles('tests/golden/01_portrait.png');
+    await expect(page).toHaveURL(/#\/edit\/[0-9a-f-]+$/, { timeout: 60_000 });
+    const id = page.url().split('/').pop();
+    const { item } = await (await page.request.get(`/api/items/${id}`)).json();
+    expect(item.mode).toBe('import');
+    expect(item.prompt).toBe('01_portrait');
+    expect([item.width, item.height]).toEqual([896, 1120]);
+    await expect(page.getByRole('group', { name: 'Versions' }).getByRole('button')).toHaveCount(1);
+  });
+
+  test('Edit: Upload with a picture open brings several in and opens the first', async () => {
+    const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
+    const first = page.url();
+    await page.getByLabel('Upload your own picture').setInputFiles(['tests/golden/09_car.png', 'tests/golden/10_interior.png']);
+    await expect(page.getByText('2 pictures added to your Library. Opening the first one.')).toBeVisible({ timeout: 60_000 });
+    expect(page.url()).not.toBe(first);
+    expect((await (await page.request.get('/api/items?limit=1')).json()).total).toBe(before + 2);
+  });
+
+  test('Library: Upload adds your pictures to the Library', async () => {
+    await page.goto('/#/library');
+    const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
+    await page.getByLabel('Upload pictures to the Library').setInputFiles('tests/golden/03_text_scene.png');
+    await expect(page.getByText('1 picture added to your Library. Double-click to edit.')).toBeVisible({ timeout: 60_000 });
+    expect((await (await page.request.get('/api/items?limit=1')).json()).total).toBe(before + 1);
+    await expect(page.getByRole('complementary', { name: 'Details' })).toContainText('03_text_scene');
   });
 
   test('Library: delete with Undo, multi-select, Recently deleted and Restore', async () => {

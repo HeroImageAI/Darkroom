@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-export type Screen = 'generate' | 'edit' | 'video' | 'library';
+export type Screen = 'home' | 'generate' | 'edit' | 'video' | 'library';
 export interface Route {
   screen: Screen;
   id?: string;
@@ -11,27 +11,19 @@ function parse(): Route {
   const h = location.hash.replace(/^#\/?/, '');
   const [pathPart, qs] = h.split('?');
   const [screen, id] = pathPart.split('/');
-  const s: Screen = (['generate', 'edit', 'video', 'library'] as const).includes(screen as Screen) ? (screen as Screen) : 'generate';
+  const s: Screen = (['home', 'generate', 'edit', 'video', 'library'] as const).includes(screen as Screen) ? (screen as Screen) : 'home';
   return { screen: s, id: id || undefined, query: new URLSearchParams(qs ?? '') };
 }
 
 const LAST = 'dr.lastRoute';
 
 /**
- * Opening Darkroom without a screen in the URL (the desktop shortcut, a bookmark of the root) returns to the screen
- * you last used, including the picture open in Edit or the take in Video. One-off handoff parameters are not kept.
+ * Darkroom opens on Home (no screen in the address). The last screen you worked on — including the picture open in
+ * Edit or the take in Video — is remembered and offered on Home as "Continue where you left off".
+ * One-off handoff parameters (e.g. from "Use as…") are not kept.
  */
-function restoreLast(): void {
-  if (location.hash.replace(/^#\/?/, '')) return;
-  try {
-    const last = localStorage.getItem(LAST);
-    if (last) history.replaceState(null, '', `${location.pathname}${location.search}#/${last}`);
-  } catch {
-    /* storage unavailable: start on Generate */
-  }
-}
-
 function remember(r: Route): void {
+  if (r.screen === 'home') return;
   const keep = new URLSearchParams();
   const take = r.query.get('take');
   if (r.screen === 'video' && take) keep.set('take', take);
@@ -43,7 +35,18 @@ function remember(r: Route): void {
   }
 }
 
-restoreLast();
+/** The last screen worked on, as a hash path like "edit/<id>", or null. */
+export function lastRoute(): { screen: Screen; path: string } | null {
+  try {
+    const last = localStorage.getItem(LAST);
+    if (!last) return null;
+    const screen = last.split(/[/?]/)[0] as Screen;
+    return ['generate', 'edit', 'video', 'library'].includes(screen) ? { screen, path: last } : null;
+  } catch {
+    return null;
+  }
+}
+
 let current = parse();
 remember(current);
 const subs = new Set<() => void>();
