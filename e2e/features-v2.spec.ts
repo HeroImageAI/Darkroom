@@ -38,7 +38,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(box).not.toHaveValue('poster for a jazz night called "Blue Hour"', { timeout: 240_000 });
     const enhanced = await box.inputValue();
     expect(enhanced.length).toBeGreaterThan(80);
-    expect(enhanced).toContain('Blue Hour');
+    expect(enhanced).toMatch(/blue hour/i); // the enhancer may set a poster title in capitals
     await shot(page, 'generate-enhanced');
     await page.getByRole('button', { name: /^Undo/ }).click();
     await expect(box).toHaveValue('poster for a jazz night called "Blue Hour"');
