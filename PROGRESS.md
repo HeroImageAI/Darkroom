@@ -1,5 +1,19 @@
 # Darkroom — progress
 
+## Addenda 1 + 2 (One Node patterns, Qwen-Image 2.1 parity; plan in docs/ADDENDA_PLAN.md)
+
+| Phase | Branch | Status |
+|---|---|---|
+| 0 Audit, plan, verification | `addenda-0-plan` | ✔ JP's decisions: core nodes only, full Qwen3.5 routing, no head swap, VLM "A/B first" |
+| 1 Sampling | `addenda-1-sampling` | ✔ One Node sampler for Klein (≥ on 10/12); KV rejected (VRAM); Qwen Draft / Native 2K |
+| 2 Enhance | `addenda-2-enhance` | ✔ Restore (edit-style) on both models; img2img kept as Subtle |
+| 3 Inpaint | `addenda-3-inpaint` | ✔ crop and stitch on both; Qwen mask-as-`<image2>` 6/6; circle quick edit (Qwen 5/5) |
+| 4 Outpaint | `addenda-4-outpaint` | ✔ Klein canvas prep, Qwen own route; 3 rounds seamless |
+| 5 Upscale + alpha | `addenda-5-upscale-alpha` | ✔ SeedVR2 v2 2–8× with alpha; Qwen BG removal + per-object layers |
+| 6 Presets + metadata | `addenda-6-presets` | ✔ 56 presets × 2 models rendered; Restore, Use as…, paste; best-model hints |
+| 7 Prompt routing | `addenda-7-vlm` | ✔ PE-T2I / PE-I2I for Qwen; Qwen3-VL 8B stays general (A/B vs PE-I2I, Qwen3.5 4B) |
+| 8 QA | `addenda-7-vlm` → `main` | ✔ docs/qa/ADDENDA_REPORT.md; e2e 25/25 passing (7.3 min, Edge against ComfyUI 0.38.0); 269 unit tests |
+
 ## v2 expansion (approved 2026-09-29; plan in docs/PLAN.md)
 
 | Phase | Branch | Status |

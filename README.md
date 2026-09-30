@@ -5,16 +5,31 @@ work; Darkroom is the only window you use day to day.
 
 | Screen | What it does |
 |---|---|
-| **Generate** | Prompt → Klein 9B (fast, 4 steps) or Qwen-Image 2.1 (text & layout; Standard/High quality, transparent background). Aspect pills, per-model style presets, up to 3 reference images (drop, paste, or capture part of your screen), batch ×1–4. **Enhance** expands a short idea into a model-specific prompt and **From picture** writes a prompt from an image (local Qwen3-VL); Undo puts your text back. |
-| **Edit** | Mask brush / eraser / lasso on a zoomable canvas. Pick **Klein 9B or Qwen-Image 2.1** for Instruct, Inpaint and Outpaint; Remove BG, Upscale 2× (SeedVR2), Crop. Every apply is a new version (v1, v2…), with a before/after slider and undo/redo. |
+| **Generate** | Prompt → Klein 9B (fast, 4 steps) or Qwen-Image 2.1 (text & layout; Draft ~1 MP or Native 2K, transparent background). Aspect pills, per-model style presets, up to 3 reference images (drop, paste, or capture part of your screen), batch ×1–4. **Enhance** expands a short idea into a model-specific prompt and **From picture** writes a prompt from an image (local Qwen3-VL); Undo puts your text back. |
+| **Edit** | Mask brush / eraser / lasso on a zoomable canvas. Pick **Klein 9B or Qwen-Image 2.1** for Instruct (with 56 presets), Inpaint (crop and stitch), Outpaint and Enhance (Restore); a red-circle quick edit (Qwen); Remove BG (fast or Qwen best quality); Layers; Upscale 2–8× (SeedVR2, keeps transparency); Crop. Every apply is a new version (v1, v2…), with a before/after slider and undo/redo. |
 | **Video** | Start frame (+ optional end frame) → Wan 2.2 (best motion) or LTX 2.5 (fast drafts). 3/5/8 s, Draft 480p / Final 720p, camera chips, measured time estimate. Takes panel, Extend +5 s, Smooth 2×, Save frame. Jobs keep running if you close or reload the page. |
 | **Library** | Everything you make, with the full settings (prompt, model, seed, size, render time, parent version). Search, filters, favourites, Reuse settings, Send to Edit, Enhance, Animate, Open graph in ComfyUI, and **Caption / Prompt → Klein / Prompt → Qwen** with the local Qwen3-VL. |
+
+## What's new in the addenda (One Node patterns + Qwen-Image 2.1 parity)
+
+- **Sharper Klein** with One Node's sampler (er_sde, shift 3, 4 steps); **Qwen tiers**: Draft (~1 MP, 25 steps) to iterate, Native 2K (40 steps) for finals.
+- **Enhance = Restore**: rebuilds a blurred, noisy or small picture as an edit on both models (the old img2img is kept as *Subtle*). Restore + upscale runs SeedVR2 2× afterwards.
+- **Inpaint with crop and stitch**: only the masked area and its surroundings are re-rendered at high resolution, then stitched back — small objects and text now work. Change strength 50–100 %, Seam feather Auto.
+- **Point at it with a red circle** (Edit → Instruct, Qwen): paint over an object, tick the option, and describe the change — no mask precision needed.
+- **Outpaint** on a prepared canvas (Klein) that stays seamless round after round.
+- **Upscale 2/4/6/8×** keeps transparency; pixelated pictures are detected and shrunk to their real size first.
+- **Background removal: Best quality** uses Qwen-Image 2.1's own transparent output (glass, hair); **Layers → Objects (Qwen 2.1)** gives full-resolution transparent layers.
+- **56 edit presets** (Angles, Relight, Styles, Enhance, Text edit, Try-on, Texture transfer), worded separately for each model, with a hint when the other model does it better. Save your own; they live in `data/user_presets.json` and survive updates.
+- **Prompt rewriters**: Qwen's Enhance uses the official Qwen-Image 2.1 prompt enhancer and also suggests the aspect ratio; Edit → **Enhance instruction** rewrites an edit instruction for the selected model.
+- **Reproducible**: every PNG carries its settings — **Restore** on Generate rebuilds them from any Darkroom file; Library right-click **Use as…**; Ctrl+V into the Edit reference slot.
+
+Which model to pick for each feature, with the evidence: docs/qa/ADDENDA_REPORT.md. The choices and A/B results: DECISIONS 62–75.
 
 ## What's new in v2
 
 - **Model-aware prompts.** Everything Darkroom adds to your text (styles, edit wording, video camera phrases) is written separately for Klein, Qwen, Wan and LTX, following each model's official guidance — see docs/PROMPT_AUDIT.md. Templates are editable in `presets/prompts.json`, `styles.json`, `camera.json`.
 - **Local vision model** (Qwen3-VL 8B — the text encoder Qwen-Image 2.1 already uses, so nothing extra was downloaded): caption, reverse prompt, prompt enhance, video motion suggestions. System prompts: `presets/vlm_prompts.json`.
-- **Enhance** (Edit → Enhance, or the Enhance buttons in Generate/Library): Subtle, Strong, or Upscale + enhance, with Klein or Qwen; strength under Advanced. Small or low-quality pictures are upscaled with SeedVR2 first, then enhanced, so old phone photos and web thumbnails come out sharp instead of soft. Subtle keeps the picture as it is; Strong can change small things.
+- **Enhance** (Edit → Enhance, or the Enhance buttons in Generate/Library): now Restore / Restore + upscale / Subtle — see the addenda above.
 - **Smart select** (Edit, **S**): click the object (Shift-click to exclude), drag a box, or type "the red car" — typing finds every match ("person" selects everyone; "person:2" the two clearest). One click may pick just a part (a boot's laces); click two or three spots to get the whole object. SAM 3.1 adds, subtracts or replaces the mask.
 - **Remove BG v2**: name the subject for SAM 3.1; BiRefNet or Lucida gives the soft edge; real transparent PNG; optional clean background plate (Qwen-Image 2.1).
 - **Layers** (Edit → Layers): one layer per named object (SAM 3.1, background filled by Qwen) or automatic layers (Qwen-Image-Layered, about 2 minutes; it describes the picture first with Qwen3-VL). Toggle, reorder, rename, export a layered **PSD** or a **ZIP** of PNGs.
