@@ -1,6 +1,6 @@
 # QA report — Darkroom v2
 
-Generated 2026-09-29 22:31 from the fixed-seed runs in `docs/qa/`
+Generated 2026-09-30 03:34 from the fixed-seed runs in `docs/qa/`
 (`scripts/ab-phase1.ts`, `scripts/qa-phase6.ts`). Machine: RTX 3090 24 GB, ComfyUI 0.37.4. Golden set: `tests/golden/`
 (synthetic, no real people, no Google Earth captures). Peak VRAM is whole-GPU usage sampled every 0.5 s, in decimal
 GB (10⁹ bytes): the card's 24 GiB is 25.8 GB on this scale, so 25 GB means "nearly full", not "over capacity".
@@ -75,9 +75,8 @@ Rows re-run after a fix replace the failing ones in `runs.json`; the Enhance "be
 4. **Klein Strong enhance invents content** at frame edges; the Strong tooltip now says so; default stays Subtle.
 5. **Video end frame equal to start frame** gives a gentle, almost static clip on both models — expected, but worth a
    hint in the UI when both slots hold the same picture.
-6. **The amber mask overlay is hard to see on yellow or orange subjects** (seen in the e2e smart-select screenshot:
-   the selected person wears a yellow raincoat). The mask is correct; only its display colour is low-contrast there.
-   A future option: a contrasting outline around the mask, or a mask-colour toggle.
+6. ~~**The amber mask overlay is hard to see on yellow or orange subjects.**~~ **Fixed:** the overlay now has a
+   two-tone outline (white inside, dark outside) at a constant on-screen width (DECISIONS 61).
 
 
 ## Phase 1 — old vs new prompts (A/B)

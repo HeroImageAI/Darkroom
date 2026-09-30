@@ -34,6 +34,8 @@ as they are.
 
 **None.** Everything runs on core ComfyUI 0.37.4 nodes, so the Desktop `.venv` was not modified and nothing needs
 reinstalling after a Desktop update. (`backup/pip-freeze.txt` records the environment as found.)
+Comfy Desktop has since updated ComfyUI to **0.38.0** on its own (noticed 2026-09-30); all 13 end-to-end tests pass on
+it unchanged.
 
 Darkroom's own npm packages added in v2: `ag-psd` (layered PSD export) and `fflate` (ZIP export). Both live in
 `E:\Darkroom\node_modules` only.

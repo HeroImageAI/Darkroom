@@ -60,6 +60,9 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
     await expect(page.getByText(/Selection added to the mask|Nothing was found/)).toBeVisible({ timeout: 240_000 });
+    // the overlay draws a two-tone outline so the selection reads on any colour (the amber tint alone vanished on a yellow coat)
+    expect(await page.getByTestId('mask-overlay').evaluate((el) => getComputedStyle(el).filter)).toContain('dr-mask-outline');
+    await expect(page.locator('filter#dr-mask-outline')).toHaveCount(1);
     await shot(page, 'edit-smart-select');
   });
 

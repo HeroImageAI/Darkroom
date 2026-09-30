@@ -194,3 +194,8 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     NVIDIA system-memory-fallback pattern). Discovery now allows 4 missed polls before calling ComfyUI offline (probe
     timeout 4 s), so heavy model loads no longer flip the app to "offline"; a job with no progress for 3 minutes shows
     a stall message suggesting a restart from Comfy Desktop. Harness scripts have per-run timeouts.
+61. **Mask outline.** The amber mask tint disappeared on yellow/orange subjects (QA issue 6). The overlay canvas now gets
+    a CSS SVG filter (`components/MaskOutline.tsx`): a white ring hugging the mask plus a dark ring outside it, so the edge
+    reads on light and dark backgrounds alike. The filter works in the canvas's on-screen pixels, so the outline is the
+    same thickness at every zoom; display only, the stored/exported mask is unchanged. Repaint cost measured in Edge
+    while painting: 16.7 ms per frame with or without the outline, at fit, 288 % and 800 % zoom.
