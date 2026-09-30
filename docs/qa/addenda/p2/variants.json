@@ -1,0 +1,34 @@
+{
+  "enhance-klein": [
+    {
+      "id": "current",
+      "label": "Darkroom v2: img2img, denoise 0.3 (+ SeedVR2 first if small)"
+    },
+    {
+      "id": "edit",
+      "label": "Edit-style: ReferenceLatent + empty latent, One Node prompt"
+    },
+    {
+      "id": "edit_scene",
+      "label": "Edit-style + \"Scene:\" caption line"
+    },
+    {
+      "id": "edit_gentle",
+      "label": "Edit-style, toned-down prompt + scene line (round 2)"
+    }
+  ],
+  "enhance-qwen": [
+    {
+      "id": "current",
+      "label": "Darkroom v2: img2img, denoise 0.35 (+ SeedVR2 first if small)"
+    },
+    {
+      "id": "edit",
+      "label": "Edit-style: image_1 + empty latent, Qwen restore prompt"
+    },
+    {
+      "id": "edit_scene",
+      "label": "Edit-style + \"The picture shows ...\" line"
+    }
+  ]
+}

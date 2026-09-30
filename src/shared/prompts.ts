@@ -27,6 +27,9 @@ export interface ImageTemplates {
   enhance_subtle?: string;
   enhance_strong?: string;
   enhance_default_caption?: string;
+  /** Edit-style Enhance ("Restore"): instruction with preservation clauses; {scene} gets enhance_scene if set. */
+  enhance_restore?: string;
+  enhance_scene?: string;
 }
 
 export interface VideoTemplates {
@@ -108,8 +111,8 @@ export interface ComposeImageArgs {
   caption?: string | null;
   /** Generate only, Qwen only: ask for a transparent background (real alpha). */
   transparent?: boolean;
-  /** Enhance only. */
-  strength?: 'subtle' | 'strong';
+  /** Enhance only. "restore" = edit-style (Addenda Phase 2); subtle/strong = img2img touch-up. */
+  strength?: 'subtle' | 'strong' | 'restore';
   /** Inpaint only: the fill removes something (background plate) rather than adding content. */
   remove?: boolean;
 }
@@ -131,6 +134,12 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
       return fill(a.remove && tpl.inpaint_remove ? tpl.inpaint_remove : tpl.inpaint, { fill: a.remove || a.model === 'klein' ? fragment(text) : text.trim().replace(/\.+$/, ''), caption });
     }
     case 'enhance': {
+      if (a.strength === 'restore') {
+        if (!tpl.enhance_restore) throw new Error(`No restore template for ${a.model}`);
+        const cap = (a.caption ?? '').trim().replace(/[.!?]+$/, '');
+        const scene = cap && tpl.enhance_scene ? sub(tpl.enhance_scene, { text: cap }) : '';
+        return fill(tpl.enhance_restore, { scene });
+      }
       const tplText = a.strength === 'strong' ? tpl.enhance_strong : tpl.enhance_subtle;
       if (!tplText) throw new Error(`No enhance template for ${a.model}`);
       if (a.model === 'klein') {

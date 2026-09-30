@@ -35,7 +35,9 @@ import { onJob, toast, useApp } from '../store';
 
 type Tool = 'move' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
 type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
-type EnhanceKind = 'subtle' | 'strong' | 'upscale';
+/** restore = edit-style (default; fixes blur and low resolution), restore_upscale = restore then SeedVR2 2x,
+ *  subtle = low-denoise img2img touch-up for pictures that are already clean (Addenda Phase 2, DECISIONS 66). */
+type EnhanceKind = 'restore' | 'restore_upscale' | 'subtle';
 interface Pad {
   left: number;
   top: number;
@@ -88,7 +90,7 @@ function Editor({ item }: { item: Item }) {
   const [mode, setMode] = useState<Mode>(() => (sessionStorage.getItem('dr.edit.mode') as Mode) || 'instruct');
   const boot = useApp((s) => s.boot);
   const [editModel, setEditModel] = useState<string>(() => localStorage.getItem('dr.edit.model') || 'qwen');
-  const [enhanceKind, setEnhanceKind] = useState<EnhanceKind>('subtle');
+  const [enhanceKind, setEnhanceKind] = useState<EnhanceKind>('restore');
   const [enhanceAdv, setEnhanceAdv] = useState(false);
   const [denoise, setDenoise] = useState<number | null>(null); // null = model default for the chosen strength
   useEffect(() => {
@@ -99,10 +101,11 @@ function Editor({ item }: { item: Item }) {
     }
   }, [editModel]);
   const modelLabel = boot?.manifest.models[editModel]?.label ?? editModel;
-  const wfFor = (m: 'instruct' | 'inpaint' | 'outpaint' | 'enhance') =>
-    boot?.manifest.edit?.[m]?.[editModel] ?? { instruct: 'qwen_edit', inpaint: 'inpaint', outpaint: 'outpaint', enhance: 'qwen_enhance' }[m];
+  const wfFor = (m: 'instruct' | 'inpaint' | 'outpaint' | 'enhance' | 'enhance_subtle') =>
+    boot?.manifest.edit?.[m]?.[editModel] ??
+    { instruct: 'qwen_edit', inpaint: 'inpaint', outpaint: 'outpaint', enhance: 'qwen_enhance_edit', enhance_subtle: 'qwen_enhance' }[m];
   const enhanceDefaults = (boot?.manifest as any)?.enhance?.[editModel] as { subtle: number; strong: number } | undefined;
-  const effDenoise = denoise ?? (enhanceKind === 'strong' ? enhanceDefaults?.strong : enhanceDefaults?.subtle) ?? 0.3;
+  const effDenoise = denoise ?? enhanceDefaults?.subtle ?? 0.3;
   const [brush, setBrush] = useState(64);
   const [feather, setFeather] = useState(8);
   const [prompt, setPrompt] = useState(() => sessionStorage.getItem('dr.edit.prompt') ?? '');
@@ -434,31 +437,37 @@ function Editor({ item }: { item: Item }) {
       return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text || 'Outpaint');
     }
     if (mode === 'enhance') {
-      const cap = await ensureCaption(em === 'klein' ? 'klein' : 'short');
-      const strength = enhanceKind === 'strong' ? 'strong' : 'subtle';
+      const restore = enhanceKind !== 'subtle';
+      // Qwen's Restore prompt ignores the caption (no measurable effect in the A/B), so skip the VLM call for it
+      const cap = restore && em === 'qwen' ? null : await ensureCaption(em === 'klein' ? 'klein' : 'short');
       const plan = planEnhance(W, H);
       const params: Record<string, string | number> = {
-        prompt: composeImagePrompt(T, { model: em, mode: 'enhance', text: '', caption: cap, strength }),
-        denoise: effDenoise,
+        prompt: composeImagePrompt(T, { model: em, mode: 'enhance', text: '', caption: cap, strength: restore ? 'restore' : 'subtle' }),
         megapixels: plan.megapixels,
       };
-      if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
-      const label = `${modelLabel} enhance (${enhanceKind === 'upscale' ? 'upscale + enhance' : strength})`;
-      const ui = { ...item.ui, caption: cap ?? undefined };
-      const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain: enhanceKind === 'upscale' ? { kind: 'upscale' } : undefined };
+      if (!restore) {
+        params.denoise = effDenoise;
+        if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
+      }
+      const workflow = wfFor(restore ? 'enhance' : 'enhance_subtle');
+      // Restore rebuilds detail itself; only the img2img touch-up needs a SeedVR2 pre-upscale for small sources
+      const preScale = restore ? null : plan.preScale;
+      const label = `${modelLabel} ${{ restore: 'restore', restore_upscale: 'restore + upscale', subtle: 'subtle enhance' }[enhanceKind]}`;
+      const ui = { ...item.ui, caption: cap ?? (item.ui as any)?.caption };
+      const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain: enhanceKind === 'restore_upscale' ? { kind: 'upscale' } : undefined };
       try {
         const inp = await api.asInput(item.id);
-        const j = plan.preScale
-          ? // small source: SeedVR2 first, then the enhance pass runs on its result (server chain)
+        const j = preScale
+          ? // small source: SeedVR2 first, then the touch-up runs on its result (server chain)
             await api.submit({
               workflow: 'upscale',
-              params: { image_1: inp.name, scale: plan.preScale, seed: randomSeed() },
-              meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: item.prompt, parentId: item.id, ui, chain: { kind: 'enhance', workflow: wfFor('enhance'), params, meta: enhanceMeta } },
+              params: { image_1: inp.name, scale: preScale, seed: randomSeed() },
+              meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: item.prompt, parentId: item.id, ui, chain: { kind: 'enhance', workflow, params, meta: enhanceMeta } },
             })
-          : await api.submit({ workflow: wfFor('enhance'), params: { image_1: inp.name, seed: randomSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
+          : await api.submit({ workflow, params: { image_1: inp.name, seed: randomSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
         setJobId(j.id);
-        if (plan.preScale) toast(`Small picture: upscaling ${plan.preScale}× with SeedVR2 first, then enhancing — the enhanced version opens when it is ready.`, 'info', 7000);
-        else if (enhanceKind === 'upscale') toast('Enhancing, then upscaling 2× with SeedVR2 — the upscaled version opens when it is ready.', 'info', 7000);
+        if (preScale) toast(`Small picture: upscaling ${preScale}× with SeedVR2 first, then enhancing — the enhanced version opens when it is ready.`, 'info', 7000);
+        else if (enhanceKind === 'restore_upscale') toast('Restoring, then upscaling 2× with SeedVR2 — the upscaled version opens when it is ready.', 'info', 7000);
       } catch (err) {
         toast((err as Error).message, 'error');
       }
@@ -865,9 +874,9 @@ function Editor({ item }: { item: Item }) {
               <div className="segmented" role="group" aria-label="Enhance strength">
                 {(
                   [
-                    ['subtle', 'Subtle', 'More detail and clarity, same picture'],
-                    ['strong', 'Strong', 'Re-render with much more detail; can change or add small things, especially near the edges'],
-                    ['upscale', 'Upscale + enhance', 'Subtle enhance, then SeedVR2 2x'],
+                    ['restore', 'Restore', 'Removes blur, noise and compression, rebuilds fine detail; keeps the picture as it is'],
+                    ['restore_upscale', 'Restore + upscale', 'Restore, then SeedVR2 2x'],
+                    ['subtle', 'Subtle', 'Light touch-up for pictures that are already sharp'],
                   ] as [EnhanceKind, string, string][]
                 ).map(([k, l, t]) => (
                   <button key={k} type="button" aria-pressed={enhanceKind === k} title={t} onClick={() => { setEnhanceKind(k); setDenoise(null); }}>
@@ -876,12 +885,16 @@ function Editor({ item }: { item: Item }) {
                 ))}
               </div>
               <p className="note" style={{ marginTop: 6 }}>
-                The picture is described by the local Qwen3-VL, then re-rendered at low strength. Composition, faces and text are kept.
+                {enhanceKind === 'subtle'
+                  ? 'Re-renders the picture at low strength. Best on pictures that are already sharp; it does not fix blur.'
+                  : 'Redraws the picture from itself as an edit: fixes motion blur, lens blur, noise and low resolution while keeping the composition, faces and colours.'}
               </p>
-              <label className="check">
-                <input type="checkbox" checked={enhanceAdv} onChange={(ev) => setEnhanceAdv(ev.target.checked)} /> Advanced
-              </label>
-              {enhanceAdv && (
+              {enhanceKind === 'subtle' && (
+                <label className="check">
+                  <input type="checkbox" checked={enhanceAdv} onChange={(ev) => setEnhanceAdv(ev.target.checked)} /> Advanced
+                </label>
+              )}
+              {enhanceKind === 'subtle' && enhanceAdv && (
                 <label className="field">
                   <span>
                     Strength (denoise) <b className="mono">{effDenoise.toFixed(2)}</b>

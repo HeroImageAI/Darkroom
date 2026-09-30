@@ -162,6 +162,18 @@ describe('enhance', () => {
       'Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: a red car.',
     );
   });
+  // Addenda Phase 2 A/B (docs/qa/addenda/p2): edit-style "Restore" won on blur for both models
+  it('Klein Restore adds a Scene line from the caption, and drops it when there is none', () => {
+    const withScene = composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', caption: 'A red vintage car in front of a blue house.', strength: 'restore' });
+    expect(withScene).toMatch(/^Restore this photograph: /);
+    expect(withScene).toMatch(/not a processed one\. Scene: A red vintage car in front of a blue house\.$/);
+    expect(composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', strength: 'restore' })).toMatch(/not a processed one\.$/);
+  });
+  it('Qwen Restore names the edit target the official way and ignores the caption', () => {
+    const p = composeImagePrompt(T, { model: 'qwen', mode: 'enhance', text: '', caption: 'a red car', strength: 'restore' });
+    expect(p).toMatch(/^Enhance the overall quality of <image1>: /);
+    expect(p).not.toContain('red car');
+  });
 });
 
 describe('qwen fill keeps quoted text intact', () => {

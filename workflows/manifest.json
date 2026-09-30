@@ -3035,6 +3035,568 @@
       "outputs": {
         "image": "DR_OUTPUT"
       }
+    },
+    "klein_enhance_edit": {
+      "file": "klein_enhance_edit.json",
+      "family": "klein",
+      "kind": "image",
+      "label": "Enhance as edit (Klein 9B)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_STEPS",
+              "input": "steps"
+            }
+          ],
+          "default": 4,
+          "min": 1,
+          "max": 12
+        },
+        "megapixels": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_WORK",
+              "input": "megapixels"
+            }
+          ],
+          "default": 1,
+          "min": 0.5,
+          "max": 2
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/enhance"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "qwen_enhance_edit": {
+      "file": "qwen_enhance_edit.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Enhance as edit (Qwen-Image 2.1)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "megapixels": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_WORK",
+              "input": "megapixels"
+            }
+          ],
+          "default": 1,
+          "min": 0.5,
+          "max": 2
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/enhance"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "klein_inpaint_cs": {
+      "file": "klein_inpaint_cs.json",
+      "family": "klein",
+      "kind": "image",
+      "label": "Inpaint, crop and stitch (Klein 9B)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_STEPS",
+              "input": "steps"
+            }
+          ],
+          "default": 4,
+          "min": 1,
+          "max": 12
+        },
+        "denoise": {
+          "type": "float",
+          "label": "Change strength",
+          "targets": [
+            {
+              "title": "DR_STEPS",
+              "input": "denoise"
+            }
+          ],
+          "default": 1,
+          "min": 0.05,
+          "max": 1
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "mask": {
+          "type": "image",
+          "label": "Mask",
+          "targets": [
+            {
+              "title": "DR_MASK",
+              "input": "image"
+            }
+          ]
+        },
+        "image_2": {
+          "type": "image",
+          "label": "Reference",
+          "targets": [
+            {
+              "title": "DR_IMAGE_2",
+              "input": "image"
+            }
+          ],
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_REF_2_POS",
+                "input": "conditioning"
+              },
+              {
+                "title": "DR_REF_2_NEG",
+                "input": "conditioning"
+              }
+            ],
+            "remove": [
+              "DR_IMAGE_2"
+            ]
+          }
+        },
+        "crop_x": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_X",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 16384
+        },
+        "crop_y": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_Y",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 16384
+        },
+        "crop_w": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_W",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 16,
+          "max": 16384
+        },
+        "crop_h": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_H",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 16,
+          "max": 16384
+        },
+        "target_w": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TARGET_W",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 64,
+          "max": 1536
+        },
+        "target_h": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TARGET_H",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 64,
+          "max": 1536
+        },
+        "grow": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_MASK_GROW",
+              "input": "expand"
+            }
+          ],
+          "default": 8,
+          "min": 0,
+          "max": 64
+        },
+        "feather": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_FEATHER",
+              "input": "blur_radius"
+            }
+          ],
+          "default": 6,
+          "min": 1,
+          "max": 31
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/inpaint"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "qwen_inpaint_cs": {
+      "file": "qwen_inpaint_cs.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Inpaint, crop and stitch (Qwen-Image 2.1)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "denoise": {
+          "type": "float",
+          "label": "Change strength",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "denoise"
+            }
+          ],
+          "default": 1,
+          "min": 0.05,
+          "max": 1
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "mask": {
+          "type": "image",
+          "label": "Mask",
+          "targets": [
+            {
+              "title": "DR_MASK",
+              "input": "image"
+            }
+          ]
+        },
+        "image_2": {
+          "type": "image",
+          "label": "Reference",
+          "targets": [
+            {
+              "title": "DR_IMAGE_2",
+              "input": "image"
+            }
+          ],
+          "whenMissing": {
+            "remove": [
+              "DR_IMAGE_2"
+            ]
+          }
+        },
+        "crop_x": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_X",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 16384
+        },
+        "crop_y": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_Y",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 16384
+        },
+        "crop_w": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_W",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 16,
+          "max": 16384
+        },
+        "crop_h": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_CROP_H",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 16,
+          "max": 16384
+        },
+        "target_w": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TARGET_W",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 64,
+          "max": 1536
+        },
+        "target_h": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TARGET_H",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 64,
+          "max": 1536
+        },
+        "grow": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_MASK_GROW",
+              "input": "expand"
+            }
+          ],
+          "default": 8,
+          "min": 0,
+          "max": 64
+        },
+        "feather": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_FEATHER",
+              "input": "blur_radius"
+            }
+          ],
+          "default": 6,
+          "min": 1,
+          "max": 31
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/inpaint"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {
@@ -3056,6 +3618,10 @@
       "qwen": "qwen_outpaint"
     },
     "enhance": {
+      "klein": "klein_enhance_edit",
+      "qwen": "qwen_enhance_edit"
+    },
+    "enhance_subtle": {
       "klein": "klein_enhance",
       "qwen": "qwen_enhance"
     }

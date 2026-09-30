@@ -221,3 +221,17 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     1328², which are not) at 25 steps for iterating, and **Native 2K** = the official size table at 40 steps for finals.
     Peak VRAM: 18.5 GB (decimal) at 2K text-to-image; with references 20–24.8 GB (2 refs at 2K is the maximum seen,
     still no stall); identity held with 1–3 references at both tiers.
+66. **Enhance = Restore (edit-style) on both models; img2img kept only as "Subtle".** A/B on five inputs (320 px JPEG,
+    the same after SeedVR2 4x, lens blur, motion blur, a clean portrait; docs/qa/addenda/p2): Darkroom v2's img2img
+    Enhance at denoise 0.3/0.35 did **not fix blur at all** (the lens-blurred car came out as blurry as it went in;
+    Phase 6 had only tested low resolution). Edit-style Enhance restored every case on both models.
+    - Klein: source as `ReferenceLatent` (lanczos ~1 MP), empty latent at the source aspect, denoise 1, One Node
+      sampler. One Node's prompt ("…increase clarity and micro-contrast…") over-processed clean pictures (HDR crunch,
+      neon greens); a toned-down prompt that lists what to keep (colours, contrast, skin and fabric texture) restored
+      just as well without it. A "Scene: <caption>" line is appended (Addendum 1 B).
+    - Qwen: its own path — source as `image_1` of `TextEncodeQwenImage21`, the encoder's empty latent, denoise 1,
+      25 steps. Natural colours, faithful faces, even from the raw 320 px JPEG. The caption line changed nothing
+      visible, so Qwen Restore skips the VLM call.
+    - Restore needs no SeedVR2 pre-upscale (DECISIONS 55 now applies to Subtle only). Modes: Restore (default),
+      Restore + upscale (SeedVR2 2x after), Subtle (old img2img; the only mode with the Advanced denoise slider).
+      "Strong" is gone: Restore does its job better.

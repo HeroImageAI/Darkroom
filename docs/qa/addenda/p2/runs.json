@@ -1,0 +1,529 @@
+[
+  {
+    "group": "enhance-klein",
+    "key": "lowres-320px",
+    "variant": "current",
+    "ok": true,
+    "seconds": 17.1,
+    "peak": 20.3,
+    "set": {
+      "seed": 51,
+      "prompt": "A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon. Crisp focus, fine natural detail and clean texture, with the same composition, people, text and colours.",
+      "denoise": 0.3,
+      "schedule_steps": 13,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lowres-320px-current\\enhance_00021_.png",
+    "cold": true
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lowres-after-seedvr2",
+    "variant": "current",
+    "ok": true,
+    "seconds": 0.1,
+    "peak": 0,
+    "set": {
+      "seed": 51,
+      "prompt": "A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon. Crisp focus, fine natural detail and clean texture, with the same composition, people, text and colours.",
+      "denoise": 0.3,
+      "schedule_steps": 13,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lowres-after-seedvr2-current\\enhance_00021_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lens-blur",
+    "variant": "current",
+    "ok": true,
+    "seconds": 13.2,
+    "peak": 20.3,
+    "set": {
+      "seed": 52,
+      "prompt": "A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph. Crisp focus, fine natural detail and clean texture, with the same composition, people, text and colours.",
+      "denoise": 0.3,
+      "schedule_steps": 13,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lens-blur-current\\enhance_00022_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "motion-blur",
+    "variant": "current",
+    "ok": true,
+    "seconds": 13.1,
+    "peak": 20.4,
+    "set": {
+      "seed": 53,
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture. Crisp focus, fine natural detail and clean texture, with the same composition, people, text and colours.",
+      "denoise": 0.3,
+      "schedule_steps": 13,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\motion-blur-current\\enhance_00023_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "clean-portrait",
+    "variant": "current",
+    "ok": true,
+    "seconds": 12.5,
+    "peak": 20.3,
+    "set": {
+      "seed": 54,
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture. Crisp focus, fine natural detail and clean texture, with the same composition, people, text and colours.",
+      "denoise": 0.3,
+      "schedule_steps": 13,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\clean-portrait-current\\enhance_00024_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lowres-320px",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 16,
+    "peak": 21.2,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lowres-320px-edit\\enhance_00025_.png",
+    "cold": true
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lowres-after-seedvr2",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 12.2,
+    "peak": 20.6,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lowres-after-seedvr2-edit\\enhance_00026_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lens-blur",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 12.3,
+    "peak": 20.2,
+    "set": {
+      "seed": 52,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lens-blur-edit\\enhance_00027_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "motion-blur",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 12.5,
+    "peak": 20.8,
+    "set": {
+      "seed": 53,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\motion-blur-edit\\enhance_00028_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "clean-portrait",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 12.5,
+    "peak": 20.6,
+    "set": {
+      "seed": 54,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\clean-portrait-edit\\enhance_00029_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lowres-320px",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 16,
+    "peak": 20.7,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source. Scene: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lowres-320px-edit_scene\\enhance_00030_.png",
+    "cold": true
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lowres-after-seedvr2",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 12.5,
+    "peak": 20.4,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source. Scene: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lowres-after-seedvr2-edit_scene\\enhance_00031_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lens-blur",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 13,
+    "peak": 21.2,
+    "set": {
+      "seed": 52,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source. Scene: A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lens-blur-edit_scene\\enhance_00032_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "motion-blur",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 13.3,
+    "peak": 20.2,
+    "set": {
+      "seed": 53,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source. Scene: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\motion-blur-edit_scene\\enhance_00033_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "clean-portrait",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 13,
+    "peak": 20.2,
+    "set": {
+      "seed": 54,
+      "prompt": "Enhance the overall image quality by restoring fine details and sharpening the focus. Remove all types of blur, including motion and lens blur, while preserving the original features, textures, and likeness. Increase clarity and micro-contrast without introducing artifacts, ensuring a clean, high-definition result that stays true to the source. Scene: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\clean-portrait-edit_scene\\enhance_00034_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lowres-320px",
+    "variant": "current",
+    "ok": true,
+    "seconds": 26.5,
+    "peak": 20.7,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "denoise": 0.35,
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lowres-320px-current\\enhance_00035_.png",
+    "cold": true
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lowres-after-seedvr2",
+    "variant": "current",
+    "ok": true,
+    "seconds": 0.1,
+    "peak": 0,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "denoise": 0.35,
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lowres-after-seedvr2-current\\enhance_00035_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lens-blur",
+    "variant": "current",
+    "ok": true,
+    "seconds": 23.6,
+    "peak": 21.2,
+    "set": {
+      "seed": 52,
+      "prompt": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "denoise": 0.35,
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lens-blur-current\\enhance_00036_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "motion-blur",
+    "variant": "current",
+    "ok": true,
+    "seconds": 24,
+    "peak": 21.3,
+    "set": {
+      "seed": 53,
+      "prompt": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "denoise": 0.35,
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\motion-blur-current\\enhance_00037_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "clean-portrait",
+    "variant": "current",
+    "ok": true,
+    "seconds": 24,
+    "peak": 21.3,
+    "set": {
+      "seed": 54,
+      "prompt": "Enhance this image: sharpen fine detail and clarity, and clean up noise and compression artifacts. Keep the composition, identity, all text and colours unchanged. The original caption is: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "denoise": 0.35,
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\clean-portrait-current\\enhance_00038_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lowres-320px",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 26.4,
+    "peak": 20.7,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lowres-320px-edit\\enhance_00039_.png",
+    "cold": true
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lowres-after-seedvr2",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 22.6,
+    "peak": 21.1,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lowres-after-seedvr2-edit\\enhance_00040_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lens-blur",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 22.6,
+    "peak": 21.1,
+    "set": {
+      "seed": 52,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lens-blur-edit\\enhance_00041_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "motion-blur",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 23.6,
+    "peak": 21.2,
+    "set": {
+      "seed": 53,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\motion-blur-edit\\enhance_00042_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "clean-portrait",
+    "variant": "edit",
+    "ok": true,
+    "seconds": 23.3,
+    "peak": 21.2,
+    "set": {
+      "seed": 54,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\clean-portrait-edit\\enhance_00043_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lowres-320px",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 26,
+    "peak": 20.7,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new. The picture shows a small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lowres-320px-edit_scene\\enhance_00044_.png",
+    "cold": true
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lowres-after-seedvr2",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 22.6,
+    "peak": 21.1,
+    "set": {
+      "seed": 51,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new. The picture shows a small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lowres-after-seedvr2-edit_scene\\enhance_00045_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "lens-blur",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 22.7,
+    "peak": 21.1,
+    "set": {
+      "seed": 52,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new. The picture shows a red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\lens-blur-edit_scene\\enhance_00046_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "motion-blur",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 23.6,
+    "peak": 21.2,
+    "set": {
+      "seed": 53,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new. The picture shows close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\motion-blur-edit_scene\\enhance_00047_.png"
+  },
+  {
+    "group": "enhance-qwen",
+    "key": "clean-portrait",
+    "variant": "edit_scene",
+    "ok": true,
+    "seconds": 23.4,
+    "peak": 21.2,
+    "set": {
+      "seed": 54,
+      "prompt": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new. The picture shows close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-qwen\\clean-portrait-edit_scene\\enhance_00048_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lowres-320px",
+    "variant": "edit_gentle",
+    "ok": true,
+    "seconds": 16,
+    "peak": 21.2,
+    "set": {
+      "seed": 51,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lowres-320px-edit_gentle\\enhance_00052_.png",
+    "cold": true
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lowres-after-seedvr2",
+    "variant": "edit_gentle",
+    "ok": true,
+    "seconds": 12.2,
+    "peak": 20.3,
+    "set": {
+      "seed": 51,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lowres-after-seedvr2-edit_gentle\\enhance_00053_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "lens-blur",
+    "variant": "edit_gentle",
+    "ok": true,
+    "seconds": 12.9,
+    "peak": 21,
+    "set": {
+      "seed": 52,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\lens-blur-edit_gentle\\enhance_00054_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "motion-blur",
+    "variant": "edit_gentle",
+    "ok": true,
+    "seconds": 13.2,
+    "peak": 20.3,
+    "set": {
+      "seed": 53,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\motion-blur-edit_gentle\\enhance_00055_.png"
+  },
+  {
+    "group": "enhance-klein",
+    "key": "clean-portrait",
+    "variant": "edit_gentle",
+    "ok": true,
+    "seconds": 12.5,
+    "peak": 21.1,
+    "set": {
+      "seed": 54,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p2\\enhance-klein\\clean-portrait-edit_gentle\\enhance_00056_.png"
+  }
+]
