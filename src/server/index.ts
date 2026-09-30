@@ -23,6 +23,7 @@ import { maskBBox } from '../shared/cropstitch.js';
 import type { Pad } from '../shared/outpaint.js';
 import { mergePresets, upsertUserPreset, type EditPreset, type UserPreset } from '../shared/presets.js';
 import { readDarkroomMeta } from '../shared/pngmeta.js';
+import { outputDirFromArgv, outputPath, recycle } from './trash.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -411,6 +412,47 @@ app.patch('/api/items/:id', async (req, reply) => {
   const item = store.getItem(id)!;
   broadcast({ type: 'item', item: slim(item) });
   return slim(item);
+});
+
+// ---- Library delete: Delete moves items to "Recently deleted" (restorable); Delete forever removes the rows and sends
+// the files to the Windows Recycle Bin. Files another item still uses are left alone.
+const idList = (body: unknown): string[] => {
+  const ids = (body as { ids?: unknown })?.ids;
+  return Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string').slice(0, 1000) : [];
+};
+
+app.post('/api/items/delete', async (req) => {
+  const done = store.softDelete(idList(req.body));
+  if (done.length) broadcast({ type: 'library' });
+  return { deleted: done };
+});
+
+app.post('/api/items/restore', async (req) => {
+  const done = store.restoreItems(idList(req.body));
+  if (done.length) broadcast({ type: 'library' });
+  return { restored: done };
+});
+
+app.post('/api/items/purge', async (req, reply) => {
+  const body = req.body as { ids?: string[]; all?: boolean };
+  const ids = body?.all ? store.deletedIds() : idList(body);
+  if (!ids.length) return { purged: 0, recycled: 0, failed: [] };
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running, so Darkroom can't find its output folder. Start it and try again." });
+  const outDir = outputDirFromArgv(((await jobs.comfy.systemStats()) as SystemStats).system?.argv);
+  if (!outDir) return reply.code(409).send({ error: "ComfyUI doesn't report its output folder, so files were not removed." });
+  const items = store.purgeItems(ids);
+  const files = new Set<string>();
+  for (const it of items) {
+    for (const f of [it.file, it.poster, it.last_frame]) {
+      if (!f || store.fileInUse(f)) continue;
+      const p = outputPath(outDir, f);
+      if (p) files.add(p);
+    }
+    fs.rmSync(jobs.thumbPath(it.id), { force: true }); // Darkroom's own thumbnail cache, rebuilt on demand
+  }
+  const r = await recycle([...files]);
+  broadcast({ type: 'library' });
+  return { purged: items.length, recycled: r.recycled.length, failed: r.failed };
 });
 
 app.get('/api/items/:id/file', async (req, reply) => {

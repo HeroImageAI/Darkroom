@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
-import { useItem } from '../lib/hooks';
+import { useItemLoad } from '../lib/hooks';
 import { CompareView } from '../components/Compare';
 import { LayerStack, LayersPanel, useLayerGroup } from '../components/LayersPanel';
 import { CropDialog, grabScreenFrame } from '../lib/capture';
@@ -82,8 +82,18 @@ const CHECKER = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 const ZERO_PAD: Pad = { left: 0, top: 0, right: 0, bottom: 0 };
 
 export function Edit({ id }: { id?: string }) {
-  const item = useItem(id);
+  const { item, missing } = useItemLoad(id);
   if (!id) return <EditEmpty />;
+  if (missing)
+    return (
+      <div className="empty" style={{ margin: 'auto' }}>
+        <h2>Picture not found</h2>
+        <p>It was deleted from the Library. Pick another picture to edit.</p>
+        <button className="btn primary" onClick={() => go('library')}>
+          Open the Library
+        </button>
+      </div>
+    );
   if (!item) return <div className="empty" style={{ margin: 'auto' }}>Opening…</div>;
   return <Editor key={item.id} item={item} />;
 }
@@ -752,6 +762,14 @@ function Editor({ item }: { item: Item }) {
       </nav>
 
       <section className="stage" aria-label="Canvas">
+        {item.deleted_at ? (
+          <div className="banner" role="status">
+            <span>This picture is in Recently deleted.</span>
+            <button className="btn sm" onClick={() => void api.restoreItems([item.id]).then(() => toast('Restored to the Library.', 'ok'))}>
+              Restore
+            </button>
+          </div>
+        ) : null}
         <div
           ref={stageRef}
           data-testid="edit-canvas"

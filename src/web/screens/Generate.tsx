@@ -345,9 +345,10 @@ export function Generate({ query }: { query: URLSearchParams }) {
       <aside className="panel" aria-label="Generate settings">
         <div className="panel-scroll">
           <div>
-            <div className="section-label">
+            {/* label on its own line, prompt tools in a wrapping row below it (they overflowed the 380 px panel) */}
+            <div className="section-label" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
               <label htmlFor="prompt">Prompt</label>
-              <span style={{ display: 'flex', gap: 2 }}>
+              <span className="prompt-tools" style={{ display: 'flex', gap: 2, flexWrap: 'wrap', marginLeft: -8, textTransform: 'none', letterSpacing: 'normal' }}>
                 {promptUndo.length > 0 && (
                   <button
                     type="button"

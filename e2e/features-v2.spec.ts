@@ -267,4 +267,77 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(await page.getByAltText('End frame (optional)').getAttribute('src')).toBe(before);
     await shot(page, 'video-frames');
   });
+  // UX review (2026-09-30)
+  test('UX: the prompt tools fit the Generate panel', async () => {
+    await page.goto('/#/generate');
+    const panel = await page.getByRole('complementary', { name: 'Generate settings' }).boundingBox();
+    for (const name of ['From picture', 'Restore', 'Enhance']) {
+      const b = await page.locator('.prompt-tools').getByRole('button', { name, exact: true }).boundingBox();
+      expect(b!.x + b!.width).toBeLessThanOrEqual(panel!.x + panel!.width);
+    }
+  });
+
+  test('UX: Darkroom reopens on the screen you used last', async () => {
+    await page.goto('/#/library');
+    await expect(page.getByRole('region', { name: 'Library' })).toBeVisible();
+    await page.goto('/');
+    await expect(page).toHaveURL(/#\/library$/);
+  });
+
+  test('Library: delete with Undo, multi-select, Recently deleted and Restore', async () => {
+    await page.goto('/#/library');
+    const count = async (f = 'all') => (await (await page.request.get('/api/items?limit=1&filter=' + f)).json()).total as number;
+    const before = await count();
+    const tiles = page.getByRole('list').getByRole('listitem');
+    // one item: click, press Delete, Undo
+    await tiles.nth(0).click();
+    await page.keyboard.press('Delete');
+    await expect(page.getByText('1 item moved to Recently deleted.')).toBeVisible();
+    expect(await count()).toBe(before - 1);
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByText('Restored.')).toBeVisible();
+    expect(await count()).toBe(before);
+    // a range with Shift-click, deleted from the selection bar
+    await tiles.nth(1).click();
+    await tiles.nth(3).click({ modifiers: ['Shift'] });
+    const bar = page.getByRole('toolbar', { name: 'Selection' });
+    await expect(bar).toContainText('3 selected');
+    await bar.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText('3 items moved to Recently deleted.')).toBeVisible();
+    expect(await count('deleted')).toBe(3);
+    // they wait in Recently deleted and come back with Restore
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
+    await expect(tiles).toHaveCount(3);
+    await shot(page, 'library-recently-deleted');
+    await page.keyboard.press('Control+a');
+    await bar.getByRole('button', { name: 'Restore' }).click();
+    await expect(page.getByText('3 items restored to the Library.')).toBeVisible();
+    expect(await count()).toBe(before);
+    expect(await count('deleted')).toBe(0);
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
+  });
+
+  test('Library: Delete forever sends the files to the Recycle Bin (a fresh crop made for this test)', async () => {
+    const src = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    const inp = await (await page.request.post(`/api/items/${src.id}/as-input`, { data: { which: 'main' } })).json();
+    const job = await (
+      await page.request.post('/api/jobs', { data: { workflow: 'crop', params: { image_1: inp.name, x: 0, y: 0, width: 64, height: 64 }, meta: { mode: 'edit:crop', model: 'Crop', parentId: src.id, prompt: 'e2e delete-forever' } } })
+    ).json();
+    let ids: string[] = [];
+    await expect
+      .poll(async () => (ids = ((await (await page.request.get(`/api/jobs/${job.id}/items`)).json()) as any[]).map((i) => i.id)).length, { timeout: 120_000 })
+      .toBe(1);
+    const fileUrl = `/api/items/${ids[0]}/file`;
+    expect((await page.request.get(fileUrl)).status()).toBe(200);
+    await page.request.post('/api/items/delete', { data: { ids } });
+    await page.goto('/#/library');
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
+    await expect(page.getByRole('list').getByRole('listitem')).toHaveCount(1);
+    await page.getByRole('list').getByRole('listitem').first().click();
+    await page.getByRole('complementary', { name: 'Details' }).getByRole('button', { name: 'Delete forever' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Delete forever' }).click();
+    await expect(page.getByText(/Deleted 1 item for good. The files are in the Windows Recycle Bin./)).toBeVisible({ timeout: 30_000 });
+    expect((await page.request.get(`/api/items/${ids[0]}`)).status()).toBe(404);
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
+  });
 });
