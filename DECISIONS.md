@@ -344,3 +344,13 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     and forbid mentioning frames or panels. Live check on the test library: the prompts now describe what actually
     changes (night sky → golden light; a side profile turning to face the lens; the coat going from yellow to red).
     Without an end frame nothing changed.
+77. **Generate "From references".** With references loaded, "From picture" only reverse-engineered reference 1 as a
+    stand-alone picture: the other references were ignored, the result had no reference tokens, and it overwrote your
+    idea. The button now reads **From references**: every reference goes to Qwen3-VL on one labelled sheet (IMAGE 1–3,
+    `labelledSheet` in `src/server/framepair.ts`, shared with the Video start/end sheet) with the `compose` prompts,
+    and your text is kept as the idea. The prompt names what to take from each reference, in the model's words ("the
+    woman from image 1 wearing the coat from image 2" for Klein, `<image1>` tokens for Qwen). Two fixes from the live
+    test: the server states the exact reference count and tokens (with one reference Klein had invented "image 2" and
+    "image 3"), and quoted text is only allowed when asked for or clearly readable (Qwen had invented a number plate).
+    Rendered check with portrait + coat + living room: both models put the woman in the coat inside the room. Without
+    references the button is unchanged (pick a picture, get a prompt that recreates it). ~5 s.

@@ -245,6 +245,10 @@ app.post('/api/vlm', async (req, reply) => {
       if (!refs.length) return reply.code(400).send({ error: 'Add a reference picture first.' });
       try {
         name = await sheetOf(refs, refs.map((_, i) => `IMAGE ${i + 1}`), 'refs_sheet');
+        // say how many references exist and the exact words to use, or the model invents an "image 3" (seen with one)
+        const tokens = refs.map((_, i) => (b.variant === 'qwen' ? `<image${i + 1}>` : `image ${i + 1}`));
+        params.prompt = `There ${refs.length === 1 ? 'is 1 reference picture' : `are ${refs.length} reference pictures`}; name each one as ${tokens.join(', ')} and no others.
+${params.prompt}`;
       } catch (e) {
         return reply.code(400).send({ error: 'Could not read the references: ' + (e as Error).message });
       }

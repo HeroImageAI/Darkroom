@@ -44,6 +44,30 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(box).toHaveValue('poster for a jazz night called "Blue Hour"');
   });
 
+  test('Generate: with references, "From references" writes a prompt that names each one', async () => {
+    const pics = (await (await page.request.get('/api/items?limit=200')).json()).items.filter((i: any) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto('/#/generate');
+    await page.getByRole('group', { name: 'Model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click().catch(() => undefined);
+    for (const it of pics.slice(0, 2)) {
+      await page.goto(`/#/generate?ref=${it.id}`);
+      await page.waitForTimeout(800);
+    }
+    const tools = page.locator('.prompt-tools');
+    await expect(tools.getByRole('button', { name: 'From references' })).toBeVisible();
+    await page.getByLabel('Prompt').fill('');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
+    await tools.getByRole('button', { name: 'From references' }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.task).toBe('compose');
+    expect(body.inputs.length).toBeGreaterThanOrEqual(2);
+    await expect(page.getByLabel('Prompt')).not.toHaveValue('', { timeout: 120_000 });
+    const text = await page.getByLabel('Prompt').inputValue();
+    expect(text).toMatch(body.variant === 'qwen' ? /<image1>/ : /image 1/);
+    expect(text).toMatch(body.variant === 'qwen' ? /<image2>/ : /image 2/);
+    expect(text).not.toMatch(/image ?3|<image3>/);
+    await shot(page, 'generate-from-references');
+  });
+
   test('Library: caption a picture with Qwen3-VL', async () => {
     await page.goto('/#/library');
     await page.getByRole('listitem').first().click();
