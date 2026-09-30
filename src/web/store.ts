@@ -5,6 +5,8 @@ export interface Toast {
   id: number;
   kind: 'info' | 'error' | 'ok';
   text: string;
+  /** Optional button in the toast, e.g. Undo after a delete. */
+  action?: { label: string; run: () => void };
 }
 
 export interface AppState {
@@ -47,9 +49,9 @@ export function onJob(fn: (job: Job) => void): () => void {
 }
 
 let toastId = 1;
-export function toast(text: string, kind: Toast['kind'] = 'info', ms = kind === 'error' ? 9000 : 4000): void {
+export function toast(text: string, kind: Toast['kind'] = 'info', ms = kind === 'error' ? 9000 : 4000, action?: Toast['action']): void {
   const id = toastId++;
-  setState((s) => ({ toasts: [...s.toasts, { id, kind, text }] }));
+  setState((s) => ({ toasts: [...s.toasts, { id, kind, text, action }] }));
   setTimeout(() => dismissToast(id), ms);
 }
 export function dismissToast(id: number): void {
