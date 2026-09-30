@@ -83,7 +83,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.keyboard.press('s');
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
-    await expect(page.getByText(/Selection added to the mask|Nothing was found/)).toBeVisible({ timeout: 240_000 });
+    await expect(page.getByText(/Selection added to the mask|Nothing was found/).last()).toBeVisible({ timeout: 240_000 });
     // the overlay draws a two-tone outline so the selection reads on any colour (the amber tint alone vanished on a yellow coat)
     expect(await page.getByTestId('mask-overlay').evaluate((el) => getComputedStyle(el).filter)).toContain('dr-mask-outline');
     await expect(page.locator('filter#dr-mask-outline')).toHaveCount(1);
@@ -101,7 +101,7 @@ test.describe.serial('Darkroom v2 features', () => {
       await page.keyboard.press('s');
       await page.getByLabel('Select by text').fill('person');
       await page.getByRole('button', { name: 'Find' }).click();
-      await expect(page.getByText(/Selection added to the mask/)).toBeVisible({ timeout: 240_000 });
+      await expect(page.getByText(/Selection added to the mask/).last()).toBeVisible({ timeout: 240_000 });
       await expect(page.getByText('Change strength')).toBeVisible();
       await page.getByLabel('What should fill the masked area?').fill('a lighthouse keeper in a bright red raincoat');
       const before = page.url();
@@ -123,7 +123,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.keyboard.press('s');
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
-    await expect(page.getByText(/Selection added to the mask/)).toBeVisible({ timeout: 240_000 });
+    await expect(page.getByText(/Selection added to the mask/).last()).toBeVisible({ timeout: 240_000 });
     await page.getByLabel(/Point at it with a red circle/).check();
     await expect(page.getByLabel(/Only change the masked area/)).toBeDisabled();
     await page.getByLabel('Instruction').fill('Replace them with a lighthouse keeper in a bright red raincoat.');
