@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2 } from 'lucide-react';
+import { Check, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { Dialog, formatDuration, Pills } from '../components/common';
 import { usePersistent } from '../lib/hooks';
+import { importPictures } from '../lib/importer';
 import { go } from '../router';
 import { toast, useApp } from '../store';
 
@@ -33,7 +34,25 @@ export function Library() {
   const [confirm, setConfirm] = useState<{ ids: string[] } | { all: true } | null>(null);
   const [loading, setLoading] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const online = useApp((s) => s.status?.comfy === 'online');
   const trash = filter === 'deleted';
+  /** Bring your own pictures into the Library (they appear at the top, ready to edit). */
+  const upload = async (files: File[]) => {
+    const pics = files.filter((f) => f.type.startsWith('image/'));
+    if (!pics.length) return;
+    if (!online) return toast('Start ComfyUI first (top right): it saves the pictures into your library.', 'info');
+    setUploading(`0 of ${pics.length}`);
+    const { ids, failed } = await importPictures(pics, (done, total) => setUploading(`${done} of ${total}`));
+    setUploading(null);
+    if (failed.length) toast(`Could not bring in ${failed.join(', ')}.`, 'error');
+    if (ids.length) {
+      if (filter !== 'all') setFilter('all');
+      setSelected(ids[0]);
+      toast(`${ids.length === 1 ? '1 picture' : `${ids.length} pictures`} added to your Library. Double-click to edit.`, 'ok');
+    }
+  };
 
   useEffect(() => {
     let live = true;
@@ -175,6 +194,22 @@ export function Library() {
           <span className="mono muted" style={{ fontSize: 12, minWidth: 70, textAlign: 'right' }}>
             {total} items
           </span>
+          <button className="btn sm" disabled={!!uploading} onClick={() => uploadRef.current?.click()} title="Add your own pictures to the Library (or drop them on the grid)">
+            {uploading ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {uploading ? `Adding ${uploading}…` : 'Upload'}
+          </button>
+          <input
+            ref={uploadRef}
+            className="sr"
+            type="file"
+            accept="image/*"
+            multiple
+            aria-label="Upload pictures to the Library"
+            onChange={(e) => {
+              const files = [...(e.target.files ?? [])];
+              e.target.value = '';
+              void upload(files);
+            }}
+          />
         </div>
         {(picked.length > 0 || trash) && (
           <div className="selection-bar" role="toolbar" aria-label="Selection">
@@ -216,7 +251,15 @@ export function Library() {
             )}
           </div>
         )}
-        <div style={{ overflowY: 'auto', padding: 20, flex: 1 }}>
+        <div
+          style={{ overflowY: 'auto', padding: 20, flex: 1 }}
+          onDragOver={(e) => [...e.dataTransfer.types].includes('Files') && e.preventDefault()}
+          onDrop={(e) => {
+            if (!e.dataTransfer.files.length) return;
+            e.preventDefault();
+            void upload([...e.dataTransfer.files]);
+          }}
+        >
           {!loading && items.length === 0 ? (
             <div className="empty" style={{ margin: '80px auto' }}>
               <h2>{trash ? 'Nothing deleted' : q || filter !== 'all' ? 'Nothing matches' : 'Your library is empty'}</h2>

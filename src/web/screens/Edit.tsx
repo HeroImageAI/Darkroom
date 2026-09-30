@@ -37,6 +37,7 @@ import { snapPad } from '../../shared/outpaint';
 import { detectPixelBlock } from '../../shared/pixelblock';
 import { CIRCLE_COLOUR, circleFor } from '../../shared/annotate';
 import { PresetPicker } from '../components/PresetPicker';
+import { importPictures } from '../lib/importer';
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
@@ -98,8 +99,25 @@ export function Edit({ id }: { id?: string }) {
   return <Editor key={item.id} item={item} />;
 }
 
+/** Bring your own pictures in and open the first in Edit (the rest wait in the Library). */
+async function openOwnPictures(files: File[], online: boolean, setBusy: (b: boolean) => void) {
+  const pics = files.filter((f) => f.type.startsWith('image/'));
+  if (!pics.length) return;
+  if (!online) return toast('Start ComfyUI first (top right): it saves the pictures into your library.', 'info');
+  setBusy(true);
+  const { ids, failed } = await importPictures(pics);
+  setBusy(false);
+  if (failed.length) toast(`Could not bring in ${failed.join(', ')}.`, 'error');
+  if (ids.length > 1) toast(`${ids.length} pictures added to your Library. Opening the first one.`, 'ok', 6000);
+  if (ids[0]) go('edit', ids[0]);
+}
+
 function Editor({ item }: { item: Item }) {
   const jobs = useApp((s) => s.jobs);
+  const comfyOnline = useApp((s) => s.status?.comfy === 'online');
+  const uploadRef = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+  const [fileOver, setFileOver] = useState(false);
   const online = useApp((s) => s.status?.comfy === 'online');
   const rev = useApp((s) => s.libraryRev);
   const [lineage, setLineage] = useState<Item[]>([]);
@@ -761,7 +779,23 @@ function Editor({ item }: { item: Item }) {
         </button>
       </nav>
 
-      <section className="stage" aria-label="Canvas">
+      <section
+        className={`stage ${fileOver ? 'file-over' : ''}`}
+        aria-label="Canvas"
+        // dropping a picture file from your computer opens it (library drags keep their own targets)
+        onDragOver={(e) => {
+          if (![...e.dataTransfer.types].includes('Files')) return;
+          e.preventDefault();
+          setFileOver(true);
+        }}
+        onDragLeave={(e) => e.currentTarget === e.target && setFileOver(false)}
+        onDrop={(e) => {
+          if (!e.dataTransfer.files.length) return;
+          e.preventDefault();
+          setFileOver(false);
+          void openOwnPictures([...e.dataTransfer.files], comfyOnline, setImporting);
+        }}
+      >
         {item.deleted_at ? (
           <div className="banner" role="status">
             <span>This picture is in Recently deleted.</span>
@@ -861,6 +895,24 @@ function Editor({ item }: { item: Item }) {
               <ProgressBar value={job!.progress} />
             </div>
           )}
+          <div style={{ position: 'absolute', left: 12, top: 12, display: 'flex', gap: 6, zIndex: 3 }} onPointerDown={(e) => e.stopPropagation()}>
+            <button className="btn sm" disabled={importing} onClick={() => uploadRef.current?.click()} title="Open one of your own pictures (or drop it on the canvas). Several at once go to the Library.">
+              {importing ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {importing ? 'Bringing in…' : 'Upload'}
+            </button>
+            <input
+              ref={uploadRef}
+              className="sr"
+              type="file"
+              accept="image/*"
+              multiple
+              aria-label="Upload your own picture"
+              onChange={(e) => {
+                const files = [...(e.target.files ?? [])];
+                e.target.value = '';
+                void openOwnPictures(files, comfyOnline, setImporting);
+              }}
+            />
+          </div>
           <div style={{ position: 'absolute', right: 12, top: 12, display: 'flex', gap: 6 }} onPointerDown={(e) => e.stopPropagation()}>
             <button className="btn sm" onClick={fit} title="Fit to screen">
               <Maximize size={14} /> Fit
@@ -1448,14 +1500,25 @@ function EditEmpty() {
             setOver(false);
             const id = e.dataTransfer.getData('application/x-darkroom-item');
             if (id) return go('edit', id);
-            const f = [...e.dataTransfer.files].find((x) => x.type.startsWith('image/'));
-            if (f) void importFile(f);
+            void openOwnPictures([...e.dataTransfer.files], online, setBusy);
           }}
         >
           <label style={{ cursor: 'pointer', display: 'grid', gap: 6, placeItems: 'center' }}>
             <ImagePlus size={22} />
-            {busy ? 'Importing…' : online ? 'Drop, paste or browse' : 'Start ComfyUI to import pictures'}
-            <input className="sr" type="file" accept="image/*" disabled={!online} onChange={(e) => e.target.files?.[0] && void importFile(e.target.files[0])} />
+            {busy ? 'Bringing in…' : online ? 'Drop, paste or browse your own pictures' : 'Start ComfyUI to bring pictures in'}
+            <input
+              className="sr"
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={!online}
+              aria-label="Upload your own picture"
+              onChange={(e) => {
+                const files = [...(e.target.files ?? [])];
+                e.target.value = '';
+                void openOwnPictures(files, online, setBusy);
+              }}
+            />
           </label>
         </div>
         <button
