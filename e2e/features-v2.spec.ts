@@ -2,6 +2,9 @@
  * End-to-end tests for the v2 features (prompt system, local VLM, smart select, compare, video frames).
  * Real UI -> real ComfyUI. Screenshots to proof/v2-*.png.
  */
+import os from 'node:os';
+import path from 'node:path';
+import sharp from 'sharp';
 import { expect, test, type Page } from '@playwright/test';
 
 const shot = (page: Page, name: string) => page.screenshot({ path: `proof/v2-${name}.png` });
@@ -350,6 +353,43 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(page.getByText('2 pictures added to your Library. Opening the first one.')).toBeVisible({ timeout: 60_000 });
     expect(page.url()).not.toBe(first);
     expect((await (await page.request.get('/api/items?limit=1')).json()).total).toBe(before + 2);
+  });
+
+  // Large photos (DECISIONS 79): Restore comes back at full size; whole-picture edits offer Sharpen to full resolution
+  test('Edit: a large photo keeps its size through Restore, and a whole-picture edit can be sharpened back', async () => {
+    const big = path.join(os.tmpdir(), 'darkroom-e2e-DSC_1001.jpg');
+    await sharp('tests/golden/09_car.png').resize(3000, 1714, { kernel: 'lanczos3' }).jpeg({ quality: 92 }).toFile(big);
+    await page.goto('/');
+    await page.getByLabel('Upload pictures', { exact: true }).setInputFiles(big);
+    await expect(page).toHaveURL(/#\/edit\/[0-9a-f-]+$/, { timeout: 60_000 });
+    const src = page.url();
+    const apply = page.locator('.panel-foot .btn.primary').first();
+    const sizeOf = async () => {
+      const { item } = await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json();
+      return { size: `${item.width}x${item.height}`, mode: item.mode };
+    };
+
+    // Restore: the note explains the rebuild, and the version that opens is full size
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Enhance' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await expect(page.getByText(/Large picture \(5 MP\).*the full 3000×1714/)).toBeVisible();
+    await apply.click();
+    await expect.poll(sizeOf, { timeout: 400_000, intervals: [3000] }).toEqual({ size: '3000x1714', mode: 'upscale' });
+
+    // whole-picture instruct: soft result, banner, Sharpen -> full-resolution version
+    await page.goto(src);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByLabel('Instruction').fill('Make it an overcast day.');
+    await apply.click();
+    await expect.poll(async () => (page.url() !== src ? (await sizeOf()).mode : ''), { timeout: 300_000 }).toBe('edit:instruct');
+    const sharpen = page.getByRole('button', { name: 'Sharpen to full resolution' });
+    await expect(sharpen).toBeVisible();
+    await shot(page, 'edit-large-sharpen');
+    const soft = page.url();
+    await sharpen.click();
+    await expect.poll(async () => (page.url() !== soft ? await sizeOf() : null), { timeout: 300_000 }).toEqual({ size: '3000x1714', mode: 'upscale' });
+    await page.goto(soft);
+    await expect(page.getByRole('button', { name: 'Sharpen to full resolution' })).toHaveCount(0);
   });
 
   test('Library: Upload adds your pictures to the Library', async () => {
