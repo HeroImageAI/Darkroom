@@ -243,6 +243,7 @@ export function Library() {
                     setPicked([]);
                     setSelected(it.id);
                   }}
+                  onDelete={trash ? undefined : () => void remove([it.id])}
                 />
               ))}
             </div>
@@ -291,7 +292,7 @@ export function Library() {
 }
 
 /** Right-click "Use as…" (Addendum 1 H): send a picture straight to a slot or mode on another screen. */
-function UseAsMenu({ item, x, y, onClose }: { item: Item; x: number; y: number; onClose: () => void }) {
+function UseAsMenu({ item, x, y, onClose, onDelete }: { item: Item; x: number; y: number; onClose: () => void; onDelete?: () => void }) {
   useEffect(() => {
     const close = () => onClose();
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
@@ -332,24 +333,46 @@ function UseAsMenu({ item, x, y, onClose }: { item: Item; x: number; y: number; 
     ['Video end frame', () => go('video', undefined, { end: item.id })],
   ];
   return (
-    <div role="menu" aria-label="Use as" className="menu" style={{ position: 'fixed', left: Math.min(x, window.innerWidth - 280), top: Math.min(y, window.innerHeight - 340), zIndex: 50, width: 270, background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 10, padding: 6, boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
+    <div role="menu" aria-label="Use as" className="menu" style={{ position: 'fixed', left: Math.min(x, window.innerWidth - 280), top: Math.min(y, window.innerHeight - 400), zIndex: 50, width: 270, background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 10, padding: 6, boxShadow: '0 12px 32px rgba(0,0,0,.45)' }}>
       <div className="section-label" style={{ padding: '4px 8px' }}>Use as…</div>
       {entries.map(([label, run, disabled]) => (
         <button key={label} role="menuitem" type="button" className="btn ghost sm" disabled={!!disabled} style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => (onClose(), run())}>
           {label}
         </button>
       ))}
+      {onDelete && (
+        <>
+          <div style={{ borderTop: '1px solid var(--line)', margin: '4px 0' }} />
+          <button role="menuitem" type="button" className="btn ghost sm danger-text" style={{ width: '100%', justifyContent: 'flex-start' }} onClick={() => (onClose(), onDelete())}>
+            <Trash2 size={14} /> Delete
+          </button>
+        </>
+      )}
     </div>
   );
 }
 
-function Tile({ item, selected, picked, onPick, onSelect }: { item: Item; selected: boolean; picked: boolean; onPick: (e: React.MouseEvent) => void; onSelect: () => void }) {
+function Tile({
+  item,
+  selected,
+  picked,
+  onPick,
+  onSelect,
+  onDelete,
+}: {
+  item: Item;
+  selected: boolean;
+  picked: boolean;
+  onPick: (e: React.MouseEvent) => void;
+  onSelect: () => void;
+  onDelete?: () => void;
+}) {
   const vid = useRef<HTMLVideoElement>(null);
   const [hover, setHover] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   return (
     <>
-    {menu && <UseAsMenu item={item} x={menu.x} y={menu.y} onClose={() => setMenu(null)} />}
+    {menu && <UseAsMenu item={item} x={menu.x} y={menu.y} onClose={() => setMenu(null)} onDelete={onDelete} />}
     <button
       role="listitem"
       className="tile"
