@@ -26,6 +26,9 @@ export interface ImageTemplates {
   inpaint_remove?: string;
   /** Qwen: inpaint wording when the mask is shown to the model as <image2>. */
   inpaint_masked?: string;
+  /** Outpaint on a pre-padded black canvas; {scene} gets outpaint_scene. */
+  outpaint_canvas?: string;
+  outpaint_scene?: string;
   enhance_subtle?: string;
   enhance_strong?: string;
   enhance_default_caption?: string;
@@ -119,6 +122,8 @@ export interface ComposeImageArgs {
   remove?: boolean;
   /** Inpaint only: the graph shows the model the mask as <image2> (Qwen crop-and-stitch, Addenda Phase 3). */
   maskShown?: boolean;
+  /** Outpaint only: the picture was pre-padded on a black canvas (Addenda Phase 4); use the canvas templates. */
+  canvas?: boolean;
 }
 
 export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): string {
@@ -158,6 +163,11 @@ export function composeImagePrompt(t: PromptTemplates, a: ComposeImageArgs): str
       return fill(tplText, { caption });
     }
     case 'outpaint': {
+      if (a.canvas && tpl.outpaint_canvas) {
+        // the user's description of the new areas wins over the caption of the old picture
+        const scene = (text || (a.caption ?? '')).trim().replace(/[.!?]+$/, '');
+        return fill(tpl.outpaint_canvas, { scene: scene && tpl.outpaint_scene ? sub(tpl.outpaint_scene, { text: a.model === 'qwen' ? fragment(scene) : scene }) : '' });
+      }
       if (!text && !a.caption && tpl.outpaint_default) return tidy(tpl.outpaint_default);
       const caption = a.caption && tpl.caption ? sub(tpl.caption, { text: sentence(a.caption) }) : '';
       const sur = text ? sub(tpl.outpaint_surroundings, { text: fragment(text) }) : '';

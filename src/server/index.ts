@@ -18,6 +18,9 @@ import { buildVlmRequest, type VlmPrompts, type VlmTask } from '../shared/vlm.js
 import { validateTemplates } from '../shared/prompts.js';
 import { samPointsJson } from '../shared/workflow.js';
 import { layersToPsd, layersToZip, type LayerInput } from './layers.js';
+import { buildOutpaintCanvas } from './outpaint.js';
+import { maskBBox } from '../shared/cropstitch.js';
+import type { Pad } from '../shared/outpaint.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -230,6 +233,32 @@ app.post('/api/vlm', async (req, reply) => {
     const text = String((done.meta as Record<string, unknown>).text ?? '');
     if (b.save && b.itemId && b.task === 'caption') store.updateItem(b.itemId, { caption: text });
     return { text, seconds: Math.round((Date.now() - t0) / 100) / 10 };
+  } catch (e) {
+    return reply.code(500).send({ error: (e as Error).message });
+  }
+});
+
+/**
+ * Outpaint canvas prep (Addendum 1 D): the item on a black canvas + a mask that fades into the original, uploaded to
+ * ComfyUI's input folder. Returns the names, the canvas size and the mask's bounding box (for the crop plan).
+ * body: { itemId, pad: {left,top,right,bottom}, feather? (0 = Auto), step (8 Klein, 32 Qwen) }
+ */
+app.post('/api/outpaint/prepare', async (req, reply) => {
+  const b = (req.body ?? {}) as { itemId: string; pad: Pad; feather?: number; step?: number };
+  const item = store.getItem(b.itemId);
+  if (!item?.file) return reply.code(404).send({ error: 'Picture not found.' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
+  const pad = { left: b.pad?.left | 0, top: b.pad?.top | 0, right: b.pad?.right | 0, bottom: b.pad?.bottom | 0 };
+  if (!(pad.left || pad.top || pad.right || pad.bottom)) return reply.code(400).send({ error: 'Choose how far to extend first.' });
+  try {
+    const src = Buffer.from(await jobs.comfy.view(item.file));
+    const cv = await buildOutpaintCanvas(src, pad, { step: b.step === 32 ? 32 : 8, feather: b.feather ?? 0 });
+    const tag = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+    const img = await jobs.comfy.upload('image', new Blob([new Uint8Array(cv.image)]), `outpaint_${tag}.png`, { subfolder: 'darkroom' });
+    const msk = await jobs.comfy.upload('image', new Blob([new Uint8Array(cv.mask)]), `outpaint_${tag}_mask.png`, { subfolder: 'darkroom' });
+    const raw = await sharp(cv.mask).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const bbox = maskBBox(raw.data, raw.info.width, raw.info.height, 0, 16);
+    return { image: inputName(img), mask: inputName(msk), width: cv.width, height: cv.height, pad: cv.pad, feather: cv.feather, bbox };
   } catch (e) {
     return reply.code(500).send({ error: (e as Error).message });
   }

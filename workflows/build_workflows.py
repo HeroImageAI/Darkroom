@@ -396,6 +396,30 @@ def qwen_inpaint_cs(mode="native"):
     return g
 
 
+def qwen_outpaint_native():
+    """Addendum 2 D alternative: let Qwen-Image 2.1 extend the frame itself. The original is image_1 (seen by the vision
+    tower and VAE-encoded as a reference) and sampling starts from an empty latent at the new canvas size (DR_WIDTH x
+    DR_HEIGHT, multiples of 32); the prompt asks for the same picture in a larger frame. Not pixel-aligned with the
+    original - judged on faithfulness in the A/B."""
+    g = G()
+    unet = g.add("UNETLoader", "DR_MODEL", unet_name=QWEN21_UNET, weight_dtype="default")
+    cache = g.add("QwenImage21Cache", "Prefix cache", model=o(unet), device="auto", dtype="default")
+    clip = g.add("CLIPLoader", "DR_TEXT_ENCODER", clip_name=QWEN21_TE, type="qwen_image", device="default")
+    vae = g.add("VAELoader", "DR_VAE", vae_name=QWEN21_VAE)
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    enc = g.add("TextEncodeQwenImage21", "DR_PROMPT", clip=o(clip), vae=o(vae), prompt="", negative_prompt="",
+                resolution=0, **{"images.image_1": o(src)})
+    w = g.add("PrimitiveInt", "DR_WIDTH", value=1024)
+    h = g.add("PrimitiveInt", "DR_HEIGHT", value=1024)
+    lat = g.add("EmptyLatentImage", "Canvas latent", width=o(w), height=o(h), batch_size=1)
+    ks = g.add("KSampler", "DR_SAMPLER", model=o(cache), positive=o(enc, 0), negative=o(enc, 1), latent_image=o(lat),
+               seed=0, steps=25, cfg=1.0, sampler_name="euler", scheduler="simple", denoise=1.0)
+    dec = g.add("VAEDecodeTiled", "Decode", samples=o(ks), vae=o(vae), tile_size=1024, overlap=128,
+                temporal_size=64, temporal_overlap=8)
+    g.add("SaveImage", "DR_OUTPUT", images=o(dec), filename_prefix="darkroom/outpaint")
+    return g
+
+
 def qwen_t2i():
     g = G()
     unet = g.add("UNETLoader", "DR_MODEL", unet_name=QWEN21_UNET, weight_dtype="default")
@@ -891,6 +915,7 @@ if __name__ == "__main__":
     # the Fun ControlNet kept structure and recoloured instead. Shipped = maskref; the others stay as experiments.
     qwen_inpaint_cs("maskref").save("qwen_inpaint_cs.json")
     qwen_inpaint_cs("native").save("experiments/qwen_inpaint_cs.native.json")
+    qwen_outpaint_native().save("experiments/qwen_outpaint_native.json")
     qwen_inpaint_cs("controlnet").save("experiments/qwen_inpaint_cs.controlnet.json")
     qwen_enhance_edit().save("qwen_enhance_edit.json")
     # Addenda A/B candidates (same DR_* titles as the shipped graphs, run with run-workflow --file)

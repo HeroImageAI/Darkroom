@@ -252,3 +252,19 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     - Reference-guided fills can copy a chunk of the reference (Klein pasted the reference's house with the car); the
       prompt should say what to take from it.
     - Optional pictures that vanished from ComfyUI's input folder are dropped with a notice instead of failing the job.
+68. **Outpaint: One Node's canvas prep for Klein; Qwen keeps its own route.** A/B on 5 cases incl. a 2528×1696 picture
+    (docs/qa/addenda/p4):
+    - Klein: server-side prep (`src/server/outpaint.ts`: black pad, mask with a gradient INTO the original — Auto =
+      min(48, short side / 6), override ≤ 256 — multiples of 8) + the crop-and-stitch graph over the **whole canvas**
+      at denoise 1.0 (locked; the inpaint Change strength never reaches outpaint). Seamless on every case. Darkroom v2's
+      in-graph padding duplicated content (a second band of hills in the harbour sky, a second chalkboard on the big
+      picture). Sampling only the new strip + context ("extend_for_outpainting") was barely faster on the large
+      picture (17.3 vs 19.4 s) and duplicated content (a second red car) because the model lacks the whole picture.
+    - Qwen: the same prep with the mask shown as `<image2>` made Qwen paint the "marked" area literally white or leave
+      the black bars; the native aspect change (image_1 + a larger empty latent) extends well but redraws the whole
+      picture (not pixel-faithful) and took 224 s on the large one. Darkroom v2's Qwen outpaint (model sees the
+      original, samples the padded canvas) was clean and exact on every case in ~27 s, so it stays; padding now
+      rounds to multiples of 32.
+    - Leftover black from earlier rounds: only near-black regions **connected to an extended edge** are re-masked (One
+      Node re-masks every dark pixel, which would regenerate night skies and black clothing; unit-tested).
+      Three rounds of +256 px in a row stayed seamless on both models (docs/qa/addenda/p4r).

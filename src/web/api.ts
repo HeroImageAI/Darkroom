@@ -69,6 +69,16 @@ export const api = {
   favourite: (id: string, favourite: boolean) => api.patch<Item>(`/api/items/${id}`, { favourite }),
   vlm: (body: { task: 'caption' | 'reverse' | 'enhance' | 'motion'; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; save?: boolean }) =>
     api.post<{ text: string; seconds: number }>('/api/vlm', body),
+  outpaintPrepare: (body: { itemId: string; pad: { left: number; top: number; right: number; bottom: number }; feather?: number; step: 8 | 32 }) =>
+    api.post<{
+      image: string;
+      mask: string;
+      width: number;
+      height: number;
+      pad: { left: number; top: number; right: number; bottom: number };
+      feather: number;
+      bbox: { x: number; y: number; w: number; h: number } | null;
+    }>('/api/outpaint/prepare', body),
 };
 
 export interface SubmitBody {

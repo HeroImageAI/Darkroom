@@ -3597,6 +3597,95 @@
       "outputs": {
         "image": "DR_OUTPUT"
       }
+    },
+    "qwen_outpaint_native": {
+      "file": "experiments/qwen_outpaint_native.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Outpaint by aspect change (Qwen-Image 2.1, experiment)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "width": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_WIDTH",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 256,
+          "max": 2816
+        },
+        "height": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_HEIGHT",
+              "input": "value"
+            }
+          ],
+          "default": 1024,
+          "min": 256,
+          "max": 2816
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/outpaint"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {
@@ -3614,7 +3703,7 @@
       "qwen": "qwen_inpaint_cs"
     },
     "outpaint": {
-      "klein": "outpaint",
+      "klein": "klein_inpaint_cs",
       "qwen": "qwen_outpaint"
     },
     "enhance": {

@@ -9,7 +9,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../src/server/config.js';
 import { composeImagePrompt, type PromptTemplates } from '../src/shared/prompts.js';
-import { maskBBox, planCrop, type CropPlan } from '../src/shared/cropstitch.js';
+import { maskBBox, planCrop, type Box, type CropPlan } from '../src/shared/cropstitch.js';
+import { buildOutpaintCanvas } from '../src/server/outpaint.js';
+import { snapPad, type Pad } from '../src/shared/outpaint.js';
 import sharp from 'sharp';
 
 const TSX = path.join(ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs');
@@ -96,7 +98,58 @@ const INPAINT_CASES: InpaintCase[] = [
   { key: 'teapot-ref-car', mask: 'teapot', fill: 'a small toy model of the red car from the reference picture', ref: '09_car', set: { seed: 66 } },
 ].map((c) => ({ ...c, images: { image_1: g(MASKS[c.mask][0]), mask: maskPath(c.mask), ...(c.ref ? { image_2: g(c.ref) } : {}) } }));
 
+// Outpaint (Phase 4). One Node's outpaint preset, verbatim (config.json autofill_prompts.outpaint), credited:
+// github.com/yanokusnir-ai/one-node-flux-2-klein. Its "[briefly describe …]" slot is filled with the caption.
+const ONE_NODE_OUTPAINT = 'Extend the composition of this image. Replace all black or empty spaces with a logical continuation of the background and foreground. Ensure the transition is invisible and the new elements perfectly match the perspective and color palette of the original image. Scene description: ';
+const QWEN_OUTPAINT_MASKED = 'In <image1>, the area marked white in <image2> is empty canvas: fill it with a natural continuation of the scene, matching the perspective, lighting and colours so the transition is invisible. The picture shows ';
+const QWEN_OUTPAINT_NATIVE = 'Extend <image1> to a larger frame: keep everything in the picture exactly as it is and continue the scene naturally beyond its edges. The picture shows ';
+interface OutCase extends Case { src: string; pad: Pad }
+const OUT_CASES: OutCase[] = [
+  { key: 'car-right', src: '09_car', pad: { left: 0, top: 0, right: 384, bottom: 0 }, set: { seed: 71 } },
+  { key: 'interior-sides', src: '10_interior', pad: { left: 256, top: 0, right: 256, bottom: 0 }, set: { seed: 72 } },
+  { key: 'portrait-down', src: '01_portrait', pad: { left: 0, top: 0, right: 0, bottom: 320 }, set: { seed: 73 } },
+  { key: 'harbour-sky', src: '08_lowres_src', pad: { left: 0, top: 256, right: 0, bottom: 0 }, set: { seed: 74 } },
+  { key: 'large-2k-right', src: '13_large_2k', pad: { left: 0, top: 0, right: 512, bottom: 0 }, set: { seed: 75 } },
+].map((c) => ({ ...c, caption: c.src === '13_large_2k' ? firstSentence(GOLD['03_text_scene'].prompt) : firstSentence(GOLD[c.src === '08_lowres_src' ? '08_lowres_src' : c.src].prompt) }));
+const CANVAS: Record<string, { image: string; mask: string; w: number; h: number; pad: Pad; bbox: Box }> = {};
+const canvasKey = (c: OutCase, step: number) => `${c.key}-s${step}`;
+const lowerFirst = (s = '') => s.charAt(0).toLowerCase() + s.slice(1);
+function outCrop(c: OutCase, step: number, whole: boolean) {
+  const cv = CANVAS[canvasKey(c, step)];
+  const p = planCrop(whole ? { x: 0, y: 0, w: cv.w, h: cv.h } : cv.bbox, cv.w, cv.h);
+  return { images: { image_1: cv.image, mask: cv.mask }, set: { ...cropSet(p), denoise: 1, grow: 0, feather: 6 } };
+}
+const padSet = (p: Pad) => ({ pad_left: p.left, pad_top: p.top, pad_right: p.right, pad_bottom: p.bottom });
+
 const PHASES: Record<string, Group[]> = {
+  p4: [
+    {
+      id: 'outpaint-klein',
+      variants: [
+        { id: 'current', label: 'Darkroom v2: pad in the graph, whole canvas at 1 MP', workflow: 'outpaint',
+          build: (c) => { const oc = c as OutCase; return { images: { image_1: g(oc.src) }, set: { ...padSet(oc.pad), prompt: composeImagePrompt(T, { model: 'klein', mode: 'outpaint', text: '', caption: oc.caption }) } }; } },
+        { id: 'full', label: 'One Node prep + whole canvas (crop and stitch)', workflow: 'klein_inpaint_cs',
+          build: (c) => { const oc = c as OutCase; const b = outCrop(oc, 8, true); return { images: b.images, set: { ...b.set, prompt: ONE_NODE_OUTPAINT + oc.caption } }; } },
+        { id: 'extend', label: 'One Node prep + new strip and context only', workflow: 'klein_inpaint_cs',
+          build: (c) => { const oc = c as OutCase; const b = outCrop(oc, 8, false); return { images: b.images, set: { ...b.set, prompt: ONE_NODE_OUTPAINT + oc.caption } }; } },
+      ],
+      cases: OUT_CASES,
+    },
+    {
+      id: 'outpaint-qwen',
+      variants: [
+        { id: 'current', label: 'Darkroom v2: model sees the original, samples the padded canvas', workflow: 'qwen_outpaint',
+          build: (c) => { const oc = c as OutCase; return { images: { image_1: g(oc.src) }, set: { ...padSet(oc.pad), prompt: composeImagePrompt(T, { model: 'qwen', mode: 'outpaint', text: '', caption: oc.caption }) } }; } },
+        { id: 'full', label: 'Shared prep + mask as <image2>, whole canvas', workflow: 'qwen_inpaint_cs',
+          build: (c) => { const oc = c as OutCase; const b = outCrop(oc, 32, true); return { images: b.images, set: { ...b.set, prompt: QWEN_OUTPAINT_MASKED + lowerFirst(oc.caption) + '.' } }; } },
+        { id: 'extend', label: 'Shared prep + mask as <image2>, new strip and context only', workflow: 'qwen_inpaint_cs',
+          build: (c) => { const oc = c as OutCase; const b = outCrop(oc, 32, false); return { images: b.images, set: { ...b.set, prompt: QWEN_OUTPAINT_MASKED + lowerFirst(oc.caption) + '.' } }; } },
+        { id: 'native', label: 'Native aspect change: Qwen extends the frame itself', workflow: 'qwen_outpaint_native',
+          build: (c) => { const oc = c as OutCase; const cv = CANVAS[canvasKey(oc, 32)]; return { images: { image_1: g(oc.src) }, set: { width: cv.w, height: cv.h, prompt: QWEN_OUTPAINT_NATIVE + lowerFirst(oc.caption) + '.' } }; } },
+      ],
+      cases: OUT_CASES,
+    },
+  ],
   p3: [
     {
       id: 'inpaint-klein',
@@ -250,6 +303,32 @@ function run(v: Variant, c: Case, out: string, free: boolean) {
 
 /** Per-phase preparation before any run. */
 const SETUP: Record<string, () => Promise<void>> = {
+  p4: async () => {
+    const dir = path.join(ROOT, 'tests', 'golden', 'outpaint');
+    fs.mkdirSync(dir, { recursive: true });
+    // the "large picture" case: a 2528x1696 Qwen Native 2K render from Phase 1
+    const big = path.join(ROOT, g('13_large_2k'));
+    if (!fs.existsSync(big)) {
+      const p1 = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'qa', 'addenda', 'p1', 'runs.json'), 'utf8')) as Row[];
+      const r = p1.find((x) => x.group === 'qwen-native-2k' && x.key === 'bakery-text' && x.variant === 's40');
+      if (!r?.file_out) throw new Error('Phase 1 2K render not found');
+      fs.copyFileSync(path.join(ROOT, r.file_out), big);
+    }
+    for (const c of OUT_CASES) {
+      for (const step of [8, 32]) {
+        const k = canvasKey(c, step);
+        const cv = await buildOutpaintCanvas(fs.readFileSync(path.join(ROOT, g(c.src))), c.pad, { step });
+        const image = path.join('tests', 'golden', 'outpaint', `${k}.png`);
+        const mask = path.join('tests', 'golden', 'outpaint', `${k}-mask.png`);
+        fs.writeFileSync(path.join(ROOT, image), cv.image);
+        fs.writeFileSync(path.join(ROOT, mask), cv.mask);
+        const raw = await sharp(cv.mask).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+        const bbox = maskBBox(raw.data, raw.info.width, raw.info.height, 0, 16)!;
+        CANVAS[k] = { image, mask, w: cv.width, h: cv.height, pad: cv.pad, bbox };
+        console.log('canvas', k, cv.width, cv.height, 'feather', cv.feather, 'bbox', JSON.stringify(bbox));
+      }
+    }
+  },
   p3: async () => {
     fs.mkdirSync(path.join(ROOT, 'tests', 'golden', 'masks'), { recursive: true });
     for (const [k, [img, text]] of Object.entries(MASKS)) {
@@ -267,7 +346,53 @@ const SETUP: Record<string, () => Promise<void>> = {
   },
 };
 
+/** Chained test (not a grid of independent cases): each outpaint round extends the previous round's result. */
+async function outpaintRounds(model: 'klein' | 'qwen', workflow: string) {
+  const dir = path.join(ROOT, 'docs', 'qa', 'addenda', 'p4r');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, 'runs.json');
+  const rows: Row[] = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : [];
+  let src = path.join(ROOT, g('09_car'));
+  const caption = firstSentence(GOLD['09_car'].prompt);
+  for (let round = 1; round <= 3; round++) {
+    // each model through the route that won its Phase 4 A/B: Klein = black-canvas prep + crop-and-stitch graph,
+    // Qwen = its v2 graph (pads internally, sees the original)
+    const cv = await buildOutpaintCanvas(fs.readFileSync(src), { left: 0, top: 0, right: 256, bottom: 0 }, { step: model === 'qwen' ? 32 : 8 });
+    let c: Case;
+    if (model === 'qwen') {
+      const meta = await sharp(src).metadata();
+      const rel = path.relative(ROOT, src);
+      c = { key: `round${round}`, set: { prompt: composeImagePrompt(T, { model, mode: 'outpaint', text: '', caption }), seed: 80 + round, ...padSet(snapPad(meta.width!, meta.height!, { left: 0, top: 0, right: 256, bottom: 0 }, 32)) }, images: { image_1: rel } };
+    } else {
+      fs.mkdirSync(path.join(dir, 'canvas'), { recursive: true });
+      const image = path.join(dir, 'canvas', `${model}-round${round}.png`);
+      const mask = path.join(dir, 'canvas', `${model}-round${round}-mask.png`);
+      fs.writeFileSync(image, cv.image);
+      fs.writeFileSync(mask, cv.mask);
+      const p = planCrop({ x: 0, y: 0, w: cv.width, h: cv.height }, cv.width, cv.height);
+      const prompt = composeImagePrompt(T, { model, mode: 'outpaint', text: '', caption, canvas: true });
+      c = { key: `round${round}`, set: { prompt, seed: 80 + round, ...cropSet(p), denoise: 1, grow: 0, feather: 6 }, images: { image_1: path.relative(ROOT, image), mask: path.relative(ROOT, mask) } };
+    }
+    const r = run({ id: model, label: model, workflow }, c, path.join(dir, `${model}-round${round}`), round === 1);
+    const row: Row = { group: 'outpaint-3rounds', key: `round${round}`, variant: model, ok: r.ok, seconds: r.seconds, peak: r.peak, error: r.error, set: { width: cv.width, height: cv.height }, file_out: r.file ? path.relative(ROOT, r.file) : undefined };
+    const i = rows.findIndex((x) => x.key === row.key && x.variant === model);
+    if (i >= 0) rows[i] = row;
+    else rows.push(row);
+    fs.writeFileSync(file, JSON.stringify(rows, null, 2));
+    console.log(r.ok ? 'ok  ' : 'FAIL', model, `round ${round}`, `${cv.width}x${cv.height}`, r.seconds ? `${r.seconds}s` : '', r.ok ? '' : r.error);
+    if (!r.ok || !r.file) break;
+    src = r.file;
+  }
+  fs.writeFileSync(path.join(dir, 'variants.json'), JSON.stringify({ 'outpaint-3rounds': [{ id: 'klein', label: 'Klein 9B, 3 rounds of +256 px' }, { id: 'qwen', label: 'Qwen-Image 2.1, 3 rounds of +256 px' }] }, null, 2));
+}
+
 const [phase, only] = process.argv.slice(2);
+if (phase === 'p4r') {
+  // usage: ab-addenda.ts p4r <klein-workflow> <qwen-workflow>
+  await outpaintRounds('klein', only ?? 'klein_inpaint_cs');
+  await outpaintRounds('qwen', process.argv[4] ?? 'qwen_inpaint_cs');
+  process.exit(0);
+}
 const groups = PHASES[phase];
 await SETUP[phase]?.();
 if (!groups) throw new Error(`usage: ab-addenda.ts <${Object.keys(PHASES).join('|')}> [group-prefix]`);

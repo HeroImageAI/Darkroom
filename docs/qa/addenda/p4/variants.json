@@ -1,0 +1,34 @@
+{
+  "outpaint-klein": [
+    {
+      "id": "current",
+      "label": "Darkroom v2: pad in the graph, whole canvas at 1 MP"
+    },
+    {
+      "id": "full",
+      "label": "One Node prep + whole canvas (crop and stitch)"
+    },
+    {
+      "id": "extend",
+      "label": "One Node prep + new strip and context only"
+    }
+  ],
+  "outpaint-qwen": [
+    {
+      "id": "current",
+      "label": "Darkroom v2: model sees the original, samples the padded canvas"
+    },
+    {
+      "id": "full",
+      "label": "Shared prep + mask as <image2>, whole canvas"
+    },
+    {
+      "id": "extend",
+      "label": "Shared prep + mask as <image2>, new strip and context only"
+    },
+    {
+      "id": "native",
+      "label": "Native aspect change: Qwen extends the frame itself"
+    }
+  ]
+}

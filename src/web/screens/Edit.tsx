@@ -31,6 +31,7 @@ import { go } from '../router';
 import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
 import { planEnhance } from '../../shared/enhance';
 import { maskBBox, planCrop } from '../../shared/cropstitch';
+import { snapPad } from '../../shared/outpaint';
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
@@ -111,6 +112,7 @@ function Editor({ item }: { item: Item }) {
   const [feather, setFeather] = useState(8);
   const [strength, setStrength] = useState(1); // inpaint "Change strength" (denoise)
   const [seam, setSeam] = useState(0); // inpaint "Seam feather": 0 = Auto (the A/B-tested grow 8 / blur 6)
+  const [opFeather, setOpFeather] = useState(0); // outpaint "Seam feather" into the original: 0 = Auto
   const [prompt, setPrompt] = useState(() => sessionStorage.getItem('dr.edit.prompt') ?? '');
   const [onlyMasked, setOnlyMasked] = useState(true);
   const [ref, setRef] = useState<{ name: string } | null>(null);
@@ -445,12 +447,43 @@ function Editor({ item }: { item: Item }) {
     if (mode === 'outpaint') {
       if (!pad.left && !pad.right && !pad.top && !pad.bottom) return toast('Choose how far to extend: drag an edge with the frame tool (O) or use a preset.', 'info');
       const text = prompt.trim();
+      if (em === 'qwen') {
+        // Qwen keeps its v2 route (it sees the original and samples the padded canvas): in the Phase 4 A/B the shared
+        // black-canvas prep made Qwen paint the "marked" area white or leave the black bars (DECISIONS 68).
+        const p = snapPad(W, H, pad, 32);
+        const params: Record<string, string | number> = {
+          prompt: composeImagePrompt(T, { model: em, mode: 'outpaint', text, caption }),
+          pad_left: p.left,
+          pad_top: p.top,
+          pad_right: p.right,
+          pad_bottom: p.bottom,
+        };
+        if (ref) params.image_2 = ref.name;
+        return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text || 'Outpaint');
+      }
+      // Klein (Addenda Phase 4): the server pads the picture on black and builds the mask (gradient into the original,
+      // leftover black at the extended edges); the whole canvas is sampled through crop-and-stitch at full strength.
+      let prep;
+      try {
+        prep = await api.outpaintPrepare({ itemId: item.id, pad, feather: opFeather, step: 8 });
+      } catch (e) {
+        return toast((e as Error).message, 'error');
+      }
+      const plan = planCrop({ x: 0, y: 0, w: prep.width, h: prep.height }, prep.width, prep.height);
       const params: Record<string, string | number> = {
-        prompt: composeImagePrompt(T, { model: em, mode: 'outpaint', text, caption }),
-        pad_left: pad.left,
-        pad_top: pad.top,
-        pad_right: pad.right,
-        pad_bottom: pad.bottom,
+        prompt: composeImagePrompt(T, { model: em, mode: 'outpaint', text, caption, canvas: true }),
+        image_1: prep.image,
+        mask: prep.mask,
+        denoise: 1, // never less: the new area starts as black padding
+        grow: 0, // the prepared mask already reaches into the original
+        feather: 6,
+        crop_x: 0,
+        crop_y: 0,
+        crop_w: prep.width,
+        crop_h: prep.height,
+        target_w: plan.target.w,
+        target_h: plan.target.h,
+        output: 'darkroom/outpaint',
       };
       if (ref) params.image_2 = ref.name;
       return submit(wfFor('outpaint'), params, 'edit:outpaint', `${modelLabel} outpaint`, text || 'Outpaint');
@@ -891,8 +924,16 @@ function Editor({ item }: { item: Item }) {
                   Reset
                 </button>
               </div>
+              {editModel === 'klein' && (
+                <label className="field" style={{ marginTop: 8 }} title="How far the new area blends back into the original picture. Auto = the smaller of 48 px and a sixth of the short side.">
+                  <span>
+                    Seam feather <b className="mono">{opFeather === 0 ? 'Auto' : `${opFeather}px`}</b>
+                  </span>
+                  <input type="range" min={0} max={256} step={8} value={opFeather} onChange={(e) => setOpFeather(Number(e.target.value))} />
+                </label>
+              )}
               <p className="note" style={{ marginTop: 6 }}>
-                Frame tool (O): drag any edge of the picture outwards. Press Fit to see the whole frame.
+                Frame tool (O): drag any edge of the picture outwards. Press Fit to see the whole frame. Extending again later works: any black left at the edges is filled too.
               </p>
             </div>
           )}

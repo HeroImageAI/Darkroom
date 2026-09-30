@@ -14,7 +14,9 @@
     "enhance_strong": "{caption} Re-rendered in high quality with rich realistic detail, accurate lighting and crisp focus, keeping the same composition, people and text.",
     "enhance_default_caption": "A high-quality version of this picture.",
     "enhance_restore": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one.{scene}",
-    "enhance_scene": " Scene: {text}."
+    "enhance_scene": " Scene: {text}.",
+    "outpaint_canvas": "Extend the composition of this image. Replace all black or empty spaces with a logical continuation of the background and foreground. Ensure the transition is invisible and the new elements perfectly match the perspective and color palette of the original image.{scene}",
+    "outpaint_scene": " Scene description: {text}."
   },
   "qwen": {
     "generate": "{prompt} {style}",
@@ -31,7 +33,9 @@
     "enhance_strong": "Re-render this image at higher quality with rich, realistic detail and texture and accurate lighting. Keep the composition, the identity of people and all text unchanged.{caption}",
     "inpaint_remove": "Perform inpainting on this image. Fill the marked area with {fill}.{caption}",
     "enhance_restore": "Enhance the overall quality of <image1>: restore fine detail and sharp focus, and remove motion blur, lens blur, noise and compression artefacts. Keep the composition, every face and its likeness, the colours, the lighting and every object exactly as they are, and add nothing new.",
-    "inpaint_masked": "In <image1>, replace the area marked white in <image2> with {fill}. Keep everything outside that area unchanged."
+    "inpaint_masked": "In <image1>, replace the area marked white in <image2> with {fill}. Keep everything outside that area unchanged.",
+    "outpaint_canvas": "In <image1>, the area marked white in <image2> is empty canvas: fill it with a natural continuation of the scene, matching the perspective, lighting and colours so the transition is invisible.{scene}",
+    "outpaint_scene": " The picture shows {text}."
   },
   "wan": {
     "motion": "{motion} {camera}",

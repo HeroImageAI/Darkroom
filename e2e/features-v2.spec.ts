@@ -88,6 +88,27 @@ test.describe.serial('Darkroom v2 features', () => {
     });
   }
 
+  // Addenda Phase 4: Klein outpaints via the server's black-canvas prep + crop-and-stitch; Qwen via its own graph
+  for (const model of ['Klein 9B', 'Qwen-Image 2.1']) {
+    test(`Edit: outpaint to 16:9 (${model})`, async () => {
+      const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && (i.height ?? 0) >= (i.width ?? 1));
+      test.skip(!it, 'needs a portrait or square picture in the library');
+      await page.goto(`/#/edit/${it.id}`);
+      await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Outpaint' }).click();
+      await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: new RegExp(`^${model}`) }).click();
+      await page.getByRole('button', { name: 'To 16:9' }).click();
+      await expect(page.getByText('Seam feather')).toHaveCount(model.startsWith('Klein') ? 1 : 0);
+      const before = page.url();
+      await page.getByRole('button', { name: /Extend canvas/ }).click();
+      await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
+      expect(page.url()).not.toBe(before);
+      const next = await page.request.get(`/api/items/${page.url().split('/').pop()}`);
+      const { item } = await next.json();
+      expect(item.width / item.height).toBeGreaterThan(1.6); // the canvas really grew to ~16:9
+      await shot(page, `edit-outpaint-${model.startsWith('Klein') ? 'klein' : 'qwen'}`);
+    });
+  }
+
   test('Edit: compare follows the cursor', async () => {
     const it = await firstItem(page, (i) => i.kind === 'image' && !!i.parent_id);
     await page.goto(`/#/edit/${it.id}`);

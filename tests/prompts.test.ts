@@ -193,6 +193,22 @@ describe('Qwen inpaint with the mask shown as <image2> (Addenda Phase 3 winner)'
   });
 });
 
+describe('outpaint on a pre-padded canvas (Addenda Phase 4)', () => {
+  it('Klein uses One Node wording with the caption as scene description', () => {
+    const p = composeImagePrompt(T, { model: 'klein', mode: 'outpaint', text: '', caption: 'A red car in front of a blue house.', canvas: true });
+    expect(p).toMatch(/^Extend the composition of this image\./);
+    expect(p).toMatch(/Scene description: A red car in front of a blue house\.$/);
+  });
+  it("the user's surroundings text wins over the caption", () => {
+    expect(composeImagePrompt(T, { model: 'klein', mode: 'outpaint', text: 'a quiet beach', caption: 'A car.', canvas: true })).toMatch(/Scene description: a quiet beach\.$/);
+  });
+  it('Qwen names the mask and describes the picture', () => {
+    const p = composeImagePrompt(T, { model: 'qwen', mode: 'outpaint', text: '', caption: 'A cozy living room.', canvas: true });
+    expect(p).toMatch(/^In <image1>, the area marked white in <image2> is empty canvas/);
+    expect(p).toMatch(/The picture shows a cozy living room\.$/);
+  });
+});
+
 describe('qwen fill keeps quoted text intact', () => {
   it('does not strip a closing quote', () => {
     expect(composeImagePrompt(T, { model: 'qwen', mode: 'inpaint', text: 'a sign reading "OPEN"' })).toBe('a sign reading "OPEN".');
