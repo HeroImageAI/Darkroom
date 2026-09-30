@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Film, ImagePlus, Layers, Library as LibraryIcon, Loader2, Wand2 } from 'lucide-react';
 import { api, thumbUrl, type Item } from '../api';
-import { importPictures } from '../lib/importer';
+import { importFailedMessage, importPictures } from '../lib/importer';
 import { go, lastRoute, type Screen } from '../router';
 import { toast, useApp } from '../store';
 
@@ -28,7 +28,7 @@ export function Home() {
   useEffect(() => {
     api
       .items({ filter: 'all', limit: 12 })
-      .then((r) => setRecent(r.items.slice(0, 10)))
+      .then((r) => setRecent(r.items.slice(0, 9)))
       .catch(() => undefined);
   }, [rev]);
 
@@ -39,7 +39,7 @@ export function Home() {
     setBusy(pics.length === 1 ? 'Bringing in your picture…' : `Bringing in 1 of ${pics.length}…`);
     const { ids, failed } = await importPictures(pics, (done, total) => done < total && setBusy(`Bringing in ${done + 1} of ${total}…`));
     setBusy(null);
-    if (failed.length) toast(`Could not bring in ${failed.join(', ')}.`, 'error');
+    if (failed.length) toast(importFailedMessage(failed), 'error', 12000);
     if (!ids.length) return;
     if (ids.length > 1) toast(`${ids.length} pictures added to your Library. Opening the first one in Edit.`, 'ok', 6000);
     go('edit', ids[0]);
@@ -105,7 +105,11 @@ export function Home() {
 
           {last && (
             <button className="home-continue" onClick={() => (location.hash = `#/${last.path}`)}>
-              {lastId ? <img src={thumbUrl(lastId)} alt="" /> : <span className="home-continue-icon"><ArrowRight size={22} /></span>}
+              {lastId ? (
+                <img src={thumbUrl(lastId)} alt="" onError={(e) => (e.currentTarget.style.visibility = 'hidden')} />
+              ) : (
+                <span className="home-continue-icon">{(() => { const I = CARDS.find((c) => c.screen === last.screen)?.icon ?? ArrowRight; return <I size={26} />; })()}</span>
+              )}
               <span>
                 <span className="section-label" style={{ margin: 0 }}>Continue where you left off</span>
                 <strong>{SCREEN_LABEL[last.screen]}</strong>

@@ -262,3 +262,6 @@ button.logo svg { transition: transform .2s; }
 .home-thumb:hover { border-color: var(--accent); }
 .home-thumb-badge { position: absolute; left: 5px; bottom: 5px; font: 11px var(--mono); background: rgba(18,18,16,.85); padding: 2px 6px; border-radius: 4px; display: flex; gap: 4px; align-items: center; }
 .stage.file-over { outline: 2px dashed var(--accent); outline-offset: -8px; }
+.home-continue-icon { color: var(--accent); }
+/* Recent: one tidy row (extra tiles wrap out of sight instead of leaving an orphan) */
+.home-recent { grid-template-rows: auto; grid-auto-rows: 0; row-gap: 0; overflow: hidden; }

@@ -5,6 +5,7 @@ work; Darkroom is the only window you use day to day.
 
 | Screen | What it does |
 |---|---|
+| **Home** | Where Darkroom opens: pick Generate, Edit, Video or Library, **upload your own pictures** to edit (drop, paste or browse — several at once), continue where you left off, or open recent work. The logo brings you back here. |
 | **Generate** | Prompt → Klein 9B (fast, 4 steps) or Qwen-Image 2.1 (text & layout; Draft ~1 MP or Native 2K, transparent background). Aspect pills, per-model style presets, up to 3 reference images (drop, paste, or capture part of your screen), batch ×1–4. **Enhance** expands a short idea into a model-specific prompt and **From picture** writes a prompt from an image (local Qwen3-VL); Undo puts your text back. |
 | **Edit** | Mask brush / eraser / lasso on a zoomable canvas. Pick **Klein 9B or Qwen-Image 2.1** for Instruct (with 56 presets), Inpaint (crop and stitch), Outpaint and Enhance (Restore); a red-circle quick edit (Qwen); Remove BG (fast or Qwen best quality); Layers; Upscale 2–8× (SeedVR2, keeps transparency); Crop. Every apply is a new version (v1, v2…), with a before/after slider and undo/redo. |
 | **Video** | Start frame (+ optional end frame) → Wan 2.2 (best motion) or LTX 2.5 (fast drafts). 3/5/8 s, Draft 480p / Final 720p, camera chips, measured time estimate. Takes panel, Extend +5 s, Smooth 2×, Save frame. Jobs keep running if you close or reload the page. |
@@ -58,7 +59,7 @@ See docs/QA_REPORT.md for how every feature performed on the test pictures, with
 
 ### Tips
 
-- Paste an image (Ctrl+V) on Generate to add it as a reference, or on Edit to import it.
+- Paste an image (Ctrl+V) on Generate to add it as a reference, or on Home / Edit to bring it in for editing. **Upload** on Home, Edit and the Library adds your own photos (JPEG, PNG, WebP; iPhone HEIC needs saving as JPEG first).
 - Drag a thumbnail from the history rail or the Library onto any image slot.
 - Video: start with **Draft**. When the motion looks right, click **Render final** to render 720p with the same seed and settings.
 - Turn on **Notify when done** to get a desktop notification when a video finishes (allow notifications when the browser asks).

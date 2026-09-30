@@ -3,7 +3,7 @@ import { Check, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, L
 import { api, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { Dialog, formatDuration, Pills } from '../components/common';
 import { usePersistent } from '../lib/hooks';
-import { importPictures } from '../lib/importer';
+import { importFailedMessage, importPictures } from '../lib/importer';
 import { go } from '../router';
 import { toast, useApp } from '../store';
 
@@ -46,7 +46,7 @@ export function Library() {
     setUploading(`0 of ${pics.length}`);
     const { ids, failed } = await importPictures(pics, (done, total) => setUploading(`${done} of ${total}`));
     setUploading(null);
-    if (failed.length) toast(`Could not bring in ${failed.join(', ')}.`, 'error');
+    if (failed.length) toast(importFailedMessage(failed), 'error', 12000);
     if (ids.length) {
       if (filter !== 'all') setFilter('all');
       setSelected(ids[0]);

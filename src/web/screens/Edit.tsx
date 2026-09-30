@@ -37,7 +37,7 @@ import { snapPad } from '../../shared/outpaint';
 import { detectPixelBlock } from '../../shared/pixelblock';
 import { CIRCLE_COLOUR, circleFor } from '../../shared/annotate';
 import { PresetPicker } from '../components/PresetPicker';
-import { importPictures } from '../lib/importer';
+import { importFailedMessage, importPictures } from '../lib/importer';
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
@@ -107,7 +107,7 @@ async function openOwnPictures(files: File[], online: boolean, setBusy: (b: bool
   setBusy(true);
   const { ids, failed } = await importPictures(pics);
   setBusy(false);
-  if (failed.length) toast(`Could not bring in ${failed.join(', ')}.`, 'error');
+  if (failed.length) toast(importFailedMessage(failed), 'error', 12000);
   if (ids.length > 1) toast(`${ids.length} pictures added to your Library. Opening the first one.`, 'ok', 6000);
   if (ids[0]) go('edit', ids[0]);
 }

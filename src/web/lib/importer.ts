@@ -11,6 +11,11 @@ export async function importPictures(files: File[], onProgress?: (done: number, 
   const ids: string[] = [];
   const failed: string[] = [];
   for (const [i, f] of pics.entries()) {
+    if (/.(heic|heif)$/i.test(f.name)) {
+      failed.push(f.name); // HEIC can't be decoded here (codec licence); see importFailedMessage
+      onProgress?.(i + 1, pics.length);
+      continue;
+    }
     try {
       const up = await api.upload(f, f.name);
       const job = await api.submit({ workflow: 'import', params: { image_1: up.name }, meta: { mode: 'import', model: 'Imported', prompt: f.name.replace(/\.[a-z0-9]+$/i, '') } });
@@ -49,4 +54,16 @@ function waitForItem(jobId: string, timeoutMs = 180_000): Promise<string> {
     const timer = setTimeout(() => finish(() => reject(new Error('Import timed out'))), timeoutMs);
     void check();
   });
+}
+
+/** Notice text for files that could not be brought in. */
+export function importFailedMessage(failed: string[]): string {
+  const heic = failed.filter((f) => /.(heic|heif)$/i.test(f));
+  const other = failed.filter((f) => !heic.includes(f));
+  return [
+    heic.length ? `${heic.join(', ')}: iPhone HEIC photos can't be opened here. Save them as JPEG first (Windows Photos → ⋯ → Save as → .jpg, or set the iPhone camera to "Most Compatible").` : '',
+    other.length ? `Could not bring in ${other.join(', ')}.` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 }

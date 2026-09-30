@@ -316,11 +316,49 @@ test.describe.serial('Darkroom v2 features', () => {
     }
   });
 
-  test('UX: Darkroom reopens on the screen you used last', async () => {
+  test('Home: Darkroom opens on Home, with the four screens and "Continue where you left off"', async () => {
     await page.goto('/#/library');
     await expect(page.getByRole('region', { name: 'Library' })).toBeVisible();
     await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
+    const start = page.getByRole('navigation', { name: 'Start' });
+    for (const name of ['Generate', 'Edit', 'Video', 'Library']) await expect(start.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
+    await shot(page, 'home');
+    await page.getByRole('button', { name: /Continue where you left off/ }).click();
     await expect(page).toHaveURL(/#\/library$/);
+    await page.getByRole('button', { name: 'Darkroom — Home' }).click();
+    await start.getByRole('button', { name: /^Generate/ }).click();
+    await expect(page).toHaveURL(/#\/generate$/);
+  });
+
+  test('Home: upload your own picture and it opens in Edit', async () => {
+    await page.goto('/');
+    await page.getByLabel('Upload pictures', { exact: true }).setInputFiles('tests/golden/01_portrait.png');
+    await expect(page).toHaveURL(/#\/edit\/[0-9a-f-]+$/, { timeout: 60_000 });
+    const id = page.url().split('/').pop();
+    const { item } = await (await page.request.get(`/api/items/${id}`)).json();
+    expect(item.mode).toBe('import');
+    expect(item.prompt).toBe('01_portrait');
+    expect([item.width, item.height]).toEqual([896, 1120]);
+    await expect(page.getByRole('group', { name: 'Versions' }).getByRole('button')).toHaveCount(1);
+  });
+
+  test('Edit: Upload with a picture open brings several in and opens the first', async () => {
+    const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
+    const first = page.url();
+    await page.getByLabel('Upload your own picture').setInputFiles(['tests/golden/09_car.png', 'tests/golden/10_interior.png']);
+    await expect(page.getByText('2 pictures added to your Library. Opening the first one.')).toBeVisible({ timeout: 60_000 });
+    expect(page.url()).not.toBe(first);
+    expect((await (await page.request.get('/api/items?limit=1')).json()).total).toBe(before + 2);
+  });
+
+  test('Library: Upload adds your pictures to the Library', async () => {
+    await page.goto('/#/library');
+    const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
+    await page.getByLabel('Upload pictures to the Library').setInputFiles('tests/golden/03_text_scene.png');
+    await expect(page.getByText('1 picture added to your Library. Double-click to edit.')).toBeVisible({ timeout: 60_000 });
+    expect((await (await page.request.get('/api/items?limit=1')).json()).total).toBe(before + 1);
+    await expect(page.getByRole('complementary', { name: 'Details' })).toContainText('03_text_scene');
   });
 
   test('Library: delete with Undo, multi-select, Recently deleted and Restore', async () => {
