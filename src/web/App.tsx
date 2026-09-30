@@ -5,6 +5,7 @@ import { OfflineBanner, TopBar } from './components/TopBar';
 import { useRoute } from './router';
 import { Edit } from './screens/Edit';
 import { Generate } from './screens/Generate';
+import { Home } from './screens/Home';
 import { Library } from './screens/Library';
 import { Video } from './screens/Video';
 import { setState, toast, useApp } from './store';
@@ -31,6 +32,8 @@ export function App() {
         <div className="empty" style={{ margin: 'auto' }}>
           Loading Darkroom…
         </div>
+      ) : route.screen === 'home' ? (
+        <Home />
       ) : route.screen === 'generate' ? (
         <Generate query={route.query} />
       ) : route.screen === 'edit' ? (
