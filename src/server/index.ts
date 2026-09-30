@@ -24,7 +24,7 @@ import type { Pad } from '../shared/outpaint.js';
 import { mergePresets, upsertUserPreset, type EditPreset, type UserPreset } from '../shared/presets.js';
 import { readDarkroomMeta } from '../shared/pngmeta.js';
 import { outputDirFromArgv, outputPath, recycle } from './trash.js';
-import { framePair } from './framepair.js';
+import { labelledSheet } from './framepair.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -209,7 +209,7 @@ app.post('/api/items/:id/as-input', async (req, reply) => {
  * body: { task, variant, text?, itemId?, input?, which? }  -> { text, seconds }
  */
 app.post('/api/vlm', async (req, reply) => {
-  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string };
+  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string; inputs?: string[] };
   if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
   let request;
   let pair = false;
@@ -230,17 +230,34 @@ app.post('/api/vlm', async (req, reply) => {
       if (!item) return reply.code(404).send({ error: 'Picture not found.' });
       name = await jobs.asInput(item, b.which ?? (item.kind === 'video' ? 'poster' : 'main'));
     }
+    const asRef = (n: string) => {
+      const i = n.lastIndexOf('/');
+      return { filename: n.slice(i + 1), subfolder: i >= 0 ? n.slice(0, i) : '', type: 'input' };
+    };
+    /** Several pictures as one labelled sheet (the vision graph takes a single image). */
+    const sheetOf = async (names: string[], labels: string[], prefix: string) => {
+      const sheet = await labelledSheet(await Promise.all(names.map((n) => jobs.comfy!.view(asRef(n)))), labels);
+      return inputName(await jobs.comfy!.upload('image', new Blob([new Uint8Array(sheet)]), `${prefix}_${Date.now().toString(36)}.png`, { subfolder: 'darkroom' }));
+    };
+    if (b.task === 'compose') {
+      // Generate "From references": every reference labelled IMAGE 1..3 on one sheet
+      const refs = (b.inputs ?? []).filter((x) => typeof x === 'string').slice(0, 3);
+      if (!refs.length) return reply.code(400).send({ error: 'Add a reference picture first.' });
+      try {
+        name = await sheetOf(refs, refs.map((_, i) => `IMAGE ${i + 1}`), 'refs_sheet');
+        // say how many references exist and the exact words to use, or the model invents an "image 3" (seen with one)
+        const tokens = refs.map((_, i) => (b.variant === 'qwen' ? `<image${i + 1}>` : `image ${i + 1}`));
+        params.prompt = `There ${refs.length === 1 ? 'is 1 reference picture' : `are ${refs.length} reference pictures`}; name each one as ${tokens.join(', ')} and no others.
+${params.prompt}`;
+      } catch (e) {
+        return reply.code(400).send({ error: 'Could not read the references: ' + (e as Error).message });
+      }
+    }
     if (!name) return reply.code(400).send({ error: 'This needs a picture.' });
     if (pair && b.input2) {
-      // start and end frame side by side, labelled, as one picture (the vision graph takes a single image)
-      const asRef = (n: string) => {
-        const i = n.lastIndexOf('/');
-        return { filename: n.slice(i + 1), subfolder: i >= 0 ? n.slice(0, i) : '', type: 'input' };
-      };
+      // Video motion with an end frame: START and END side by side
       try {
-        const sheet = await framePair(await jobs.comfy.view(asRef(name)), await jobs.comfy.view(asRef(b.input2)));
-        const up = await jobs.comfy.upload('image', new Blob([new Uint8Array(sheet)]), `motion_pair_${Date.now().toString(36)}.png`, { subfolder: 'darkroom' });
-        name = inputName(up);
+        name = await sheetOf([name, b.input2], ['START', 'END'], 'motion_pair');
       } catch (e) {
         return reply.code(400).send({ error: 'Could not read the end frame: ' + (e as Error).message });
       }
