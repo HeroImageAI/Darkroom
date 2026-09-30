@@ -199,3 +199,25 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     reads on light and dark backgrounds alike. The filter works in the canvas's on-screen pixels, so the outline is the
     same thickness at every zoom; display only, the stored/exported mask is unchanged. Repaint cost measured in Edge
     while painting: 16.7 ms per frame with or without the outline, at fit, 288 % and 800 % zoom.
+
+### Addenda 1+2 (One Node patterns, Qwen-Image 2.1 parity) — plan and decisions in docs/ADDENDA_PLAN.md
+
+62. **Klein sampling = One Node's distilled defaults.** `ModelSamplingAuraFlow` shift 3 + `simple` schedule + `er_sde`,
+    4 steps, CFG 1 (github.com/yanokusnir-ai/one-node-flux-2-klein). A/B against Darkroom's Flux2Scheduler + euler on
+    8 text-to-image and 4 edit cases, fixed seeds (docs/qa/addenda/p1): equal or better on 10 of 12 — finer skin and
+    stone/rigging detail; the cat's fur was marginally crisper with euler; edits equal. Same speed (7.5–8 s at 1 MP).
+    Shipped as `klein_t2i/klein_ref/inpaint/outpaint/klein_edit.v2.json` with identical DR_* titles; v1 files kept.
+    Enhance keeps its own graph until its Phase 2 redesign.
+63. **No KV toggle for Klein on this machine.** `flux-2-klein-9b-kv` is bf16 (18.2 GB) vs the 9.4 GB fp8mixed model;
+    with 2–3 references it filled the 24 GiB card and ran 168 s / 59 s against 21 s / 29 s, with no quality gain (one
+    3-reference result had a worse pose). `FluxKVCache` and the KV graphs remain in `workflows/experiments/` for a card
+    with more memory or an fp8 KV release.
+64. **Klein base-model rules not wired.** No Klein *base* model is installed and Darkroom's model file is fixed, so the
+    base defaults (20 steps, CFG 5, real negatives) would be unreachable code; recorded here instead.
+65. **Qwen-Image 2.1 tiers: Draft and Native 2K.** Official pipeline: ~40–50 Euler steps (template note); ComfyUI
+    template: 25. A/B (docs/qa/addenda/p1): at 25 steps a busy crowd shows smeared, half-formed pedestrians that 40 steps
+    resolves; text and single subjects are the same. Cost +45 % (Draft 16 → 23 s, 2K 105 → 160 s). So **Draft** =
+    ~1 MP (1024², 928×1152, 1248×832, 1376×768 — all multiples of 32; the old "Standard" used Qwen-Image v1 sizes such as
+    1328², which are not) at 25 steps for iterating, and **Native 2K** = the official size table at 40 steps for finals.
+    Peak VRAM: 18.5 GB (decimal) at 2K text-to-image; with references 20–24.8 GB (2 refs at 2K is the maximum seen,
+    still no stall); identity held with 1–3 references at both tiers.

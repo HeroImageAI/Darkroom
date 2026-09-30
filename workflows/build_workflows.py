@@ -14,6 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ---- model files (single place to change) --------------------------------
 KLEIN_UNET = "flux-2-klein-9b-fp8mixed.safetensors"
+KLEIN_KV_UNET = "flux-2-klein-9b-kv.safetensors"  # bf16, 18 GB; needs FluxKVCache
 KLEIN_TE = "qwen_3_8b_fp8mixed.safetensors"
 KLEIN_VAE = "flux2-vae.safetensors"
 QWEN21_UNET = "qwen_image_2.1_int8_convrot.safetensors"
@@ -73,6 +74,7 @@ class G:
         return nid
 
     def save(self, name):
+        os.makedirs(os.path.dirname(os.path.join(HERE, name)), exist_ok=True)
         with open(os.path.join(HERE, name), "w", encoding="utf-8") as f:
             json.dump(self.p, f, indent=2, ensure_ascii=False)
         print("wrote", name, len(self.p), "nodes")
@@ -91,8 +93,12 @@ def soft_mask(g, mask, radius=6):
 
 
 # ---------------------------------------------------------------- Klein --
-def klein_base(g):
-    unet = g.add("UNETLoader", "DR_MODEL", unet_name=KLEIN_UNET, weight_dtype="default")
+def klein_base(g, kv=False):
+    """kv=True: the FLUX.2 [klein] 9B KV variant (bf16, 18 GB) behind FluxKVCache, which caches the reference
+    tokens across steps (Addendum 1 A; pattern from One Node's inpaint/outpaint graphs)."""
+    unet = g.add("UNETLoader", "DR_MODEL", unet_name=KLEIN_KV_UNET if kv else KLEIN_UNET, weight_dtype="default")
+    if kv:
+        unet = g.add("FluxKVCache", "KV cache", model=o(unet))
     clip = g.add("CLIPLoader", "DR_TEXT_ENCODER", clip_name=KLEIN_TE, type="flux2", device="default")
     vae = g.add("VAELoader", "DR_VAE", vae_name=KLEIN_VAE)
     pos = g.add("CLIPTextEncode", "DR_PROMPT", text="", clip=o(clip))
@@ -100,9 +106,18 @@ def klein_base(g):
     return unet, clip, vae, pos, neg
 
 
-def klein_sample(g, unet, vae, pos, neg, latent, wlink, hlink):
-    sched = g.add("Flux2Scheduler", "DR_STEPS", steps=4, width=wlink, height=hlink)
-    sampler = g.add("KSamplerSelect", "Sampler", sampler_name="euler")
+def klein_sample(g, unet, vae, pos, neg, latent, wlink, hlink, style="flux2"):
+    """style "flux2": Flux2Scheduler + euler (Darkroom v1/v2).
+    style "onenode": ModelSamplingAuraFlow shift 3 + simple schedule + er_sde, the distilled-Klein defaults used by
+    One Node (github.com/yanokusnir-ai/one-node-flux-2-klein, workflows/*.json). Same DR_* titles, so both styles
+    share one manifest entry."""
+    if style == "onenode":
+        unet = g.add("ModelSamplingAuraFlow", "Shift", model=o(unet), shift=3.0)
+        sched = g.add("BasicScheduler", "DR_STEPS", model=o(unet), scheduler="simple", steps=4, denoise=1.0)
+        sampler = g.add("KSamplerSelect", "Sampler", sampler_name="er_sde")
+    else:
+        sched = g.add("Flux2Scheduler", "DR_STEPS", steps=4, width=wlink, height=hlink)
+        sampler = g.add("KSamplerSelect", "Sampler", sampler_name="euler")
     noise = g.add("RandomNoise", "DR_SEED", noise_seed=0)
     guider = g.add("CFGGuider", "DR_CFG", model=o(unet), positive=o(pos), negative=o(neg), cfg=1.0)
     samp = g.add("SamplerCustomAdvanced", "Sample", noise=o(noise), guider=o(guider),
@@ -123,24 +138,24 @@ def klein_refs(g, vae, pos, neg, n):
     return pos, neg
 
 
-def klein_t2i(refs=0):
+def klein_t2i(refs=0, style="flux2", kv=False):
     g = G()
-    unet, clip, vae, pos, neg = klein_base(g)
+    unet, clip, vae, pos, neg = klein_base(g, kv)
     w = g.add("PrimitiveInt", "DR_WIDTH", value=1024)
     h = g.add("PrimitiveInt", "DR_HEIGHT", value=1024)
     if refs:
         pos, neg = klein_refs(g, vae, pos, neg, refs)
     lat = g.add("EmptyFlux2LatentImage", "DR_BATCH", width=o(w), height=o(h), batch_size=1)
-    img = klein_sample(g, unet, vae, pos, neg, lat, o(w), o(h))
+    img = klein_sample(g, unet, vae, pos, neg, lat, o(w), o(h), style)
     g.add("SaveImage", "DR_OUTPUT", images=o(img), filename_prefix="darkroom/klein")
     return g
 
 
-def klein_masked(outpaint=False, prefix=None):
+def klein_masked(outpaint=False, prefix=None, style="flux2", kv=False):
     """Klein inpaint / outpaint: masked latent re-noise with the source image as
     reference, then composite so pixels outside the mask are untouched."""
     g = G()
-    unet, clip, vae, pos, neg = klein_base(g)
+    unet, clip, vae, pos, neg = klein_base(g, kv)
     src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
     if outpaint:
         pad = g.add("ImagePadForOutpaint", "DR_PAD", image=o(src), left=0, top=0, right=0, bottom=0,
@@ -174,7 +189,7 @@ def klein_masked(outpaint=False, prefix=None):
     neg = g.add("ReferenceLatent", "DR_REF_2_NEG", conditioning=o(neg), latent=o(enc2))
     lat = g.add("VAEEncode", "Encode canvas", pixels=o(work), vae=o(vae))
     nm = g.add("SetLatentNoiseMask", "DR_MASK_LATENT", samples=o(lat), mask=o(wmask))
-    img = klein_sample(g, unet, vae, pos, neg, nm, o(size, 0), o(size, 1))
+    img = klein_sample(g, unet, vae, pos, neg, nm, o(size, 0), o(size, 1), style)
     # Composite back at the source's full resolution so unmasked pixels are exact.
     full = g.add("GetImageSize", "Full dims", image=base_img)
     up = g.add("ImageScale", "Fill to full size", image=o(img), upscale_method="lanczos",
@@ -697,3 +712,17 @@ if __name__ == "__main__":
     video_frame().save("video_frame.json")
     vlm_text(True).save("vlm_image.json")
     vlm_text(False).save("vlm_text.json")
+    # Addenda Phase 1: One Node sampling for distilled Klein (A/B in docs/qa/addenda/p1: equal or better on
+    # 10 of 12 cases). v1 graphs above stay for rollback; the manifest points at these.
+    klein_t2i(0, style="onenode").save("klein_t2i.v2.json")
+    klein_t2i(3, style="onenode").save("klein_ref.v2.json")
+    klein_masked(False, style="onenode").save("inpaint.v2.json")
+    klein_masked(True, style="onenode").save("outpaint.v2.json")
+    klein_masked(False, prefix="darkroom/edit", style="onenode").save("klein_edit.v2.json")
+    # Addenda A/B candidates (same DR_* titles as the shipped graphs, run with run-workflow --file)
+    klein_t2i(0, style="onenode").save("experiments/klein_t2i.onenode.json")
+    klein_t2i(3, style="onenode").save("experiments/klein_ref.onenode.json")
+    klein_t2i(3, kv=True).save("experiments/klein_ref.kv.json")
+    klein_t2i(3, style="onenode", kv=True).save("experiments/klein_ref.onenode.kv.json")
+    klein_masked(False, prefix="darkroom/edit", style="onenode").save("experiments/klein_edit.onenode.json")
+    klein_masked(False, prefix="darkroom/edit", kv=True).save("experiments/klein_edit.kv.json")

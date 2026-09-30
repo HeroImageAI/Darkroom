@@ -12,3 +12,6 @@ research/templates/*.json
 # raw QA renders stay on disk; grids + runs.json are committed
 docs/qa/*/*/
 
+# addenda phases keep grids + runs.json one level deeper; raw renders below that stay untracked
+!docs/qa/addenda/*/
+docs/qa/addenda/*/*/

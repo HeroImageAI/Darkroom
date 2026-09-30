@@ -91,35 +91,35 @@
       },
       "quality": {
         "standard": {
-          "label": "Standard",
-          "note": "25 steps, ~1.8 MP",
+          "label": "Draft",
+          "note": "25 steps, ~1 MP (fast iteration)",
           "steps": 25,
           "aspects": {
             "1:1": [
-              1328,
-              1328
+              1024,
+              1024
             ],
             "4:5": [
-              1184,
-              1472
+              928,
+              1152
             ],
             "3:2": [
-              1584,
-              1056
+              1248,
+              832
             ],
             "16:9": [
-              1664,
-              928
+              1376,
+              768
             ],
             "9:16": [
-              928,
-              1664
+              768,
+              1376
             ]
           }
         },
         "high": {
-          "label": "High",
-          "note": "40 steps, ~4 MP (model-card sizes)",
+          "label": "Native 2K",
+          "note": "40 steps, ~4 MP (official sizes, finals)",
           "steps": 40,
           "aspects": {
             "1:1": [
@@ -257,7 +257,7 @@
   },
   "workflows": {
     "klein_t2i": {
-      "file": "klein_t2i.json",
+      "file": "klein_t2i.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Klein 9B text to image",
@@ -362,7 +362,7 @@
       }
     },
     "klein_ref": {
-      "file": "klein_ref.json",
+      "file": "klein_ref.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Klein 9B with reference images",
@@ -783,7 +783,7 @@
       }
     },
     "inpaint": {
-      "file": "inpaint.json",
+      "file": "inpaint.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Masked fill (Klein 9B)",
@@ -907,7 +907,7 @@
       }
     },
     "outpaint": {
-      "file": "outpaint.json",
+      "file": "outpaint.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Outpaint (Klein 9B)",
@@ -1881,7 +1881,7 @@
       }
     },
     "klein_edit": {
-      "file": "klein_edit.json",
+      "file": "klein_edit.v2.json",
       "family": "klein",
       "kind": "image",
       "label": "Klein 9B instruction edit",
