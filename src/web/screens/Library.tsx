@@ -55,9 +55,12 @@ export function Library() {
       clearTimeout(t);
     };
   }, [filter, q, rev]);
+  // switching filter drops the old list at once, so nothing from the previous view can be clicked or acted on
   useEffect(() => {
     setPicked([]);
     setAnchor(null);
+    setItems([]);
+    setLoading(true);
   }, [filter]);
 
   const more = async () => {
@@ -264,7 +267,7 @@ export function Library() {
             <p>Ctrl-click to add or remove, Shift-click for a range. Press Delete to {trash ? 'delete them for good' : 'move them to Recently deleted'}.</p>
           </div>
         ) : sel ? (
-          <Detail item={sel} comfyUrl={comfyUrl} trash={trash} onDelete={() => void remove([sel.id])} onRestore={() => void restore([sel.id])} onPurge={() => setConfirm({ ids: [sel.id] })} />
+          <Detail item={sel} comfyUrl={comfyUrl} trash={!!sel.deleted_at} onDelete={() => void remove([sel.id])} onRestore={() => void restore([sel.id])} onPurge={() => setConfirm({ ids: [sel.id] })} />
         ) : (
           <div className="empty" style={{ margin: 'auto' }}>
             <h2>No item selected</h2>

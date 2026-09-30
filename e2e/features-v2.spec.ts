@@ -332,6 +332,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.request.post('/api/items/delete', { data: { ids } });
     await page.goto('/#/library');
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
+    await expect(page.getByRole('list').getByRole('listitem')).toHaveCount(1);
     await page.getByRole('list').getByRole('listitem').first().click();
     await page.getByRole('complementary', { name: 'Details' }).getByRole('button', { name: 'Delete forever' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Delete forever' }).click();
