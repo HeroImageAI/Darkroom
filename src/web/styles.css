@@ -231,3 +231,4 @@ img[src*="/api/items/"] {
 /* sticky panel footers: a soft edge so content scrolling underneath reads as "more above" */
 .panel-foot { box-shadow: 0 -10px 18px -10px rgba(0,0,0,.6); position: relative; z-index: 1; }
 .panel .empty h2 { font-size: 24px; }
+.banner { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--raised); border-bottom: 1px solid var(--line); font-size: 13px; }

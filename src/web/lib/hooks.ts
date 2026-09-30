@@ -4,23 +4,28 @@ import { useApp } from '../store';
 
 /** Load a library item (re-fetches when the library changes). */
 export function useItem(id: string | null | undefined): Item | null {
-  const [item, setItem] = useState<Item | null>(null);
+  return useItemLoad(id).item;
+}
+
+/** Like useItem, but also says when the item no longer exists (deleted for good), so screens can stop "Opening…". */
+export function useItemLoad(id: string | null | undefined): { item: Item | null; missing: boolean } {
+  const [state, setState] = useState<{ item: Item | null; missing: boolean }>({ item: null, missing: false });
   const rev = useApp((s) => s.libraryRev);
   useEffect(() => {
     if (!id) {
-      setItem(null);
+      setState({ item: null, missing: false });
       return;
     }
     let live = true;
     api
       .item(id)
-      .then((r) => live && setItem(r.item))
-      .catch(() => live && setItem(null));
+      .then((r) => live && setState({ item: r.item, missing: false }))
+      .catch((e) => live && setState({ item: null, missing: (e as { status?: number }).status === 404 }));
     return () => {
       live = false;
     };
   }, [id, rev]);
-  return item;
+  return state;
 }
 
 /** State persisted in localStorage so a reload never loses what you typed. */
