@@ -32,6 +32,7 @@ import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
 import { go } from '../router';
 import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
 import { planEnhance } from '../../shared/enhance';
+import { doubledTarget, isBig, sharpenPlan } from '../../shared/fullsize';
 import { maskBBox, planCrop } from '../../shared/cropstitch';
 import { snapPad } from '../../shared/outpaint';
 import { detectPixelBlock } from '../../shared/pixelblock';
@@ -195,6 +196,11 @@ function Editor({ item }: { item: Item }) {
   const running = !!job && (job.status === 'queued' || job.status === 'running');
   const W = item.width ?? 1;
   const H = item.height ?? 1;
+  /** A whole-picture result on a large photo (drawn at ~1 MP, enlarged back) that has not been sharpened yet. */
+  const softWhole =
+    isBig(W, H) &&
+    ((item.mode === 'edit:instruct' && !(item.params as Record<string, unknown>)?.mask) || item.workflow === 'qwen_remove_bg') &&
+    !lineage.some((v) => v.parent_id === item.id && v.mode === 'upscale');
 
   useEffect(() => sessionStorage.setItem('dr.edit.prompt', prompt), [prompt]);
   // Don't lose a painted mask by closing the tab.
@@ -580,7 +586,15 @@ function Editor({ item }: { item: Item }) {
       const preScale = restore ? null : plan.preScale;
       const label = `${modelLabel} ${{ restore: 'restore', restore_upscale: 'restore + upscale', subtle: 'subtle enhance' }[enhanceKind]}`;
       const ui = { ...item.ui, caption: cap ?? (item.ui as any)?.caption };
-      const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain: enhanceKind === 'restore_upscale' ? { kind: 'upscale' } : undefined };
+      // large photo: Enhance draws at ~1-2 MP, so SeedVR2 brings the result back to the photo's own size (or double
+      // it for Restore + upscale) instead of handing back a smaller picture (DECISIONS 79)
+      const big = isBig(W, H);
+      const chain = big
+        ? { kind: 'upscale', to: enhanceKind === 'restore_upscale' ? doubledTarget(W, H) : { w: W, h: H } }
+        : enhanceKind === 'restore_upscale'
+          ? { kind: 'upscale' }
+          : undefined;
+      const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain };
       try {
         const inp = await api.asInput(item.id);
         const j = preScale
@@ -593,6 +607,10 @@ function Editor({ item }: { item: Item }) {
           : await api.submit({ workflow, params: { image_1: inp.name, seed: randomSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
         setJobId(j.id);
         if (preScale) toast(`Small picture: upscaling ${preScale}× with SeedVR2 first, then enhancing — the enhanced version opens when it is ready.`, 'info', 7000);
+        else if (big) {
+          const t = enhanceKind === 'restore_upscale' ? doubledTarget(W, H) : { w: W, h: H };
+          toast(`Large picture: enhancing at about 2 MP, then SeedVR2 rebuilds it at ${t.w}×${t.h}. The full-size version opens when it is ready.`, 'info', 8000);
+        }
         else if (enhanceKind === 'restore_upscale') toast('Restoring, then upscaling 2× with SeedVR2 — the upscaled version opens when it is ready.', 'info', 7000);
       } catch (err) {
         toast((err as Error).message, 'error');
@@ -796,6 +814,22 @@ function Editor({ item }: { item: Item }) {
           void openOwnPictures([...e.dataTransfer.files], comfyOnline, setImporting);
         }}
       >
+        {softWhole && !running ? (
+          <div className="banner" role="status">
+            <span>
+              This edit was drawn at about 1 MP and enlarged to {W}×{H}, so fine detail is soft. SeedVR2 can rebuild it at full resolution.
+            </span>
+            <button
+              className="btn sm primary"
+              onClick={() => {
+                const plan = sharpenPlan(W, H);
+                void submit('upscale', { scale: plan.scale, preshrink: plan.preshrink!, target_w: plan.target_w, target_h: plan.target_h }, 'upscale', 'SeedVR2 7B → full resolution');
+              }}
+            >
+              Sharpen to full resolution
+            </button>
+          </div>
+        ) : null}
         {item.deleted_at ? (
           <div className="banner" role="status">
             <span>This picture is in Recently deleted.</span>
@@ -1185,6 +1219,11 @@ function Editor({ item }: { item: Item }) {
                   ? 'Re-renders the picture at low strength. Best on pictures that are already sharp; it does not fix blur.'
                   : 'Redraws the picture from itself as an edit: fixes motion blur, lens blur, noise and low resolution while keeping the composition, faces and colours.'}
               </p>
+              {isBig(W, H) && (
+                <p className="note" style={{ marginTop: 6 }}>
+                  Large picture ({((W * H) / 1e6).toFixed(0)} MP): the models work at about 2 MP, so SeedVR2 then rebuilds the result at {enhanceKind === 'restore_upscale' ? `${doubledTarget(W, H).w}×${doubledTarget(W, H).h}` : `the full ${W}×${H}`}. Fine detail is re-created, not copied from the original.
+                </p>
+              )}
               {enhanceKind === 'subtle' && (
                 <label className="check">
                   <input type="checkbox" checked={enhanceAdv} onChange={(ev) => setEnhanceAdv(ev.target.checked)} /> Advanced

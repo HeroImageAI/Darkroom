@@ -9,6 +9,7 @@ import { friendlyError } from '../shared/errors.js';
 import type { Manifest } from '../shared/manifest.js';
 import { buildPrompt, findByTitle, titleOf, type ApiPrompt, type ParamValues } from '../shared/workflow.js';
 import type { FileRef, Item, Job, Store } from './db.js';
+import { backToSize } from '../shared/fullsize.js';
 
 export interface SubmitRequest {
   workflow: string;
@@ -483,11 +484,14 @@ export class JobManager {
     if (chain?.kind === 'upscale' && newIds[0]) {
       const it = this.store.getItem(newIds[0]);
       if (!it) return;
+      // "to": bring the result to an exact size (a large photo restored at ~1 MP goes back to its own size, DECISIONS 79)
+      const to = (chain as { to?: { w: number; h: number } }).to;
+      const size = to && it.width && it.height ? backToSize({ w: it.width, h: it.height }, to) : null;
       try {
         await this.submit({
           workflow: 'upscale',
-          params: { image_1: await this.asInput(it), scale: 2, seed: Math.floor(Math.random() * 2 ** 31) },
-          meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: it.prompt, parentId: it.id, ui: it.ui, followOf: job.id },
+          params: { image_1: await this.asInput(it), scale: 2, seed: Math.floor(Math.random() * 2 ** 31), ...(size ?? {}) },
+          meta: { mode: 'upscale', model: size ? `SeedVR2 7B → ${size.target_w}×${size.target_h}` : 'SeedVR2 7B', prompt: it.prompt, parentId: it.id, ui: it.ui, followOf: job.id },
         });
       } catch (e) {
         this.broadcast({ type: 'toast', kind: 'error', text: 'Could not start the upscale: ' + friendlyError((e as Error).message) });

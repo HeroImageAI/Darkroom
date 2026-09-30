@@ -795,6 +795,19 @@ def upscale_v2():
     return g
 
 
+def upscale_v3():
+    """upscale v2 + an optional exact final size (DR_EXACT, bypassed when no target is given). Used to bring a
+    picture that was drawn at ~1 MP (Restore, whole-picture edits) back to the exact size of a large original: the
+    model's working size never has exactly the original's aspect (1184x880 for a 4000x3000 photo)."""
+    g = upscale_v2()
+    post = next(k for k, v in g.p.items() if v["_meta"]["title"] == "DR_COLOUR")
+    save = next(k for k, v in g.p.items() if v["_meta"]["title"] == "DR_OUTPUT")
+    exact = g.add("ImageScale", "DR_EXACT", image=[post, 0], upscale_method="lanczos", width=1024, height=1024,
+                  crop="disabled")
+    g.p[save]["inputs"]["images"] = o(exact)
+    return g
+
+
 # ---------------------------------------------------------------- video --
 def video_tail(g, frames_img, fps_node, prefix):
     vid = g.add("CreateVideo", "Create video", images=frames_img, fps=o(fps_node))
@@ -968,6 +981,7 @@ if __name__ == "__main__":
     qwen_layered().save("qwen_layered.json")
     upscale().save("upscale.json")
     upscale_v2().save("upscale.v2.json")
+    upscale_v3().save("upscale.v3.json")
     qwen_remove_bg().save("qwen_remove_bg.json")
     wan22_i2v().save("wan22_i2v.json")
     # v2: negatives removed - inert at CFG 1 (comfy/samplers.py skips the uncond pass). PROMPT_AUDIT P6/P7.
