@@ -303,7 +303,7 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(body.input2).toBeTruthy();
     expect(body.input2).not.toBe(body.input);
     await expect(page.getByLabel('Motion prompt')).not.toHaveValue('', { timeout: 120_000 });
-    expect((await page.getByLabel('Motion prompt').inputValue()).split(/s+/).length).toBeGreaterThan(15);
+    expect((await page.getByLabel('Motion prompt').inputValue()).split(/\s+/).length).toBeGreaterThan(15);
     await shot(page, 'video-motion-endframe');
   });
   // UX review (2026-09-30)
