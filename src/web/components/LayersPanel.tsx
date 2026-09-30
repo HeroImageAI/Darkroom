@@ -14,6 +14,8 @@ const CHECKER =
 
 function defaultName(it: Item, i: number): string {
   if (it.mode === 'edit:plate') return 'Background plate';
+  // Qwen 2.1 object layers carry the object's name as their prompt
+  if (it.model === 'Qwen-Image 2.1 layer' && it.prompt) return it.prompt.charAt(0).toUpperCase() + it.prompt.slice(1);
   return `Layer ${i + 1}`;
 }
 
@@ -49,7 +51,8 @@ export function LayerStack({ rows }: { rows: LayerRow[] }) {
         .reverse()
         .filter((r) => r.visible)
         .map((r) => (
-          <img key={r.id} src={fileUrl(r.id)} alt={r.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+          // background 'none' overrides the global checkerboard for library pictures, so lower layers show through
+          <img key={r.id} src={fileUrl(r.id)} alt={r.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', background: 'none' }} />
         ))}
     </div>
   );

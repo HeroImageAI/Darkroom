@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Copy, Download, ExternalLink, Film, Heart, Layers, Search, Share2, Sparkles } from 'lucide-react';
+import { Copy, Download, ExternalLink, Film, Heart, Layers, Maximize2, Search, Share2, Sparkles } from 'lucide-react';
 import { api, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { formatDuration, Pills } from '../components/common';
 import { usePersistent } from '../lib/hooks';
@@ -235,6 +235,27 @@ function Detail({ item, comfyUrl }: { item: Item; comfyUrl: string | null }) {
               }}
             >
               <Sparkles size={14} /> Enhance
+            </button>
+          )}
+          {item.kind === 'image' && (
+            <button
+              className="btn sm"
+              title="SeedVR2 2x. More options (4-8x, tile size) in Edit > Upscale."
+              onClick={async () => {
+                try {
+                  const inp = await api.asInput(item.id);
+                  await api.submit({
+                    workflow: 'upscale',
+                    params: { image_1: inp.name, scale: 2, seed: Math.floor(Math.random() * 2 ** 31) },
+                    meta: { mode: 'upscale', model: 'SeedVR2 7B 2×', prompt: item.prompt, parentId: item.id, ui: item.ui },
+                  });
+                  toast('Upscaling 2× with SeedVR2 — the new version appears in the Library when it is ready.', 'info');
+                } catch (e) {
+                  toast((e as Error).message, 'error');
+                }
+              }}
+            >
+              <Maximize2 size={14} /> Upscale 2×
             </button>
           )}
           {item.kind === 'image' && (

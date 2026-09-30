@@ -1,0 +1,78 @@
+{
+  "upscale-colour": [
+    {
+      "id": "lab",
+      "label": "SeedVR2 4x, LAB colour match (Darkroom v2)"
+    },
+    {
+      "id": "wavelet",
+      "label": "SeedVR2 4x, wavelet colour match (One Node)"
+    }
+  ],
+  "upscale-scale": [
+    {
+      "id": "x2",
+      "label": "2x"
+    },
+    {
+      "id": "x4",
+      "label": "4x"
+    },
+    {
+      "id": "x6",
+      "label": "6x"
+    },
+    {
+      "id": "x8",
+      "label": "8x (tile 512)"
+    },
+    {
+      "id": "x8t256",
+      "label": "8x, tile 256"
+    },
+    {
+      "id": "x8t1024",
+      "label": "8x, tile 1024"
+    }
+  ],
+  "upscale-preshrink": [
+    {
+      "id": "direct",
+      "label": "Pixelated 384 px, 4x directly"
+    },
+    {
+      "id": "shrink192",
+      "label": "Scale by longer side to 192 px first, then 8x (One Node option)"
+    }
+  ],
+  "remove-bg": [
+    {
+      "id": "qwen",
+      "label": "Qwen-Image 2.1 native extraction (official wording)"
+    },
+    {
+      "id": "sam_lucida",
+      "label": "SAM 3.1 + Lucida matte (Darkroom v2)"
+    },
+    {
+      "id": "sam_birefnet",
+      "label": "SAM 3.1 + BiRefNet matte"
+    },
+    {
+      "id": "birefnet",
+      "label": "BiRefNet only (one click)"
+    }
+  ],
+  "layers-qwen21": [
+    {
+      "id": "qwen21",
+      "label": "Qwen-Image 2.1: one extraction per layer"
+    }
+  ],
+  "layers-layered": [
+    {
+      "id": "layered",
+      "label": "Qwen-Image-Layered, 4 layers (captioned)"
+    }
+  ]
+}

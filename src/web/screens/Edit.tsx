@@ -32,6 +32,7 @@ import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageM
 import { planEnhance } from '../../shared/enhance';
 import { maskBBox, planCrop } from '../../shared/cropstitch';
 import { snapPad } from '../../shared/outpaint';
+import { detectPixelBlock } from '../../shared/pixelblock';
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
@@ -113,6 +114,10 @@ function Editor({ item }: { item: Item }) {
   const [strength, setStrength] = useState(1); // inpaint "Change strength" (denoise)
   const [seam, setSeam] = useState(0); // inpaint "Seam feather": 0 = Auto (the A/B-tested grow 8 / blur 6)
   const [opFeather, setOpFeather] = useState(0); // outpaint "Seam feather" into the original: 0 = Auto
+  const [upScale, setUpScale] = useState(2);
+  const [upShrink, setUpShrink] = useState(0); // "Scale by longer side" first: 0 = off, else the target long side
+  const [upTile, setUpTile] = useState(512);
+  const [upBlock, setUpBlock] = useState(1); // detected pixel-block size of the current picture
   const [prompt, setPrompt] = useState(() => sessionStorage.getItem('dr.edit.prompt') ?? '');
   const [onlyMasked, setOnlyMasked] = useState(true);
   const [ref, setRef] = useState<{ name: string } | null>(null);
@@ -134,8 +139,9 @@ function Editor({ item }: { item: Item }) {
   const [bgMatte, setBgMatte] = useState('birefnet.safetensors');
   const [bgEdge, setBgEdge] = useState(0);
   const [bgPlate, setBgPlate] = useState(false);
+  const [bgMethod, setBgMethod] = useState<'matte' | 'qwen'>('matte'); // Fast (BiRefNet/SAM) or Best quality (Qwen 2.1)
   // Layers
-  const [layerMode, setLayerMode] = useState<'sam' | 'qwen'>('sam');
+  const [layerMode, setLayerMode] = useState<'sam' | 'qwen21' | 'qwen'>('sam');
   const [layerText, setLayerText] = useState('');
   const [layerCount, setLayerCount] = useState(4);
   const [layerFill, setLayerFill] = useState(true);
@@ -201,8 +207,8 @@ function Editor({ item }: { item: Item }) {
         if (j.status === 'done' && (chainKind === 'upscale' || chainKind === 'enhance')) return; // wait for the follow-up
         if (j.status === 'done' && (j.meta as any).layers) {
           sessionStorage.removeItem('dr.edit.job');
-          setLayerGroup(j.id);
-          toast(`${j.result_ids.length} layers ready. Toggle, reorder, rename and export them on the right.`, 'ok');
+          setLayerGroup(((j.meta as any).groupId as string | undefined) ?? j.id);
+          toast('Layers ready. Toggle, reorder, rename and export them on the right.', 'ok');
           return;
         }
         if (j.status === 'done' && j.result_ids[0]) {
@@ -525,6 +531,10 @@ function Editor({ item }: { item: Item }) {
       }
       return;
     }
+    if (mode === 'remove_bg' && bgMethod === 'qwen') {
+      // Addenda Phase 5: Qwen-Image 2.1 native extraction (official template wording), scaled back to the source size
+      return submit('qwen_remove_bg', {}, 'edit:remove_bg', 'Qwen-Image 2.1 extraction');
+    }
     if (mode === 'remove_bg') {
       const params: Record<string, string | number> = { matte: bgMatte, edge: bgEdge };
       if (bgSubject.trim()) params.subject = bgSubject.trim();
@@ -556,6 +566,32 @@ function Editor({ item }: { item: Item }) {
     if (mode === 'layers') {
       try {
         const inp = await api.asInput(item.id);
+        if (layerMode === 'qwen21') {
+          // Addenda Phase 5: Qwen-Image 2.1 extracts each object as a transparent layer (full resolution) and paints the
+          // background without them; beat Qwen-Image-Layered (640 px) in the A/B. Jobs share a group; ComfyUI runs them in
+          // order, so the last one finishing means the whole group is ready.
+          const objects = layerText.split(',').map((s) => s.replace(/:\s*\d+\s*$/, '').trim()).filter(Boolean);
+          if (!objects.length) return toast('List the objects to separate, e.g. "the red car, the potted palm".', 'info');
+          const groupId = `qwen21-${Date.now().toString(36)}`;
+          const list = objects.length === 1 ? objects[0] : `${objects.slice(0, -1).join(', ')} and ${objects[objects.length - 1]}`;
+          const layers = [
+            { name: 'Background', prompt: `Remove ${list} from <image1> and fill in what is behind them naturally. Keep everything else exactly as it is.` },
+            ...objects.map((o) => ({ name: o, prompt: `Extract ${o} from <image1> onto a transparent background, and output a PNG image` })),
+          ];
+          let last = '';
+          for (const l of layers) {
+            const j = await api.submit({
+              workflow: 'qwen_remove_bg',
+              params: { image_1: inp.name, prompt: l.prompt, seed: randomSeed(), output: 'darkroom/layers/qwen21' },
+              // the background is tagged as a plate so the Layers panel keeps it at the bottom of the stack
+              meta: { mode: l.name === 'Background' ? 'edit:plate' : 'edit:layers', model: 'Qwen-Image 2.1 layer', prompt: l.name, parentId: item.id, ui: item.ui, groupId, layers: true },
+            });
+            last = j.id;
+          }
+          setJobId(last);
+          toast(`Making ${layers.length} layers with Qwen-Image 2.1 (about ${layers.length * 25} s). You can keep working.`, 'info', 8000);
+          return;
+        }
         if (layerMode === 'sam') {
           if (!layerText.trim()) return toast('List the objects to separate, e.g. "person, dog, car:2".', 'info');
           const j = await api.submit({
@@ -590,7 +626,10 @@ function Editor({ item }: { item: Item }) {
       }
       return;
     }
-    return submit('upscale', { scale: 2 }, 'upscale', 'SeedVR2 7B');
+    // Addenda Phase 5: 2-8x, optional "scale by longer side" pre-shrink, tile size as the VRAM setting (overlap = tile/4)
+    const up: Record<string, string | number> = { scale: upScale, tile: upTile, tile_overlap: upTile / 4 };
+    if (upShrink) up.preshrink = upShrink;
+    return submit('upscale', up, 'upscale', `SeedVR2 7B ${upScale}×`);
   };
 
   useHotkey((e) => (e.ctrlKey || e.metaKey) && e.key === 'Enter', () => void apply(), [mode, prompt, pad, onlyMasked, ref, maskEmpty, crop, tool, running, feather], true);
@@ -609,7 +648,7 @@ function Editor({ item }: { item: Item }) {
   const applyLabel =
     tool === 'crop'
       ? 'Apply crop'
-      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', enhance: 'Enhance', remove_bg: 'Remove background', layers: 'Make layers', upscale: 'Upscale 2×' }[mode];
+      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', enhance: 'Enhance', remove_bg: 'Remove background', layers: 'Make layers', upscale: `Upscale ${upScale}×` }[mode];
 
   return (
     <div className="screen" style={{ gridTemplateColumns: '68px 1fr 392px' }}>
@@ -1015,7 +1054,21 @@ function Editor({ item }: { item: Item }) {
           )}
           {mode === 'remove_bg' && (
             <div>
-              <p className="note" style={{ marginTop: 0 }}>
+              <div className="segmented" role="group" aria-label="Background removal method">
+                <button type="button" aria-pressed={bgMethod === 'matte'} onClick={() => setBgMethod('matte')} title="BiRefNet or Lucida matting, optionally SAM 3.1 to pick the subject. About 1-5 s.">
+                  Fast
+                </button>
+                <button type="button" aria-pressed={bgMethod === 'qwen'} onClick={() => setBgMethod('qwen')} title="Qwen-Image 2.1 extracts the subject itself. About 25 s. Best on glass, smoke and fine hair.">
+                  Best quality (Qwen)
+                </button>
+              </div>
+              {bgMethod === 'qwen' ? (
+                <p className="note">
+                  Qwen-Image 2.1 draws the subject again with real transparency: see-through glass stays see-through and stray hairs keep their soft edges. About 25 seconds.
+                </p>
+              ) : (
+                <>
+              <p className="note" style={{ marginTop: 6 }}>
                 Real transparency (PNG with alpha). The soft edge comes from a matting model (good on hair and fur); naming the subject lets SAM 3.1 pick which object to keep.
               </p>
               <label className="field">
@@ -1039,6 +1092,8 @@ function Editor({ item }: { item: Item }) {
                 <input type="checkbox" checked={bgPlate} onChange={(ev) => setBgPlate(ev.target.checked)} />
                 Also make a clean background plate (Qwen-Image 2.1)
               </label>
+                </>
+              )}
             </div>
           )}
           {mode === 'layers' && (
@@ -1048,11 +1103,23 @@ function Editor({ item }: { item: Item }) {
                 <button type="button" aria-pressed={layerMode === 'sam'} onClick={() => setLayerMode('sam')} title="One layer per named object, cut with SAM 3.1">
                   Objects (SAM)
                 </button>
-                <button type="button" aria-pressed={layerMode === 'qwen'} onClick={() => setLayerMode('qwen')} title="Native RGBA layers from Qwen-Image-Layered (slow)">
+                <button type="button" aria-pressed={layerMode === 'qwen21'} onClick={() => setLayerMode('qwen21')} title="Qwen-Image 2.1 extracts each named object as a transparent layer at full resolution, plus a clean background. About 25 s per layer.">
+                  Objects (Qwen 2.1)
+                </button>
+                <button type="button" aria-pressed={layerMode === 'qwen'} onClick={() => setLayerMode('qwen')} title="Native RGBA layers from Qwen-Image-Layered: no names needed, but 640 px and slow">
                   Automatic (Qwen-Layered)
                 </button>
               </div>
-              {layerMode === 'sam' ? (
+              {layerMode === 'qwen21' && (
+                <>
+                  <label className="field" style={{ marginTop: 8 }}>
+                    <span>Objects</span>
+                    <input className="input" placeholder='e.g. "the red car, the potted palm"' value={layerText} onChange={(ev) => setLayerText(ev.target.value)} />
+                  </label>
+                  <p className="note">One transparent layer per object at full resolution, plus the background with them removed. Best quality; about 25 seconds per layer.</p>
+                </>
+              )}
+              {layerMode === 'qwen21' ? null : layerMode === 'sam' ? (
                 <>
                   <label className="field" style={{ marginTop: 8 }}>
                     <span>Objects</span>
@@ -1076,7 +1143,65 @@ function Editor({ item }: { item: Item }) {
               </div>
             </div>
           )}
-          {mode === 'upscale' && <p className="note">Doubles the resolution, adding real detail (SeedVR2, a dedicated upscaler, not an image model). About 20 seconds for a 1 MP picture.</p>}
+          {mode === 'upscale' && (
+            <div>
+              <p className="section-label">
+                Upscale <span className="mono">{Math.round((upShrink ? Math.min(1, upShrink / Math.max(W, H)) : 1) * W * upScale)} × {Math.round((upShrink ? Math.min(1, upShrink / Math.max(W, H)) : 1) * H * upScale)}</span>
+              </p>
+              <div className="segmented" role="group" aria-label="Upscale factor">
+                {[2, 4, 6, 8].map((f) => (
+                  <button key={f} type="button" aria-pressed={upScale === f} onClick={() => setUpScale(f)}>
+                    {f}×
+                  </button>
+                ))}
+              </div>
+              <label className="check" title="Shrinks the picture before upscaling. Sounds backwards, but SeedVR2 restores small and pixelated pictures best, so this often gives cleaner results on them.">
+                <input
+                  type="checkbox"
+                  checked={upShrink > 0}
+                  onChange={(e) => {
+                    if (!e.target.checked) return (setUpShrink(0), setUpBlock(1));
+                    // a blown-up pixelated picture only de-pixelates when shrunk back to its real size (Phase 5 A/B)
+                    let block = 1;
+                    try {
+                      const im = imgRef.current;
+                      if (im && im.naturalWidth) {
+                        const cv = document.createElement('canvas');
+                        cv.width = im.naturalWidth;
+                        cv.height = im.naturalHeight;
+                        const cx = cv.getContext('2d', { willReadFrequently: true })!;
+                        cx.drawImage(im, 0, 0);
+                        block = detectPixelBlock(cx.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height);
+                      }
+                    } catch {
+                      /* keep the default */
+                    }
+                    setUpBlock(block);
+                    setUpShrink(block > 1 ? Math.max(64, Math.round(Math.max(W, H) / block)) : 512);
+                  }}
+                />{' '}
+                Scale by longer side first
+              </label>
+              {upShrink > 0 && upBlock > 1 && <p className="note">Pixelated picture: blocks of {upBlock} px, so its real size is about {Math.round(Math.max(W, H) / upBlock)} px. Shrinking to that lets SeedVR2 rebuild real detail.</p>}
+              {upShrink > 0 && (
+                <label className="field">
+                  <span>
+                    Longer side <b className="mono">{upShrink}px</b>
+                  </span>
+                  <input type="range" min={64} max={1024} step={16} value={upShrink} onChange={(e) => setUpShrink(Number(e.target.value))} />
+                </label>
+              )}
+              <label className="field" title="Smaller tiles use less graphics memory and take a little longer. Lower it if a large upscale runs out of memory.">
+                <span>Tile size (graphics memory)</span>
+                <select className="input" value={upTile} onChange={(e) => setUpTile(Number(e.target.value))}>
+                  <option value={256}>256 - least memory</option>
+                  <option value={512}>512 - default</option>
+                  <option value={1024}>1024 - fastest, most memory</option>
+                </select>
+              </label>
+              <p className="note">Adds real detail with SeedVR2, a dedicated upscaler. Transparent pictures keep their transparency.</p>
+            </div>
+          )}
           {tool === 'crop' && <p className="note warn">Crop: drag a box on the picture. {crop ? `${Math.round(crop.w)} × ${Math.round(crop.h)} at ${Math.round(crop.x)}, ${Math.round(crop.y)}` : ''}</p>}
           <p className="note">Every apply saves a new version; nothing is overwritten.</p>
         </div>

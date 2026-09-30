@@ -420,6 +420,32 @@ def qwen_outpaint_native():
     return g
 
 
+def qwen_remove_bg():
+    """Addendum 2: Qwen-Image 2.1's native subject extraction (official template image_qwen_image_2_1_background_removal:
+    the picture as image_1, "Remove the background, and output a PNG image", 25 steps, CFG 1). The 64-channel RGBA VAE
+    decodes real alpha. Output is scaled back to the source size (the model works at multiples of 32)."""
+    g = G()
+    unet = g.add("UNETLoader", "DR_MODEL", unet_name=QWEN21_UNET, weight_dtype="default")
+    cache = g.add("QwenImage21Cache", "Prefix cache", model=o(unet), device="auto", dtype="default")
+    clip = g.add("CLIPLoader", "DR_TEXT_ENCODER", clip_name=QWEN21_TE, type="qwen_image", device="default")
+    vae = g.add("VAELoader", "DR_VAE", vae_name=QWEN21_VAE)
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    work = g.add("ImageScaleToTotalPixels", "DR_WORK", image=o(src), upscale_method="lanczos", megapixels=1.0,
+                 resolution_steps=32)
+    enc = g.add("TextEncodeQwenImage21", "DR_PROMPT", clip=o(clip), vae=o(vae),
+                prompt="Remove the background, and output a PNG image", negative_prompt="", resolution=0,
+                **{"images.image_1": o(work)})
+    ks = g.add("KSampler", "DR_SAMPLER", model=o(cache), positive=o(enc, 0), negative=o(enc, 1), latent_image=o(enc, 2),
+               seed=0, steps=25, cfg=1.0, sampler_name="euler", scheduler="simple", denoise=1.0)
+    dec = g.add("VAEDecodeTiled", "Decode", samples=o(ks), vae=o(vae), tile_size=1024, overlap=128,
+                temporal_size=64, temporal_overlap=8)
+    size = g.add("GetImageSize", "Source dims", image=o(src))
+    back = g.add("ImageScale", "Back to source size", image=o(dec), upscale_method="lanczos", width=o(size, 0),
+                 height=o(size, 1), crop="disabled")
+    g.add("SaveImage", "DR_OUTPUT", images=o(back), filename_prefix="darkroom/cutout")
+    return g
+
+
 def qwen_t2i():
     g = G()
     unet = g.add("UNETLoader", "DR_MODEL", unet_name=QWEN21_UNET, weight_dtype="default")
@@ -718,6 +744,35 @@ def upscale():
     return g
 
 
+def upscale_v2():
+    """Addendum 1 E, after One Node's UPSCALE graph (github.com/yanokusnir-ai/one-node-flux-2-klein):
+    alpha kept (JoinImageWithAlpha with LoadImage's own mask before resizing; SeedVR2PostProcessing re-applies it),
+    optional "scale by longer side" pre-shrink for small or pixelated sources (DR_PRESHRINK, bypassed when unset),
+    2x-8x, tile size as a VRAM setting (DR_TILE_* encode + decode, overlap = tile / 4 set by the app), colour
+    correction selectable (DR_COLOUR: lab | wavelet)."""
+    g = G()
+    src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
+    rgba = g.add("JoinImageWithAlpha", "With alpha", image=o(src, 0), alpha=o(src, 1))
+    shrink = g.add("ImageScaleToMaxDimension", "DR_PRESHRINK", image=o(rgba), upscale_method="lanczos", largest_size=512)
+    unet = g.add("UNETLoader", "DR_MODEL", unet_name=SEEDVR2_UNET, weight_dtype="default")
+    vae = g.add("VAELoader", "DR_VAE", vae_name=SEEDVR2_VAE)
+    rs = g.add("ResizeImageMaskNode", "DR_SCALE", input=o(shrink), resize_type="scale by multiplier",
+               **{"resize_type.multiplier": 2.0}, scale_method="lanczos")
+    pre = g.add("SeedVR2Preprocess", "Preprocess", resized_images=o(rs))
+    enc = g.add("VAEEncodeTiled", "DR_TILE_ENC", pixels=o(pre), vae=o(vae), tile_size=512, overlap=128,
+                temporal_size=4096, temporal_overlap=8)
+    cond = g.add("SeedVR2Conditioning", "Condition", model=o(unet), vae_conditioning=o(enc))
+    ks = g.add("KSampler", "DR_SAMPLER", model=o(unet), positive=o(cond, 0), negative=o(cond, 1),
+               latent_image=o(enc), seed=0, steps=1, cfg=1.0, sampler_name="euler",
+               scheduler="simple", denoise=1.0)
+    dec = g.add("VAEDecodeTiled", "DR_TILE_DEC", samples=o(ks), vae=o(vae), tile_size=512, overlap=128,
+                temporal_size=4096, temporal_overlap=8)
+    post = g.add("SeedVR2PostProcessing", "DR_COLOUR", images=o(dec), original_resized_images=o(rs),
+                 color_correction_method="lab")
+    g.add("SaveImage", "DR_OUTPUT", images=o(post), filename_prefix="darkroom/upscale")
+    return g
+
+
 # ---------------------------------------------------------------- video --
 def video_tail(g, frames_img, fps_node, prefix):
     vid = g.add("CreateVideo", "Create video", images=frames_img, fps=o(fps_node))
@@ -890,6 +945,8 @@ if __name__ == "__main__":
     sam_layers().save("sam_layers.json")
     qwen_layered().save("qwen_layered.json")
     upscale().save("upscale.json")
+    upscale_v2().save("upscale.v2.json")
+    qwen_remove_bg().save("qwen_remove_bg.json")
     wan22_i2v().save("wan22_i2v.json")
     # v2: negatives removed - inert at CFG 1 (comfy/samplers.py skips the uncond pass). PROMPT_AUDIT P6/P7.
     wan22_i2v(negative="").save("wan22_i2v.v2.json")

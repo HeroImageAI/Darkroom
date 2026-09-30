@@ -121,7 +121,74 @@ function outCrop(c: OutCase, step: number, whole: boolean) {
 }
 const padSet = (p: Pad) => ({ pad_left: p.left, pad_top: p.top, pad_right: p.right, pad_bottom: p.bottom });
 
+// Phase 5. The official Qwen-Image 2.1 background-removal wording (ComfyUI template image_qwen_image_2_1_background_removal).
+const QWEN_REMOVE_BG = 'Remove the background, and output a PNG image';
+const extract = (what: string) => `Extract ${what} from <image1> onto a transparent background, and output a PNG image`;
+
 const PHASES: Record<string, Group[]> = {
+  p5: [
+    {
+      id: 'upscale-colour',
+      variants: [
+        { id: 'lab', label: 'SeedVR2 4x, LAB colour match (Darkroom v2)', workflow: 'upscale', set: { scale: 4, colour: 'lab' } },
+        { id: 'wavelet', label: 'SeedVR2 4x, wavelet colour match (One Node)', workflow: 'upscale', set: { scale: 4, colour: 'wavelet' } },
+      ],
+      cases: [
+        { key: 'lowres-320px', set: { seed: 1 }, images: { image_1: g('08_lowres') } },
+        { key: 'pixelated', set: { seed: 1 }, images: { image_1: g('15_pixelated') } },
+        { key: 'rgba-hair', set: { seed: 1 }, images: { image_1: g('14_rgba_hair') } },
+      ],
+    },
+    {
+      id: 'upscale-scale',
+      variants: [
+        { id: 'x2', label: '2x', workflow: 'upscale', set: { scale: 2 } },
+        { id: 'x4', label: '4x', workflow: 'upscale', set: { scale: 4 } },
+        { id: 'x6', label: '6x', workflow: 'upscale', set: { scale: 6 } },
+        { id: 'x8', label: '8x (tile 512)', workflow: 'upscale', set: { scale: 8 } },
+        { id: 'x8t256', label: '8x, tile 256', workflow: 'upscale', set: { scale: 8, tile: 256, tile_overlap: 64 } },
+        { id: 'x8t1024', label: '8x, tile 1024', workflow: 'upscale', set: { scale: 8, tile: 1024, tile_overlap: 256 } },
+      ],
+      cases: [{ key: 'lowres-320px', set: { seed: 1, colour: 'lab' }, images: { image_1: g('08_lowres') } }],
+    },
+    {
+      id: 'upscale-preshrink',
+      variants: [
+        { id: 'direct', label: 'Pixelated 384 px, 4x directly', workflow: 'upscale', set: { scale: 4 } },
+        { id: 'shrink192', label: 'Scale by longer side to 192 px first, then 8x (One Node option)', workflow: 'upscale', set: { scale: 8, preshrink: 192 } },
+      ],
+      cases: [{ key: 'pixelated', set: { seed: 1, colour: 'lab' }, images: { image_1: g('15_pixelated') } }],
+    },
+    {
+      id: 'remove-bg',
+      variants: [
+        { id: 'qwen', label: 'Qwen-Image 2.1 native extraction (official wording)', workflow: 'qwen_enhance_edit', set: { prompt: QWEN_REMOVE_BG, steps: 25, megapixels: 1 } },
+        { id: 'sam_lucida', label: 'SAM 3.1 + Lucida matte (Darkroom v2)', workflow: 'remove_bg', build: (c) => ({ set: { subject: c.caption ?? '', matte: 'lucida.safetensors' } }) },
+        { id: 'sam_birefnet', label: 'SAM 3.1 + BiRefNet matte', workflow: 'remove_bg', build: (c) => ({ set: { subject: c.caption ?? '', matte: 'birefnet.safetensors' } }) },
+        { id: 'birefnet', label: 'BiRefNet only (one click)', workflow: 'remove_bg_v1' },
+      ],
+      cases: [
+        { key: 'hair', set: { seed: 91 }, images: { image_1: g('05_hair') }, caption: 'woman' },
+        { key: 'fur', set: { seed: 92 }, images: { image_1: g('06_fur') }, caption: 'cat' },
+        { key: 'glass', set: { seed: 93 }, images: { image_1: g('07_transparent') }, caption: 'carafe, glass' },
+        { key: 'product', set: { seed: 94 }, images: { image_1: g('02_product') }, caption: 'boots' },
+      ],
+    },
+    {
+      id: 'layers-qwen21',
+      variants: [{ id: 'qwen21', label: 'Qwen-Image 2.1: one extraction per layer', workflow: 'qwen_enhance_edit', set: { steps: 25, megapixels: 1 } }],
+      cases: [
+        { key: 'car', set: { seed: 95, prompt: extract('the red car') }, images: { image_1: g('09_car') } },
+        { key: 'palm', set: { seed: 95, prompt: extract('the potted palm') }, images: { image_1: g('09_car') } },
+        { key: 'background', set: { seed: 95, prompt: 'Remove the red car and the potted palm from <image1> and fill in the wall, the pavement and the road behind them naturally. Keep everything else exactly as it is.' }, images: { image_1: g('09_car') } },
+      ],
+    },
+    {
+      id: 'layers-layered',
+      variants: [{ id: 'layered', label: 'Qwen-Image-Layered, 4 layers (captioned)', workflow: 'qwen_layered', set: { layers: 4, seed: 5 } }],
+      cases: [{ key: 'car-scene', set: { prompt: GOLD['09_car'].prompt }, images: { image_1: g('09_car') } }],
+    },
+  ],
   p4: [
     {
       id: 'outpaint-klein',

@@ -268,3 +268,22 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     - Leftover black from earlier rounds: only near-black regions **connected to an extended edge** are re-masked (One
       Node re-masks every dark pixel, which would regenerate night skies and black clothing; unit-tested).
       Three rounds of +256 px in a row stayed seamless on both models (docs/qa/addenda/p4r).
+69. **Upscale v2 (SeedVR2, One Node's graph).** `upscale.v2.json`: alpha kept (`JoinImageWithAlpha` with LoadImage's own
+    mask; SeedVR2 post-processing re-applies it — a cutout's mean alpha 83.4 came out 83.3 at 4×), 2/4/6/8×, tile size
+    as the VRAM setting (256 / 512 / 1024, overlap = tile/4), optional "scale by longer side" pre-shrink. Measured on a
+    320 px source: even 8× peaks at ~10.5 GB (7.9–11.2 s depending on tile), so all factors are safe on 24 GB.
+    LAB vs wavelet colour matching: near-identical (wavelet slightly more saturated) — LAB stays (SeedVR2's "most
+    faithful"). **Pixelated sources:** SeedVR2 keeps nearest-neighbour blocks as detail at any factor, and a pre-shrink
+    only helps when it reaches the picture's real resolution (a 96 px cat blown up to 384 px came back as a realistic cat
+    only when shrunk to 96 px first). So ticking "Scale by longer side" detects the block size
+    (`src/shared/pixelblock.ts`) and pre-fills the real size. One-click Upscale 2× is on every Generate result and in the
+    Library; Edit > Upscale has the full options.
+70. **Transparency and background removal.** Every library picture shows transparency on a checkerboard (one CSS rule on
+    `/api/items/…` images; layer stacks opt out so lower layers show through). Background removal benchmarked three ways on
+    hair, fur, glass and a product (docs/qa/addenda/p5): BiRefNet one-click (1 s) matched SAM + BiRefNet, so it stays the
+    fast default; Lucida left an orange glow under the product; **Qwen-Image 2.1 native extraction** (official template
+    wording, ~25 s) gave real alpha, the most convincing see-through glass and pixel-faithful stray hairs → added as
+    "Best quality (Qwen)". Layer decomposition: Qwen 2.1 per-object extraction (+ a background plate with the objects
+    removed) gave transparent layers at full resolution (1344×768, ~24 s per layer); Qwen-Image-Layered returned 640×360
+    in 86 s. Added as Layers > "Objects (Qwen 2.1)"; **Qwen-Image-Layered is kept only as the no-names "Automatic"
+    option**. Addendum 2's premise "Qwen can't produce real alpha" never applied to Darkroom (DECISIONS 46).

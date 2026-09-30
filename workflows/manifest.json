@@ -1161,7 +1161,7 @@
       }
     },
     "upscale": {
-      "file": "upscale.json",
+      "file": "upscale.v2.json",
       "family": "seedvr2",
       "kind": "image",
       "label": "Upscale 2x (SeedVR2 7B)",
@@ -1186,7 +1186,7 @@
           ],
           "default": 2,
           "min": 1,
-          "max": 4
+          "max": 8
         },
         "seed": {
           "type": "int",
@@ -1209,6 +1209,70 @@
             }
           ],
           "default": "darkroom/upscale"
+        },
+        "preshrink": {
+          "type": "int",
+          "label": "Scale by longer side first",
+          "targets": [
+            {
+              "title": "DR_PRESHRINK",
+              "input": "largest_size"
+            }
+          ],
+          "min": 64,
+          "max": 4096,
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_PRESHRINK",
+                "input": "image"
+              }
+            ]
+          }
+        },
+        "colour": {
+          "type": "string",
+          "label": "Colour correction",
+          "targets": [
+            {
+              "title": "DR_COLOUR",
+              "input": "color_correction_method"
+            }
+          ],
+          "default": "lab"
+        },
+        "tile": {
+          "type": "int",
+          "label": "Tile size",
+          "targets": [
+            {
+              "title": "DR_TILE_ENC",
+              "input": "tile_size"
+            },
+            {
+              "title": "DR_TILE_DEC",
+              "input": "tile_size"
+            }
+          ],
+          "default": 512,
+          "min": 256,
+          "max": 1024
+        },
+        "tile_overlap": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_TILE_ENC",
+              "input": "overlap"
+            },
+            {
+              "title": "DR_TILE_DEC",
+              "input": "overlap"
+            }
+          ],
+          "default": 128,
+          "min": 32,
+          "max": 256
         }
       },
       "outputs": {
@@ -3681,6 +3745,126 @@
             }
           ],
           "default": "darkroom/outpaint"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "upscale_v1": {
+      "file": "upscale.json",
+      "family": "seedvr2",
+      "kind": "image",
+      "label": "Upscale 2x (SeedVR2 7B) (v1)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "scale": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_SCALE",
+              "input": "resize_type.multiplier"
+            }
+          ],
+          "default": 2,
+          "min": 1,
+          "max": 4
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/upscale"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "qwen_remove_bg": {
+      "file": "qwen_remove_bg.json",
+      "family": "qwen",
+      "kind": "image",
+      "label": "Remove background (Qwen-Image 2.1)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SAMPLER",
+              "input": "steps"
+            }
+          ],
+          "default": 25,
+          "min": 8,
+          "max": 50
+        },
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "prompt"
+            }
+          ],
+          "default": "Remove the background, and output a PNG image"
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/cutout"
         }
       },
       "outputs": {

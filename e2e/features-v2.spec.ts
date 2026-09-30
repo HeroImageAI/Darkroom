@@ -109,6 +109,53 @@ test.describe.serial('Darkroom v2 features', () => {
     });
   }
 
+  // Addenda Phase 5
+  test('Edit: remove background with Qwen (best quality) keeps real transparency', async () => {
+    const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && /lighthouse/i.test(i.prompt));
+    await page.goto(`/#/edit/${it.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Remove BG' }).click();
+    await page.getByRole('group', { name: 'Background removal method' }).getByRole('button', { name: /Best quality/ }).click();
+    const before = page.url();
+    await page.getByRole('button', { name: /Remove background/ }).click();
+    await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
+    expect(page.url()).not.toBe(before);
+    const id = page.url().split('/').pop()!;
+    const png = Buffer.from(await (await page.request.get(`/api/items/${id}/file`)).body());
+    expect(png.readUInt8(25)).toBe(6); // PNG colour type 6 = RGBA
+    await shot(page, 'edit-remove-bg-qwen');
+  });
+
+  test('Edit: layers per object with Qwen 2.1', async () => {
+    const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && /lighthouse/i.test(i.prompt));
+    await page.goto(`/#/edit/${it.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Layers' }).click();
+    await page.getByRole('group', { name: 'Layer method' }).getByRole('button', { name: 'Objects (Qwen 2.1)' }).click();
+    await page.getByPlaceholder(/the red car, the potted palm/).fill('the person');
+    await page.getByRole('button', { name: /Make layers/ }).click();
+    await expect(page.getByText('Layers ready')).toBeVisible({ timeout: 400_000 });
+    // layer names are editable text boxes
+    await expect(page.locator('input[value="Background plate"]')).toHaveCount(1);
+    await expect(page.locator('input[value="The person"]')).toHaveCount(1);
+    // the stacked preview must let lower layers show through (regression: a checkerboard on every layer hid the plate)
+    const bgs = await page.locator('img[alt="The person"], img[alt="Background plate"]').evaluateAll((els) => els.map((e) => getComputedStyle(e).backgroundImage));
+    expect(bgs.every((b) => b === 'none')).toBe(true);
+    await shot(page, 'edit-layers-qwen21');
+  });
+
+  test('Edit: upscale through the new panel (factor + tile size)', async () => {
+    const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && (i.width ?? 9999) <= 1400);
+    await page.goto(`/#/edit/${it.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Upscale' }).click();
+    await page.getByRole('group', { name: 'Upscale factor' }).getByRole('button', { name: '2×' }).click();
+    await page.getByLabel(/Tile size/).selectOption('256');
+    const before = page.url();
+    await page.getByRole('button', { name: /Upscale/ }).last().click();
+    await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
+    expect(page.url()).not.toBe(before);
+    const { item } = await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json();
+    expect(item.width).toBe(it.width * 2);
+  });
+
   test('Edit: compare follows the cursor', async () => {
     const it = await firstItem(page, (i) => i.kind === 'image' && !!i.parent_id);
     await page.goto(`/#/edit/${it.id}`);

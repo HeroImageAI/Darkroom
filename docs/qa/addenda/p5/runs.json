@@ -1,0 +1,498 @@
+[
+  {
+    "group": "upscale-colour",
+    "key": "lowres-320px",
+    "variant": "lab",
+    "ok": true,
+    "seconds": 8.3,
+    "peak": 10.3,
+    "set": {
+      "seed": 1,
+      "scale": 4,
+      "colour": "lab"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-colour\\lowres-320px-lab\\upscale_00010_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-colour",
+    "key": "pixelated",
+    "variant": "lab",
+    "ok": true,
+    "seconds": 4.4,
+    "peak": 10.8,
+    "set": {
+      "seed": 1,
+      "scale": 4,
+      "colour": "lab"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-colour\\pixelated-lab\\upscale_00011_.png"
+  },
+  {
+    "group": "upscale-colour",
+    "key": "rgba-hair",
+    "variant": "lab",
+    "ok": true,
+    "seconds": 6.8,
+    "peak": 11.1,
+    "set": {
+      "seed": 1,
+      "scale": 4,
+      "colour": "lab"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-colour\\rgba-hair-lab\\upscale_00012_.png"
+  },
+  {
+    "group": "upscale-colour",
+    "key": "lowres-320px",
+    "variant": "wavelet",
+    "ok": true,
+    "seconds": 5.2,
+    "peak": 10.3,
+    "set": {
+      "seed": 1,
+      "scale": 4,
+      "colour": "wavelet"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-colour\\lowres-320px-wavelet\\upscale_00013_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-colour",
+    "key": "pixelated",
+    "variant": "wavelet",
+    "ok": true,
+    "seconds": 3.7,
+    "peak": 10.8,
+    "set": {
+      "seed": 1,
+      "scale": 4,
+      "colour": "wavelet"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-colour\\pixelated-wavelet\\upscale_00014_.png"
+  },
+  {
+    "group": "upscale-colour",
+    "key": "rgba-hair",
+    "variant": "wavelet",
+    "ok": true,
+    "seconds": 5.7,
+    "peak": 10.8,
+    "set": {
+      "seed": 1,
+      "scale": 4,
+      "colour": "wavelet"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-colour\\rgba-hair-wavelet\\upscale_00015_.png"
+  },
+  {
+    "group": "upscale-scale",
+    "key": "lowres-320px",
+    "variant": "x2",
+    "ok": true,
+    "seconds": 5.3,
+    "peak": 10.3,
+    "set": {
+      "seed": 1,
+      "colour": "lab",
+      "scale": 2
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-scale\\lowres-320px-x2\\upscale_00016_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-scale",
+    "key": "lowres-320px",
+    "variant": "x4",
+    "ok": true,
+    "seconds": 5.2,
+    "peak": 10.4,
+    "set": {
+      "seed": 1,
+      "colour": "lab",
+      "scale": 4
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-scale\\lowres-320px-x4\\upscale_00017_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-scale",
+    "key": "lowres-320px",
+    "variant": "x6",
+    "ok": true,
+    "seconds": 7.3,
+    "peak": 10.7,
+    "set": {
+      "seed": 1,
+      "colour": "lab",
+      "scale": 6
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-scale\\lowres-320px-x6\\upscale_00018_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-scale",
+    "key": "lowres-320px",
+    "variant": "x8",
+    "ok": true,
+    "seconds": 9.8,
+    "peak": 10.4,
+    "set": {
+      "seed": 1,
+      "colour": "lab",
+      "scale": 8
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-scale\\lowres-320px-x8\\upscale_00019_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-scale",
+    "key": "lowres-320px",
+    "variant": "x8t256",
+    "ok": true,
+    "seconds": 11.2,
+    "peak": 10.4,
+    "set": {
+      "seed": 1,
+      "colour": "lab",
+      "scale": 8,
+      "tile": 256,
+      "tile_overlap": 64
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-scale\\lowres-320px-x8t256\\upscale_00020_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-scale",
+    "key": "lowres-320px",
+    "variant": "x8t1024",
+    "ok": true,
+    "seconds": 7.9,
+    "peak": 10.5,
+    "set": {
+      "seed": 1,
+      "colour": "lab",
+      "scale": 8,
+      "tile": 1024,
+      "tile_overlap": 256
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-scale\\lowres-320px-x8t1024\\upscale_00021_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-preshrink",
+    "key": "pixelated",
+    "variant": "direct",
+    "ok": true,
+    "seconds": 6.4,
+    "peak": 10.5,
+    "set": {
+      "seed": 1,
+      "colour": "lab",
+      "scale": 4
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-preshrink\\pixelated-direct\\upscale_00022_.png",
+    "cold": true
+  },
+  {
+    "group": "upscale-preshrink",
+    "key": "pixelated",
+    "variant": "shrink192",
+    "ok": true,
+    "seconds": 6.4,
+    "peak": 10.4,
+    "set": {
+      "seed": 1,
+      "colour": "lab",
+      "scale": 8,
+      "preshrink": 192
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\upscale-preshrink\\pixelated-shrink192\\upscale_00023_.png",
+    "cold": true
+  },
+  {
+    "group": "remove-bg",
+    "key": "hair",
+    "variant": "qwen",
+    "ok": true,
+    "seconds": 27.2,
+    "peak": 20.8,
+    "set": {
+      "seed": 91,
+      "prompt": "Remove the background, and output a PNG image",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\hair-qwen\\enhance_00057_.png",
+    "cold": true
+  },
+  {
+    "group": "remove-bg",
+    "key": "fur",
+    "variant": "qwen",
+    "ok": true,
+    "seconds": 23.1,
+    "peak": 21.2,
+    "set": {
+      "seed": 92,
+      "prompt": "Remove the background, and output a PNG image",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\fur-qwen\\enhance_00058_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "glass",
+    "variant": "qwen",
+    "ok": true,
+    "seconds": 23.2,
+    "peak": 21.2,
+    "set": {
+      "seed": 93,
+      "prompt": "Remove the background, and output a PNG image",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\glass-qwen\\enhance_00059_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "product",
+    "variant": "qwen",
+    "ok": true,
+    "seconds": 23.2,
+    "peak": 21.2,
+    "set": {
+      "seed": 94,
+      "prompt": "Remove the background, and output a PNG image",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\product-qwen\\enhance_00060_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "hair",
+    "variant": "sam_lucida",
+    "ok": true,
+    "seconds": 4.6,
+    "peak": 4.1,
+    "set": {
+      "seed": 91,
+      "subject": "woman",
+      "matte": "lucida.safetensors"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\hair-sam_lucida\\cutout_00027_.png",
+    "cold": true
+  },
+  {
+    "group": "remove-bg",
+    "key": "fur",
+    "variant": "sam_lucida",
+    "ok": true,
+    "seconds": 2.9,
+    "peak": 4.4,
+    "set": {
+      "seed": 92,
+      "subject": "cat",
+      "matte": "lucida.safetensors"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\fur-sam_lucida\\cutout_00028_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "glass",
+    "variant": "sam_lucida",
+    "ok": true,
+    "seconds": 5,
+    "peak": 4.8,
+    "set": {
+      "seed": 93,
+      "subject": "carafe, glass",
+      "matte": "lucida.safetensors"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\glass-sam_lucida\\cutout_00029_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "product",
+    "variant": "sam_lucida",
+    "ok": true,
+    "seconds": 3.2,
+    "peak": 4.5,
+    "set": {
+      "seed": 94,
+      "subject": "boots",
+      "matte": "lucida.safetensors"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\product-sam_lucida\\cutout_00030_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "hair",
+    "variant": "sam_birefnet",
+    "ok": true,
+    "seconds": 4.4,
+    "peak": 4.4,
+    "set": {
+      "seed": 91,
+      "subject": "woman",
+      "matte": "birefnet.safetensors"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\hair-sam_birefnet\\cutout_00031_.png",
+    "cold": true
+  },
+  {
+    "group": "remove-bg",
+    "key": "fur",
+    "variant": "sam_birefnet",
+    "ok": true,
+    "seconds": 2.9,
+    "peak": 4,
+    "set": {
+      "seed": 92,
+      "subject": "cat",
+      "matte": "birefnet.safetensors"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\fur-sam_birefnet\\cutout_00032_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "glass",
+    "variant": "sam_birefnet",
+    "ok": true,
+    "seconds": 4.8,
+    "peak": 4.7,
+    "set": {
+      "seed": 93,
+      "subject": "carafe, glass",
+      "matte": "birefnet.safetensors"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\glass-sam_birefnet\\cutout_00033_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "product",
+    "variant": "sam_birefnet",
+    "ok": true,
+    "seconds": 3.2,
+    "peak": 4.5,
+    "set": {
+      "seed": 94,
+      "subject": "boots",
+      "matte": "birefnet.safetensors"
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\product-sam_birefnet\\cutout_00034_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "hair",
+    "variant": "birefnet",
+    "ok": true,
+    "seconds": 1.5,
+    "peak": 2.2,
+    "set": {
+      "seed": 91
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\hair-birefnet\\cutout_00035_.png",
+    "cold": true
+  },
+  {
+    "group": "remove-bg",
+    "key": "fur",
+    "variant": "birefnet",
+    "ok": true,
+    "seconds": 1,
+    "peak": 2.2,
+    "set": {
+      "seed": 92
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\fur-birefnet\\cutout_00036_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "glass",
+    "variant": "birefnet",
+    "ok": true,
+    "seconds": 1.2,
+    "peak": 2.2,
+    "set": {
+      "seed": 93
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\glass-birefnet\\cutout_00037_.png"
+  },
+  {
+    "group": "remove-bg",
+    "key": "product",
+    "variant": "birefnet",
+    "ok": true,
+    "seconds": 1,
+    "peak": 2.2,
+    "set": {
+      "seed": 94
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\remove-bg\\product-birefnet\\cutout_00038_.png"
+  },
+  {
+    "group": "layers-qwen21",
+    "key": "car",
+    "variant": "qwen21",
+    "ok": true,
+    "seconds": 26.6,
+    "peak": 20.8,
+    "set": {
+      "seed": 95,
+      "prompt": "Extract the red car from <image1> onto a transparent background, and output a PNG image",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\layers-qwen21\\car-qwen21\\enhance_00061_.png",
+    "cold": true
+  },
+  {
+    "group": "layers-qwen21",
+    "key": "palm",
+    "variant": "qwen21",
+    "ok": true,
+    "seconds": 22.7,
+    "peak": 21.2,
+    "set": {
+      "seed": 95,
+      "prompt": "Extract the potted palm from <image1> onto a transparent background, and output a PNG image",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\layers-qwen21\\palm-qwen21\\enhance_00062_.png"
+  },
+  {
+    "group": "layers-qwen21",
+    "key": "background",
+    "variant": "qwen21",
+    "ok": true,
+    "seconds": 22.7,
+    "peak": 21.3,
+    "set": {
+      "seed": 95,
+      "prompt": "Remove the red car and the potted palm from <image1> and fill in the wall, the pavement and the road behind them naturally. Keep everything else exactly as it is.",
+      "steps": 25,
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\layers-qwen21\\background-qwen21\\enhance_00063_.png"
+  },
+  {
+    "group": "layers-layered",
+    "key": "car-scene",
+    "variant": "layered",
+    "ok": true,
+    "seconds": 86.2,
+    "peak": 25,
+    "set": {
+      "prompt": "A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "layers": 4,
+      "seed": 5
+    },
+    "file_out": "docs\\qa\\addenda\\p5\\layers-layered\\car-scene-layered\\qwen_00025_.png",
+    "cold": true
+  }
+]
