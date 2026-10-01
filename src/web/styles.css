@@ -358,3 +358,4 @@ button.logo svg { transition: transform .2s; }
 .compose-layer-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .compose-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .compose-modes .card { padding: 10px 8px; min-height: 0; }
+.compose-row { display: flex; align-items: center; gap: 8px; min-width: 0; }

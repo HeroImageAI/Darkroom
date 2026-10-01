@@ -655,6 +655,34 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(Math.round((await sel.boundingBox())!.width)).toBe(Math.round(after.width));
     await shot(page, 'compose-placed');
 
+    // erase part of the cut-out: a new picture file with more transparency; Ctrl+Z brings the old one back
+    const srcOf = async () => {
+      const r = await (await page.request.get(`/api/compositions/${compositionUrl.split('/').pop()}`)).json();
+      return r.doc.layers.find((l: any) => l.name === '09_car').src as string;
+    };
+    const transparent = async (src: string) => {
+      const { data, info } = await sharp(Buffer.from(await (await page.request.get(`/api/input?name=${encodeURIComponent(src)}`)).body())).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      let n = 0;
+      for (let i = 3; i < data.length; i += 4) if (data[i] < 16) n++;
+      return n / (info.width * info.height);
+    };
+    await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 10_000 });
+    const src0 = await srcOf();
+    await page.keyboard.press('e');
+    await page.getByLabel('Brush size').fill('40');
+    const car = (await page.locator('.compose-piece').last().boundingBox())!;
+    await page.mouse.move(car.x + car.width * 0.1, car.y + car.height * 0.5);
+    await page.mouse.down();
+    await page.mouse.move(car.x + car.width * 0.4, car.y + car.height * 0.5, { steps: 6 });
+    await page.mouse.up();
+    await expect.poll(srcOf, { timeout: 20_000 }).not.toBe(src0);
+    const src1 = await srcOf();
+    expect(await transparent(src1)).toBeGreaterThan((await transparent(src0)) + 0.02);
+    await shot(page, 'compose-erased');
+    await page.keyboard.press('Control+z');
+    await expect.poll(srcOf, { timeout: 10_000 }).toBe(src0);
+    await page.keyboard.press('v');
+
     // photo pieces → Harmonise is suggested (Qwen)
     const modes = page.getByRole('group', { name: 'Render mode' });
     await expect(modes.getByRole('button', { name: /Harmonise/ })).toHaveAttribute('aria-pressed', 'true');
@@ -717,7 +745,7 @@ test.describe.serial('Darkroom v2 features', () => {
     }
     await expect(page.locator('.compose-layers li')).toHaveCount(1);
     await expect(page.getByRole('group', { name: 'Render mode' }).getByRole('button', { name: /Reimagine/ })).toContainText('Suggested', { timeout: 5_000 });
-    await page.getByRole('button', { name: 'Erase paint (E)' }).click();
+    await page.getByRole('button', { name: 'Erase (E)' }).click();
     await page.mouse.move(c.x + c.width / 2, c.y + 10);
     await page.mouse.down();
     await page.mouse.move(c.x + c.width / 2, c.y + c.height - 10, { steps: 5 });
