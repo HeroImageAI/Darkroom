@@ -67,6 +67,8 @@ export interface Vlm2Entry extends Partial<VlmEntry> {
   top_p?: number;
   top_k?: number;
   thinking?: boolean;
+  repetition_penalty?: number;
+  presence_penalty?: number;
 }
 
 export interface VlmModelRef {
@@ -112,6 +114,8 @@ export function buildVlm2Request(p: Vlm2Prompts, task: Vlm2Task, variant: string
       top_p: entry.top_p ?? 0.8,
       top_k: entry.top_k ?? 20,
       thinking: entry.thinking ?? false,
+      ...(entry.repetition_penalty !== undefined ? { repetition_penalty: entry.repetition_penalty } : {}),
+      ...(entry.presence_penalty !== undefined ? { presence_penalty: entry.presence_penalty } : {}),
     },
     modelLabel: model.label,
     output: entry.output ?? 'text',
