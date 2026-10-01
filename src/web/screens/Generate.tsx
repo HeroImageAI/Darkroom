@@ -23,6 +23,11 @@ import {
 } from 'lucide-react';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo, openLibrary } from '../lib/remove';
+import { expandVariations } from '../../shared/variations';
+
+/** Prompt variations: at most this many prompts, and this many pictures per click (variations × batch). */
+const MAX_VARIATIONS = 16;
+const MAX_PICTURES = 16;
 import { Pills, ProgressBar, Segmented, randomSeed, useHotkey } from '../components/common';
 import { CropDialog, grabScreenFrame } from '../lib/capture';
 import { useItemLoad, useSessionState, useWorkspace } from '../lib/hooks';
@@ -89,6 +94,9 @@ export function Generate({ query }: { query: URLSearchParams }) {
   };
   const [selected, setSelected] = useSessionState<string | null>('generate.selected', null);
   const [jobId, setJobId] = useSessionState<string | null>('generate.job', null);
+  // all jobs of the last click: one per prompt variation; the strip shows their results together
+  const [runJobs, setRunJobs] = useSessionState<string[]>('generate.run', []);
+  const [runTick, setRunTick] = useState(0);
   const [strip, setStrip] = useState<Item[]>([]);
   const [capture, setCapture] = useState<HTMLCanvasElement | null>(null);
   const [busyRef, setBusyRef] = useState(false);
@@ -130,38 +138,40 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const T = boot?.prompts;
 
   const update = (p: Partial<GenSettings>) => setS((prev) => ({ ...prev, ...p }));
+  const promptVariations = useMemo(() => expandVariations(s.prompt, MAX_VARIATIONS), [s.prompt]);
 
   const selectModel = (key: string) => {
     const mm = m!.models[key];
     update({ model: key, steps: mm.defaults.steps, cfg: mm.defaults.cfg });
   };
 
-  // Strip = all outputs of the selected item's job.
+  // Strip = all outputs of the selected item's job, or of every variation of the last click when it belongs to that run.
   useEffect(() => {
     if (!selectedItem?.job_id) {
       setStrip(selectedItem ? [selectedItem] : []);
       return;
     }
-    api
-      .get<Item[]>(`/api/jobs/${selectedItem.job_id}/items`)
-      .then((items) => {
-        const live = items.filter((i) => !i.deleted_at);
+    const jobsToShow = runJobs.includes(selectedItem.job_id) ? runJobs : [selectedItem.job_id];
+    Promise.all(jobsToShow.map((id) => api.get<Item[]>(`/api/jobs/${id}/items`).catch(() => [] as Item[])))
+      .then((lists) => {
+        const live = lists.flat().filter((i) => !i.deleted_at);
         setStrip(live.length ? live : [selectedItem]);
       })
       .catch(() => setStrip([selectedItem]));
-  }, [selectedItem?.id, selectedItem?.job_id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedItem?.id, selectedItem?.job_id, runTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // When our job finishes, show its results.
   useEffect(
     () =>
       onJob((j) => {
+        if (runJobs.includes(j.id) && j.id !== jobId && (j.status === 'done' || j.status === 'error')) setRunTick((t) => t + 1);
         if (j.id !== jobId) return;
         if (j.status === 'done' && j.result_ids.length) {
           setSelected(j.result_ids[0]);
         }
         if (j.status === 'error' || j.status === 'lost') toast(j.error ?? 'Generation failed.', 'error');
       }),
-    [jobId], // eslint-disable-line react-hooks/exhaustive-deps
+    [jobId, runJobs], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // "Reuse settings" from Library / elsewhere: #/generate?reuse=<id>
@@ -308,22 +318,33 @@ export function Generate({ query }: { query: URLSearchParams }) {
       promptRef.current?.focus();
       return;
     }
+    // prompt variations: {a|b} groups expand to one job each, all on the same seed so only the wording differs
+    const variations = expandVariations(cur.prompt, MAX_VARIATIONS);
+    if (variations.prompts.length * cur.batch > MAX_PICTURES) {
+      toast(
+        `That is ${variations.prompts.length} variations × batch ${cur.batch} = ${variations.prompts.length * cur.batch} pictures. Keep it to ${MAX_PICTURES} at most: lower the batch or remove an option.`,
+        'info',
+        9000,
+      );
+      return;
+    }
+    if (variations.total > MAX_VARIATIONS) toast(`Your prompt describes ${variations.total} variations; rendering the first ${MAX_VARIATIONS}.`, 'info', 8000);
     const seed = cur.seedLocked ? cur.seed : randomSeed();
     if (!cur.seedLocked) update({ seed });
     const style = styles.find((x) => x.id === cur.style);
     const mm = m.models[cur.model];
-    const fullPrompt = composeImagePrompt(boot!.prompts, {
-      model: cur.model as ImageModelKey,
-      mode: 'generate',
-      text: cur.prompt,
-      style: style ?? null,
-      transparent: cur.model === 'qwen' && !!cur.transparent,
-    });
+    const compose = (text: string) =>
+      composeImagePrompt(boot!.prompts, {
+        model: cur.model as ImageModelKey,
+        mode: 'generate',
+        text,
+        style: style ?? null,
+        transparent: cur.model === 'qwen' && !!cur.transparent,
+      });
     const wf = cur.refs.length ? mm.ref : mm.t2i;
     const q = mm.quality?.[cur.quality ?? 'standard'];
     const [ww, hh] = aspectsFor(mm, cur.quality)![cur.aspect];
     const params: Record<string, string | number> = {
-      prompt: fullPrompt,
       seed,
       steps: q ? q.steps : cur.steps,
       cfg: mm.ranges.cfg[0] === mm.ranges.cfg[1] ? mm.ranges.cfg[0] : cur.cfg,
@@ -333,18 +354,26 @@ export function Generate({ query }: { query: URLSearchParams }) {
     };
     cur.refs.forEach((r, i) => (params[`image_${i + 1}`] = r.name));
     try {
-      const j = await api.submit({
-        workflow: wf,
-        params,
-        meta: {
-          mode: 'generate',
-          model: cur.refs.length ? `${mm.label} + refs` : mm.label,
-          prompt: fullPrompt,
-          parentId,
-          ui: { ...cur, seed },
-        },
-      });
-      setJobId(j.id);
+      const ids: string[] = [];
+      for (const text of variations.prompts) {
+        const fullPrompt = compose(text);
+        const j = await api.submit({
+          workflow: wf,
+          params: { ...params, prompt: fullPrompt },
+          meta: {
+            mode: 'generate',
+            model: cur.refs.length ? `${mm.label} + refs` : mm.label,
+            prompt: fullPrompt,
+            parentId,
+            // the settings keep the prompt as typed (with its {a|b} groups), so Reuse / Restore bring the template back
+            ui: { ...cur, seed },
+          },
+        });
+        ids.push(j.id);
+      }
+      setRunJobs(ids);
+      setJobId(ids[0]);
+      if (ids.length > 1) toast(`${ids.length} variations queued on the same seed; they appear together under the picture.`, 'info', 6000);
     } catch (e) {
       toast(e instanceof ApiError ? e.message : (e as Error).message, 'error');
     }
@@ -510,6 +539,22 @@ export function Generate({ query }: { query: URLSearchParams }) {
               onChange={(e) => update({ prompt: e.target.value })}
               rows={5}
             />
+            {promptVariations.total > 1 ? (
+              <details className="variations">
+                <summary>
+                  {promptVariations.prompts.length} variations
+                  {s.batch > 1 ? ` × batch ${s.batch} = ${promptVariations.prompts.length * s.batch} pictures` : ''}
+                  {promptVariations.total > MAX_VARIATIONS ? ` (of ${promptVariations.total}; the first ${MAX_VARIATIONS} are rendered)` : ''}
+                </summary>
+                <ol>
+                  {promptVariations.prompts.map((v, i) => (
+                    <li key={i}>{v}</li>
+                  ))}
+                </ol>
+              </details>
+            ) : (
+              <p className="note variations-hint">Tip: {'{red|green|blue}'} in the prompt makes one picture per option.</p>
+            )}
           </div>
 
           <div>
@@ -739,7 +784,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
         <div className="strip" aria-label="Variations">
           {strip.length > 1 &&
             strip.map((it) => (
-              <button key={it.id} aria-pressed={it.id === selected} onClick={() => setSelected(it.id)} title={`Seed ${it.seed}`}>
+              <button key={it.id} aria-pressed={it.id === selected} onClick={() => setSelected(it.id)} title={strip.length > 1 && strip.some((x) => x.prompt !== it.prompt) ? it.prompt : `Seed ${it.seed}`}>
                 <img src={thumbUrl(it.id)} alt="" />
               </button>
             ))}

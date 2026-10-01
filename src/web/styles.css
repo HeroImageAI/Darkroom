@@ -291,3 +291,10 @@ button.logo svg { transition: transform .2s; }
 /* item count + Upload sit at the right end of the board row (after the board actions when a board is open) */
 .board-row .item-count { margin-left: auto; font-size: 12px; padding: 0 4px 0 10px; white-space: nowrap; }
 .board-row .board-actions + .item-count { margin-left: 8px; }
+
+/* ---- Prompt variations ---- */
+.variations { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.variations summary { cursor: pointer; color: var(--accent); }
+.variations ol { margin: 6px 0 0; padding-left: 20px; max-height: 160px; overflow-y: auto; color: var(--text); }
+.variations li { margin: 2px 0; }
+.variations-hint { margin: 6px 0 0; font-size: 12px; }
