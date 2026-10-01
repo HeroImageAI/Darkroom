@@ -487,3 +487,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     URLs; pictures by their ComfyUI input name, checked server-side) and deleting one only hides it (Undo).
     Renders are ordinary Library items (`mode: compose`, `ui.compositionId`) in the working board; **Continue from
     this** makes a render the new background and hides — never removes — the layers under it.
+88. **v3 review: what stays and why** (docs/REVIEW_V3.md, grids in `docs/qa/addenda/rv/`). Klein full bf16 instead of
+    fp8mixed: visually identical, +35 % time, 24.7 GB peak — fp8mixed stays. Klein 6 steps: mixed, +35 % — 4 stays.
+    Whole-picture VAE decode: seams were already invisible, 6 % faster at Native 2K but +3–4 GB — tiled stays. Edits at a
+    bigger working size (Klein 2 MP, Qwen 1.76 MP): marginal gain, less consistent, 1.6–2.2× time — 1 MP plus
+    "Sharpen to full resolution" stays. Qwen-Image 2.1 already matches the official template. Klein at ~2 MP is the one
+    clear gain (text, fur, skin, crowds; 13–14 s) and is proposed as a Klein Quality choice. UI: the top bar no longer
+    pushes the app past 1280 px, the LoRA list fits its panel, an empty LoRA section is one line, Generate's Quality
+    sits under Model, Compose's Render area is compact on short screens.

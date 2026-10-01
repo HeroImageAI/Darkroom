@@ -216,164 +216,6 @@
     "cold": true
   },
   {
-    "group": "klein-2mp",
-    "key": "fox@1:1",
-    "variant": "1mp",
-    "ok": false,
-    "error": "ult = binding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\fox@1:1-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\fox@1:1-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
-      "seed": 7000,
-      "width": 1024,
-      "height": 1024
-    },
-    "cold": true
-  },
-  {
-    "group": "klein-2mp",
-    "key": "church@16:9",
-    "variant": "1mp",
-    "ok": false,
-    "error": "nding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\church@16:9-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\church@16:9-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
-      "seed": 7001,
-      "width": 1344,
-      "height": 768
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "portrait@4:5",
-    "variant": "1mp",
-    "ok": false,
-    "error": "ing.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\portrait@4:5-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\portrait@4:5-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
-      "seed": 7002,
-      "width": 896,
-      "height": 1120
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "bakery-text@3:2",
-    "variant": "1mp",
-    "ok": false,
-    "error": "dir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\bakery-text@3:2-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\bakery-text@3:2-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
-      "seed": 7003,
-      "width": 1248,
-      "height": 832
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "busy-street@16:9",
-    "variant": "1mp",
-    "ok": false,
-    "error": "r(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\busy-street@16:9-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\busy-street@16:9-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
-      "seed": 7004,
-      "width": 1344,
-      "height": 768
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "fur@1:1",
-    "variant": "1mp",
-    "ok": false,
-    "error": "ult = binding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\fur@1:1-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\fur@1:1-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
-      "seed": 7005,
-      "width": 1024,
-      "height": 1024
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "fox@1:1",
-    "variant": "2mp",
-    "ok": false,
-    "error": "ult = binding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\fox@1:1-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\fox@1:1-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
-      "seed": 7000,
-      "width": 1408,
-      "height": 1408
-    },
-    "cold": true
-  },
-  {
-    "group": "klein-2mp",
-    "key": "church@16:9",
-    "variant": "2mp",
-    "ok": false,
-    "error": "nding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\church@16:9-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\church@16:9-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
-      "seed": 7001,
-      "width": 1920,
-      "height": 1088
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "portrait@4:5",
-    "variant": "2mp",
-    "ok": false,
-    "error": "ing.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\portrait@4:5-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\portrait@4:5-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
-      "seed": 7002,
-      "width": 1264,
-      "height": 1584
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "bakery-text@3:2",
-    "variant": "2mp",
-    "ok": false,
-    "error": "dir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\bakery-text@3:2-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\bakery-text@3:2-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
-      "seed": 7003,
-      "width": 1728,
-      "height": 1152
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "busy-street@16:9",
-    "variant": "2mp",
-    "ok": false,
-    "error": "r(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\busy-street@16:9-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\busy-street@16:9-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
-      "seed": 7004,
-      "width": 1920,
-      "height": 1088
-    }
-  },
-  {
-    "group": "klein-2mp",
-    "key": "fur@1:1",
-    "variant": "2mp",
-    "ok": false,
-    "error": "ult = binding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\fur@1:1-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\fur@1:1-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
-    "set": {
-      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
-      "seed": 7005,
-      "width": 1408,
-      "height": 1408
-    }
-  },
-  {
     "group": "klein-steps",
     "key": "fox",
     "variant": "s4",
@@ -693,5 +535,286 @@
       "height": 832
     },
     "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\bakery-text@3x2-1mp\\klein_00220_.png"
+  },
+  {
+    "group": "klein-2mp",
+    "key": "busy-street@16x9",
+    "variant": "1mp",
+    "ok": true,
+    "seconds": 7.6,
+    "peak": 20.6,
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 7004,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\busy-street@16x9-1mp\\klein_00221_.png"
+  },
+  {
+    "group": "klein-2mp",
+    "key": "fur@1x1",
+    "variant": "1mp",
+    "ok": true,
+    "seconds": 7.3,
+    "peak": 20.6,
+    "set": {
+      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
+      "seed": 7005,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\fur@1x1-1mp\\klein_00222_.png"
+  },
+  {
+    "group": "klein-2mp",
+    "key": "fox@1x1",
+    "variant": "2mp",
+    "ok": true,
+    "seconds": 16.3,
+    "peak": 20.7,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7000,
+      "width": 1408,
+      "height": 1408
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\fox@1x1-2mp\\klein_00223_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-2mp",
+    "key": "church@16x9",
+    "variant": "2mp",
+    "ok": true,
+    "seconds": 13.9,
+    "peak": 20.2,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 7001,
+      "width": 1920,
+      "height": 1088
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\church@16x9-2mp\\klein_00224_.png"
+  },
+  {
+    "group": "klein-2mp",
+    "key": "portrait@4x5",
+    "variant": "2mp",
+    "ok": true,
+    "seconds": 13.3,
+    "peak": 20.6,
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 7002,
+      "width": 1264,
+      "height": 1584
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\portrait@4x5-2mp\\klein_00225_.png"
+  },
+  {
+    "group": "klein-2mp",
+    "key": "bakery-text@3x2",
+    "variant": "2mp",
+    "ok": true,
+    "seconds": 13.2,
+    "peak": 20.8,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 7003,
+      "width": 1728,
+      "height": 1152
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\bakery-text@3x2-2mp\\klein_00226_.png"
+  },
+  {
+    "group": "klein-2mp",
+    "key": "busy-street@16x9",
+    "variant": "2mp",
+    "ok": true,
+    "seconds": 14,
+    "peak": 20.1,
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 7004,
+      "width": 1920,
+      "height": 1088
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\busy-street@16x9-2mp\\klein_00227_.png"
+  },
+  {
+    "group": "klein-2mp",
+    "key": "fur@1x1",
+    "variant": "2mp",
+    "ok": true,
+    "seconds": 13.2,
+    "peak": 20.4,
+    "set": {
+      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
+      "seed": 7005,
+      "width": 1408,
+      "height": 1408
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-2mp\\fur@1x1-2mp\\klein_00228_.png"
+  },
+  {
+    "group": "edit-worksize",
+    "key": "large-relight",
+    "variant": "klein-1mp",
+    "ok": true,
+    "seconds": 17.4,
+    "peak": 20.6,
+    "set": {
+      "prompt": "Relight the scene with warm golden late-afternoon sunlight from the left, source out of frame. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 91
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\large-relight-klein-1mp\\edit_00320_.png",
+    "cold": true
+  },
+  {
+    "group": "edit-worksize",
+    "key": "bakery-sign",
+    "variant": "klein-1mp",
+    "ok": true,
+    "seconds": 13.7,
+    "peak": 21.2,
+    "set": {
+      "prompt": "Change the sign text to \"MOONLIGHT BAKERY\". Keep the composition, the people and all other details exactly as they are.",
+      "seed": 92
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\bakery-sign-klein-1mp\\edit_00321_.png"
+  },
+  {
+    "group": "edit-worksize",
+    "key": "interior-season",
+    "variant": "klein-1mp",
+    "ok": true,
+    "seconds": 13.6,
+    "peak": 20.1,
+    "set": {
+      "prompt": "Make it a snowy winter evening outside the window, with warm lamp light inside. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 93
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\interior-season-klein-1mp\\edit_00322_.png"
+  },
+  {
+    "group": "edit-worksize",
+    "key": "large-relight",
+    "variant": "klein-2mp",
+    "ok": true,
+    "seconds": 25.5,
+    "peak": 20.3,
+    "set": {
+      "prompt": "Relight the scene with warm golden late-afternoon sunlight from the left, source out of frame. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 91
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\large-relight-klein-2mp\\edit_00323_.png",
+    "cold": true
+  },
+  {
+    "group": "edit-worksize",
+    "key": "bakery-sign",
+    "variant": "klein-2mp",
+    "ok": true,
+    "seconds": 21.5,
+    "peak": 21.6,
+    "set": {
+      "prompt": "Change the sign text to \"MOONLIGHT BAKERY\". Keep the composition, the people and all other details exactly as they are.",
+      "seed": 92
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\bakery-sign-klein-2mp\\edit_00324_.png"
+  },
+  {
+    "group": "edit-worksize",
+    "key": "interior-season",
+    "variant": "klein-2mp",
+    "ok": true,
+    "seconds": 22,
+    "peak": 21.6,
+    "set": {
+      "prompt": "Make it a snowy winter evening outside the window, with warm lamp light inside. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 93
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\interior-season-klein-2mp\\edit_00325_.png"
+  },
+  {
+    "group": "edit-worksize",
+    "key": "large-relight",
+    "variant": "qwen-1mp",
+    "ok": true,
+    "seconds": 27.7,
+    "peak": 20.6,
+    "set": {
+      "prompt": "Relight the scene with warm golden late-afternoon sunlight from the left, source out of frame. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 91
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\large-relight-qwen-1mp\\edit_00326_.png",
+    "cold": true
+  },
+  {
+    "group": "edit-worksize",
+    "key": "bakery-sign",
+    "variant": "qwen-1mp",
+    "ok": true,
+    "seconds": 23.5,
+    "peak": 21.1,
+    "set": {
+      "prompt": "Change the sign text to \"MOONLIGHT BAKERY\". Keep the composition, the people and all other details exactly as they are.",
+      "seed": 92
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\bakery-sign-qwen-1mp\\edit_00327_.png"
+  },
+  {
+    "group": "edit-worksize",
+    "key": "interior-season",
+    "variant": "qwen-1mp",
+    "ok": true,
+    "seconds": 23.8,
+    "peak": 21.1,
+    "set": {
+      "prompt": "Make it a snowy winter evening outside the window, with warm lamp light inside. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 93
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\interior-season-qwen-1mp\\edit_00328_.png"
+  },
+  {
+    "group": "edit-worksize",
+    "key": "large-relight",
+    "variant": "qwen-176",
+    "ok": true,
+    "seconds": 55.9,
+    "peak": 22.6,
+    "set": {
+      "prompt": "Relight the scene with warm golden late-afternoon sunlight from the left, source out of frame. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 91
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\large-relight-qwen-176\\edit_00329_.png",
+    "cold": true
+  },
+  {
+    "group": "edit-worksize",
+    "key": "bakery-sign",
+    "variant": "qwen-176",
+    "ok": true,
+    "seconds": 52.8,
+    "peak": 23,
+    "set": {
+      "prompt": "Change the sign text to \"MOONLIGHT BAKERY\". Keep the composition, the people and all other details exactly as they are.",
+      "seed": 92
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\bakery-sign-qwen-176\\edit_00330_.png"
+  },
+  {
+    "group": "edit-worksize",
+    "key": "interior-season",
+    "variant": "qwen-176",
+    "ok": true,
+    "seconds": 51.2,
+    "peak": 22.9,
+    "set": {
+      "prompt": "Make it a snowy winter evening outside the window, with warm lamp light inside. Keep the composition, the people and all other details exactly as they are.",
+      "seed": 93
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\interior-season-qwen-176\\edit_00331_.png"
   }
 ]

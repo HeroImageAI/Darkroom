@@ -39,6 +39,24 @@
       "label": "6 steps"
     }
   ],
+  "edit-worksize": [
+    {
+      "id": "klein-1mp",
+      "label": "Klein edit, works at 1 MP (Darkroom)"
+    },
+    {
+      "id": "klein-2mp",
+      "label": "Klein edit, works at 2 MP"
+    },
+    {
+      "id": "qwen-1mp",
+      "label": "Qwen edit, works at 1 MP (Darkroom)"
+    },
+    {
+      "id": "qwen-176",
+      "label": "Qwen edit, works at 1.76 MP (native)"
+    }
+  ],
   "qwen-decode-2k": [
     {
       "id": "tiled",
