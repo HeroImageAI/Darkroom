@@ -170,7 +170,41 @@ const vlmVariant = (id: string, label: string, file: string): Variant => ({
 const cacheVariants = (workflow: string): Variant[] =>
   (['default', 'int8', 'int4'] as const).map((dt) => ({ id: dt, label: `Prefix cache: ${dt}`, workflow, ...(dt === 'default' ? {} : { file: `experiments/${workflow}.cache_${dt}.json` }) }));
 
+// The author's prompt, verbatim from the model page (typos included: the LoRA was trained on it).
+const LORA_AUTHOR_PROMPT = 'restore the image quality, remove any compression artefacts, remove any haze and soft edges, enrich the original with new intricate detail in all textures and surfaces createing a professional photorealistic photograph with natral lighting and skin texture.';
+
 const PHASES: Record<string, Group[]> = {
+  // "Ultimate Upscaler Klein-9b" LoRA (civitai.com/models/2474084, Flux2-Klein-Image-RestoreV1.safetensors) against
+  // Darkroom's Klein Restore. The LoRA graph is the shipped one plus LoraLoaderModelOnly (strength 1, as the author
+  // recommends) between the model and the sampler. Same seeds, same 4 steps.
+  lora: [
+    {
+      id: 'restore-lora',
+      variants: [
+        { id: 'current', label: 'Darkroom Restore today', workflow: 'klein_enhance_edit',
+          build: (c) => ({ set: { prompt: composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', caption: c.caption, strength: 'restore' }), megapixels: 1 } }) },
+        { id: 'lora_dr', label: 'LoRA + Darkroom prompt', workflow: 'klein_enhance_edit', file: 'experiments/klein_enhance_edit.restore_lora.json',
+          build: (c) => ({ set: { prompt: composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', caption: c.caption, strength: 'restore' }), megapixels: 1 } }) },
+        { id: 'lora_author', label: "LoRA + the author's prompt", workflow: 'klein_enhance_edit', file: 'experiments/klein_enhance_edit.restore_lora.json',
+          build: () => ({ set: { prompt: LORA_AUTHOR_PROMPT, megapixels: 1 } }) },
+      ],
+      cases: ENHANCE_CASES,
+    },
+    {
+      id: 'restore-lora-large',
+      variants: [
+        { id: 'current_2mp', label: 'Darkroom Restore today (2 MP, then SeedVR2 to full size)', workflow: 'klein_enhance_edit',
+          build: (c) => ({ set: { prompt: composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', caption: c.caption, strength: 'restore' }), megapixels: 2 } }) },
+        { id: 'current_4mp', label: 'Darkroom Restore at 4 MP, no LoRA (fair baseline)', workflow: 'klein_enhance_edit',
+          build: (c) => ({ set: { prompt: composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', caption: c.caption, strength: 'restore' }), megapixels: 4 } }) },
+        { id: 'lora_dr_4mp', label: 'LoRA + Darkroom prompt at 4 MP', workflow: 'klein_enhance_edit', file: 'experiments/klein_enhance_edit.restore_lora.json',
+          build: (c) => ({ set: { prompt: composeImagePrompt(T, { model: 'klein', mode: 'enhance', text: '', caption: c.caption, strength: 'restore' }), megapixels: 4 } }) },
+        { id: 'lora_author_4mp', label: "LoRA + author's prompt at 4 MP", workflow: 'klein_enhance_edit', file: 'experiments/klein_enhance_edit.restore_lora.json',
+          build: () => ({ set: { prompt: LORA_AUTHOR_PROMPT, megapixels: 4 } }) },
+      ],
+      cases: [{ key: 'large-2528', set: { seed: 57 }, images: { image_1: g('13_large_2k') }, caption: firstSentence(GOLD['03_text_scene'].prompt) }],
+    },
+  ],
   // ComfyUI templates 0.11.73 embed the official Qwen-Image 2.1 prompt enhancers with their own sampling settings
   // (thinking on, max 4096, repetition 1.0, presence penalty 1.5 for T2I / 0 for I2I, I2I loader "qwen_image").
   // Same system prompts as Darkroom's (byte-identical); only the run settings differ.

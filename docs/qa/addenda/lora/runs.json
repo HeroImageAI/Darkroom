@@ -1,0 +1,275 @@
+[
+  {
+    "group": "restore-lora",
+    "key": "lowres-320px",
+    "variant": "current",
+    "ok": true,
+    "seconds": 16.8,
+    "peak": 21.4,
+    "set": {
+      "seed": 51,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lowres-320px-current\\enhance_00075_.png",
+    "cold": true
+  },
+  {
+    "group": "restore-lora",
+    "key": "lowres-after-seedvr2",
+    "variant": "current",
+    "ok": true,
+    "seconds": 12.4,
+    "peak": 20.8,
+    "set": {
+      "seed": 51,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lowres-after-seedvr2-current\\enhance_00076_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "lens-blur",
+    "variant": "current",
+    "ok": true,
+    "seconds": 13.7,
+    "peak": 20.9,
+    "set": {
+      "seed": 52,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lens-blur-current\\enhance_00077_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "motion-blur",
+    "variant": "current",
+    "ok": true,
+    "seconds": 14.1,
+    "peak": 21.8,
+    "set": {
+      "seed": 53,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\motion-blur-current\\enhance_00078_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "clean-portrait",
+    "variant": "current",
+    "ok": true,
+    "seconds": 12.9,
+    "peak": 21.4,
+    "set": {
+      "seed": 54,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\clean-portrait-current\\enhance_00079_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "lowres-320px",
+    "variant": "lora_dr",
+    "ok": true,
+    "seconds": 17.2,
+    "peak": 21.6,
+    "set": {
+      "seed": 51,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lowres-320px-lora_dr\\enhance_00080_.png",
+    "cold": true
+  },
+  {
+    "group": "restore-lora",
+    "key": "lowres-after-seedvr2",
+    "variant": "lora_dr",
+    "ok": true,
+    "seconds": 12.8,
+    "peak": 20.9,
+    "set": {
+      "seed": 51,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small harbour with colourful wooden fishing boats moored along a stone quay, houses on a hillside behind, overcast afternoon.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lowres-after-seedvr2-lora_dr\\enhance_00081_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "lens-blur",
+    "variant": "lora_dr",
+    "ok": true,
+    "seconds": 13.5,
+    "peak": 20.7,
+    "set": {
+      "seed": 52,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A red vintage 1960s car parked in front of a pastel blue house with a white door and a potted palm, sunny afternoon, photograph.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lens-blur-lora_dr\\enhance_00082_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "motion-blur",
+    "variant": "lora_dr",
+    "ok": true,
+    "seconds": 13.8,
+    "peak": 20.8,
+    "set": {
+      "seed": 53,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\motion-blur-lora_dr\\enhance_00083_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "clean-portrait",
+    "variant": "lora_dr",
+    "ok": true,
+    "seconds": 13.1,
+    "peak": 20.7,
+    "set": {
+      "seed": 54,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\clean-portrait-lora_dr\\enhance_00084_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "lowres-320px",
+    "variant": "lora_author",
+    "ok": true,
+    "seconds": 17.2,
+    "peak": 20.9,
+    "set": {
+      "seed": 51,
+      "prompt": "restore the image quality, remove any compression artefacts, remove any haze and soft edges, enrich the original with new intricate detail in all textures and surfaces createing a professional photorealistic photograph with natral lighting and skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lowres-320px-lora_author\\enhance_00085_.png",
+    "cold": true
+  },
+  {
+    "group": "restore-lora",
+    "key": "lowres-after-seedvr2",
+    "variant": "lora_author",
+    "ok": true,
+    "seconds": 12.9,
+    "peak": 21,
+    "set": {
+      "seed": 51,
+      "prompt": "restore the image quality, remove any compression artefacts, remove any haze and soft edges, enrich the original with new intricate detail in all textures and surfaces createing a professional photorealistic photograph with natral lighting and skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lowres-after-seedvr2-lora_author\\enhance_00086_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "lens-blur",
+    "variant": "lora_author",
+    "ok": true,
+    "seconds": 12.9,
+    "peak": 20.9,
+    "set": {
+      "seed": 52,
+      "prompt": "restore the image quality, remove any compression artefacts, remove any haze and soft edges, enrich the original with new intricate detail in all textures and surfaces createing a professional photorealistic photograph with natral lighting and skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\lens-blur-lora_author\\enhance_00087_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "motion-blur",
+    "variant": "lora_author",
+    "ok": true,
+    "seconds": 13.1,
+    "peak": 21.6,
+    "set": {
+      "seed": 53,
+      "prompt": "restore the image quality, remove any compression artefacts, remove any haze and soft edges, enrich the original with new intricate detail in all textures and surfaces createing a professional photorealistic photograph with natral lighting and skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\motion-blur-lora_author\\enhance_00088_.png"
+  },
+  {
+    "group": "restore-lora",
+    "key": "clean-portrait",
+    "variant": "lora_author",
+    "ok": true,
+    "seconds": 13.1,
+    "peak": 20.7,
+    "set": {
+      "seed": 54,
+      "prompt": "restore the image quality, remove any compression artefacts, remove any haze and soft edges, enrich the original with new intricate detail in all textures and surfaces createing a professional photorealistic photograph with natral lighting and skin texture.",
+      "megapixels": 1
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora\\clean-portrait-lora_author\\enhance_00089_.png"
+  },
+  {
+    "group": "restore-lora-large",
+    "key": "large-2528",
+    "variant": "current_2mp",
+    "ok": true,
+    "seconds": 33.2,
+    "peak": 21.7,
+    "set": {
+      "seed": 57,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small bakery storefront on a cobbled street.",
+      "megapixels": 2
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora-large\\large-2528-current_2mp\\enhance_00090_.png",
+    "cold": true
+  },
+  {
+    "group": "restore-lora-large",
+    "key": "large-2528",
+    "variant": "current_4mp",
+    "ok": true,
+    "seconds": 77.6,
+    "peak": 19.8,
+    "set": {
+      "seed": 57,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small bakery storefront on a cobbled street.",
+      "megapixels": 4
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora-large\\large-2528-current_4mp\\enhance_00093_.png",
+    "cold": true
+  },
+  {
+    "group": "restore-lora-large",
+    "key": "large-2528",
+    "variant": "lora_dr_4mp",
+    "ok": true,
+    "seconds": 76.1,
+    "peak": 19.8,
+    "set": {
+      "seed": 57,
+      "prompt": "Restore this photograph: remove the blur, noise and compression artefacts and bring back fine, natural detail and sharp focus. Keep the same composition, the same person and likeness, the original colours, contrast and lighting, and the natural skin and fabric texture. Make it look like a clean, sharp original photograph, not a processed one. Scene: A small bakery storefront on a cobbled street.",
+      "megapixels": 4
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora-large\\large-2528-lora_dr_4mp\\enhance_00094_.png",
+    "cold": true
+  },
+  {
+    "group": "restore-lora-large",
+    "key": "large-2528",
+    "variant": "lora_author_4mp",
+    "ok": true,
+    "seconds": 76.1,
+    "peak": 19.7,
+    "set": {
+      "seed": 57,
+      "prompt": "restore the image quality, remove any compression artefacts, remove any haze and soft edges, enrich the original with new intricate detail in all textures and surfaces createing a professional photorealistic photograph with natral lighting and skin texture.",
+      "megapixels": 4
+    },
+    "file_out": "docs\\qa\\addenda\\lora\\restore-lora-large\\large-2528-lora_author_4mp\\enhance_00095_.png",
+    "cold": true
+  }
+]
