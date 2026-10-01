@@ -321,13 +321,13 @@ test.describe.serial('Darkroom v2 features', () => {
     }
   });
 
-  test('Home: Darkroom opens on Home, with the four screens and "Continue where you left off"', async () => {
+  test('Home: Darkroom opens on Home, with the five screens and "Continue where you left off"', async () => {
     await page.goto('/#/library');
     await expect(page.getByRole('region', { name: 'Library' })).toBeVisible();
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
     const start = page.getByRole('navigation', { name: 'Start' });
-    for (const name of ['Generate', 'Edit', 'Video', 'Library']) await expect(start.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
+    for (const name of ['Generate', 'Edit', 'Compose', 'Video', 'Library']) await expect(start.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
     await shot(page, 'home');
     await page.getByRole('button', { name: /Continue where you left off/ }).click();
     await expect(page).toHaveURL(/#\/library$/);
@@ -606,6 +606,135 @@ test.describe.serial('Darkroom v2 features', () => {
       expect(r.status()).toBe(400);
       expect((await r.json()).error).toMatch(/is not a Klein 9B LoRA/);
     }
+  });
+
+  // Compose (DECISIONS 87)
+  let compositionUrl = '';
+  test('Compose: start from a picture, cut out a piece, move and scale it on the ground line, undo, Harmonise into the Library', async () => {
+    await page.goto('/#/compose');
+    await page.getByLabel('Upload a background picture').setInputFiles('tests/golden/08_lowres_src.png');
+    await expect(page).toHaveURL(/#\/compose\/[0-9a-f-]+$/, { timeout: 60_000 });
+    compositionUrl = page.url();
+    await expect(page.getByRole('button', { name: 'Select Background' })).toBeVisible();
+    await expect(page.getByLabel('Composition name')).toHaveValue(/^Composition \d+$/);
+    // the canvas takes the background's shape at about 1 MP
+    await expect(page.getByText('1248 × 832')).toBeVisible();
+
+    await page.getByLabel('Upload pictures to the canvas').setInputFiles('tests/golden/09_car.png');
+    await expect(page.getByRole('button', { name: /^Select 09_car/ })).toBeVisible({ timeout: 60_000 });
+    const sel = page.locator('.compose-select');
+    const boxed = (await sel.boundingBox())!;
+    await page.getByRole('button', { name: 'Cut out' }).click();
+    await expect(page.getByText('cut-out', { exact: true })).toBeVisible({ timeout: 90_000 });
+    // trimmed to the car: a smaller box than the whole photo, and the cut-out is in the Library
+    const trimmed = (await sel.boundingBox())!;
+    expect(trimmed.height).toBeLessThan(boxed.height);
+    expect((await firstItem(page, (i) => i.mode === 'edit:remove_bg' && i.prompt === '09_car'))?.id).toBeTruthy();
+
+    // drag: the ground line shows where it stands
+    const canvas = (await page.getByRole('application', { name: 'Canvas' }).boundingBox())!;
+    await page.mouse.move(trimmed.x + trimmed.width / 2, trimmed.y + trimmed.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(canvas.x + canvas.width * 0.75, canvas.y + canvas.height * 0.78, { steps: 6 });
+    await expect(page.locator('.compose-ground')).toBeVisible();
+    await page.mouse.up();
+    await expect(page.locator('.compose-ground')).toHaveCount(0);
+    // scale from the top-left corner, keeping the shape
+    const before = (await sel.boundingBox())!;
+    const nw = (await page.locator('.compose-handle.nw').boundingBox())!;
+    await page.mouse.move(nw.x + 7, nw.y + 7);
+    await page.mouse.down();
+    await page.mouse.move(nw.x + 7 + before.width * 0.3, nw.y + 7 + before.height * 0.3, { steps: 5 });
+    await page.mouse.up();
+    const after = (await sel.boundingBox())!;
+    expect(after.width).toBeLessThan(before.width * 0.8);
+    expect(after.width / after.height).toBeCloseTo(before.width / before.height, 1);
+    await page.keyboard.press('Control+z');
+    expect(Math.round((await sel.boundingBox())!.width)).toBe(Math.round(before.width));
+    await page.keyboard.press('Control+y');
+    expect(Math.round((await sel.boundingBox())!.width)).toBe(Math.round(after.width));
+    await shot(page, 'compose-placed');
+
+    // photo pieces → Harmonise is suggested (Qwen)
+    const modes = page.getByRole('group', { name: 'Render mode' });
+    await expect(modes.getByRole('button', { name: /Harmonise/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(modes.getByRole('button', { name: /Harmonise/ })).toContainText('Suggested');
+    await page.getByLabel('Scene description').fill('a red classic car parked on the stone quay of a fishing harbour, overcast day');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && r.postDataJSON().meta?.mode === 'compose');
+    await page.getByRole('button', { name: /^Render/ }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.workflow).toBe('qwen_edit');
+    expect(body.params.mask).toBeUndefined();
+    expect(body.params.prompt).toMatch(/The scene: a red classic car parked on the stone quay/);
+    await expect(page.locator('.compose-view img')).toBeVisible({ timeout: 180_000 });
+    await expect(page.getByRole('list', { name: 'Renders' }).getByRole('listitem')).toHaveCount(1);
+    const it = await firstItem(page, (i) => i.mode === 'compose');
+    expect(it.ui.compositionId).toBe(compositionUrl.split('/').pop());
+    expect(it.model).toMatch(/Qwen-Image 2.1 · Harmonise/);
+    await shot(page, 'compose-harmonised');
+  });
+
+  test('Compose: Blend edges sends a seam mask; paint suggests Reimagine; saved, reopened, deleted with Undo', async () => {
+    // Blend edges on the same canvas: a white band round the car on black
+    await page.getByRole('button', { name: 'Back to canvas' }).click();
+    await page.getByRole('group', { name: 'Render mode' }).getByRole('button', { name: /Blend edges/ }).click();
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && r.postDataJSON().meta?.mode === 'compose');
+    await page.getByRole('button', { name: /^Render/ }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.params.mask).toBeTruthy();
+    expect(body.params.feather).toBe(12);
+    const mask = await sharp(Buffer.from(await (await page.request.get(`/api/input?name=${encodeURIComponent(body.params.mask)}`)).body())).greyscale().raw().toBuffer({ resolveWithObject: true });
+    const white = [...mask.data].filter((v) => v > 127).length / mask.data.length;
+    expect(white).toBeGreaterThan(0.005);
+    expect(white).toBeLessThan(0.1); // only the seams, never the whole picture
+    await expect(page.getByRole('list', { name: 'Renders' }).getByRole('listitem')).toHaveCount(2, { timeout: 180_000 });
+
+    // continue from a render: it becomes the background, the old layers are hidden (not removed)
+    await page.getByRole('list', { name: 'Renders' }).getByRole('listitem').first().click();
+    await page.getByRole('button', { name: 'Continue from this' }).click();
+    await expect(page.getByRole('button', { name: 'Select Render' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Show 09_car' })).toBeVisible();
+    await expect(page.locator('.compose-layers li')).toHaveCount(3);
+
+    // saved: reopening brings the layers and renders back
+    await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 10_000 });
+    await page.reload();
+    await expect(page.locator('.compose-layers li')).toHaveCount(3);
+    await expect(page.getByRole('list', { name: 'Renders' }).getByRole('listitem')).toHaveCount(2);
+
+    // a paint-only canvas → Reimagine is suggested
+    await page.goto('/#/compose');
+    await page.getByRole('button', { name: 'New composition' }).click();
+    await expect(page).toHaveURL(/#\/compose\/[0-9a-f-]+$/);
+    await page.getByRole('button', { name: 'Paint (B)' }).click();
+    const c = (await page.getByRole('application', { name: 'Canvas' }).boundingBox())!;
+    await page.getByLabel('Brush size').fill('300');
+    for (const y of [0.15, 0.4, 0.65, 0.9]) {
+      await page.mouse.move(c.x + 5, c.y + c.height * y);
+      await page.mouse.down();
+      await page.mouse.move(c.x + c.width - 5, c.y + c.height * y, { steps: 5 });
+      await page.mouse.up();
+    }
+    await expect(page.locator('.compose-layers li')).toHaveCount(1);
+    await expect(page.getByRole('group', { name: 'Render mode' }).getByRole('button', { name: /Reimagine/ })).toContainText('Suggested', { timeout: 5_000 });
+    await page.getByRole('button', { name: 'Erase paint (E)' }).click();
+    await page.mouse.move(c.x + c.width / 2, c.y + 10);
+    await page.mouse.down();
+    await page.mouse.move(c.x + c.width / 2, c.y + c.height - 10, { steps: 5 });
+    await page.mouse.up();
+    await page.keyboard.press('Control+z');
+    await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 10_000 });
+    const name = await page.getByLabel('Composition name').inputValue();
+
+    // the start page lists it with a thumbnail; delete with Undo
+    await page.getByRole('button', { name: '← All compositions' }).click();
+    const item = page.getByRole('listitem').filter({ hasText: name });
+    await expect(item.locator('img')).toBeVisible();
+    await shot(page, 'compose-list');
+    await item.getByRole('button', { name: `Delete ${name}` }).click();
+    await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Undo' }).last().click();
+    await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(1);
   });
 
   test('Library: Upload adds your pictures to the Library', async () => {

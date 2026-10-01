@@ -15,6 +15,7 @@ import {
   Plus,
   Redo2,
   Scissors,
+  Sparkles,
   Trash2,
   Undo2,
   Upload,
@@ -145,7 +146,7 @@ function ComposeStart() {
               </button>
               {busy && <Loader2 size={16} className="spin" aria-label="Working" />}
             </div>
-            <input ref={upload} type="file" accept="image/*" hidden onChange={(e) => (void fromFile([...(e.target.files ?? [])]), (e.target.value = ''))} />
+            <input ref={upload} type="file" accept="image/*" hidden aria-label="Upload a background picture" onChange={(e) => (void fromFile([...(e.target.files ?? [])]), (e.target.value = ''))} />
           </section>
         </div>
 
@@ -762,7 +763,7 @@ function ComposeEditor({ id }: { id: string }) {
                 <Paintbrush size={15} /> Paint layer
               </button>
             </div>
-            <input ref={upload} type="file" accept="image/*" multiple hidden onChange={(e) => (void addFiles([...(e.target.files ?? [])]), (e.target.value = ''))} />
+            <input ref={upload} type="file" accept="image/*" multiple hidden aria-label="Upload pictures to the canvas" onChange={(e) => (void addFiles([...(e.target.files ?? [])]), (e.target.value = ''))} />
           </div>
 
           {(tool === 'brush' || tool === 'eraser') && (
@@ -859,16 +860,16 @@ function ComposeEditor({ id }: { id: string }) {
             {MODES.find((m) => m.id === mode)!.text}
             {doc.mode === 'auto' ? ` Suggested because ${auto.why}.` : ''}
           </p>
-          <div className="row" style={{ justifyContent: 'space-between' }}>
-            <span className="note">Scene</span>
-            <button className="btn ghost sm" onClick={() => void describe()} disabled={describing || !doc.layers.length} title="Let the local vision model describe the real scene your canvas stands for">
-              {describing ? <Loader2 size={14} className="spin" /> : null} Describe
+          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+            <span className="note">Scene (optional)</span>
+            <button className="btn sm" onClick={() => void describe()} disabled={describing || !doc.layers.length} title="Let the local vision model describe the real scene your canvas stands for">
+              {describing ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Describe
             </button>
           </div>
           <textarea
             className="input"
-            rows={3}
-            placeholder="What should the scene be? (optional) e.g. a quiet harbour at dusk"
+            rows={2}
+            placeholder="e.g. a quiet harbour at dusk. Empty: Reimagine describes it for you."
             aria-label="Scene description"
             value={doc.description}
             onChange={(e) => setDocState({ ...doc, description: e.target.value })}
