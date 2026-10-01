@@ -415,8 +415,18 @@ app.post('/api/jobs', async (req, reply) => {
 });
 
 app.get('/api/jobs', async (req) => {
-  const { kind, limit } = req.query as { kind?: string; limit?: string };
+  const { kind, limit, live } = req.query as { kind?: string; limit?: string; live?: string };
+  if (live && kind) return store.liveTakes(kind, Number(limit) || 30).map(publicJob);
   return store.recentJobs(kind, Number(limit) || 50).map(publicJob);
+});
+
+/** Takes panel: hide failed / cancelled / lost renders (one, or every one of a kind). */
+app.post('/api/jobs/dismiss', async (req) => {
+  const b = (req.body ?? {}) as { ids?: string[]; failedOfKind?: string };
+  const ids = b.failedOfKind ? store.failedJobIds(b.failedOfKind) : Array.isArray(b.ids) ? b.ids.filter((x) => typeof x === 'string') : [];
+  const done = store.dismissJobs(ids);
+  if (done.length) broadcast({ type: 'library' });
+  return { dismissed: done };
 });
 
 app.get('/api/jobs/active', async () => store.activeJobs().map(publicJob));

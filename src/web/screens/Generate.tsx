@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
+import { deleteWithUndo, openLibrary } from '../lib/remove';
 import { Pills, ProgressBar, Segmented, randomSeed, useHotkey } from '../components/common';
 import { CropDialog, grabScreenFrame } from '../lib/capture';
 import { useItem, usePersistent } from '../lib/hooks';
@@ -70,7 +71,20 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const previews = useApp((s) => s.previews);
   const online = useApp((s) => s.status?.comfy === 'online');
   const [s, setS] = usePersistent<GenSettings>('generate', DEFAULTS);
-  const [history, setHistory] = usePersistent<string[]>('generate.history', []);
+  // History = your latest Generate pictures in the Library (deleting anywhere removes them here too)
+  const rev = useApp((s) => s.libraryRev);
+  const [history, setHistory] = useState<Item[]>([]);
+  useEffect(() => {
+    api
+      .items({ filter: 'generated', limit: 30 })
+      .then((r) => setHistory(r.items))
+      .catch(() => undefined);
+  }, [rev]);
+  const removeFromHistory = async (id: string) => {
+    const at = history.findIndex((h) => h.id === id);
+    const gone = await deleteWithUndo([id], 'picture');
+    if (gone.length && id === selected) setSelected(history[at + 1]?.id ?? history[at - 1]?.id ?? null);
+  };
   const [selected, setSelected] = usePersistent<string | null>('generate.selected', null);
   const [jobId, setJobId] = usePersistent<string | null>('generate.job', null);
   const [strip, setStrip] = useState<Item[]>([]);
@@ -118,7 +132,6 @@ export function Generate({ query }: { query: URLSearchParams }) {
         if (j.id !== jobId) return;
         if (j.status === 'done' && j.result_ids.length) {
           setSelected(j.result_ids[0]);
-          setHistory((h) => [...j.result_ids, ...h.filter((x) => !j.result_ids.includes(x))].slice(0, 200));
         }
         if (j.status === 'error' || j.status === 'lost') toast(j.error ?? 'Generation failed.', 'error');
       }),
@@ -696,20 +709,32 @@ export function Generate({ query }: { query: URLSearchParams }) {
         </div>
       </section>
 
-      <aside className="rail" aria-label="Session history">
+      <aside className="rail" aria-label="History">
         <h3>History</h3>
         {history.length === 0 && <p className="note" style={{ textAlign: 'center' }}>Your results appear here.</p>}
-        {history.map((id) => (
-          <button
-            key={id}
-            aria-pressed={id === selected}
-            onClick={() => setSelected(id)}
-            draggable
-            onDragStart={(e) => e.dataTransfer.setData('application/x-darkroom-item', id)}
-          >
-            <img src={thumbUrl(id)} alt="" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).style.visibility = 'hidden')} />
-          </button>
+        {history.map((it) => (
+          <div key={it.id} className="rail-item">
+            <button
+              aria-pressed={it.id === selected}
+              aria-label={`Show: ${it.prompt || 'picture'}`}
+              title="Delete key removes it (Undo in the notice)"
+              onClick={() => setSelected(it.id)}
+              onKeyDown={(e) => e.key === 'Delete' && (e.preventDefault(), void removeFromHistory(it.id))}
+              draggable
+              onDragStart={(e) => e.dataTransfer.setData('application/x-darkroom-item', it.id)}
+            >
+              <img src={thumbUrl(it.id)} alt="" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).style.visibility = 'hidden')} />
+            </button>
+            <button className="rail-delete" aria-label="Delete this picture" title="Delete (moves it to Recently deleted)" onClick={() => void removeFromHistory(it.id)}>
+              <X size={13} />
+            </button>
+          </div>
         ))}
+        {history.length > 0 && (
+          <button className="btn ghost sm rail-more" onClick={() => openLibrary('all')}>
+            See all in Library
+          </button>
+        )}
       </aside>
 
       {capture && (

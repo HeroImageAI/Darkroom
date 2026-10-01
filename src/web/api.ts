@@ -72,6 +72,8 @@ export const api = {
   /** Library delete: to "Recently deleted" (restorable), back, or for good (files to the Windows Recycle Bin). */
   deleteItems: (ids: string[]) => api.post<{ deleted: string[] }>('/api/items/delete', { ids }),
   restoreItems: (ids: string[]) => api.post<{ restored: string[] }>('/api/items/restore', { ids }),
+  /** Video Takes: hide failed / cancelled / lost renders. */
+  dismissJobs: (body: { ids: string[] } | { failedOfKind: string }) => api.post<{ dismissed: string[] }>('/api/jobs/dismiss', body),
   purgeItems: (body: { ids: string[] } | { all: true }) => api.post<{ purged: number; recycled: number; failed: string[] }>('/api/items/purge', body),
   vlm: (body: { task: 'caption' | 'reverse' | 'enhance' | 'motion' | 'edit_enhance' | 'compose'; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; save?: boolean; input2?: string; inputs?: string[] }) =>
     api.post<{ text: string; seconds: number; model?: string; ratio?: string; aspect?: string | null }>('/api/vlm', body),

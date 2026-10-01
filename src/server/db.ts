@@ -134,7 +134,7 @@ function decode<T>(row: Record<string, any> | undefined, jsonCols: readonly stri
 }
 
 export interface LibraryQuery {
-  filter?: 'all' | 'favourites' | 'klein' | 'qwen' | 'edits' | 'videos' | 'deleted';
+  filter?: 'all' | 'favourites' | 'klein' | 'qwen' | 'edits' | 'videos' | 'deleted' | 'generated';
   q?: string;
   limit?: number;
   offset?: number;
@@ -153,6 +153,9 @@ export class Store {
     if (!cols.includes('group_id')) this.db.exec('ALTER TABLE items ADD COLUMN group_id TEXT');
     // Library delete: items first go to "Recently deleted" (deleted_at set) and can be restored from there
     if (!cols.includes('deleted_at')) this.db.exec('ALTER TABLE items ADD COLUMN deleted_at INTEGER');
+    // Video Takes panel: failed / cancelled / lost renders can be dismissed (they have no file to keep)
+    const jobCols = (this.db.prepare('PRAGMA table_info(jobs)').all() as { name: string }[]).map((c) => c.name);
+    if (!jobCols.includes('dismissed')) this.db.exec('ALTER TABLE jobs ADD COLUMN dismissed INTEGER NOT NULL DEFAULT 0');
   }
 
   groupItems(groupId: string): Item[] {
@@ -203,6 +206,10 @@ export class Store {
         break;
       case 'videos':
         where.push("kind = 'video'");
+        break;
+      case 'generated':
+        // Generate's History panel: pictures made on the Generate screen
+        where.push("mode = 'generate'");
         break;
     }
     if (q.q && q.q.trim()) {
@@ -300,6 +307,34 @@ export class Store {
   activeJobs(): Job[] {
     const rows = this.db.prepare("SELECT * FROM jobs WHERE status IN ('queued','running') ORDER BY created_at").all() as any[];
     return rows.map((r) => decode<Job>(r, JSON_JOB)!);
+  }
+
+  /**
+   * The Video "Takes" panel as a view of the Library: running and failed renders, plus finished ones whose video is
+   * still in the Library (deleting the video there removes the take; restoring brings it back). Dismissed failures
+   * are left out.
+   */
+  liveTakes(kind: string, limit = 30): Job[] {
+    const rows = this.db.prepare('SELECT * FROM jobs WHERE kind = ? AND dismissed = 0 ORDER BY created_at DESC LIMIT 400').all(kind) as any[];
+    const live = (id: string) => {
+      const r = this.db.prepare('SELECT deleted_at FROM items WHERE id = ?').get(id) as { deleted_at: number | null } | undefined;
+      return !!r && r.deleted_at == null;
+    };
+    return rows
+      .map((r) => decode<Job>(r, JSON_JOB)!)
+      .filter((j) => j.status !== 'done' || j.result_ids.some(live))
+      .slice(0, limit);
+  }
+
+  /** Hide finished-without-a-file renders (error, cancelled, lost) from the Takes panel. Returns the ids hidden. */
+  dismissJobs(ids: string[]): string[] {
+    const done: string[] = [];
+    for (const id of ids) if (this.db.prepare("UPDATE jobs SET dismissed = 1 WHERE id = ? AND status IN ('error','cancelled','lost')").run(id).changes) done.push(id);
+    return done;
+  }
+
+  failedJobIds(kind: string): string[] {
+    return (this.db.prepare("SELECT id FROM jobs WHERE kind = ? AND dismissed = 0 AND status IN ('error','cancelled','lost')").all(kind) as { id: string }[]).map((r) => r.id);
   }
 
   recentJobs(kind?: string, limit = 50): Job[] {
