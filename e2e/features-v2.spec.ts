@@ -541,6 +541,30 @@ test.describe.serial('Darkroom v2 features', () => {
     }
   });
 
+  // Prompt variations (DECISIONS 85)
+  test('Generate: {a|b} variations render one picture each on the same seed, shown together', async () => {
+    await page.goto('/#/generate');
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByRole('group', { name: 'Batch size' }).getByRole('button', { name: '×4' }).click();
+    await page.getByLabel('Prompt').fill('a {red|blue|green|white|black} vintage car');
+    await expect(page.locator('.variations summary')).toHaveText('5 variations × batch 4 = 20 pictures');
+    await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
+    await expect(page.getByText(/= 20 pictures\. Keep it to 16 at most/).last()).toBeVisible();
+    await page.getByRole('group', { name: 'Batch size' }).getByRole('button', { name: '×1' }).click();
+    await page.getByLabel('Prompt').fill('a {red|blue} vintage car parked by the sea, photograph');
+    await expect(page.locator('.variations summary')).toHaveText('2 variations');
+    const sent: any[] = [];
+    page.on('request', (r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && sent.push(r.postDataJSON()));
+    await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
+    await expect(page.locator('button[title*="vintage car parked by the sea"]')).toHaveCount(2, { timeout: 240_000 });
+    expect(sent).toHaveLength(2);
+    expect(sent[0].params.seed).toBe(sent[1].params.seed);
+    expect(sent[0].meta.prompt).toMatch(/a red vintage car/);
+    expect(sent[1].meta.prompt).toMatch(/a blue vintage car/);
+    expect(sent[0].meta.ui.prompt).toBe('a {red|blue} vintage car parked by the sea, photograph');
+    await shot(page, 'generate-variations');
+  });
+
   test('Library: Upload adds your pictures to the Library', async () => {
     await page.goto('/#/library');
     const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
