@@ -1,0 +1,182 @@
+[
+  {
+    "group": "qwen-ref-native2k",
+    "key": "2ref",
+    "variant": "default",
+    "ok": true,
+    "seconds": 219.2,
+    "peak": 23.6,
+    "set": {
+      "prompt": "The woman from <image1> sits on the green velvet sofa in the room from <image2>, reading a book. Keep her face, hair and green scarf identical.",
+      "seed": 31,
+      "steps": 40,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-ref-native2k\\2ref-default\\qwen_ref_00010_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-ref-native2k",
+    "key": "3ref",
+    "variant": "default",
+    "ok": true,
+    "seconds": 249.2,
+    "peak": 21.3,
+    "set": {
+      "prompt": "The woman from <image1> leans on the red car from <image2>, parked in the harbour from <image3> on an overcast afternoon. Keep her face and scarf identical.",
+      "seed": 31,
+      "steps": 40,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-ref-native2k\\3ref-default\\qwen_ref_00011_.png"
+  },
+  {
+    "group": "qwen-ref-native2k",
+    "key": "2ref",
+    "variant": "int8",
+    "ok": true,
+    "seconds": 219.5,
+    "peak": 22.3,
+    "set": {
+      "prompt": "The woman from <image1> sits on the green velvet sofa in the room from <image2>, reading a book. Keep her face, hair and green scarf identical.",
+      "seed": 31,
+      "steps": 40,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-ref-native2k\\2ref-int8\\qwen_ref_00012_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-ref-native2k",
+    "key": "3ref",
+    "variant": "int8",
+    "ok": true,
+    "seconds": 243.9,
+    "peak": 24.2,
+    "set": {
+      "prompt": "The woman from <image1> leans on the red car from <image2>, parked in the harbour from <image3> on an overcast afternoon. Keep her face and scarf identical.",
+      "seed": 31,
+      "steps": 40,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-ref-native2k\\3ref-int8\\qwen_ref_00013_.png"
+  },
+  {
+    "group": "qwen-ref-native2k",
+    "key": "2ref",
+    "variant": "int4",
+    "ok": true,
+    "seconds": 220,
+    "peak": 21.2,
+    "set": {
+      "prompt": "The woman from <image1> sits on the green velvet sofa in the room from <image2>, reading a book. Keep her face, hair and green scarf identical.",
+      "seed": 31,
+      "steps": 40,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-ref-native2k\\2ref-int4\\qwen_ref_00014_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-ref-native2k",
+    "key": "3ref",
+    "variant": "int4",
+    "ok": true,
+    "seconds": 243,
+    "peak": 22.2,
+    "set": {
+      "prompt": "The woman from <image1> leans on the red car from <image2>, parked in the harbour from <image3> on an overcast afternoon. Keep her face and scarf identical.",
+      "seed": 31,
+      "steps": 40,
+      "width": 2048,
+      "height": 2048
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-ref-native2k\\3ref-int4\\qwen_ref_00015_.png"
+  },
+  {
+    "group": "qwen-edit-2img",
+    "key": "try-on",
+    "variant": "default",
+    "ok": true,
+    "seconds": 36.1,
+    "peak": 23.2,
+    "set": {
+      "prompt": "Dress the person in <image1> in the outfit from <image2>, with the same style, materials, textures and colours, fitted naturally to their body and lit like <image1>. Keep the face, identity, hair, expression, pose, background and framing of <image1> unchanged.",
+      "seed": 41
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-edit-2img\\try-on-default\\edit_00218_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-edit-2img",
+    "key": "text",
+    "variant": "default",
+    "ok": true,
+    "seconds": 24.3,
+    "peak": 21.3,
+    "set": {
+      "prompt": "In <image1>, replace the text \"SUNRISE BAKERY\" with \"MOONLIGHT BAKERY\". Keep the same font, letter shapes, colour, effects, texture, position, size and alignment, and keep everything else unchanged.",
+      "seed": 42
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-edit-2img\\text-default\\edit_00219_.png"
+  },
+  {
+    "group": "qwen-edit-2img",
+    "key": "try-on",
+    "variant": "int8",
+    "ok": true,
+    "seconds": 35.8,
+    "peak": 21.3,
+    "set": {
+      "prompt": "Dress the person in <image1> in the outfit from <image2>, with the same style, materials, textures and colours, fitted naturally to their body and lit like <image1>. Keep the face, identity, hair, expression, pose, background and framing of <image1> unchanged.",
+      "seed": 41
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-edit-2img\\try-on-int8\\edit_00220_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-edit-2img",
+    "key": "text",
+    "variant": "int8",
+    "ok": true,
+    "seconds": 24.1,
+    "peak": 20.3,
+    "set": {
+      "prompt": "In <image1>, replace the text \"SUNRISE BAKERY\" with \"MOONLIGHT BAKERY\". Keep the same font, letter shapes, colour, effects, texture, position, size and alignment, and keep everything else unchanged.",
+      "seed": 42
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-edit-2img\\text-int8\\edit_00221_.png"
+  },
+  {
+    "group": "qwen-edit-2img",
+    "key": "try-on",
+    "variant": "int4",
+    "ok": true,
+    "seconds": 35.9,
+    "peak": 20.2,
+    "set": {
+      "prompt": "Dress the person in <image1> in the outfit from <image2>, with the same style, materials, textures and colours, fitted naturally to their body and lit like <image1>. Keep the face, identity, hair, expression, pose, background and framing of <image1> unchanged.",
+      "seed": 41
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-edit-2img\\try-on-int4\\edit_00222_.png",
+    "cold": true
+  },
+  {
+    "group": "qwen-edit-2img",
+    "key": "text",
+    "variant": "int4",
+    "ok": true,
+    "seconds": 24.3,
+    "peak": 19.8,
+    "set": {
+      "prompt": "In <image1>, replace the text \"SUNRISE BAKERY\" with \"MOONLIGHT BAKERY\". Keep the same font, letter shapes, colour, effects, texture, position, size and alignment, and keep everything else unchanged.",
+      "seed": 42
+    },
+    "file_out": "docs\\qa\\addenda\\c381\\qwen-edit-2img\\text-int4\\edit_00223_.png"
+  }
+]

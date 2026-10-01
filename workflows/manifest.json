@@ -4028,6 +4028,30 @@
               "input": "image"
             }
           ]
+        },
+        "repetition_penalty": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.repetition_penalty"
+            }
+          ],
+          "default": 1.05,
+          "min": 0.5,
+          "max": 2
+        },
+        "presence_penalty": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.presence_penalty"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 2
         }
       },
       "outputs": {
@@ -4149,6 +4173,30 @@
           "default": 20,
           "min": 0,
           "max": 1000
+        },
+        "repetition_penalty": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.repetition_penalty"
+            }
+          ],
+          "default": 1.05,
+          "min": 0.5,
+          "max": 2
+        },
+        "presence_penalty": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "sampling_mode.presence_penalty"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 2
         }
       },
       "outputs": {

@@ -115,3 +115,13 @@ describe('stripLeakedReasoning', () => {
     expect(cleanVlmOutput(raw)).toBe(raw);
   });
 });
+
+describe('wrapping quotes', () => {
+  it('strips quotes around the whole answer even when it quotes text inside', () => {
+    expect(cleanVlmOutput('</think>\n\n"Change it to night. Keep the plate "E65 8Q4S" unchanged."')).toBe('Change it to night. Keep the plate "E65 8Q4S" unchanged.');
+  });
+  it('keeps an answer that merely starts and ends with separate quotations', () => {
+    const t = '"SUNRISE BAKERY" becomes "MOONLIGHT BAKERY"';
+    expect(cleanVlmOutput(t)).toBe(t);
+  });
+});

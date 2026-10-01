@@ -167,7 +167,58 @@ const vlmVariant = (id: string, label: string, file: string): Variant => ({
   set: { model: file },
 });
 
+const cacheVariants = (workflow: string): Variant[] =>
+  (['default', 'int8', 'int4'] as const).map((dt) => ({ id: dt, label: `Prefix cache: ${dt}`, workflow, ...(dt === 'default' ? {} : { file: `experiments/${workflow}.cache_${dt}.json` }) }));
+
 const PHASES: Record<string, Group[]> = {
+  // ComfyUI templates 0.11.73 embed the official Qwen-Image 2.1 prompt enhancers with their own sampling settings
+  // (thinking on, max 4096, repetition 1.0, presence penalty 1.5 for T2I / 0 for I2I, I2I loader "qwen_image").
+  // Same system prompts as Darkroom's (byte-identical); only the run settings differ.
+  c381pe: [
+    {
+      id: 'qwen-pe-settings',
+      variants: [
+        { id: 'darkroom', label: 'Darkroom today (thinking off, 1024/1536 tokens, rep 1.05)', workflow: 'vlm2_text' },
+        {
+          id: 'official',
+          label: 'Official template settings',
+          workflow: 'vlm2_text',
+          build: (c): { set: Record<string, string | number> } => ({
+            set: c.workflow === 'vlm2_image'
+              ? { thinking: 'true', max_tokens: 4096, repetition_penalty: 1, presence_penalty: 0, loader: 'qwen_image' }
+              : { thinking: 'true', max_tokens: 4096, repetition_penalty: 1, presence_penalty: 1.5 },
+          }),
+        },
+      ],
+      cases: [
+        ...['poster for a jazz night called "Blue Hour" on Friday', 'a lighthouse in a storm', 'a cat wearing a tiny crown', 'product photo of a ceramic mug, seen from above'].map((t, i) => vlmCase(`t2i-${i + 1}`, 'enhance', 'qwen', t)),
+        vlmCase('i2i-night', 'edit_enhance', 'qwen', 'make it night', '09_car'),
+        vlmCase('i2i-sign', 'edit_enhance', 'qwen', 'change the sign to MOONLIGHT BAKERY', '03_text_scene'),
+        vlmCase('i2i-winter', 'edit_enhance', 'qwen', 'make it winter', '10_interior'),
+        vlmCase('i2i-remove', 'edit_enhance', 'qwen', 'remove the car', '09_car'),
+      ],
+    },
+  ],
+  // ComfyUI 0.38.1 fixed the int8 / int4 Qwen-Image 2.1 prefix cache (#16667). Same seeds; only the cache precision
+  // differs (experiments/<graph>.cache_<dtype>.json are copies of the shipped graphs with that one setting changed).
+  c381: [
+    {
+      id: 'qwen-ref-native2k',
+      variants: cacheVariants('qwen_ref'),
+      cases: [
+        { key: '2ref', set: { prompt: 'The woman from <image1> sits on the green velvet sofa in the room from <image2>, reading a book. Keep her face, hair and green scarf identical.', seed: 31, steps: 40, width: 2048, height: 2048 }, images: { image_1: g('01_portrait'), image_2: g('10_interior') } },
+        { key: '3ref', set: { prompt: 'The woman from <image1> leans on the red car from <image2>, parked in the harbour from <image3> on an overcast afternoon. Keep her face and scarf identical.', seed: 31, steps: 40, width: 2048, height: 2048 }, images: { image_1: g('01_portrait'), image_2: g('09_car'), image_3: g('08_lowres_src') } },
+      ],
+    },
+    {
+      id: 'qwen-edit-2img',
+      variants: cacheVariants('qwen_edit'),
+      cases: [
+        { key: 'try-on', set: { prompt: 'Dress the person in <image1> in the outfit from <image2>, with the same style, materials, textures and colours, fitted naturally to their body and lit like <image1>. Keep the face, identity, hair, expression, pose, background and framing of <image1> unchanged.', seed: 41 }, images: { image_1: g('01_portrait'), image_2: g('16_outfit') } },
+        { key: 'text', set: { prompt: 'In <image1>, replace the text "SUNRISE BAKERY" with "MOONLIGHT BAKERY". Keep the same font, letter shapes, colour, effects, texture, position, size and alignment, and keep everything else unchanged.', seed: 42 }, images: { image_1: g('03_text_scene') } },
+      ],
+    },
+  ],
   // Phase 7 follow-up: the Klein "Enhance instruction" rewrite turned "make it night" into warm light (relight rule bias).
   p7b: [
     {

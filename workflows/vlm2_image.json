@@ -59,6 +59,7 @@
       "sampling_mode.min_p": 0.0,
       "sampling_mode.repetition_penalty": 1.05,
       "sampling_mode.seed": 0,
+      "sampling_mode.presence_penalty": 0.0,
       "thinking": false,
       "use_default_template": true,
       "system_prompt": [

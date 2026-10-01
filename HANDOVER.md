@@ -72,10 +72,16 @@ BENCHMARKS.md.
   `docs/qa/addenda/` (re-run with `npx tsx scripts/ab-addenda.ts <phase>`).
 - **UX review** (docs/UX_REVIEW.md): Library delete → Recently deleted (Undo, Restore, Delete forever to the Windows
   Recycle Bin), multi-select, Darkroom reopens on your last screen, prompt tools no longer cut off.
-- `npm test`: 284 unit tests. `npm run e2e`: 35 end-to-end tests in Edge against ComfyUI (v1, v2 and the addenda). If Darkroom is already open from the desktop shortcut, run the test stack beside it on
+- `npm test`: 286 unit tests. `npm run e2e`: 35 end-to-end tests in Edge against ComfyUI (v1, v2 and the addenda). If Darkroom is already open from the desktop shortcut, run the test stack beside it on
   another port with its own library: `DR_SERVER_PORT=5179 DR_DATA_DIR=data/e2e npm run dev`, then `npx playwright test`.
 - `docs/QA_REPORT.md`: every feature run on the golden test pictures (`tests/golden/`), with grids, timings, peak memory,
   a model-switching stress test and the remaining known issues. Re-run with `npx tsx scripts/qa-phase6.ts features`.
+
+## After a ComfyUI update
+
+Comfy Desktop updates ComfyUI by itself. Afterwards run `npx tsx scripts/check-nodes.ts` (every node, input, dropdown
+value and model file the workflows use, checked against the running ComfyUI) and `npm run e2e`. Checked up to
+ComfyUI 0.38.1 (DECISIONS 80).
 
 ## Known limitations
 

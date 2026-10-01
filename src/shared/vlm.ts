@@ -67,6 +67,8 @@ export interface Vlm2Entry extends Partial<VlmEntry> {
   top_p?: number;
   top_k?: number;
   thinking?: boolean;
+  repetition_penalty?: number;
+  presence_penalty?: number;
 }
 
 export interface VlmModelRef {
@@ -112,6 +114,8 @@ export function buildVlm2Request(p: Vlm2Prompts, task: Vlm2Task, variant: string
       top_p: entry.top_p ?? 0.8,
       top_k: entry.top_k ?? 20,
       thinking: entry.thinking ?? false,
+      ...(entry.repetition_penalty !== undefined ? { repetition_penalty: entry.repetition_penalty } : {}),
+      ...(entry.presence_penalty !== undefined ? { presence_penalty: entry.presence_penalty } : {}),
     },
     modelLabel: model.label,
     output: entry.output ?? 'text',
@@ -176,7 +180,15 @@ export function cleanVlmOutput(raw: string): string {
   s = s.replace(/^(rewritten prompt|video prompt|prompt|caption|description|output)\s*:\s*/i, '');
   s = s.replace(/^\*\*[^*]+\*\*\s*:?\s*/, '');
   const q = s.match(/^["“](.*)["”]$/s);
-  if (q && !q[1].includes('"')) s = q[1];
+  // the whole answer wrapped in quotes; quoted text inside (a sign, a number plate) is fine as long as it is balanced
+  // and its first quote *opens* a quotation ('plate "E65"'), not closes the outer one ('"SUNRISE" becomes "MOON"')
+  if (q) {
+    const inner = q[1];
+    const marks = inner.match(/["“”]/g) ?? [];
+    const first = inner.search(/["“”]/);
+    const opens = first < 0 || ((first === 0 || /[\s(\[:—-]/.test(inner[first - 1])) && /\S/.test(inner[first + 1] ?? ''));
+    if (marks.length % 2 === 0 && opens) s = inner;
+  }
   s = s.trim();
   // a lone closing quote left over after the answer (odd quote count, quote at the very end)
   if (/["”]$/.test(s) && (s.match(/["“”]/g) ?? []).length % 2 === 1) s = s.slice(0, -1).trim();

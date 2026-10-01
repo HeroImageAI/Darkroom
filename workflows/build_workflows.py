@@ -614,7 +614,9 @@ def vlm2(with_image=True):
     system = g.add("PrimitiveStringMultiline", "DR_SYSTEM", value="")
     inputs = dict(clip=o(clip), prompt="", max_length=512, sampling_mode="on",
                   **{"sampling_mode.temperature": 0.7, "sampling_mode.top_k": 20, "sampling_mode.top_p": 0.8,
-                     "sampling_mode.min_p": 0.0, "sampling_mode.repetition_penalty": 1.05, "sampling_mode.seed": 0},
+                     "sampling_mode.min_p": 0.0, "sampling_mode.repetition_penalty": 1.05, "sampling_mode.seed": 0,
+                     # 0 = off; the official Qwen-Image 2.1 PE-T2I template uses 1.5 (ComfyUI templates 0.11.73)
+                     "sampling_mode.presence_penalty": 0.0},
                   thinking=False, use_default_template=True, system_prompt=o(system))
     if with_image:
         img = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
