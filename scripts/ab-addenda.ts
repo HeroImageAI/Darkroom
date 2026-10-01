@@ -171,6 +171,34 @@ const cacheVariants = (workflow: string): Variant[] =>
   (['default', 'int8', 'int4'] as const).map((dt) => ({ id: dt, label: `Prefix cache: ${dt}`, workflow, ...(dt === 'default' ? {} : { file: `experiments/${workflow}.cache_${dt}.json` }) }));
 
 const PHASES: Record<string, Group[]> = {
+  // ComfyUI templates 0.11.73 embed the official Qwen-Image 2.1 prompt enhancers with their own sampling settings
+  // (thinking on, max 4096, repetition 1.0, presence penalty 1.5 for T2I / 0 for I2I, I2I loader "qwen_image").
+  // Same system prompts as Darkroom's (byte-identical); only the run settings differ.
+  c381pe: [
+    {
+      id: 'qwen-pe-settings',
+      variants: [
+        { id: 'darkroom', label: 'Darkroom today (thinking off, 1024/1536 tokens, rep 1.05)', workflow: 'vlm2_text' },
+        {
+          id: 'official',
+          label: 'Official template settings',
+          workflow: 'vlm2_text',
+          build: (c): { set: Record<string, string | number> } => ({
+            set: c.workflow === 'vlm2_image'
+              ? { thinking: 'true', max_tokens: 4096, repetition_penalty: 1, presence_penalty: 0, loader: 'qwen_image' }
+              : { thinking: 'true', max_tokens: 4096, repetition_penalty: 1, presence_penalty: 1.5 },
+          }),
+        },
+      ],
+      cases: [
+        ...['poster for a jazz night called "Blue Hour" on Friday', 'a lighthouse in a storm', 'a cat wearing a tiny crown', 'product photo of a ceramic mug, seen from above'].map((t, i) => vlmCase(`t2i-${i + 1}`, 'enhance', 'qwen', t)),
+        vlmCase('i2i-night', 'edit_enhance', 'qwen', 'make it night', '09_car'),
+        vlmCase('i2i-sign', 'edit_enhance', 'qwen', 'change the sign to MOONLIGHT BAKERY', '03_text_scene'),
+        vlmCase('i2i-winter', 'edit_enhance', 'qwen', 'make it winter', '10_interior'),
+        vlmCase('i2i-remove', 'edit_enhance', 'qwen', 'remove the car', '09_car'),
+      ],
+    },
+  ],
   // ComfyUI 0.38.1 fixed the int8 / int4 Qwen-Image 2.1 prefix cache (#16667). Same seeds; only the cache precision
   // differs (experiments/<graph>.cache_<dtype>.json are copies of the shipped graphs with that one setting changed).
   c381: [

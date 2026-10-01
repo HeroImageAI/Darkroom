@@ -378,3 +378,24 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
       rebuilds it at full size. Detail score 30 → 426 (original 319) in 18 s; crops show crisp vents, wiper and trim
       without halos. Transparency survives (alpha kept, exact size hit). The banner goes once a sharpened version
       exists. Masked edits never need it.
+80. **ComfyUI 0.38.1 (2026-10-01).** Changes: a fix for the int8 / int4 Qwen-Image 2.1 prefix cache (#16667), three
+    paid cloud partner nodes (Ideogram 4.5, HeyGen Video 1.0, Claude Sonnet 5.5) and templates 0.11.70 → 0.11.73.
+    - **Compatibility:** `scripts/check-nodes.ts` (new; run it after every ComfyUI update) checks every workflow the
+      manifest uses against the live `/object_info` — node classes, input names, autogrow children, fixed dropdown
+      values and installed model files: 38 workflows, 27 model files, all compatible. Full e2e on 0.38.1: green.
+    - **Prefix cache int8 / int4: not adopted** (docs/qa/addenda/c381). Same seeds: int8 looks identical to default
+      (mean difference 0.5–3 / 255), int4 visibly changes the picture (14–19 / 255: pose and furniture move). Speed is
+      the same. Peak memory, measured twice from an empty card (Native 2K, 3 references), was *higher* with int8
+      (22.8 / 23.6 GB vs 20.5 / 20.4 GB): the cache is dequantised to full precision while sampling, so no saving
+      reaches the peak. The graphs keep `dtype: default`; the int8 / int4 copies stay in `workflows/experiments/`.
+      Side result: Darkroom's heaviest Qwen job peaks at ~20.5 GB from a clean start (the 24.8 GB seen in the
+      addenda included other models still loaded).
+    - **Official prompt-enhancer settings: not adopted** (docs/qa/addenda/c381pe). The 0.11.73 Qwen-Image 2.1
+      templates now embed PE-T2I / PE-I2I with thinking on, 4096 tokens, repetition 1.0, presence penalty 1.5 (T2I),
+      and the `qwen_image` loader for PE-I2I; the system prompts are byte-identical to Darkroom's. Same 8 requests:
+      Darkroom's settings 6–16 s, 8/8 clean, aspect ratio every time; the official settings 15–40 s, with one T2I
+      answer as unparseable JSON (no ratio), one empty edit instruction, one cut off mid-sentence and one wrapped in
+      JSON. The graphs gained `repetition_penalty` / `presence_penalty` settings (default: today's behaviour) so a
+      future template change can be tried from `presets/vlm_prompts.json` without a graph change.
+    - Found on the way: an answer wrapped in quotes that also quoted text inside ("…plate "E65 8Q4S"…") kept its
+      wrapper; the cleaner now strips a balanced outer pair (unit-tested both ways).

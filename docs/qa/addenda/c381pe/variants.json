@@ -1,0 +1,12 @@
+{
+  "qwen-pe-settings": [
+    {
+      "id": "darkroom",
+      "label": "Darkroom today (thinking off, 1024/1536 tokens, rep 1.05)"
+    },
+    {
+      "id": "official",
+      "label": "Official template settings"
+    }
+  ]
+}

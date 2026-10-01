@@ -1,0 +1,30 @@
+{
+  "qwen-ref-native2k": [
+    {
+      "id": "default",
+      "label": "Prefix cache: default"
+    },
+    {
+      "id": "int8",
+      "label": "Prefix cache: int8"
+    },
+    {
+      "id": "int4",
+      "label": "Prefix cache: int4"
+    }
+  ],
+  "qwen-edit-2img": [
+    {
+      "id": "default",
+      "label": "Prefix cache: default"
+    },
+    {
+      "id": "int8",
+      "label": "Prefix cache: int8"
+    },
+    {
+      "id": "int4",
+      "label": "Prefix cache: int4"
+    }
+  ]
+}
