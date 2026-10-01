@@ -411,3 +411,16 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     - **Failed takes** (error, cancelled, lost — no file) get **Dismiss**, and **Clear failed (N)** hides them all
       (`jobs.dismissed`, additive migration). Only failures can be dismissed.
     - **See all in Library** links (videos filter for Takes). No separate "hide from panel": one kind of removal.
+82. **Clean workspace.** Generate and Video kept everything in localStorage, so a new launch reopened the last picture
+    and prompt, even after that picture had been deleted (JP's screenshots: a deleted red car on Generate, an old start
+    frame on Video), while Edit and Library opened clean. Now:
+    - **Deleted work leaves the screen**: the picture or take on show is dropped as soon as it is deleted anywhere,
+      and so is a start / end frame picked from a Library picture that gets deleted (frames are copies, so the source
+      item is checked).
+    - **Work in progress is per launch, preferences stay** (`useWorkspace` / `useSessionState` in
+      `src/web/lib/hooks.ts`): the prompt, references, seed, frames, motion text, camera moves and what is on screen
+      live in sessionStorage (kept across reloads and screen changes, cleared when Darkroom is launched again — the
+      launcher opens a new tab); model, aspect, style, quality, batch, length and notifications stay in localStorage.
+      Older stored work-in-progress values are ignored. Earlier results stay in History / Takes, and Home's
+      "Continue where you left off" still returns to the last screen.
+    - **New** on Generate (next to "Prompt") and Video (next to "Frames") clears the workspace at any time, with Undo.

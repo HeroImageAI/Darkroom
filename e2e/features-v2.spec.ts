@@ -17,9 +17,11 @@ async function firstItem(page: Page, pred: (i: any) => boolean): Promise<any> {
 test.describe.serial('Darkroom v2 features', () => {
   let page: Page;
   test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    // a real context (not browser.newPage) so a test can open a second tab, i.e. a fresh launch
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
   });
-  test.afterAll(async () => page.close());
+  test.afterAll(async () => page.context().close());
 
   test('Generate: Klein guidance is fixed, Qwen offers quality + transparency', async () => {
     await page.goto('/#/generate');
@@ -438,6 +440,49 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(takes.getByTestId('take')).toHaveCount(cards);
     expect(await videos()).toBe(before);
     await shot(page, 'video-takes');
+  });
+
+  // Clean workspace (DECISIONS 82): work in progress is per launch, preferences stay, deleted work leaves the screen
+  test('Generate: a fresh launch starts clean but keeps preferences; New clears with Undo', async () => {
+    await page.goto('/#/generate');
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByLabel('Prompt').fill('a ceramic teapot on linen, morning light');
+    await page.getByRole('complementary', { name: 'History' }).locator('.rail-item').first().getByRole('button').first().click();
+    await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+
+    // a new tab = a fresh launch (sessionStorage is per tab, localStorage is shared)
+    const fresh = await page.context().newPage();
+    await fresh.goto('/#/generate');
+    await expect(fresh.getByLabel('Prompt')).toHaveValue('');
+    await expect(fresh.getByText('Nothing developed yet')).toBeVisible();
+    await expect(fresh.getByRole('button', { name: /^Klein 9B/ })).toHaveAttribute('aria-pressed', 'true');
+    await fresh.close();
+
+    await page.getByRole('button', { name: 'New', exact: true }).click();
+    await expect(page.getByLabel('Prompt')).toHaveValue('');
+    await expect(page.getByText('Nothing developed yet')).toBeVisible();
+    await page.getByRole('button', { name: 'Undo' }).last().click();
+    await expect(page.getByLabel('Prompt')).toHaveValue('a ceramic teapot on linen, morning light');
+    await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+  });
+
+  test('Generate and Video: deleted work leaves the screen', async () => {
+    const pics = (await (await page.request.get('/api/items?limit=20&filter=generated')).json()).items;
+    const victim = pics[3];
+    // Generate: the picture on screen is deleted in the Library -> clean stage
+    await page.goto('/#/generate');
+    // History lists the same pictures in the same order (many test pictures share a prompt, so pick by position)
+    await page.getByRole('complementary', { name: 'History' }).locator('.rail-item').nth(3).getByRole('button').first().click();
+    await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+    await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
+    await expect(page.getByText('Nothing developed yet')).toBeVisible();
+    // Video: a start frame picked from that picture goes too
+    await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
+    await page.goto(`/#/video?start=${victim.id}`);
+    await expect(page.getByAltText('Start frame')).toBeVisible({ timeout: 30_000 });
+    await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
+    await expect(page.getByAltText('Start frame')).toHaveCount(0);
+    await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
   });
 
   test('Library: Upload adds your pictures to the Library', async () => {
