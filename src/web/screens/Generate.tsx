@@ -575,27 +575,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
             </div>
           </div>
 
-          <div>
-            <p className="section-label">
-              Aspect <span className="mono">{w} × {h}</span>
-            </p>
-            <Pills label="Aspect ratio" options={ASPECTS.map((a) => ({ value: a, label: a }))} value={s.aspect} onChange={(aspect) => update({ aspect })} />
-          </div>
-
-          <div>
-            <p className="section-label">Style</p>
-            <Pills
-              label="Style preset"
-              options={styles.map((x) => ({ value: x.id, label: x.label, title: x[s.model as ImageModelKey] || 'No style added' }))}
-              value={s.style}
-              onChange={(style) => update({ style })}
-            />
-          </div>
-
-          {(s.model === 'klein' || s.model === 'qwen') && (
-            <LoraPicker family={s.model} value={s.loras?.[s.model] ?? []} onChange={(v) => update({ loras: { ...(s.loras ?? {}), [s.model]: v } })} />
-          )}
-
+          {/* quality sits with the model: it is the biggest quality choice after the model itself */}
           {model.quality && (
             <div>
               <p className="section-label">
@@ -613,6 +593,23 @@ export function Generate({ query }: { query: URLSearchParams }) {
               </label>
             </div>
           )}
+
+          <div>
+            <p className="section-label">
+              Aspect <span className="mono">{w} × {h}</span>
+            </p>
+            <Pills label="Aspect ratio" options={ASPECTS.map((a) => ({ value: a, label: a }))} value={s.aspect} onChange={(aspect) => update({ aspect })} />
+          </div>
+
+          <div>
+            <p className="section-label">Style</p>
+            <Pills
+              label="Style preset"
+              options={styles.map((x) => ({ value: x.id, label: x.label, title: x[s.model as ImageModelKey] || 'No style added' }))}
+              value={s.style}
+              onChange={(style) => update({ style })}
+            />
+          </div>
 
           <RefSlots
             refs={s.refs}
@@ -635,6 +632,10 @@ export function Generate({ query }: { query: URLSearchParams }) {
               }
             }}
           />
+
+          {(s.model === 'klein' || s.model === 'qwen') && (
+            <LoraPicker family={s.model} value={s.loras?.[s.model] ?? []} onChange={(v) => update({ loras: { ...(s.loras ?? {}), [s.model]: v } })} />
+          )}
 
           <div>
             <p className="section-label">Batch</p>

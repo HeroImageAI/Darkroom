@@ -58,6 +58,23 @@ export function LoraPicker({ family, value, onChange }: { family: 'klein' | 'qwe
   const free = fits.filter((f) => !value.some((v) => v.name === f.name));
   const label = (name: string) => fits.find((f) => f.name === name)?.label ?? name;
   const others = cat ? cat.other.length + cat[family === 'klein' ? 'qwen' : 'klein'].length : 0;
+  // none made for this model: one quiet line (the how-to is in its tooltip), not a paragraph on every visit
+  if (cat && fits.length === 0 && !error)
+    return (
+      <div className="lora-picker">
+        <p
+          className="section-label"
+          title={`Put .safetensors files made for ${MODEL_NAME[family]} in ComfyUI's models\\loras folder, then press Refresh.${others ? ` Your other ${others} LoRAs are for other models.` : ''}`}
+        >
+          <span>
+            LoRAs <span className="lora-none">none for {MODEL_NAME[family]}</span>
+          </span>
+          <button type="button" className="btn ghost sm icon" title="Look for new LoRA files" aria-label="Refresh LoRAs" onClick={refresh}>
+            <RefreshCw size={13} />
+          </button>
+        </p>
+      </div>
+    );
   return (
     <div className="lora-picker">
       <p className="section-label">

@@ -1,0 +1,52 @@
+{
+  "klein-precision": [
+    {
+      "id": "fp8mixed",
+      "label": "Darkroom: klein-9b fp8mixed (9 GB)"
+    },
+    {
+      "id": "bf16",
+      "label": "klein-9b full bf16 (18 GB)"
+    }
+  ],
+  "klein-batch4": [
+    {
+      "id": "fp8mixed",
+      "label": "fp8mixed, batch of 4"
+    },
+    {
+      "id": "bf16",
+      "label": "bf16, batch of 4"
+    }
+  ],
+  "klein-2mp": [
+    {
+      "id": "1mp",
+      "label": "Klein at ~1 MP (Darkroom)"
+    },
+    {
+      "id": "2mp",
+      "label": "Klein at ~2 MP"
+    }
+  ],
+  "klein-steps": [
+    {
+      "id": "s4",
+      "label": "4 steps (Darkroom)"
+    },
+    {
+      "id": "s6",
+      "label": "6 steps"
+    }
+  ],
+  "qwen-decode-2k": [
+    {
+      "id": "tiled",
+      "label": "Tiled decode (Darkroom)"
+    },
+    {
+      "id": "whole",
+      "label": "Whole-picture decode"
+    }
+  ]
+}

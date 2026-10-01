@@ -570,7 +570,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.goto('/#/generate');
     await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     const cat = await (await page.request.get('/api/loras')).json();
-    if (!cat.qwen.length) await expect(page.locator('.lora-picker .note').first()).toContainText('No Qwen-Image 2.1 LoRAs found');
+    if (!cat.qwen.length) await expect(page.locator('.lora-picker .lora-none')).toHaveText('none for Qwen-Image 2.1');
     await page.getByRole('button', { name: /^Klein 9B/ }).click();
     test.skip(!cat.klein.length, 'no Klein 9B LoRA installed on this machine');
     const offered = (await page.getByLabel('Add a LoRA').locator('option').allInnerTexts()).slice(1);

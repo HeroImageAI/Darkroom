@@ -76,7 +76,7 @@ export function TopBar({ screen }: { screen: Screen }) {
         <div className={`status-pill ${state}`} title={status?.message || status?.url || ''}>
           <span className="dot" aria-hidden="true" />
           {state === 'starting' && <Loader2 size={14} className="spin" />}
-          <span>{label}</span>
+          <span>{state === 'online' && socket === 'open' ? (<><span className="status-name">ComfyUI </span>{status?.version ?? ''}</>) : label}</span>
           {socket === 'open' && (state === 'offline' || state === 'desktop-open') && <button onClick={startComfy}>Start ComfyUI</button>}
           {socket === 'open' && state !== 'online' && (
             <button
@@ -87,16 +87,16 @@ export function TopBar({ screen }: { screen: Screen }) {
             </button>
           )}
         </div>
-        <div className="vram" title="Graphics memory in use">
-          <span>VRAM</span>
+        <div className="vram" title={`Graphics memory in use${used !== null && total ? `: ${used.toFixed(1)} of ${total.toFixed(0)} GB` : ""}`}>
+          <span className="vram-label">VRAM</span>
           <div className="vram-bar">
             <div style={{ width: used && total ? `${(used / total) * 100}%` : '0%' }} />
           </div>
-          <span className="mono">{used !== null && total ? `${used.toFixed(1)}/${total.toFixed(0)} GB` : '–'}</span>
+          <span className="mono vram-text">{used !== null && total ? `${used.toFixed(1)}/${total.toFixed(0)} GB` : '–'}</span>
         </div>
-        <div className="queue-count" title="Jobs waiting or running in ComfyUI">
+        <div className="queue-count" title={`${status?.queue ?? 0} jobs waiting or running in ComfyUI`}>
           <ListOrdered size={15} />
-          {status?.queue ?? 0} queued
+          {status?.queue ?? 0}<span className="queue-word"> queued</span>
         </div>
       </div>
       {log !== null && (

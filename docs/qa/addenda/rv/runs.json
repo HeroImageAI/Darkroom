@@ -1,0 +1,363 @@
+[
+  {
+    "group": "klein-precision",
+    "key": "fox",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 10.9,
+    "peak": 20.9,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7000,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\fox-fp8mixed\\klein_00173_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-precision",
+    "key": "church",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 7.4,
+    "peak": 20.5,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 7001,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\church-fp8mixed\\klein_00174_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "portrait",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 7.5,
+    "peak": 20.3,
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 7002,
+      "width": 896,
+      "height": 1120
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\portrait-fp8mixed\\klein_00175_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "bakery-text",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 7.6,
+    "peak": 20.7,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 7003,
+      "width": 1248,
+      "height": 832
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\bakery-text-fp8mixed\\klein_00176_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "busy-street",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 7.5,
+    "peak": 20.3,
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 7004,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\busy-street-fp8mixed\\klein_00177_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "fur",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 7.4,
+    "peak": 20.5,
+    "set": {
+      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
+      "seed": 7005,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\fur-fp8mixed\\klein_00178_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "fox",
+    "variant": "bf16",
+    "ok": true,
+    "seconds": 16.3,
+    "peak": 24.1,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7000,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\fox-bf16\\klein_00179_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-precision",
+    "key": "church",
+    "variant": "bf16",
+    "ok": true,
+    "seconds": 10.4,
+    "peak": 24.7,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 7001,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\church-bf16\\klein_00180_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "portrait",
+    "variant": "bf16",
+    "ok": true,
+    "seconds": 9.8,
+    "peak": 25,
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 7002,
+      "width": 896,
+      "height": 1120
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\portrait-bf16\\klein_00181_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "bakery-text",
+    "variant": "bf16",
+    "ok": true,
+    "seconds": 10.2,
+    "peak": 24.7,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 7003,
+      "width": 1248,
+      "height": 832
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\bakery-text-bf16\\klein_00182_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "busy-street",
+    "variant": "bf16",
+    "ok": true,
+    "seconds": 10,
+    "peak": 24.8,
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 7004,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\busy-street-bf16\\klein_00183_.png"
+  },
+  {
+    "group": "klein-precision",
+    "key": "fur",
+    "variant": "bf16",
+    "ok": true,
+    "seconds": 9.9,
+    "peak": 24.6,
+    "set": {
+      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
+      "seed": 7005,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-precision\\fur-bf16\\klein_00184_.png"
+  },
+  {
+    "group": "klein-batch4",
+    "key": "fox-x4",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 28.6,
+    "peak": 21.7,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7100,
+      "width": 1024,
+      "height": 1024,
+      "batch": 4
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-batch4\\fox-x4-fp8mixed\\klein_00185_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-batch4",
+    "key": "fox-x4",
+    "variant": "bf16",
+    "ok": true,
+    "seconds": 30.6,
+    "peak": 22.8,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7100,
+      "width": 1024,
+      "height": 1024,
+      "batch": 4
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-batch4\\fox-x4-bf16\\klein_00189_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-2mp",
+    "key": "fox@1:1",
+    "variant": "1mp",
+    "ok": false,
+    "error": "ult = binding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\fox@1:1-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\fox@1:1-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7000,
+      "width": 1024,
+      "height": 1024
+    },
+    "cold": true
+  },
+  {
+    "group": "klein-2mp",
+    "key": "church@16:9",
+    "variant": "1mp",
+    "ok": false,
+    "error": "nding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\church@16:9-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\church@16:9-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 7001,
+      "width": 1344,
+      "height": 768
+    }
+  },
+  {
+    "group": "klein-2mp",
+    "key": "portrait@4:5",
+    "variant": "1mp",
+    "ok": false,
+    "error": "ing.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\portrait@4:5-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\portrait@4:5-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 7002,
+      "width": 896,
+      "height": 1120
+    }
+  },
+  {
+    "group": "klein-2mp",
+    "key": "bakery-text@3:2",
+    "variant": "1mp",
+    "ok": false,
+    "error": "dir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\bakery-text@3:2-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\bakery-text@3:2-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 7003,
+      "width": 1248,
+      "height": 832
+    }
+  },
+  {
+    "group": "klein-2mp",
+    "key": "busy-street@16:9",
+    "variant": "1mp",
+    "ok": false,
+    "error": "r(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\busy-street@16:9-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\busy-street@16:9-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 7004,
+      "width": 1344,
+      "height": 768
+    }
+  },
+  {
+    "group": "klein-2mp",
+    "key": "fur@1:1",
+    "variant": "1mp",
+    "ok": false,
+    "error": "ult = binding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\fur@1:1-1mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\fur@1:1-1mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A fluffy grey Maine Coon cat sitting on a white windowsill, long detailed fur and ear tufts, soft daylight, plain pale wall behind.",
+      "seed": 7005,
+      "width": 1024,
+      "height": 1024
+    }
+  },
+  {
+    "group": "klein-2mp",
+    "key": "fox@1:1",
+    "variant": "2mp",
+    "ok": false,
+    "error": "ult = binding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\fox@1:1-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\fox@1:1-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7000,
+      "width": 1408,
+      "height": 1408
+    },
+    "cold": true
+  },
+  {
+    "group": "klein-2mp",
+    "key": "church@16:9",
+    "variant": "2mp",
+    "ok": false,
+    "error": "nding.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\church@16:9-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\church@16:9-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 7001,
+      "width": 1920,
+      "height": 1088
+    }
+  },
+  {
+    "group": "klein-2mp",
+    "key": "portrait@4:5",
+    "variant": "2mp",
+    "ok": false,
+    "error": "ing.mkdir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\portrait@4:5-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\portrait@4:5-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 7002,
+      "width": 1264,
+      "height": 1584
+    }
+  },
+  {
+    "group": "klein-2mp",
+    "key": "bakery-text@3:2",
+    "variant": "2mp",
+    "ok": false,
+    "error": "dir(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\bakery-text@3:2-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\bakery-text@3:2-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 7003,
+      "width": 1728,
+      "height": 1152
+    }
+  },
+  {
+    "group": "klein-2mp",
+    "key": "busy-street@16:9",
+    "variant": "2mp",
+    "ok": false,
+    "error": "r(\r\n                         ^\r\n\r\nError: ENOENT: no such file or directory, mkdir 'E:\\Darkroom\\docs\\qa\\addenda\\rv\\klein-2mp\\busy-street@16:9-2mp'\r\n    at Object.mkdirSync (node:fs:1411:26)\r\n    at <anonymous> (E:\\Darkroom\\scripts\\run-workflow.ts:103:4)\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  errno: -4058,\r\n  code: 'ENOENT',\r\n  syscall: 'mkdir',\r\n  path: 'E:\\\\Darkroom\\\\docs\\\\qa\\\\addenda\\\\rv\\\\klein-2mp\\\\busy-street@16:9-2mp'\r\n}\r\n\r\nNode.js v24.19.0\r\n",
+    "set": {
+      "prompt": "A busy city street at noon seen from a second-floor window: crowds of pedestrians on both pavements, yellow taxis and cars, two cyclists, a red tram, shop signs and awnings, realistic photography with fine detail.",
+      "seed": 7004,
+      "width": 1920,
+      "height": 1088
+    }
+  }
+]
