@@ -402,10 +402,10 @@ test.describe.serial('Darkroom v2 features', () => {
     const firstLabel = await rail.locator('.rail-item').first().getByRole('button').first().getAttribute('aria-label');
     await rail.locator('.rail-item').first().hover();
     await rail.getByRole('button', { name: 'Delete this picture' }).first().click();
-    await expect(page.getByText('1 picture moved to Recently deleted.')).toBeVisible();
+    await expect(page.getByText('1 picture moved to Recently deleted.').last()).toBeVisible();
     expect(await count('all')).toBe(before - 1);
-    await page.getByRole('button', { name: 'Undo' }).click();
-    await expect(page.getByText('Restored.')).toBeVisible();
+    await page.getByRole('button', { name: 'Undo' }).last().click();
+    await expect(page.getByText('Restored.').last()).toBeVisible();
     expect(await count('all')).toBe(before);
     await expect(rail.locator('.rail-item').first().getByRole('button').first()).toHaveAttribute('aria-label', firstLabel!);
     await expect(rail.getByRole('button', { name: 'See all in Library' })).toBeVisible();
@@ -431,10 +431,10 @@ test.describe.serial('Darkroom v2 features', () => {
     const cards = await takes.getByTestId('take').count();
     await takes.getByTestId('take').first().hover();
     await takes.getByRole('button', { name: 'Delete this take' }).first().click();
-    await expect(page.getByText('1 video moved to Recently deleted.')).toBeVisible();
+    await expect(page.getByText('1 video moved to Recently deleted.').last()).toBeVisible();
     await expect(takes.getByTestId('take')).toHaveCount(cards - 1);
     expect(await videos()).toBe(before - 1);
-    await page.getByRole('button', { name: 'Undo' }).click();
+    await page.getByRole('button', { name: 'Undo' }).last().click();
     await expect(takes.getByTestId('take')).toHaveCount(cards);
     expect(await videos()).toBe(before);
     await shot(page, 'video-takes');
@@ -457,10 +457,10 @@ test.describe.serial('Darkroom v2 features', () => {
     // one item: click, press Delete, Undo
     await tiles.nth(0).click();
     await page.keyboard.press('Delete');
-    await expect(page.getByText('1 item moved to Recently deleted.')).toBeVisible();
+    await expect(page.getByText('1 item moved to Recently deleted.').last()).toBeVisible();
     expect(await count()).toBe(before - 1);
-    await page.getByRole('button', { name: 'Undo' }).click();
-    await expect(page.getByText('Restored.')).toBeVisible();
+    await page.getByRole('button', { name: 'Undo' }).last().click();
+    await expect(page.getByText('Restored.').last()).toBeVisible();
     expect(await count()).toBe(before);
     // a range with Shift-click, deleted from the selection bar
     await tiles.nth(1).click();
@@ -468,7 +468,7 @@ test.describe.serial('Darkroom v2 features', () => {
     const bar = page.getByRole('toolbar', { name: 'Selection' });
     await expect(bar).toContainText('3 selected');
     await bar.getByRole('button', { name: 'Delete' }).click();
-    await expect(page.getByText('3 items moved to Recently deleted.')).toBeVisible();
+    await expect(page.getByText('3 items moved to Recently deleted.').last()).toBeVisible();
     expect(await count('deleted')).toBe(3);
     // they wait in Recently deleted and come back with Restore
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
