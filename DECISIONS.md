@@ -459,3 +459,15 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     prompt. A line under the prompt counts the pictures and previews the list. Limits: 16 prompts and 16 pictures per
     click (variations × batch) — over that, nothing is queued and the note says why. The saved settings keep the prompt
     as typed, so Reuse / Restore bring the template back.
+86. **Your own LoRAs, only where they fit.** ComfyUI lists every LoRA it can see (three folders on this PC, read from
+    its `/internal/folder_paths`), but a LoRA works only on the model it was trained for. Darkroom reads each file's
+    header — layer names and sizes, never the weights — and matches its layers against the model Darkroom actually
+    loads (`loraFit` in `src/shared/loras.ts`, native and Kohya names; a LoRA counts when ≥ 90 % of its layers exist
+    with the same width). On JP's 21 files the split is unambiguous: the 5 Klein 9B LoRAs score 1.00 on Klein, every
+    other file ~0 (Klein 4B, Flux.1, Z-Image, Wan, and the older 3072-wide Qwen-Image / Edit-2511 LoRAs, which do not
+    fit the 4096-wide Qwen-Image 2.1 — so there are no Qwen 2.1 LoRAs yet), and one damaged file is reported. Generate
+    and Edit (Instruct, Inpaint, Outpaint, Enhance) get a LoRA picker for the selected model: up to 3, strength 0–1.5,
+    remembered per model. The job carries them (`loras`, saved with the picture, so Reuse / Restore bring them back);
+    the server re-checks the fit and refuses anything else, then chains LoraLoaderModelOnly nodes after the graph's
+    DR_MODEL (the restore LoRA of large-photo Restore stays after them). Live: the chosen LoRA lands on the graph at
+    its strength and changes the picture on the same seed (mean difference 13 / 255).

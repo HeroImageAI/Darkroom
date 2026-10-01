@@ -565,6 +565,49 @@ test.describe.serial('Darkroom v2 features', () => {
     await shot(page, 'generate-variations');
   });
 
+  // Your own LoRAs (DECISIONS 86)
+  test('LoRAs: only ones made for the model are offered, and a chosen LoRA is put on the graph', async () => {
+    await page.goto('/#/generate');
+    await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    const cat = await (await page.request.get('/api/loras')).json();
+    if (!cat.qwen.length) await expect(page.locator('.lora-picker .note').first()).toContainText('No Qwen-Image 2.1 LoRAs found');
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
+    test.skip(!cat.klein.length, 'no Klein 9B LoRA installed on this machine');
+    const offered = (await page.getByLabel('Add a LoRA').locator('option').allInnerTexts()).slice(1);
+    expect(offered.length).toBe(cat.klein.length);
+    // nothing from another model is offered
+    for (const o of cat.other) expect(offered.some((t: string) => t.startsWith(o.name.replace(/^.*[\\/]/, '').replace(/\.safetensors$/, '')))).toBe(false);
+    await page.getByLabel('Add a LoRA').selectOption({ index: 1 });
+    const chosen = cat.klein.find((l: any) => offered[0].startsWith(l.label));
+    await page.getByLabel(`Strength of ${chosen.label}`).fill('0.7');
+    await page.getByLabel('Prompt').fill('portrait of an old fisherman with a weathered face, overcast light');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
+    const body = (await sent).postDataJSON();
+    expect(JSON.parse(body.params.loras)).toEqual([{ name: chosen.name, strength: 0.7 }]);
+    let item: any;
+    await expect
+      .poll(
+        async () => {
+          item = ((await (await page.request.get('/api/items?limit=5&filter=generated')).json()).items as any[]).find((i) => i.params?.loras === body.params.loras);
+          return !!item;
+        },
+        { timeout: 120_000 },
+      )
+      .toBe(true);
+    const graph = await (await page.request.get(`/api/items/${item.id}/graph`)).json();
+    const loraNode: any = Object.values(graph).find((n: any) => n._meta?.title === 'DR_USER_LORA_1');
+    expect(loraNode.inputs).toMatchObject({ lora_name: chosen.name, strength_model: 0.7 });
+    await page.getByRole('button', { name: `Remove ${chosen.label}` }).click();
+    // a LoRA for another model is refused by the server
+    const wrong = cat.other.find((o: any) => !/Unreadable/.test(o.reason));
+    if (wrong) {
+      const r = await page.request.post('/api/jobs', { data: { workflow: 'klein_t2i', params: { prompt: 'x', seed: 1, loras: JSON.stringify([{ name: wrong.name, strength: 1 }]) }, meta: { mode: 'generate', model: 'Klein' } } });
+      expect(r.status()).toBe(400);
+      expect((await r.json()).error).toMatch(/is not a Klein 9B LoRA/);
+    }
+  });
+
   test('Library: Upload adds your pictures to the Library', async () => {
     await page.goto('/#/library');
     const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
