@@ -471,3 +471,19 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     the server re-checks the fit and refuses anything else, then chains LoraLoaderModelOnly nodes after the graph's
     DR_MODEL (the restore LoRA of large-photo Restore stays after them). Live: the chosen LoRA lands on the graph at
     its strength and changes the picture on the same seed (mean difference 13 / 255).
+87. **Compose, after Invoke's unified canvas.** Arrange pictures, cut-outs and rough paint on a canvas, then let the
+    models turn the collage into one picture. A feasibility A/B came first (docs/qa/COMPOSE_AB.md): Qwen keeps pasted
+    photos and faces but leaves paint as paint; Klein turns paint into a photo but redraws pieces; redrawing only the
+    seams keeps pieces exact but can't fix placement. Hence three render modes on the existing edit graphs (no new
+    ComfyUI workflow): **Blend edges** (`qwen_edit` with a seam mask built in the browser — a band round every piece
+    above the background plus a contact-shadow strip, feather 12), **Harmonise** (`qwen_edit`, whole picture) and
+    **Reimagine** (`klein_edit`). The suggestion follows the canvas (paint ≥ 20 % → Reimagine, else Harmonise).
+    Reimagine with no scene text first asks Qwen3-VL to describe the real scene (`scene` task) — bare rough paint
+    otherwise became a toy house. Pieces come from the Library, an upload or a drop; **Cut out** runs background
+    removal (~2 s, the cut-out also lands in the Library) and trims the layer to the subject in place. Move, scale with
+    the shape kept, a ground line while dragging, flip, order, hide, fill the canvas, paint and erase, undo/redo.
+    The first picture on a blank canvas becomes the background and gives the canvas its shape (~1 MP, sides ÷16).
+    Compositions save themselves (`compositions` table: the layout as JSON, a thumbnail; paint layers as PNG data
+    URLs; pictures by their ComfyUI input name, checked server-side) and deleting one only hides it (Undo).
+    Renders are ordinary Library items (`mode: compose`, `ui.compositionId`) in the working board; **Continue from
+    this** makes a render the new background and hides — never removes — the layers under it.
