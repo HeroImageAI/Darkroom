@@ -1,0 +1,34 @@
+{
+  "restore-lora": [
+    {
+      "id": "current",
+      "label": "Darkroom Restore today"
+    },
+    {
+      "id": "lora_dr",
+      "label": "LoRA + Darkroom prompt"
+    },
+    {
+      "id": "lora_author",
+      "label": "LoRA + the author's prompt"
+    }
+  ],
+  "restore-lora-large": [
+    {
+      "id": "current_2mp",
+      "label": "Darkroom Restore today (2 MP, then SeedVR2 to full size)"
+    },
+    {
+      "id": "current_4mp",
+      "label": "Darkroom Restore at 4 MP, no LoRA (fair baseline)"
+    },
+    {
+      "id": "lora_dr_4mp",
+      "label": "LoRA + Darkroom prompt at 4 MP"
+    },
+    {
+      "id": "lora_author_4mp",
+      "label": "LoRA + author's prompt at 4 MP"
+    }
+  ]
+}

@@ -48,3 +48,30 @@ export function doubledTarget(w: number, h: number): { w: number; h: number } {
   const k = Math.min(2, MAX_SIDE / Math.max(w, h));
   return { w: Math.round(w * k), h: Math.round(h * k) };
 }
+
+/** ComfyUI's megapixel unit (ImageScaleToTotalPixels): 1 MP = 1024 x 1024. */
+const COMFY_MP = 1024 * 1024;
+/** Klein + the restore LoRA stays sharp up to here (DECISIONS 83); beyond it SeedVR2 finishes the job. */
+export const LARGE_RESTORE_MP = 4;
+
+export interface LargeRestorePlan {
+  /** Working size for Klein + LoRA, in ComfyUI megapixels. */
+  megapixels: number;
+  /** Exact output size from the graph itself (photos up to ~4 MP come back at exactly their own size). */
+  exact?: { w: number; h: number };
+  /** SeedVR2 to this size afterwards (photos above 4 MP, or Restore + upscale). */
+  chainTo?: { w: number; h: number };
+}
+
+/**
+ * Klein Restore of a large photo (2 MP and up) with the restore LoRA (DECISIONS 83): draw at the photo's own size up
+ * to 4 MP; larger photos are drawn at 4 MP and SeedVR2 takes them to full size. `doubled` = Restore + upscale.
+ */
+export function planLargeRestore(w: number, h: number, doubled = false): LargeRestorePlan | null {
+  if (!isBig(w, h)) return null;
+  const mp = (w * h) / COMFY_MP;
+  const megapixels = Math.round(Math.min(LARGE_RESTORE_MP, mp) * 100) / 100;
+  if (doubled) return { megapixels, chainTo: doubledTarget(w, h) };
+  // within ~5% of 4 MP the drawn size is the photo's size, so a resample is enough
+  return mp <= LARGE_RESTORE_MP * 1.05 ? { megapixels, exact: { w, h } } : { megapixels, chainTo: { w, h } };
+}

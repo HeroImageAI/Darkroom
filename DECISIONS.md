@@ -424,3 +424,21 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
       Older stored work-in-progress values are ignored. Earlier results stay in History / Takes, and Home's
       "Continue where you left off" still returns to the last screen.
     - **New** on Generate (next to "Prompt") and Video (next to "Frames") clears the workspace at any time, with Undo.
+83. **Restore LoRA for large photos only.** JP asked about three Klein LoRAs (2026-10-01):
+    - fal *flux-2-klein-4B-outpaint-lora*: Klein **4B** — cannot load on 9B, and Klein outpaint is already seamless
+      (DECISIONS 68). Not used.
+    - nomadoor *flux-2-klein-9B-schematic-lora*: trained on Klein 9B **base** (the author warns it may misbehave on the
+      distilled model Darkroom runs), outputs depth / normal / pose / segmentation maps the author calls not
+      production-ready; SAM 3.1 already segments and nothing in Darkroom uses depth or pose. Not used.
+    - **Ultimate Upscaler Klein-9b** (civitai.com/models/2474084, `Flux2-Klein-Image-RestoreV1.safetensors`, 237 MB,
+      non-commercial; downloaded by JP, logged in; SHA-256 verified): made for the distilled 4-step Klein 9B.
+      A/B (docs/qa/addenda/lora, same seeds, LoRA strength 1): at Darkroom's usual 1 MP the LoRA did **not** help —
+      softer on lens and motion blur (edge detail 4263 → ~3000, 853 → 686–787), a tie on the low-res JPEG and the
+      clean portrait. At **4 MP** it did: Klein alone at 4 MP is waxy, with the LoRA stone and wood stay crisp and
+      natural (no halos, text intact), and against today's large-photo path (Restore at 2 MP + SeedVR2 to full size)
+      it is clearly sharper with truer colours (edge detail 2536 vs 1336 and 4159 vs 1878), 76 s vs 44 s, < 20 GB.
+    Shipped: **Klein Restore of a photo of 2 MP and up** uses `klein_enhance_large.json` (the Restore graph + DR_LORA +
+    an optional exact final size, DR_EXACT): up to ~4 MP it is drawn at the photo's own size and returned exactly at
+    it; larger photos are drawn at 4 MP and SeedVR2 takes them to full size (Restore + upscale: twice, capped at
+    8192 px) — `planLargeRestore` in `src/shared/fullsize.ts`. Small pictures, Subtle and Qwen are unchanged. Live:
+    2528×1696 → exactly 2528×1696 in 90 s; 4000×2286 → 4000×2286 in 104 s; 1344×768 → normal Restore in 24 s.

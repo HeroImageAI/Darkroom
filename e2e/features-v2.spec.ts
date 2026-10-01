@@ -374,7 +374,8 @@ test.describe.serial('Darkroom v2 features', () => {
     // Restore: the note explains the rebuild, and the version that opens is full size
     await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Enhance' }).click();
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
-    await expect(page.getByText(/Large picture \(5 MP\).*the full 3000×1714/)).toBeVisible();
+    // 3000x1714 is above 4 MP: Klein + the restore LoRA at 4 MP, then SeedVR2 to the exact size (DECISIONS 83)
+    await expect(page.getByText(/Large picture \(5 MP\).*restore LoRA, then SeedVR2 takes it to 3000×1714/)).toBeVisible();
     await apply.click();
     await expect.poll(sizeOf, { timeout: 400_000, intervals: [3000] }).toEqual({ size: '3000x1714', mode: 'upscale' });
 
