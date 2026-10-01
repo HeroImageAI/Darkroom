@@ -288,3 +288,6 @@ button.logo svg { transition: transform .2s; }
 .board-pill img { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; margin-left: -4px; }
 .board-actions { display: inline-flex; gap: 2px; margin-left: auto; }
 .input.sm { height: 36px; padding: 0 8px; font-size: 13px; width: auto; }
+/* item count + Upload sit at the right end of the board row (after the board actions when a board is open) */
+.board-row .item-count { margin-left: auto; font-size: 12px; padding: 0 4px 0 10px; white-space: nowrap; }
+.board-row .board-actions + .item-count { margin-left: 8px; }

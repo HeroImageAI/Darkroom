@@ -27,7 +27,7 @@ export function Library() {
   const [filter, setFilter] = usePersistent<Filter>('library.filter', 'all');
   // which board the Library shows: 'all', 'none' (no board) or a board id
   const [shownBoard, setShownBoard] = usePersistent<string>('library.board', 'all');
-  const { boards, none: noBoardCount, loaded: boardsLoaded } = useBoards();
+  const { boards, none: noBoardCount, loaded: boardsLoaded, reload: reloadBoards } = useBoards();
   useEffect(() => {
     // the board on show was deleted (here or in another tab)
     if (boardsLoaded && shownBoard !== 'all' && shownBoard !== 'none' && !boards.some((b) => b.id === shownBoard)) setShownBoard('all');
@@ -208,18 +208,12 @@ export function Library() {
       <section style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }} aria-label="Library">
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
           <Pills label="Filter" options={FILTERS.map((f) => ({ value: f.value, label: f.label }))} value={filter} onChange={setFilter} />
-          <div style={{ flex: 1 }} />
-          <label style={{ position: 'relative', width: 'min(320px, 100%)' }}>
+          {/* the search box gives way first, so the header stays on one line at 1280–1440 px */}
+          <label style={{ position: 'relative', flex: '1 1 180px', maxWidth: 320, marginLeft: 'auto' }}>
             <span className="sr">Search</span>
             <Search size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--muted)' }} />
             <input ref={searchRef} className="input" style={{ paddingLeft: 34 }} placeholder="Search prompt, seed or tag  ( / )" value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
-          <span className="mono muted" style={{ fontSize: 12, minWidth: 70, textAlign: 'right' }}>
-            {total} items
-          </span>
-          <button className="btn sm" disabled={!!uploading} onClick={() => uploadRef.current?.click()} title="Add your own pictures to the Library (or drop them on the grid)">
-            {uploading ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {uploading ? `Adding ${uploading}…` : 'Upload'}
-          </button>
           <input
             ref={uploadRef}
             className="sr"
@@ -264,6 +258,10 @@ export function Library() {
                 </button>
               </span>
             )}
+            <span className="mono muted item-count">{total} items</span>
+            <button className="btn sm upload-btn" disabled={!!uploading} onClick={() => uploadRef.current?.click()} title="Add your own pictures to the Library (or drop them on the grid)">
+              {uploading ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {uploading ? `Adding ${uploading}…` : 'Upload'}
+            </button>
           </div>
         )}
         {(picked.length > 0 || trash) && (
@@ -400,6 +398,7 @@ export function Library() {
               return;
             }
             const b = await api.createBoard(name);
+            await reloadBoards(); // list first, or the "board no longer exists" check would undo the choice
             if (picked.length) await moveTo(picked, b.id);
             setShownBoard(b.id);
           }}

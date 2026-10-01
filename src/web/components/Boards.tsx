@@ -5,15 +5,15 @@ import { setActiveBoard, toast, useApp } from '../store';
 import { Dialog } from './common';
 
 /** The boards, refreshed on every library change. */
-export function useBoards(): { boards: Board[]; none: number; loaded: boolean; reload: () => void } {
+export function useBoards(): { boards: Board[]; none: number; loaded: boolean; reload: () => Promise<void> } {
   const rev = useApp((s) => s.libraryRev);
   const [data, setData] = useState<{ boards: Board[]; none: number; loaded: boolean }>({ boards: [], none: 0, loaded: false });
   const reload = () =>
-    void api
+    api
       .boards()
       .then((r) => setData({ ...r, loaded: true }))
       .catch(() => undefined);
-  useEffect(reload, [rev]);
+  useEffect(() => void reload(), [rev]);
   return { ...data, reload };
 }
 
@@ -67,7 +67,7 @@ const NEW = '__new__';
  */
 export function WorkingBoardPicker() {
   const board = useApp((s) => s.board);
-  const { boards, loaded } = useBoards();
+  const { boards, loaded, reload } = useBoards();
   const [creating, setCreating] = useState(false);
   // a board deleted elsewhere: fall back to "No board"
   useEffect(() => {
@@ -98,6 +98,7 @@ export function WorkingBoardPicker() {
           onClose={() => setCreating(false)}
           onDone={async (name) => {
             const b = await api.createBoard(name);
+            await reload(); // list first, or the "board no longer exists" check would undo the choice
             setActiveBoard(b.id);
             toast(`New pictures now go to "${b.name}".`, 'ok');
           }}
