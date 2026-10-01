@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { Store, type Item } from '../src/server/db';
+import { Store, type Item, type Job } from '../src/server/db';
 import { outputDirFromArgv, outputPath } from '../src/server/trash';
 
 const item = (id: string, filename: string, extra: Partial<Item> = {}): Item => ({
@@ -98,5 +98,57 @@ describe('output paths for the Recycle Bin', () => {
     expect(outputPath(out, { filename: 'x.png', subfolder: 'darkroom', type: 'output' })).toBe(path.join(out, 'darkroom', 'x.png'));
     expect(outputPath(out, { filename: 'x.png', subfolder: '..\\..\\Windows', type: 'output' })).toBeNull();
     expect(outputPath(out, { filename: 'x.png', subfolder: 'darkroom', type: 'input' })).toBeNull();
+  });
+});
+
+describe('Video Takes follow the Library', () => {
+  let dir: string;
+  let store: Store;
+  const job = (id: string, status: Job['status'], result_ids: string[], created_at: number): Job => ({
+    id, prompt_id: null, workflow: 'wan_i2v', kind: 'video', family: 'wan', status, created_at, started_at: created_at, finished_at: created_at + 1,
+    progress: 1, stage: '', error: status === 'error' ? 'boom' : null, meta: {}, params: {}, api_prompt: {}, estimate_sec: null, result_ids,
+  });
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dr-takes-'));
+    store = new Store(dir);
+    store.insertItem(item('v1', 'v1.mp4', { kind: 'video' }));
+    store.insertItem(item('v2', 'v2.mp4', { kind: 'video' }));
+    store.insertJob(job('j1', 'done', ['v1'], 1));
+    store.insertJob(job('j2', 'done', ['v2'], 2));
+    store.insertJob(job('j3', 'error', [], 3));
+    store.insertJob(job('j4', 'running', [], 4));
+  });
+  afterEach(() => {
+    store.db.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('a deleted video drops its take; restoring brings it back', () => {
+    expect(store.liveTakes('video').map((j) => j.id)).toEqual(['j4', 'j3', 'j2', 'j1']);
+    store.softDelete(['v1']);
+    expect(store.liveTakes('video').map((j) => j.id)).toEqual(['j4', 'j3', 'j2']);
+    store.restoreItems(['v1']);
+    expect(store.liveTakes('video').map((j) => j.id)).toContain('j1');
+  });
+
+  it('only failed renders can be dismissed, and Clear failed finds them', () => {
+    expect(store.failedJobIds('video')).toEqual(['j3']);
+    expect(store.dismissJobs(['j1', 'j3', 'j4'])).toEqual(['j3']);
+    expect(store.liveTakes('video').map((j) => j.id)).toEqual(['j4', 'j2', 'j1']);
+    expect(store.failedJobIds('video')).toEqual([]);
+  });
+});
+
+describe('Generate History is the Library', () => {
+  it('lists only pictures made on the Generate screen, without deleted ones', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dr-hist-'));
+    const store = new Store(dir);
+    store.insertItem(item('g1', 'g1.png'));
+    store.insertItem(item('e1', 'e1.png', { mode: 'edit:instruct' }));
+    store.insertItem(item('g2', 'g2.png'));
+    store.softDelete(['g2']);
+    expect(store.listItems({ filter: 'generated' }).items.map((i) => i.id)).toEqual(['g1']);
+    store.db.close();
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 });

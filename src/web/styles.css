@@ -265,3 +265,12 @@ button.logo svg { transition: transform .2s; }
 .home-continue-icon { color: var(--accent); }
 /* Recent: one tidy row (extra tiles wrap out of sight instead of leaving an orphan) */
 .home-recent { grid-template-rows: auto; grid-auto-rows: 0; row-gap: 0; overflow: hidden; }
+
+/* ---- History / Takes panels: delete in place ---- */
+.rail-item { position: relative; flex: none; }
+.rail .rail-delete, .take-delete { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; min-height: 0; padding: 0; border-radius: 50%;
+  border: 0; background: rgba(18,18,16,.85); color: var(--text); display: grid; place-items: center; opacity: 0; transition: opacity .12s; cursor: pointer; }
+.rail-item:hover .rail-delete, .rail-item:focus-within .rail-delete, .take:hover .take-delete, .take:focus-within .take-delete { opacity: 1; }
+.rail .rail-delete:hover, .take-delete:hover { background: var(--danger); color: var(--bg); }
+.rail .rail-more { width: auto; height: auto; min-height: 32px; padding: 4px 6px; font-size: 12px; white-space: normal; background: transparent; border: 0; }
+@media (hover: none) { .rail .rail-delete, .take-delete { opacity: 1; } }

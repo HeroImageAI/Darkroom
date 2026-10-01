@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Repeat, Sparkles, Undo2, Waves, X } from 'lucide-react';
 import { LibraryPicker } from '../components/LibraryPicker';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
+import { deleteWithUndo, openLibrary } from '../lib/remove';
 import { Dialog, formatDuration, ProgressBar, randomSeed, Segmented, timecode, useHotkey } from '../components/common';
 import { ensureNotifyPermission, notifyDesktop, useItem, usePersistent } from '../lib/hooks';
 import { go } from '../router';
@@ -53,17 +54,42 @@ export function Video({ query }: { query: URLSearchParams }) {
   const vm = m?.video[s.model] ?? m?.video.wan;
   const cams = boot?.camera.camera ?? [];
 
-  // Takes = video jobs from the server (survive reloads), live-updated.
+  // Takes = a view of the Library: running and failed renders plus finished ones whose video is still in the Library
+  // (deleting the video anywhere removes its take; dismissed failures stay hidden). Refreshed on every library change.
+  const [fetchedAt, setFetchedAt] = useState(0);
   useEffect(() => {
-    api.get<Job[]>('/api/jobs?kind=video&limit=40').then(setTakes).catch(() => undefined);
+    const t = Date.now();
+    api
+      .get<Job[]>('/api/jobs?kind=video&limit=30&live=1')
+      .then((r) => (setTakes(r), setFetchedAt(t)))
+      .catch(() => undefined);
   }, [rev]);
   const liveTakes = useMemo(() => {
     const map = new Map(takes.map((t) => [t.id, t]));
+    // live updates from this session: progress for listed takes, and renders started since the last refresh
     Object.values(jobs)
-      .filter((j) => j.kind === 'video')
+      .filter((j) => j.kind === 'video' && (map.has(j.id) || j.status === 'queued' || j.status === 'running' || j.created_at > fetchedAt))
       .forEach((j) => map.set(j.id, j));
     return [...map.values()].sort((a, b) => b.created_at - a.created_at);
-  }, [takes, jobs]);
+  }, [takes, jobs, fetchedAt]);
+  const failedTakes = liveTakes.filter((t) => t.status === 'error' || t.status === 'cancelled' || t.status === 'lost');
+  const removeTake = async (t: Job) => {
+    const at = liveTakes.findIndex((x) => x.id === t.id);
+    const gone = await deleteWithUndo(t.result_ids, 'video');
+    if (gone.length && selected && t.result_ids.includes(selected)) {
+      const next = liveTakes.slice(at + 1).concat(liveTakes.slice(0, at).reverse()).find((x) => x.status === 'done' && x.id !== t.id);
+      setSelected(next?.result_ids[0] ?? null);
+    }
+  };
+  const dismissTakes = async (body: { ids: string[] } | { failedOfKind: string }) => {
+    try {
+      const r = await api.dismissJobs(body);
+      setTakes((ts) => ts.filter((x) => !r.dismissed.includes(x.id)));
+      setFetchedAt(Date.now());
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
   const activeVideo = liveTakes.filter((j) => j.status === 'queued' || j.status === 'running');
 
   // Arrive with ?start=<item> from Generate / Edit / Library.
@@ -479,10 +505,27 @@ export function Video({ query }: { query: URLSearchParams }) {
           <p className="section-label" style={{ margin: 0 }}>
             Takes <span className="mono">{liveTakes.filter((t) => t.status === 'done').length}</span>
           </p>
+          {failedTakes.length > 0 && (
+            <button className="btn sm ghost" onClick={() => void dismissTakes({ failedOfKind: 'video' })} title="Hide every failed, cancelled or lost render (they have no video to keep)">
+              Clear failed ({failedTakes.length})
+            </button>
+          )}
           {liveTakes.length === 0 && <p className="note">Every render appears here as a take. Running jobs show progress and time left.</p>}
           {liveTakes.map((t) => (
-            <Take key={t.id} job={t} selected={!!sel && t.result_ids.includes(sel.id)} onSelect={() => t.result_ids[0] && setSelected(t.result_ids[0])} />
+            <Take
+              key={t.id}
+              job={t}
+              selected={!!sel && t.result_ids.includes(sel.id)}
+              onSelect={() => t.result_ids[0] && setSelected(t.result_ids[0])}
+              onDelete={() => void removeTake(t)}
+              onDismiss={() => void dismissTakes({ ids: [t.id] })}
+            />
           ))}
+          {liveTakes.length > 0 && (
+            <button className="btn ghost sm" onClick={() => openLibrary('videos')}>
+              See all videos in the Library
+            </button>
+          )}
         </div>
       </aside>
 
@@ -578,7 +621,7 @@ function FrameSlot({
   );
 }
 
-function Take({ job, selected, onSelect }: { job: Job; selected: boolean; onSelect: () => void }) {
+function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; selected: boolean; onSelect: () => void; onDelete: () => void; onDismiss: () => void }) {
   const [now, setNow] = useState(Date.now());
   const running = job.status === 'queued' || job.status === 'running';
   useEffect(() => {
@@ -596,7 +639,7 @@ function Take({ job, selected, onSelect }: { job: Job; selected: boolean; onSele
       className="take"
       data-testid="take"
       data-status={job.status}
-      style={{ display: 'grid', gridTemplateColumns: '84px 1fr', gap: 10, padding: 8, borderRadius: 10, border: `1px solid ${selected ? 'var(--accent)' : 'var(--input)'}`, background: 'var(--raised)' }}
+      style={{ position: 'relative', display: 'grid', gridTemplateColumns: '84px 1fr', gap: 10, padding: 8, borderRadius: 10, border: `1px solid ${selected ? 'var(--accent)' : 'var(--input)'}`, background: 'var(--raised)' }}
     >
       <button
         onClick={onSelect}
@@ -637,6 +680,16 @@ function Take({ job, selected, onSelect }: { job: Job; selected: boolean; onSele
       {running && (
         <button className="btn sm ghost" style={{ gridColumn: '1 / -1', minHeight: 32 }} onClick={() => void api.cancel(job.id)}>
           Cancel
+        </button>
+      )}
+      {job.status === 'done' && (
+        <button className="take-delete" aria-label="Delete this take" title="Delete the video (moves it to Recently deleted)" onClick={onDelete}>
+          <X size={13} />
+        </button>
+      )}
+      {(job.status === 'error' || job.status === 'cancelled' || job.status === 'lost') && (
+        <button className="btn sm ghost" style={{ gridColumn: '1 / -1', minHeight: 32 }} onClick={onDismiss}>
+          Dismiss
         </button>
       )}
     </div>
