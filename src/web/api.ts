@@ -1,6 +1,10 @@
 import type { Item as DbItem, Job as DbJob } from '../server/db';
 import type { Manifest } from '../shared/manifest';
 import type { CameraPreset, PromptTemplates, StylePreset } from '../shared/prompts';
+import type { Board } from '../server/db';
+import { getState } from './store';
+
+export type { Board };
 
 export type Item = Omit<DbItem, 'api_prompt'>;
 export type Job = Omit<DbJob, 'api_prompt'>;
@@ -63,10 +67,16 @@ export const api = {
   },
   asInput: (id: string, which: 'main' | 'poster' | 'last' = 'main') =>
     api.post<{ name: string; width: number | null; height: number | null }>(`/api/items/${id}/as-input`, { which }),
-  submit: (body: SubmitBody) => api.post<Job>('/api/jobs', body),
+  // every new job carries the working board (a new version of a picture stays in that picture's board, server-side)
+  submit: (body: SubmitBody) => api.post<Job>('/api/jobs', { ...body, meta: { boardId: getState().board, ...body.meta } }),
   cancel: (id: string) => api.post(`/api/jobs/${id}/cancel`),
   item: (id: string) => api.get<{ item: Item; lineage: Item[] }>(`/api/items/${id}`),
-  items: (q: { filter?: string; q?: string; limit?: number; offset?: number }) =>
+  boards: () => api.get<{ boards: Board[]; none: number }>('/api/boards'),
+  createBoard: (name: string) => api.post<Board>('/api/boards', { name }),
+  renameBoard: (id: string, name: string) => api.patch<Board>(`/api/boards/${id}`, { name }),
+  deleteBoard: (id: string) => fetch(`/api/boards/${id}`, { method: 'DELETE' }).then((r) => handle<{ ok: true }>(r)),
+  moveToBoard: (ids: string[], boardId: string | null) => api.post<{ moved: string[] }>('/api/items/board', { ids, boardId }),
+  items: (q: { filter?: string; q?: string; limit?: number; offset?: number; board?: string }) =>
     api.get<{ total: number; items: Item[] }>(`/api/items?${new URLSearchParams(Object.entries(q).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]))}`),
   favourite: (id: string, favourite: boolean) => api.patch<Item>(`/api/items/${id}`, { favourite }),
   /** Library delete: to "Recently deleted" (restorable), back, or for good (files to the Windows Recycle Bin). */
@@ -105,6 +115,8 @@ export interface SubmitBody {
     chain?: Record<string, unknown>;
     layers?: boolean;
     groupId?: string;
+    /** Board for the new result(s); filled in from the working board by api.submit. */
+    boardId?: string | null;
   };
   force?: boolean;
 }

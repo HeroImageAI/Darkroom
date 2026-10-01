@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2 } from 'lucide-react';
-import { api, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
+import { Check, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2, Plus } from 'lucide-react';
+import { api, type Board, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { Dialog, formatDuration, Pills } from '../components/common';
+import { BoardNameDialog, useBoards } from '../components/Boards';
 import { usePersistent } from '../lib/hooks';
 import { importFailedMessage, importPictures } from '../lib/importer';
 import { go } from '../router';
@@ -24,6 +25,28 @@ export function Library() {
   const rev = useApp((s) => s.libraryRev);
   const comfyUrl = useApp((s) => s.status?.url ?? s.boot?.comfyUrl ?? null);
   const [filter, setFilter] = usePersistent<Filter>('library.filter', 'all');
+  // which board the Library shows: 'all', 'none' (no board) or a board id
+  const [shownBoard, setShownBoard] = usePersistent<string>('library.board', 'all');
+  const { boards, none: noBoardCount, loaded: boardsLoaded } = useBoards();
+  useEffect(() => {
+    // the board on show was deleted (here or in another tab)
+    if (boardsLoaded && shownBoard !== 'all' && shownBoard !== 'none' && !boards.some((b) => b.id === shownBoard)) setShownBoard('all');
+  }, [boardsLoaded, boards]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [boardDialog, setBoardDialog] = useState<null | 'new' | 'rename'>(null);
+  const [boardConfirm, setBoardConfirm] = useState(false);
+  const currentBoard = boards.find((b) => b.id === shownBoard) ?? null;
+  const boardQuery = shownBoard === 'all' ? undefined : shownBoard;
+  const moveTo = async (ids: string[], boardId: string | null) => {
+    if (!ids.length) return;
+    try {
+      const r = await api.moveToBoard(ids, boardId);
+      const name = boardId ? `"${boards.find((b) => b.id === boardId)?.name ?? 'the board'}"` : 'No board';
+      toast(`${r.moved.length === 1 ? '1 item' : `${r.moved.length} items`} moved to ${name}.`, 'ok');
+      setPicked([]);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
   const [q, setQ] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
@@ -59,7 +82,7 @@ export function Library() {
     const t = setTimeout(() => {
       setLoading(true);
       api
-        .items({ filter, q, limit: PAGE })
+        .items({ filter, q, limit: PAGE, board: boardQuery })
         .then((r) => {
           if (!live) return;
           setItems(r.items);
@@ -73,7 +96,7 @@ export function Library() {
       live = false;
       clearTimeout(t);
     };
-  }, [filter, q, rev]);
+  }, [filter, q, rev, shownBoard]);
   // switching filter drops the old list at once, so nothing from the previous view can be clicked or acted on
   useEffect(() => {
     setPicked([]);
@@ -83,7 +106,7 @@ export function Library() {
   }, [filter]);
 
   const more = async () => {
-    const r = await api.items({ filter, q, limit: PAGE, offset: items.length });
+    const r = await api.items({ filter, q, limit: PAGE, offset: items.length, board: boardQuery });
     setItems((x) => [...x, ...r.items]);
   };
 
@@ -211,6 +234,38 @@ export function Library() {
             }}
           />
         </div>
+        {!trash && (
+          <div className="board-row" role="group" aria-label="Boards">
+            <button className="pill" aria-pressed={shownBoard === 'all'} onClick={() => setShownBoard('all')}>
+              All boards
+            </button>
+            <button className="pill" aria-pressed={shownBoard === 'none'} onClick={() => setShownBoard('none')}>
+              No board <span className="mono muted">{noBoardCount}</span>
+            </button>
+            {boards.map((b) => (
+              <button key={b.id} className="pill board-pill" aria-pressed={shownBoard === b.id} onClick={() => setShownBoard(b.id)}>
+                {b.cover && <img src={thumbUrl(b.cover)} alt="" />}
+                {b.name} <span className="mono muted">{b.count}</span>
+              </button>
+            ))}
+            <button className="btn ghost sm" onClick={() => setBoardDialog('new')}>
+              <Plus size={14} /> New board
+            </button>
+            {currentBoard && (
+              <span className="board-actions">
+                <button className="btn ghost sm" onClick={() => setBoardDialog('rename')}>
+                  Rename
+                </button>
+                <a className="btn ghost sm" href={`/api/boards/${currentBoard.id}/zip`} download title="All pictures and videos in this board, original quality">
+                  <Download size={14} /> Download ZIP
+                </a>
+                <button className="btn ghost sm danger-text" onClick={() => setBoardConfirm(true)}>
+                  <Trash2 size={14} /> Delete board
+                </button>
+              </span>
+            )}
+          </div>
+        )}
         {(picked.length > 0 || trash) && (
           <div className="selection-bar" role="toolbar" aria-label="Selection">
             {picked.length > 0 ? (
@@ -235,9 +290,25 @@ export function Library() {
                     </button>
                   </>
                 ) : (
-                  <button className="btn sm danger" onClick={() => void remove(picked)}>
-                    <Trash2 size={14} /> Delete
-                  </button>
+                  <>
+                    <select
+                      className="input sm"
+                      aria-label="Move to board"
+                      value=""
+                      onChange={(e) => e.target.value && void moveTo(picked, e.target.value === '__none__' ? null : e.target.value)}
+                    >
+                      <option value="">Move to board…</option>
+                      {boards.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
+                      ))}
+                      <option value="__none__">No board</option>
+                    </select>
+                    <button className="btn sm danger" onClick={() => void remove(picked)}>
+                      <Trash2 size={14} /> Delete
+                    </button>
+                  </>
                 )}
               </>
             ) : (
@@ -310,7 +381,7 @@ export function Library() {
             <p>Ctrl-click to add or remove, Shift-click for a range. Press Delete to {trash ? 'delete them for good' : 'move them to Recently deleted'}.</p>
           </div>
         ) : sel ? (
-          <Detail item={sel} comfyUrl={comfyUrl} trash={!!sel.deleted_at} onDelete={() => void remove([sel.id])} onRestore={() => void restore([sel.id])} onPurge={() => setConfirm({ ids: [sel.id] })} />
+          <Detail item={sel} comfyUrl={comfyUrl} boards={boards} onMove={(boardId) => void moveTo([sel.id], boardId)} trash={!!sel.deleted_at} onDelete={() => void remove([sel.id])} onRestore={() => void restore([sel.id])} onPurge={() => setConfirm({ ids: [sel.id] })} />
         ) : (
           <div className="empty" style={{ margin: 'auto' }}>
             <h2>No item selected</h2>
@@ -318,6 +389,51 @@ export function Library() {
           </div>
         )}
       </aside>
+      {boardDialog && (
+        <BoardNameDialog
+          title={boardDialog === 'new' ? 'New board' : 'Rename board'}
+          initial={boardDialog === 'rename' ? (currentBoard?.name ?? '') : ''}
+          onClose={() => setBoardDialog(null)}
+          onDone={async (name) => {
+            if (boardDialog === 'rename' && currentBoard) {
+              await api.renameBoard(currentBoard.id, name);
+              return;
+            }
+            const b = await api.createBoard(name);
+            if (picked.length) await moveTo(picked, b.id);
+            setShownBoard(b.id);
+          }}
+        />
+      )}
+      {boardConfirm && currentBoard && (
+        <Dialog title={`Delete the board "${currentBoard.name}"?`} onClose={() => setBoardConfirm(false)}>
+          <p style={{ marginTop: 0 }}>
+            Only the board goes. Its {currentBoard.count === 1 ? 'picture stays' : `${currentBoard.count} pictures and videos stay`} in your Library, under
+            "No board".
+          </p>
+          <div className="field-row" style={{ justifyContent: 'flex-end' }}>
+            <button className="btn" onClick={() => setBoardConfirm(false)}>
+              Cancel
+            </button>
+            <button
+              className="btn danger"
+              onClick={async () => {
+                const name = currentBoard.name;
+                setBoardConfirm(false);
+                try {
+                  await api.deleteBoard(currentBoard.id);
+                  setShownBoard('all');
+                  toast(`Board "${name}" deleted; its pictures are under "No board".`, 'ok');
+                } catch (e) {
+                  toast((e as Error).message, 'error');
+                }
+              }}
+            >
+              Delete board
+            </button>
+          </div>
+        </Dialog>
+      )}
       {confirm && (
         <Dialog title="Delete for good?" onClose={() => setConfirm(null)}>
           <p style={{ marginTop: 0 }}>
@@ -492,6 +608,8 @@ const MODE_LABEL: Record<string, string> = {
 function Detail({
   item,
   comfyUrl,
+  boards,
+  onMove,
   trash,
   onDelete,
   onRestore,
@@ -499,6 +617,8 @@ function Detail({
 }: {
   item: Item;
   comfyUrl: string | null;
+  boards: Board[];
+  onMove: (boardId: string | null) => void;
   trash: boolean;
   onDelete: () => void;
   onRestore: () => void;
@@ -587,6 +707,17 @@ function Detail({
                 <Trash2 size={14} /> Delete
               </button>
             </div>
+            <label className="field">
+              <span>Board</span>
+              <select className="input" aria-label="Board" value={item.board_id ?? ''} onChange={(e) => onMove(e.target.value || null)}>
+                <option value="">No board</option>
+                {boards.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div>
               <p className="section-label">More</p>
               <div className="field-row" style={{ flexWrap: 'wrap' }}>

@@ -17,9 +17,18 @@ export interface AppState {
   previews: Record<string, string>;
   libraryRev: number;
   toasts: Toast[];
+  /** The board new results go to (a preference, kept across launches); null = no board. */
+  board: string | null;
 }
 
-let state: AppState = { status: null, socket: 'connecting', boot: null, jobs: {}, previews: {}, libraryRev: 0, toasts: [] };
+const savedBoard = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('dr.board') ?? 'null') as string | null;
+  } catch {
+    return null;
+  }
+})();
+let state: AppState = { status: null, socket: 'connecting', boot: null, jobs: {}, previews: {}, libraryRev: 0, toasts: [], board: savedBoard };
 const listeners = new Set<() => void>();
 const jobListeners = new Set<(job: Job) => void>();
 
@@ -114,4 +123,14 @@ export function connectEvents(): void {
     };
   };
   open();
+}
+
+/** Choose the board new results go to. */
+export function setActiveBoard(id: string | null): void {
+  try {
+    localStorage.setItem('dr.board', JSON.stringify(id));
+  } catch {
+    /* ignore */
+  }
+  setState({ board: id });
 }

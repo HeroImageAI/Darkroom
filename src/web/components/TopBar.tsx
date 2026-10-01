@@ -4,6 +4,7 @@ import { api } from '../api';
 import { go, type Screen } from '../router';
 import { toast, useApp } from '../store';
 import { Dialog } from './common';
+import { WorkingBoardPicker } from './Boards';
 
 const TABS: { id: Screen; label: string; icon: typeof ImageIcon }[] = [
   { id: 'generate', label: 'Generate', icon: Wand2 },
@@ -70,6 +71,7 @@ export function TopBar({ screen }: { screen: Screen }) {
         ))}
       </nav>
       <div className="topbar-right">
+        <WorkingBoardPicker />
         <div className={`status-pill ${state}`} title={status?.message || status?.url || ''}>
           <span className="dot" aria-hidden="true" />
           {state === 'starting' && <Loader2 size={14} className="spin" />}
