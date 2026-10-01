@@ -137,7 +137,7 @@ function ComposeStart() {
           <section className="compose-new-card" aria-label="Start from a picture">
             <h2>Start from a picture</h2>
             <p className="note">It becomes the background; the canvas takes its shape.</p>
-            <div className="row" style={{ gap: 8 }}>
+            <div className="compose-row" style={{ gap: 8 }}>
               <button className="btn" onClick={() => setPicking(true)} disabled={busy}>
                 <ImagePlus size={16} /> From Library
               </button>
@@ -164,7 +164,7 @@ function ComposeStart() {
                 <button className="compose-thumb" onClick={() => go('compose', c.id)} aria-label={`Open ${c.name}`}>
                   {c.thumb ? <img src={c.thumb} alt="" /> : <span className="note">No preview</span>}
                 </button>
-                <div className="row" style={{ justifyContent: 'space-between', gap: 6 }}>
+                <div className="compose-row" style={{ justifyContent: 'space-between', gap: 6 }}>
                   <span className="compose-name" title={c.name}>
                     {c.name}
                     <small className="note">{new Date(c.updated_at).toLocaleString()}</small>
@@ -189,7 +189,7 @@ function ComposeStart() {
 type Drag =
   | { kind: 'move'; id: string; sx: number; sy: number; ox: number; oy: number; before: ComposeDoc }
   | { kind: 'scale'; id: string; ax: number; ay: number; w0: number; h0: number; before: ComposeDoc }
-  | { kind: 'paint'; id: string | null; erase: boolean; last: { x: number; y: number }; before: ComposeDoc };
+  | { kind: 'paint'; id: string | null; erase: boolean; picture?: boolean; last: { x: number; y: number }; before: ComposeDoc };
 
 function ComposeEditor({ id }: { id: string }) {
   const [name, setName] = useState('');
@@ -206,6 +206,9 @@ function ComposeEditor({ id }: { id: string }) {
   const [jobIds, setJobIds] = useState<string[]>([]);
   const [view, setView] = useState<string | null>(null);
   const [busyLayer, setBusyLayer] = useState<string | null>(null);
+  /** Erasing a picture: it is drawn on a working canvas at full resolution (shown in its place) until saved. */
+  const [erasingId, setErasingId] = useState<string | null>(null);
+  const eraseWork = useRef<{ id: string; canvas: HTMLCanvasElement } | null>(null);
   const [picking, setPicking] = useState(false);
   const [rendering, setRendering] = useState(false);
   const [describing, setDescribing] = useState(false);
@@ -417,14 +420,48 @@ function ComposeEditor({ id }: { id: string }) {
     ctx.restore();
   };
 
+  const erasePicture = (l: ComposeLayer, from: { x: number; y: number }, to: { x: number; y: number }) => {
+    const c = eraseWork.current?.canvas;
+    if (!c) return;
+    const map = (q: { x: number; y: number }) => {
+      const u = (q.x - l.x) / l.w;
+      return { x: (l.flip ? 1 - u : u) * c.width, y: ((q.y - l.y) / l.h) * c.height };
+    };
+    const a = map(from);
+    const b = map(to);
+    const ctx = c.getContext('2d')!;
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = (size * c.width) / l.w;
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x + 0.01, b.y);
+    ctx.stroke();
+    ctx.restore();
+  };
+
   const onPointerDown = async (e: React.PointerEvent) => {
     if (!doc || e.button !== 0) return;
     const p = toCanvas(e);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     if (tool === 'brush' || tool === 'eraser') {
       const erase = tool === 'eraser';
+      if (erase && sel?.kind === 'picture' && !sel.hidden) {
+        if (busyLayer) return;
+        const img = await loadImg(layerUrl(sel));
+        const c = makeCanvas(img.naturalWidth, img.naturalHeight);
+        c.getContext('2d')!.drawImage(img, 0, 0);
+        c.style.width = c.style.height = '100%';
+        c.style.display = 'block';
+        eraseWork.current = { id: sel.id, canvas: c };
+        setErasingId(sel.id);
+        setDrag({ kind: 'paint', id: sel.id, erase: true, picture: true, last: p, before: doc });
+        erasePicture(sel, p, p);
+        return;
+      }
       const target = sel?.kind === 'paint' ? sel.id : null;
-      if (erase && !target) return toast('Select a paint layer to erase from.', 'info');
+      if (erase && !target) return toast('Select a picture, cut-out or paint layer to erase from.', 'info');
       setDrag({ kind: 'paint', id: target, erase, last: p, before: doc });
       strokeTo(p, p, erase, target ? paint(target)! : null);
       return;
@@ -450,7 +487,11 @@ function ComposeEditor({ id }: { id: string }) {
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag || !doc) return;
     const p = toCanvas(e);
-    if (drag.kind === 'paint') {
+    if (drag.kind === 'paint' && drag.picture) {
+      const l = doc.layers.find((x) => x.id === drag.id);
+      if (l) erasePicture(l, drag.last, p);
+      setDrag({ ...drag, last: p });
+    } else if (drag.kind === 'paint') {
       strokeTo(drag.last, p, drag.erase, drag.id ? paint(drag.id)! : null);
       setDrag({ ...drag, last: p });
     } else if (drag.kind === 'move') {
@@ -471,6 +512,29 @@ function ComposeEditor({ id }: { id: string }) {
     setDrag(null);
     if (d.kind !== 'paint') {
       if (d.before !== doc) commit(doc, d.before);
+      return;
+    }
+    if (d.picture) {
+      // the erased picture is saved as a new file; the old one stays, so Undo brings it back
+      const work = eraseWork.current;
+      const lid = d.id!;
+      if (!work) return setErasingId(null);
+      setBusyLayer(lid);
+      void (async () => {
+        try {
+          const up = await api.upload(await toBlob(work.canvas), 'erased.png');
+          await loadImg(inputUrl(up.name)); // loaded before it replaces the working canvas: no flicker
+          const cur = docRef.current!;
+          const isBg = cur.layers.findIndex((l) => l.id === lid) === backgroundIndex(cur);
+          commit({ ...cur, layers: cur.layers.map((l) => (l.id === lid ? { ...l, src: up.name, cutout: l.cutout || !isBg } : l)) }, d.before);
+        } catch (err) {
+          toast(`Could not save the erased picture: ${(err as Error).message}`, 'error');
+        } finally {
+          eraseWork.current = null;
+          setErasingId(null);
+          setBusyLayer(null);
+        }
+      })();
       return;
     }
     if (d.erase) {
@@ -605,7 +669,7 @@ function ComposeEditor({ id }: { id: string }) {
   const TOOLS: { id: Tool; label: string; key: string; icon: typeof Brush }[] = [
     { id: 'move', label: 'Move and scale', key: 'V', icon: MousePointer2 },
     { id: 'brush', label: 'Paint', key: 'B', icon: Brush },
-    { id: 'eraser', label: 'Erase paint', key: 'E', icon: Eraser },
+    { id: 'eraser', label: 'Erase', key: 'E', icon: Eraser },
   ];
 
   return (
@@ -654,7 +718,7 @@ function ComposeEditor({ id }: { id: string }) {
           {view ? (
             <div className="compose-view">
               <img src={fileUrl(view)} alt="Render" onError={() => setView(null)} />
-              <div className="row compose-view-bar">
+              <div className="compose-row compose-view-bar">
                 <button className="btn sm" onClick={() => setView(null)}>
                   Back to canvas
                 </button>
@@ -681,6 +745,16 @@ function ComposeEditor({ id }: { id: string }) {
               {doc.layers.map((l) =>
                 l.kind === 'paint' ? (
                   <PaintLayer key={l.id} layer={l} doc={doc} hidden={!!l.hidden} register={(el) => (el ? paintEls.current.set(l.id, el) : paintEls.current.delete(l.id))} />
+                ) : l.id === erasingId ? (
+                  <div
+                    key={l.id}
+                    className="compose-piece"
+                    ref={(el) => {
+                      const c = eraseWork.current?.canvas;
+                      if (el && c && c.parentElement !== el) el.replaceChildren(c);
+                    }}
+                    style={{ left: l.x * scale, top: l.y * scale, width: l.w * scale, height: l.h * scale, transform: l.flip ? 'scaleX(-1)' : undefined }}
+                  />
                 ) : (
                   <img
                     key={l.id}
@@ -742,7 +816,7 @@ function ComposeEditor({ id }: { id: string }) {
       <aside className="panel right" aria-label="Composition settings">
         <div className="panel-scroll">
           <div>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
+            <div className="compose-row" style={{ justifyContent: 'space-between' }}>
               <button className="btn ghost sm" onClick={() => go('compose')}>
                 ← All compositions
               </button>
@@ -758,7 +832,7 @@ function ComposeEditor({ id }: { id: string }) {
 
           <div>
             <h3 className="section-label">Add</h3>
-            <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+            <div className="compose-row" style={{ gap: 6, flexWrap: 'wrap' }}>
               <button className="btn sm" onClick={() => setPicking(true)}>
                 <ImagePlus size={15} /> From Library
               </button>
@@ -787,7 +861,7 @@ function ComposeEditor({ id }: { id: string }) {
               )}
               <input type="range" min={2} max={400} value={size} onChange={(e) => setSize(+e.target.value)} aria-label="Brush size" style={{ width: '100%', marginTop: 8 }} />
               <p className="note">
-                {tool === 'brush' ? 'Rough shapes are fine: Reimagine turns them into the real thing. Paints on the selected paint layer, or starts a new one.' : 'Erases from the selected paint layer.'} [ and ] change the size.
+                {tool === 'brush' ? 'Rough shapes are fine: Reimagine turns them into the real thing. Paints on the selected paint layer, or starts a new one.' : 'Erases from the selected layer: a picture, a cut-out or paint. Ctrl+Z brings it back.'} [ and ] change the size.
               </p>
             </div>
           )}
@@ -808,7 +882,7 @@ function ComposeEditor({ id }: { id: string }) {
                         {l.name}
                         <small className="note">{i === bg ? 'background' : l.kind === 'paint' ? 'paint' : l.cutout ? 'cut-out' : 'picture'}</small>
                       </span>
-                      {busyLayer === l.id && <Loader2 size={14} className="spin" aria-label="Cutting out" />}
+                      {busyLayer === l.id && <Loader2 size={14} className="spin" aria-label="Working" />}
                     </button>
                     <button className="btn ghost sm icon" onClick={() => setLayer(l.id, { hidden: !l.hidden })} aria-label={l.hidden ? `Show ${l.name}` : `Hide ${l.name}`} title={l.hidden ? 'Show' : 'Hide'}>
                       {l.hidden ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -820,7 +894,7 @@ function ComposeEditor({ id }: { id: string }) {
             {sel && (
               <div className="compose-layer-actions" role="group" aria-label={`${sel.name} actions`}>
                 <input className="input" aria-label="Layer name" value={sel.name} onChange={(e) => setDocState({ ...doc, layers: doc.layers.map((l) => (l.id === sel.id ? { ...l, name: e.target.value } : l)) })} />
-                <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
+                <div className="compose-row" style={{ gap: 4, flexWrap: 'wrap' }}>
                   {sel.kind === 'picture' && !sel.cutout && (
                     <button className="btn sm" onClick={() => void cutOut(sel)} disabled={!!busyLayer} title="Remove its background (about 2 s); the cut-out also goes into your Library">
                       <Scissors size={15} /> Cut out
@@ -866,7 +940,7 @@ function ComposeEditor({ id }: { id: string }) {
             {MODES.find((m) => m.id === mode)!.text}
             {doc.mode === 'auto' ? ` Suggested because ${auto.why}.` : ''}
           </p>
-          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <div className="compose-row" style={{ justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <span className="note">Scene (optional)</span>
             <button className="btn sm" onClick={() => void describe()} disabled={describing || !doc.layers.length} title="Let the local vision model describe the real scene your canvas stands for">
               {describing ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Describe
