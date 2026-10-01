@@ -392,6 +392,54 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(page.getByRole('button', { name: 'Sharpen to full resolution' })).toHaveCount(0);
   });
 
+  // History and Takes are views of the Library (DECISIONS 81)
+  test('Generate History: delete a picture in place, Undo brings it back', async () => {
+    const count = async (f: string) => (await (await page.request.get(`/api/items?limit=1&filter=${f}`)).json()).total as number;
+    await page.goto('/#/generate');
+    const rail = page.getByRole('complementary', { name: 'History' });
+    await expect(rail.locator('.rail-item').first()).toBeVisible();
+    const before = await count('all');
+    const firstLabel = await rail.locator('.rail-item').first().getByRole('button').first().getAttribute('aria-label');
+    await rail.locator('.rail-item').first().hover();
+    await rail.getByRole('button', { name: 'Delete this picture' }).first().click();
+    await expect(page.getByText('1 picture moved to Recently deleted.')).toBeVisible();
+    expect(await count('all')).toBe(before - 1);
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByText('Restored.')).toBeVisible();
+    expect(await count('all')).toBe(before);
+    await expect(rail.locator('.rail-item').first().getByRole('button').first()).toHaveAttribute('aria-label', firstLabel!);
+    await expect(rail.getByRole('button', { name: 'See all in Library' })).toBeVisible();
+  });
+
+  test('Video Takes: failed renders can be dismissed, finished takes deleted with Undo', async () => {
+    // a render cancelled straight away = a failed take (no video)
+    const pic = (await (await page.request.get('/api/items?limit=50')).json()).items.find((i: any) => i.kind === 'image');
+    const inp = await (await page.request.post(`/api/items/${pic.id}/as-input`, { data: { which: 'main' } })).json();
+    const job = await (await page.request.post('/api/jobs', { data: { workflow: 'wan22_i2v', params: { start_image: inp.name, prompt: 'e2e cancelled take', seed: 1 }, meta: { mode: 'video', model: 'Wan 2.2', prompt: 'e2e' } } })).json();
+    await page.request.post(`/api/jobs/${job.id}/cancel`);
+    await expect.poll(async () => ((await (await page.request.get('/api/jobs?kind=video&limit=5')).json()) as any[]).find((j) => j.id === job.id)?.status, { timeout: 30_000 }).toBe('cancelled');
+
+    await page.goto('/#/video');
+    const takes = page.getByRole('complementary', { name: 'Takes' });
+    await expect(takes.getByRole('button', { name: /Clear failed \(\d+\)/ })).toBeVisible({ timeout: 15_000 });
+    await takes.getByRole('button', { name: /Clear failed/ }).click();
+    await expect(takes.getByRole('button', { name: /Clear failed/ })).toHaveCount(0);
+    await expect(takes.locator('[data-status="cancelled"], [data-status="error"], [data-status="lost"]')).toHaveCount(0);
+
+    const videos = async () => (await (await page.request.get('/api/items?limit=1&filter=videos')).json()).total as number;
+    const before = await videos();
+    const cards = await takes.getByTestId('take').count();
+    await takes.getByTestId('take').first().hover();
+    await takes.getByRole('button', { name: 'Delete this take' }).first().click();
+    await expect(page.getByText('1 video moved to Recently deleted.')).toBeVisible();
+    await expect(takes.getByTestId('take')).toHaveCount(cards - 1);
+    expect(await videos()).toBe(before - 1);
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(takes.getByTestId('take')).toHaveCount(cards);
+    expect(await videos()).toBe(before);
+    await shot(page, 'video-takes');
+  });
+
   test('Library: Upload adds your pictures to the Library', async () => {
     await page.goto('/#/library');
     const before = (await (await page.request.get('/api/items?limit=1')).json()).total;

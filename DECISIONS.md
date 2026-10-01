@@ -399,3 +399,15 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
       future template change can be tried from `presets/vlm_prompts.json` without a graph change.
     - Found on the way: an answer wrapped in quotes that also quoted text inside ("…plate "E65 8Q4S"…") kept its
       wrapper; the cleaner now strips a balanced outer pair (unit-tested both ways).
+81. **History and Takes are views of the Library.** Generate's History was a list of up to 200 picture ids in the
+    browser (deleted pictures stayed in it, purged ones left gaps) and Video's Takes listed the last 40 render jobs
+    (deleted videos stayed; failed renders piled up). Now:
+    - **History** = the newest 30 Generate pictures in the Library (`filter=generated`), refreshed on every library
+      change; **Takes** = running and failed renders plus finished ones whose video is still in the Library
+      (`Store.liveTakes`). Delete or restore anywhere and both panels follow.
+    - **Delete in place**: a ✕ on hover (always visible on touch screens) or the Delete key on a focused History
+      picture, through the same Recently deleted + Undo as the Library (`src/web/lib/remove.ts`). Deleting the picture
+      or take on show moves the view to the next one.
+    - **Failed takes** (error, cancelled, lost — no file) get **Dismiss**, and **Clear failed (N)** hides them all
+      (`jobs.dismissed`, additive migration). Only failures can be dismissed.
+    - **See all in Library** links (videos filter for Takes). No separate "hide from panel": one kind of removal.

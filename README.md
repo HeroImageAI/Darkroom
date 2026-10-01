@@ -65,6 +65,7 @@ See docs/QA_REPORT.md for how every feature performed on the test pictures, with
 - Turn on **Notify when done** to get a desktop notification when a video finishes (allow notifications when the browser asks).
 - Style presets live in `presets/styles.json`, camera phrases in `presets/camera.json`. Edit them freely; changes appear on
   the next page load.
+- **History (Generate) and Takes (Video)** show the newest work from your Library. Hover and click ✕ to delete (it goes to Recently deleted, with Undo); failed video renders have **Dismiss** and **Clear failed**.
 - **Big photos:** Klein and Qwen work at about 1–2 MP. Masked edits (Inpaint, Instruct with "Only change the masked area") and fast Remove BG leave the rest of your photo pixel-for-pixel untouched. Enhance brings a large photo back to its full size automatically, and after a whole-picture edit a **Sharpen to full resolution** button rebuilds the detail (SeedVR2, about 20 s).
 - Licences: FLUX.2 [klein] 9B and Qwen-Image 2.1 are both **non-commercial** licences — fine for personal use. See docs/AUDIT.md §7.
 
