@@ -152,3 +152,53 @@ describe('Generate History is the Library', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });
+
+describe('Boards', () => {
+  let dir: string;
+  let store: Store;
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dr-boards-'));
+    store = new Store(dir);
+    for (const id of ['a', 'b', 'c']) store.insertItem(item(id, `${id}.png`));
+  });
+  afterEach(() => {
+    store.db.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('moves items into a board and lists by board, with counts and a cover', () => {
+    store.createBoard('Client X', 'bx');
+    expect(store.moveToBoard(['a', 'b'], 'bx')).toEqual(['a', 'b']);
+    expect(store.listItems({ board: 'bx' }).items.map((i) => i.id).sort()).toEqual(['a', 'b']);
+    expect(store.listItems({ board: 'none' }).items.map((i) => i.id)).toEqual(['c']);
+    expect(store.listItems({}).total).toBe(3);
+    const bx = store.board('bx')!;
+    expect(bx.count).toBe(2);
+    expect(['a', 'b']).toContain(bx.cover);
+  });
+
+  it('counts only live items', () => {
+    store.createBoard('X', 'bx');
+    store.moveToBoard(['a', 'b'], 'bx');
+    store.softDelete(['a']);
+    expect(store.board('bx')!.count).toBe(1);
+  });
+
+  it('deleting a board never deletes its pictures', () => {
+    store.createBoard('X', 'bx');
+    store.moveToBoard(['a'], 'bx');
+    expect(store.deleteBoard('bx')).toBe(true);
+    expect(store.getItem('a')).not.toBeNull();
+    expect(store.getItem('a')!.board_id).toBeNull();
+    expect(store.boards()).toEqual([]);
+  });
+
+  it('renames and moves back to no board', () => {
+    store.createBoard('X', 'bx');
+    store.renameBoard('bx', 'Logos');
+    expect(store.board('bx')!.name).toBe('Logos');
+    store.moveToBoard(['a'], 'bx');
+    store.moveToBoard(['a'], null);
+    expect(store.listItems({ board: 'none' }).total).toBe(3);
+  });
+});

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
@@ -6,6 +7,7 @@ import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import sharp from 'sharp';
+import { zipSync } from 'fflate';
 import type { WebSocket } from 'ws';
 import { inputName, type SystemStats } from '../shared/comfy.js';
 import type { Manifest } from '../shared/manifest.js';
@@ -438,7 +440,7 @@ app.post('/api/jobs/:id/cancel', async (req) => {
 
 app.get('/api/items', async (req) => {
   const q = req.query as Record<string, string>;
-  const res = store.listItems({ filter: (q.filter as LibraryQuery['filter']) ?? 'all', q: q.q, limit: Number(q.limit) || 60, offset: Number(q.offset) || 0 });
+  const res = store.listItems({ filter: (q.filter as LibraryQuery['filter']) ?? 'all', q: q.q, limit: Number(q.limit) || 60, offset: Number(q.offset) || 0, board: q.board || undefined });
   return { total: res.total, items: res.items.map(slim) };
 });
 
@@ -457,6 +459,72 @@ app.patch('/api/items/:id', async (req, reply) => {
   const item = store.getItem(id)!;
   broadcast({ type: 'item', item: slim(item) });
   return slim(item);
+});
+
+// ---- Boards (collections). Deleting a board never deletes its pictures; they just have no board any more.
+const boardName = (v: unknown) => (typeof v === 'string' ? v.trim().slice(0, 60) : '');
+
+app.get('/api/boards', async () => ({ boards: store.boards(), none: store.listItems({ filter: 'all', board: 'none', limit: 1 }).total }));
+
+app.post('/api/boards', async (req, reply) => {
+  const name = boardName((req.body as { name?: unknown })?.name);
+  if (!name) return reply.code(400).send({ error: 'Give the board a name.' });
+  if (store.boards().some((b) => b.name.toLowerCase() === name.toLowerCase())) return reply.code(409).send({ error: `There is already a board called "${name}".` });
+  const board = store.createBoard(name, crypto.randomUUID());
+  broadcast({ type: 'library' });
+  return board;
+});
+
+app.patch('/api/boards/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  const name = boardName((req.body as { name?: unknown })?.name);
+  if (!name) return reply.code(400).send({ error: 'Give the board a name.' });
+  if (store.boards().some((b) => b.id !== id && b.name.toLowerCase() === name.toLowerCase())) return reply.code(409).send({ error: `There is already a board called "${name}".` });
+  if (!store.renameBoard(id, name)) return reply.code(404).send({ error: 'Board not found' });
+  broadcast({ type: 'library' });
+  return store.board(id);
+});
+
+app.delete('/api/boards/:id', async (req, reply) => {
+  if (!store.deleteBoard((req.params as { id: string }).id)) return reply.code(404).send({ error: 'Board not found' });
+  broadcast({ type: 'library' });
+  return { ok: true };
+});
+
+app.post('/api/items/board', async (req, reply) => {
+  const b = req.body as { ids?: unknown; boardId?: unknown };
+  const boardId = typeof b?.boardId === 'string' ? b.boardId : null;
+  if (boardId && !store.board(boardId)) return reply.code(404).send({ error: 'Board not found' });
+  const moved = store.moveToBoard(idList(b), boardId);
+  if (moved.length) broadcast({ type: 'library' });
+  return { moved };
+});
+
+/** A board as a ZIP of its files (pictures and videos, original quality), streamed from ComfyUI's output folder. */
+app.get('/api/boards/:id/zip', async (req, reply) => {
+  const board = store.board((req.params as { id: string }).id);
+  if (!board) return reply.code(404).send({ error: 'Board not found' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running, so the files can't be fetched." });
+  const items = store.listItems({ filter: 'all', board: board.id, limit: 100000 }).items;
+  const files: Record<string, Uint8Array> = {};
+  const used = new Set<string>();
+  for (const it of items) {
+    try {
+      const bytes = await jobs.comfy.view(it.file);
+      const ext = path.extname(it.file.filename) || '.png';
+      const base = (it.prompt || it.mode).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40).replace(/^-|-$/g, '') || 'darkroom';
+      let name = `${base}-v${it.version}${ext}`;
+      for (let n = 2; used.has(name); n++) name = `${base}-v${it.version}-${n}${ext}`;
+      used.add(name);
+      files[name] = [new Uint8Array(bytes), { level: 0 }] as unknown as Uint8Array; // already compressed media
+    } catch {
+      /* a file ComfyUI no longer has is skipped */
+    }
+  }
+  const zip = zipSync(files as Parameters<typeof zipSync>[0]);
+  const slug = board.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'board';
+  reply.header('content-type', 'application/zip').header('content-disposition', `attachment; filename="darkroom-${slug}.zip"`);
+  return reply.send(Buffer.from(zip));
 });
 
 // ---- Library delete: Delete moves items to "Recently deleted" (restorable); Delete forever removes the rows and sends
