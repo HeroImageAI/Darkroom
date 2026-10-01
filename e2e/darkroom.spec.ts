@@ -31,7 +31,7 @@ test.describe.serial('Darkroom end to end', () => {
     await page.goto('/#/generate');
     await page.getByRole('button', { name: /^Klein 9B/ }).click();
     await page.getByRole('button', { name: '16:9' }).click();
-    await page.getByRole('button', { name: 'Photographic' }).click();
+    await page.getByRole('button', { name: 'Photographic', exact: true }).click();
     await page.getByRole('button', { name: '×2' }).click();
     await page.getByLabel('Prompt').fill('A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds');
     await page.getByLabel('Prompt').press('Control+Enter');
@@ -47,7 +47,7 @@ test.describe.serial('Darkroom end to end', () => {
     await page.goto('/#/generate');
     await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     await page.getByRole('button', { name: '4:5' }).click();
-    await page.getByRole('button', { name: 'Screen print' }).click();
+    await page.getByRole('button', { name: 'Screen print', exact: true }).click();
     await page.getByRole('button', { name: '×1' }).click();
     await page.getByLabel('Prompt').fill('Poster with the bold headline "DARKROOM" and the line "open every night" beneath, a crescent moon over rooftops');
     await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
