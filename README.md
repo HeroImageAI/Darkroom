@@ -66,6 +66,8 @@ See docs/QA_REPORT.md for how every feature performed on the test pictures, with
 - Style presets live in `presets/styles.json`, camera phrases in `presets/camera.json`. Edit them freely; changes appear on
   the next page load.
 - **Each launch starts clean.** Generate and Video keep your prompt, references and frames while you work (also across reloads) and start empty the next time you open Darkroom; your choices of model, aspect, style and quality are remembered. **New** clears them at any time (with Undo).
+- **Boards** keep projects apart: pick a board in the top bar and everything new goes into it (new versions of a picture stay with that picture). In the Library: New board, Rename, Download ZIP, Delete board (pictures stay), and "Move to board…" for a selection.
+- **Prompt variations:** write `a {red|blue} car at {dawn|night}` to get every combination in one click, all on the same seed so only the wording changes (up to 16 pictures per click).
 - **History (Generate) and Takes (Video)** show the newest work from your Library. Hover and click ✕ to delete (it goes to Recently deleted, with Undo); failed video renders have **Dismiss** and **Clear failed**.
 - **Big photos:** Klein and Qwen work at about 1–2 MP. Masked edits (Inpaint, Instruct with "Only change the masked area") and fast Remove BG leave the rest of your photo pixel-for-pixel untouched. Enhance → Restore with Klein redraws a large photo at up to 4 MP with a dedicated restore LoRA and brings it back to its full size automatically, and after a whole-picture edit a **Sharpen to full resolution** button rebuilds the detail (SeedVR2, about 20 s).
 - Licences: FLUX.2 [klein] 9B and Qwen-Image 2.1 are both **non-commercial** licences — fine for personal use. See docs/AUDIT.md §7.

@@ -371,6 +371,8 @@ export class JobManager {
       job_id: job.id,
       input_name: null,
       group_id: (job.meta.groupId as string | undefined) ?? (job.meta.layers ? job.id : null),
+      // a new version stays in its picture's board; anything new goes to the board you are working in
+      board_id: parent ? (parent.board_id ?? null) : this.liveBoard(job.meta.boardId),
     };
     if (spec.kind === 'video') {
       const vid = role('video')[0];
@@ -537,6 +539,11 @@ export class JobManager {
     } catch (e) {
       this.broadcast({ type: 'toast', kind: 'error', text: 'Could not join the clips: ' + friendlyError((e as Error).message) });
     }
+  }
+
+  /** The board a new result should go to, if it (still) exists. */
+  private liveBoard(id: unknown): string | null {
+    return typeof id === 'string' && id && this.store.board(id) ? id : null;
   }
 
   thumbPath(id: string): string {

@@ -42,6 +42,18 @@ export interface Item {
   group_id?: string | null;
   /** Set while the item is in the Library's "Recently deleted"; null for live items. */
   deleted_at?: number | null;
+  /** Board (collection) the item belongs to; null = no board. */
+  board_id?: string | null;
+}
+
+export interface Board {
+  id: string;
+  name: string;
+  created_at: number;
+  /** Live (not deleted) items in the board. */
+  count: number;
+  /** Newest live item, for the board's thumbnail. */
+  cover: string | null;
 }
 
 export type JobStatus = 'queued' | 'running' | 'done' | 'error' | 'cancelled' | 'lost';
@@ -138,6 +150,8 @@ export interface LibraryQuery {
   q?: string;
   limit?: number;
   offset?: number;
+  /** A board id, or 'none' for items without a board; unset = every board. */
+  board?: string;
 }
 
 export class Store {
@@ -156,6 +170,10 @@ export class Store {
     // Video Takes panel: failed / cancelled / lost renders can be dismissed (they have no file to keep)
     const jobCols = (this.db.prepare('PRAGMA table_info(jobs)').all() as { name: string }[]).map((c) => c.name);
     if (!jobCols.includes('dismissed')) this.db.exec('ALTER TABLE jobs ADD COLUMN dismissed INTEGER NOT NULL DEFAULT 0');
+    // Boards (collections): additive, items keep working without one
+    this.db.exec('CREATE TABLE IF NOT EXISTS boards (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL)');
+    if (!cols.includes('board_id')) this.db.exec('ALTER TABLE items ADD COLUMN board_id TEXT');
+    this.db.exec('CREATE INDEX IF NOT EXISTS items_board ON items(board_id)');
   }
 
   groupItems(groupId: string): Item[] {
@@ -212,6 +230,11 @@ export class Store {
         where.push("mode = 'generate'");
         break;
     }
+    if (q.board === 'none') where.push('board_id IS NULL');
+    else if (q.board) {
+      where.push('board_id = ?');
+      args.push(q.board);
+    }
     if (q.q && q.q.trim()) {
       const term = q.q.trim();
       if (/^\d+$/.test(term)) {
@@ -234,6 +257,45 @@ export class Store {
   lineage(rootId: string): Item[] {
     const rows = this.db.prepare('SELECT * FROM items WHERE (id = ? OR root_id = ?) AND deleted_at IS NULL ORDER BY version, created_at').all(rootId, rootId) as any[];
     return rows.map((r) => decode<Item>(r, JSON_ITEM)!);
+  }
+
+  // ---- Boards
+  boards(): Board[] {
+    const rows = this.db
+      .prepare(
+        `SELECT b.id, b.name, b.created_at,
+           (SELECT COUNT(*) FROM items i WHERE i.board_id = b.id AND i.deleted_at IS NULL) AS count,
+           (SELECT i.id FROM items i WHERE i.board_id = b.id AND i.deleted_at IS NULL ORDER BY i.created_at DESC LIMIT 1) AS cover
+         FROM boards b ORDER BY b.name COLLATE NOCASE`,
+      )
+      .all() as any[];
+    return rows.map((r) => ({ id: r.id, name: r.name, created_at: r.created_at, count: r.count, cover: r.cover ?? null }));
+  }
+
+  board(id: string): Board | null {
+    return this.boards().find((b) => b.id === id) ?? null;
+  }
+
+  createBoard(name: string, id: string, now = Date.now()): Board {
+    this.db.prepare('INSERT INTO boards (id, name, created_at) VALUES (?, ?, ?)').run(id, name, now);
+    return this.board(id)!;
+  }
+
+  renameBoard(id: string, name: string): boolean {
+    return this.db.prepare('UPDATE boards SET name = ? WHERE id = ?').run(name, id).changes > 0;
+  }
+
+  /** Remove a board. Its items are never deleted: they simply have no board any more. */
+  deleteBoard(id: string): boolean {
+    this.db.prepare('UPDATE items SET board_id = NULL WHERE board_id = ?').run(id);
+    return this.db.prepare('DELETE FROM boards WHERE id = ?').run(id).changes > 0;
+  }
+
+  /** Put items in a board (null = no board). Returns the ids moved. */
+  moveToBoard(ids: string[], boardId: string | null): string[] {
+    const done: string[] = [];
+    for (const id of ids) if (this.db.prepare('UPDATE items SET board_id = ? WHERE id = ?').run(boardId, id).changes) done.push(id);
+    return done;
   }
 
   /** Move items to "Recently deleted". Returns the ids that were live. */

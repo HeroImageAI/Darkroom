@@ -442,3 +442,20 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     it; larger photos are drawn at 4 MP and SeedVR2 takes them to full size (Restore + upscale: twice, capped at
     8192 px) — `planLargeRestore` in `src/shared/fullsize.ts`. Small pictures, Subtle and Qwen are unchanged. Live:
     2528×1696 → exactly 2528×1696 in 90 s; 4000×2286 → 4000×2286 in 104 s; 1344×768 → normal Restore in 24 s.
+84. **Boards (collections), after Invoke's gallery boards.** JP's Library was one flat list. A board groups pictures and
+    videos by project or client (`boards` table, `items.board_id`; additive). A **working board** chosen in the top bar
+    is where everything *new* goes — generations, uploads, videos — sent with every job by `api.submit`; a **new
+    version** of a picture (edit, upscale, restore, frame) stays in that picture's board, so a picture's versions never
+    split up. The Library gets a board row (All boards, No board, each board with its cover and count; New board,
+    Rename, Download ZIP of the original files, Delete board), "Move to board…" for a selection and a Board field per
+    item. **Deleting a board never deletes pictures** — they go back to "No board". Found while testing: creating a
+    board and selecting it raced the board list's refresh (the "board no longer exists" check undid the choice); the
+    list is now refreshed before the new board is selected. The Library header also lost a line at 1280 px: Upload and
+    the item count moved to the board row.
+85. **Prompt variations, after Invoke's dynamic prompts.** `{a|b|c}` groups in the Generate prompt expand to every
+    combination (`src/shared/variations.ts`; braces without a `|` are left alone, options kept as typed, joins tidied).
+    Each variation is its own job on the **same seed**, so only the wording changes (live: red and blue vintage car,
+    identical car, pose and scene), and the result strip shows the whole run together, each tile titled with its
+    prompt. A line under the prompt counts the pictures and previews the list. Limits: 16 prompts and 16 pictures per
+    click (variations × batch) — over that, nothing is queued and the note says why. The saved settings keep the prompt
+    as typed, so Reuse / Restore bring the template back.
