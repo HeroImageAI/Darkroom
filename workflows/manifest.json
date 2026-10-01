@@ -4321,6 +4321,115 @@
       "outputs": {
         "image": "DR_OUTPUT"
       }
+    },
+    "klein_enhance_large": {
+      "file": "klein_enhance_large.json",
+      "family": "klein",
+      "kind": "image",
+      "label": "Restore a large photo (Klein 9B + restore LoRA, up to 4 MP)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_STEPS",
+              "input": "steps"
+            }
+          ],
+          "default": 4,
+          "min": 1,
+          "max": 12
+        },
+        "megapixels": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_WORK",
+              "input": "megapixels"
+            }
+          ],
+          "default": 1,
+          "min": 0.5,
+          "max": 4
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/enhance"
+        },
+        "target_w": {
+          "type": "int",
+          "label": "Exact width",
+          "targets": [
+            {
+              "title": "DR_EXACT",
+              "input": "width"
+            }
+          ],
+          "min": 16,
+          "max": 16384,
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_EXACT",
+                "input": "image"
+              }
+            ]
+          }
+        },
+        "target_h": {
+          "type": "int",
+          "label": "Exact height",
+          "targets": [
+            {
+              "title": "DR_EXACT",
+              "input": "height"
+            }
+          ],
+          "min": 16,
+          "max": 16384
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {

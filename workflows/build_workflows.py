@@ -293,12 +293,15 @@ def klein_inpaint_cs():
     return g
 
 
-def klein_enhance_edit():
+def klein_enhance_edit(lora=None):
     """Addendum 1 B: Enhance as an EDIT, not img2img. The source (lanczos, ~1 MP) is only a ReferenceLatent; an empty
     latent at the source's aspect is sampled at full denoise with an instruction prompt that asks for restoration and
-    preservation. Pattern from One Node's EDIT graph (github.com/yanokusnir-ai/one-node-flux-2-klein)."""
+    preservation. Pattern from One Node's EDIT graph (github.com/yanokusnir-ai/one-node-flux-2-klein).
+    lora: a restore LoRA on the model (DR_LORA), used for large photos at up to 4 MP (DECISIONS 83)."""
     g = G()
     unet, clip, vae, pos, neg = klein_base(g)
+    if lora:
+        unet = g.add("LoraLoaderModelOnly", "DR_LORA", model=o(unet), lora_name=lora, strength_model=1.0)
     src = g.add("LoadImage", "DR_IMAGE_1", image=PLACEHOLDER_IMAGE)
     work = g.add("ImageScaleToTotalPixels", "DR_WORK", image=o(src), upscale_method="lanczos",
                  megapixels=1.0, resolution_steps=16)
@@ -308,8 +311,16 @@ def klein_enhance_edit():
     neg = g.add("ReferenceLatent", "Ref neg", conditioning=o(neg), latent=o(ref))
     lat = g.add("EmptyFlux2LatentImage", "Empty latent", width=o(size, 0), height=o(size, 1), batch_size=1)
     img = klein_sample(g, unet, vae, pos, neg, lat, o(size, 0), o(size, 1), "onenode")
+    if lora:
+        # optional exact size (bypassed when unset): a photo up to 4 MP comes back at exactly its own size
+        img = g.add("ImageScale", "DR_EXACT", image=o(img), upscale_method="lanczos", width=1024, height=1024,
+                    crop="disabled")
     g.add("SaveImage", "DR_OUTPUT", images=o(img), filename_prefix="darkroom/enhance")
     return g
+
+
+# "Ultimate Upscaler Klein-9b" (civitai.com/models/2474084, non-commercial): keeps Klein sharp at 4 MP (DECISIONS 83)
+KLEIN_RESTORE_LORA = "Flux2-Klein-Image-RestoreV1.safetensors"
 
 
 # ----------------------------------------------------------------- Qwen --
@@ -1007,6 +1018,7 @@ if __name__ == "__main__":
     klein_masked(True, style="onenode").save("outpaint.v2.json")
     klein_masked(False, prefix="darkroom/edit", style="onenode").save("klein_edit.v2.json")
     klein_enhance_edit().save("klein_enhance_edit.json")
+    klein_enhance_edit(lora=KLEIN_RESTORE_LORA).save("klein_enhance_large.json")
     klein_inpaint_cs().save("klein_inpaint_cs.json")
     # Phase 3 A/B (docs/qa/addenda/p3): showing Qwen the mask as <image2> won 6/6; native added instead of replacing,
     # the Fun ControlNet kept structure and recoloured instead. Shipped = maskref; the others stay as experiments.
