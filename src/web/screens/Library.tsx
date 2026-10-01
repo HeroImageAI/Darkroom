@@ -596,6 +596,7 @@ const MODE_LABEL: Record<string, string> = {
   'edit:outpaint': 'Outpaint',
   'edit:remove_bg': 'Background removed',
   'edit:crop': 'Crop',
+  compose: 'Composed',
   upscale: 'Upscale',
   video: 'Video',
   smooth: 'Smoothed video',

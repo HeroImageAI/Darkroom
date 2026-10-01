@@ -3,6 +3,7 @@ import { api, type Bootstrap } from './api';
 import { Toasts } from './components/common';
 import { OfflineBanner, TopBar } from './components/TopBar';
 import { useRoute } from './router';
+import { Compose } from './screens/Compose';
 import { Edit } from './screens/Edit';
 import { Generate } from './screens/Generate';
 import { Home } from './screens/Home';
@@ -38,6 +39,8 @@ export function App() {
         <Generate query={route.query} />
       ) : route.screen === 'edit' ? (
         <Edit id={route.id} />
+      ) : route.screen === 'compose' ? (
+        <Compose id={route.id} />
       ) : route.screen === 'video' ? (
         <Video query={route.query} />
       ) : (

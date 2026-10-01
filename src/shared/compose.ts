@@ -34,6 +34,8 @@ export interface ComposeDoc {
   /** optional: what the finished scene should be */
   description: string;
   mode: RenderMode | 'auto';
+  /** Library items rendered from this composition, newest first */
+  renders?: string[];
 }
 
 export interface Composition {
@@ -171,5 +173,6 @@ export function sanitiseDoc(raw: unknown): ComposeDoc | null {
     });
   }
   const mode = (['auto', 'blend', 'harmonise', 'reimagine'] as const).find((m) => m === r.mode) ?? 'auto';
-  return { width, height, layers, description: str(r.description, 2000), mode };
+  const renders = Array.isArray(r.renders) ? (r.renders.filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(x)) as string[]).slice(0, 200) : [];
+  return { width, height, layers, description: str(r.description, 2000), mode, renders };
 }
