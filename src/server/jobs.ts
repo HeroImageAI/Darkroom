@@ -7,9 +7,11 @@ import { ComfyClient, filesFromHistory, historyError, parseWsMessage, textFromHi
 import { cleanVlmOutput } from '../shared/vlm.js';
 import { friendlyError } from '../shared/errors.js';
 import type { Manifest } from '../shared/manifest.js';
-import { buildPrompt, findByTitle, titleOf, type ApiPrompt, type ParamValues } from '../shared/workflow.js';
+import { buildPrompt, findByTitle, titleOf, WorkflowError, type ApiPrompt, type ParamValues } from '../shared/workflow.js';
 import type { FileRef, Item, Job, Store } from './db.js';
 import { backToSize } from '../shared/fullsize.js';
+import { injectLoras, parseLoras } from '../shared/loras.js';
+import { LoraLibrary, type LoraFamily } from './loras.js';
 
 export interface SubmitRequest {
   workflow: string;
@@ -51,6 +53,18 @@ export class VramWarning extends Error {
 
 export class JobManager {
   comfy: ComfyClient | null = null;
+  /** Your LoRAs, sorted by the model they fit (read from the files' headers). */
+  readonly loraLibrary = new LoraLibrary(() => this.comfy?.baseUrl ?? null);
+
+  /** The diffusion-model files LoRAs are matched against: whatever the Klein and Qwen graphs load. */
+  loraModels(): Record<LoraFamily, string> {
+    const unet = (wf: string) => {
+      const spec = this.manifest().workflows[wf];
+      const node = Object.values(this.template(spec.file)).find((n) => n._meta?.title === 'DR_MODEL');
+      return String(node?.inputs.unet_name ?? '');
+    };
+    return { klein: unet('klein_t2i'), qwen: unet('qwen_t2i') };
+  }
   private ws: WebSocket | null = null;
   private lastFamily: string | null = null;
   private previewAt = 0;
@@ -241,6 +255,16 @@ export class JobManager {
       }
     }
     const prompt = buildPrompt(this.template(spec.file), spec, req.params);
+    // your own LoRAs (DECISIONS 86): only ones made for this job's model, put on the graph's model
+    const loras = parseLoras(req.params.loras);
+    if (loras.length) {
+      const family = spec.family === 'klein' ? 'klein' : spec.family.startsWith('qwen') ? 'qwen' : null;
+      if (!family || !findByTitle(prompt, 'DR_MODEL').length) throw new WorkflowError('LoRAs can only be used with Klein 9B and Qwen-Image 2.1.');
+      const fits = new Set((await this.loraLibrary.catalogue(this.loraModels()))[family].map((l) => l.name));
+      const wrong = loras.filter((l) => !fits.has(l.name));
+      if (wrong.length) throw new WorkflowError(`${wrong.map((l) => l.name).join(', ')} is not a ${family === 'klein' ? 'Klein 9B' : 'Qwen-Image 2.1'} LoRA.`);
+      injectLoras(prompt, loras);
+    }
 
     const active = this.store.activeJobs();
     const familyChanged = this.lastFamily !== null && this.lastFamily !== spec.family && !FREE_FAMILIES_IGNORED.has(spec.family);

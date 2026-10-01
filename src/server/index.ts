@@ -461,6 +461,16 @@ app.patch('/api/items/:id', async (req, reply) => {
   return slim(item);
 });
 
+// ---- Your own LoRAs, sorted by the model they fit (DECISIONS 86)
+app.get('/api/loras', async (_req, reply) => {
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
+  try {
+    return await jobs.loraLibrary.catalogue(jobs.loraModels());
+  } catch (e) {
+    return reply.code(500).send({ error: (e as Error).message });
+  }
+});
+
 // ---- Boards (collections). Deleting a board never deletes its pictures; they just have no board any more.
 const boardName = (v: unknown) => (typeof v === 'string' ? v.trim().slice(0, 60) : '');
 
