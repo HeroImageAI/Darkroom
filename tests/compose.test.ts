@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Store } from '../src/server/db';
-import { autoMode, canvasSizeFor, coverLayer, emptyDoc, placeLayer, renderPlan, sanitiseDoc, seamWidths } from '../src/shared/compose';
+import { autoMode, canvasKey, canvasSizeFor, coverLayer, emptyDoc, isDescribedText, placeLayer, renderPlan, sanitiseDoc, seamWidths } from '../src/shared/compose';
 
 describe('compose sizing', () => {
   it('canvas keeps the picture shape at about 1 MP, sides multiples of 16', () => {
@@ -87,5 +87,26 @@ describe('compositions store', () => {
     expect(s.restoreComposition('comp-1')).toBe(true);
     expect(s.compositions().map((x) => x.name)).toEqual(['Harbour at dusk']);
     s.db.close();
+  });
+});
+
+describe('Describe: its own text vs yours, and a stale one', () => {
+  const doc = () => ({ ...emptyDoc(), layers: [{ id: 'p', kind: 'paint' as const, name: 'Paint 1', paint: 'data:image/png;base64,AAAA', x: 0, y: 0, w: 1216, h: 832 }] });
+  it('the canvas key changes when the paint or a piece changes, not otherwise', () => {
+    const a = doc();
+    expect(canvasKey(a)).toBe(canvasKey(doc()));
+    expect(canvasKey({ ...a, layers: [{ ...a.layers[0], paint: 'data:image/png;base64,BBBB' }] })).not.toBe(canvasKey(a));
+    expect(canvasKey({ ...a, layers: [{ ...a.layers[0], hidden: true }] })).not.toBe(canvasKey(a));
+  });
+  it('text written by Describe is recognised; once you edit it, it is yours', () => {
+    const d = { description: 'A cottage on a hill.', described: { text: 'A cottage on a hill.', canvas: 'x' } };
+    expect(isDescribedText(d)).toBe(true);
+    expect(isDescribedText({ ...d, description: 'A cottage on a hill at dusk.' })).toBe(false);
+    expect(isDescribedText({ description: 'A cottage.', described: null })).toBe(false);
+  });
+  it('sanitiseDoc keeps the described record', () => {
+    const s = sanitiseDoc({ ...emptyDoc(), described: { text: 'A house.', canvas: 'abc' } })!;
+    expect(s.described).toEqual({ text: 'A house.', canvas: 'abc' });
+    expect(sanitiseDoc({ ...emptyDoc(), described: { text: 5 } })!.described).toBeNull();
   });
 });

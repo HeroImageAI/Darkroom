@@ -36,6 +36,8 @@ export interface ComposeDoc {
   mode: RenderMode | 'auto';
   /** Library items rendered from this composition, newest first */
   renders?: string[];
+  /** What Describe last wrote, and for which canvas — so it can tell its own text from yours, and notice a stale one */
+  described?: { text: string; canvas: string } | null;
 }
 
 export interface Composition {
@@ -175,5 +177,27 @@ export function sanitiseDoc(raw: unknown): ComposeDoc | null {
   }
   const mode = (['auto', 'blend', 'harmonise', 'reimagine'] as const).find((m) => m === r.mode) ?? 'auto';
   const renders = Array.isArray(r.renders) ? (r.renders.filter((x) => typeof x === 'string' && /^[A-Za-z0-9-]{1,64}$/.test(x)) as string[]).slice(0, 200) : [];
-  return { width, height, layers, description: str(r.description, 2000), mode, renders };
+  const d = r.described as Record<string, unknown> | null | undefined;
+  const described = d && typeof d === 'object' && typeof d.text === 'string' && typeof d.canvas === 'string' ? { text: d.text.slice(0, 2000), canvas: d.canvas.slice(0, 64) } : null;
+  return { width, height, layers, description: str(r.description, 2000), mode, renders, described };
+}
+
+/** A short fingerprint of what is on the canvas (pieces, places, paint), to know when a description is out of date. */
+export function canvasKey(doc: Pick<ComposeDoc, 'width' | 'height' | 'layers'>): string {
+  let h = 5381;
+  const add = (s: string) => {
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  };
+  add(`${doc.width}x${doc.height}`);
+  for (const l of doc.layers) {
+    if (l.hidden) continue;
+    add(`|${l.kind}|${l.src ?? ''}|${Math.round(l.x)},${Math.round(l.y)},${Math.round(l.w)},${Math.round(l.h)}|${l.flip ? 1 : 0}|`);
+    if (l.paint) add(l.paint);
+  }
+  return (h >>> 0).toString(36);
+}
+
+/** Is the description still the one Describe wrote (not typed or edited by you)? */
+export function isDescribedText(doc: Pick<ComposeDoc, 'description' | 'described'>): boolean {
+  return !!doc.described && doc.description.trim() === doc.described.text.trim();
 }
