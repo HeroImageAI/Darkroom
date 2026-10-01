@@ -29,7 +29,7 @@ export async function importPictures(files: File[], onProgress?: (done: number, 
 }
 
 /** Job finished → its item id. Listens for the live update and also polls, so a very fast import is never missed. */
-function waitForItem(jobId: string, timeoutMs = 180_000): Promise<string> {
+export function waitForItem(jobId: string, timeoutMs = 180_000): Promise<string> {
   return new Promise((resolve, reject) => {
     let settled = false;
     const finish = (fn: () => void) => {

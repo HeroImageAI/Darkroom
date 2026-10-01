@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Film, Image as ImageIcon, Layers, Library, ListOrdered, Loader2, Wand2 } from 'lucide-react';
+import { Film, Image as ImageIcon, Layers, Library, ListOrdered, Loader2, Shapes, Wand2 } from 'lucide-react';
 import { api } from '../api';
 import { go, type Screen } from '../router';
 import { toast, useApp } from '../store';
@@ -9,6 +9,7 @@ import { WorkingBoardPicker } from './Boards';
 const TABS: { id: Screen; label: string; icon: typeof ImageIcon }[] = [
   { id: 'generate', label: 'Generate', icon: Wand2 },
   { id: 'edit', label: 'Edit', icon: Layers },
+  { id: 'compose', label: 'Compose', icon: Shapes },
   { id: 'video', label: 'Video', icon: Film },
   { id: 'library', label: 'Library', icon: Library },
 ];

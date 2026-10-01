@@ -27,6 +27,7 @@ import { mergePresets, upsertUserPreset, type EditPreset, type UserPreset } from
 import { readDarkroomMeta } from '../shared/pngmeta.js';
 import { outputDirFromArgv, outputPath, recycle } from './trash.js';
 import { labelledSheet } from './framepair.js';
+import { sanitiseDoc } from '../shared/compose.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -470,6 +471,26 @@ app.get('/api/loras', async (_req, reply) => {
     return reply.code(500).send({ error: (e as Error).message });
   }
 });
+
+// ---- Compose (DECISIONS 87): saved compositions. Deleting only hides one (restorable); pictures are never touched.
+app.get('/api/compositions', async () => store.compositions());
+
+app.get('/api/compositions/:id', async (req, reply) => store.composition((req.params as { id: string }).id) ?? reply.code(404).send({ error: 'Composition not found' }));
+
+app.put('/api/compositions/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  if (!/^[A-Za-z0-9-]{6,64}$/.test(id)) return reply.code(400).send({ error: 'Bad composition id' });
+  const b = req.body as { name?: unknown; doc?: unknown; thumb?: unknown };
+  const doc = sanitiseDoc(b?.doc);
+  if (!doc) return reply.code(400).send({ error: 'That composition could not be read.' });
+  const name = typeof b.name === 'string' && b.name.trim() ? b.name.trim().slice(0, 80) : 'Untitled composition';
+  const thumb = typeof b.thumb === 'string' && b.thumb.startsWith('data:image/') && b.thumb.length < 400_000 ? b.thumb : null;
+  return store.saveComposition(id, name, doc, thumb);
+});
+
+app.post('/api/compositions/:id/delete', async (req, reply) => (store.deleteComposition((req.params as { id: string }).id) ? { ok: true } : reply.code(404).send({ error: 'Composition not found' })));
+
+app.post('/api/compositions/:id/restore', async (req, reply) => (store.restoreComposition((req.params as { id: string }).id) ? { ok: true } : reply.code(404).send({ error: 'Composition not found' })));
 
 // ---- Boards (collections). Deleting a board never deletes its pictures; they just have no board any more.
 const boardName = (v: unknown) => (typeof v === 'string' ? v.trim().slice(0, 60) : '');

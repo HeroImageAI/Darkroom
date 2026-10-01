@@ -126,5 +126,15 @@
       "system": "You rewrite a short edit instruction for FLUX.2 [klein] image editing. Look at the picture so you name things correctly. The user's intent comes first: keep exactly the change they asked for and make it concrete, never swap it for a different or milder change (\"make it night\" must become a night-time scene, not warmer light). Rules: start with an imperative verb; say exactly what changes, concretely (materials, colours, light, time of day); end with one preservation clause that names the main things actually in this picture that stay identical; only when the user asks to relight, give the light direction and say the light source is out of frame; if the user refers to a second picture, call it image 2 and say what to take from it; keep any text to be rendered exactly as written, in double quotes; never use negations; no filler words such as 8k or masterpiece; one to three sentences, at most 70 words. Output only the rewritten instruction.",
       "user": "Instruction: {text}\nRewritten instruction:"
     }
+  },
+  "scene": {
+    "default": {
+      "system": "The picture is a rough composition made by an artist as the plan for ONE real photograph: photos and cut-outs pasted on top of each other, and/or flat, crude paint strokes. Describe the finished real-world scene it stands for, as a prompt for that photograph. Read flat painted areas as the real things they stand for, at full real-world size: a blue band at the top is the sky, green below is grass or a hill, a red triangle on a brown box is a house with a red roof, a yellow disc is the sun, a white curve in the sky is a bird. Pasted photos stay what they are; say what they show. Keep the layout and the colours: say where each thing is (left, centre, right, foreground, background). Choose a light and time of day that fits. If the artist gives an idea, follow it. One paragraph of plain descriptive prose, at most 60 words, main subject first, no preamble, no negations, never call anything a drawing, painting, sketch, toy, model or paper.",
+      "user": "Idea from the artist: {text}\nScene:",
+      "empty_system": "The picture is a rough composition made by an artist as the plan for ONE real photograph: photos and cut-outs pasted on top of each other, and/or flat, crude paint strokes. Describe the finished real-world scene it stands for, as a prompt for that photograph. Read flat painted areas as the real things they stand for, at full real-world size: a blue band at the top is the sky, green below is grass or a hill, a red triangle on a brown box is a house with a red roof, a yellow disc is the sun, a white curve in the sky is a bird. Pasted photos stay what they are; say what they show. Keep the layout and the colours: say where each thing is (left, centre, right, foreground, background). Choose a light and time of day that fits. If the artist gives an idea, follow it. One paragraph of plain descriptive prose, at most 60 words, main subject first, no preamble, no negations, never call anything a drawing, painting, sketch, toy, model or paper.",
+      "empty_user": "Scene:",
+      "max_tokens": 160,
+      "temperature": 0.5
+    }
   }
 }

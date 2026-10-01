@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import type { ComposeDoc, Composition } from '../shared/compose.js';
 
 export interface FileRef {
   filename: string;
@@ -174,6 +175,40 @@ export class Store {
     this.db.exec('CREATE TABLE IF NOT EXISTS boards (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL)');
     if (!cols.includes('board_id')) this.db.exec('ALTER TABLE items ADD COLUMN board_id TEXT');
     this.db.exec('CREATE INDEX IF NOT EXISTS items_board ON items(board_id)');
+    // Compose: saved compositions (the layout is JSON; deleting only hides it, like the Library)
+    this.db.exec(
+      'CREATE TABLE IF NOT EXISTS compositions (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, doc TEXT NOT NULL, thumb TEXT, deleted_at INTEGER)',
+    );
+  }
+
+  /** Saved compositions, newest first, without their layouts. */
+  compositions(): Omit<Composition, 'doc'>[] {
+    return (this.db.prepare('SELECT id, name, created_at, updated_at, thumb FROM compositions WHERE deleted_at IS NULL ORDER BY updated_at DESC').all() as any[]).map((r) => ({ ...r }));
+  }
+
+  composition(id: string): Composition | null {
+    const r = this.db.prepare('SELECT * FROM compositions WHERE id = ? AND deleted_at IS NULL').get(id) as any;
+    return r ? { id: r.id, name: r.name, created_at: r.created_at, updated_at: r.updated_at, thumb: r.thumb ?? null, doc: JSON.parse(r.doc) } : null;
+  }
+
+  /** Create or update a composition. */
+  saveComposition(id: string, name: string, doc: ComposeDoc, thumb: string | null, now = Date.now()): Composition {
+    this.db
+      .prepare(
+        `INSERT INTO compositions (id, name, created_at, updated_at, doc, thumb) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET name = excluded.name, updated_at = excluded.updated_at, doc = excluded.doc, thumb = COALESCE(excluded.thumb, thumb), deleted_at = NULL`,
+      )
+      .run(id, name, now, now, JSON.stringify(doc), thumb);
+    return this.composition(id)!;
+  }
+
+  /** Hide a composition (restorable); its pictures stay where they are. */
+  deleteComposition(id: string, now = Date.now()): boolean {
+    return this.db.prepare('UPDATE compositions SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL').run(now, id).changes > 0;
+  }
+
+  restoreComposition(id: string): boolean {
+    return this.db.prepare('UPDATE compositions SET deleted_at = NULL WHERE id = ?').run(id).changes > 0;
   }
 
   groupItems(groupId: string): Item[] {
