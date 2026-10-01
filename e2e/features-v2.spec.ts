@@ -765,6 +765,66 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(1);
   });
 
+  test('Compose: Describe reads the canvas again after you change the sketch (its own old text is not your idea)', async () => {
+    await page.goto('/#/compose');
+    await page.getByRole('button', { name: 'New composition' }).click();
+    await expect(page).toHaveURL(/#\/compose\/[0-9a-f-]+$/);
+    await page.getByRole('button', { name: 'Paint (B)' }).click();
+    const c = (await page.getByRole('application', { name: 'Canvas' }).boundingBox())!;
+    const band = async (colour: string, y0: number, y1: number, size = 200) => {
+      await page.getByLabel(`Colour ${colour}`).click();
+      await page.getByLabel('Brush size').fill(String(size));
+      for (let y = y0; y <= y1; y += 0.12) {
+        await page.mouse.move(c.x + 2, c.y + c.height * y);
+        await page.mouse.down();
+        await page.mouse.move(c.x + c.width - 2, c.y + c.height * y, { steps: 4 });
+        await page.mouse.up();
+      }
+    };
+    const blob = async (colour: string, pts: number[][], size: number) => {
+      await page.getByLabel(`Colour ${colour}`).click();
+      await page.getByLabel('Brush size').fill(String(size));
+      await page.mouse.move(c.x + pts[0][0] * c.width, c.y + pts[0][1] * c.height);
+      await page.mouse.down();
+      for (const [x, y] of pts.slice(1)) await page.mouse.move(c.x + x * c.width, c.y + y * c.height, { steps: 4 });
+      await page.mouse.up();
+    };
+    // 1: a house on a green hill
+    await band('#7fb8e8', 0.05, 0.5);
+    await band('#5fae4f', 0.6, 1.0);
+    await blob('#b8352b', [[0.4, 0.45], [0.5, 0.33], [0.6, 0.45]], 50);
+    await blob('#8a5a3b', [[0.42, 0.5], [0.58, 0.5], [0.58, 0.62], [0.42, 0.62], [0.42, 0.5]], 60);
+    const scene = page.getByLabel('Scene description');
+    await page.getByRole('button', { name: 'Describe' }).click();
+    await expect(scene).not.toHaveValue('', { timeout: 120_000 });
+    const first = await scene.inputValue();
+    expect(first).toMatch(/house|cottage|home|cabin/i);
+
+    // 2: hide that sketch and paint a sea with a sailing boat instead
+    await page.getByRole('button', { name: 'Hide Paint 1' }).click();
+    await page.getByRole('button', { name: 'Paint (B)' }).click();
+    await band('#7fb8e8', 0.05, 0.45);
+    await band('#2b5aa8', 0.55, 1.0);
+    await blob('#ffffff', [[0.45, 0.58], [0.5, 0.3], [0.55, 0.58], [0.45, 0.58]], 30);
+    await blob('#8a5a3b', [[0.38, 0.62], [0.62, 0.62], [0.58, 0.68], [0.42, 0.68], [0.38, 0.62]], 30);
+    await expect(page.getByText(/The canvas changed since this was described/)).toBeVisible();
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Describe' }).click();
+    expect((await sent).postDataJSON().text).toBe(''); // its own earlier text is not passed as your idea
+    await expect.poll(() => scene.inputValue(), { timeout: 120_000 }).not.toBe(first);
+    const second = await scene.inputValue();
+    expect(second).toMatch(/sea|ocean|boat|sail|water/i);
+    await expect(page.getByText(/The canvas changed since this was described/)).toHaveCount(0);
+
+    // your own words are kept as the idea
+    await scene.fill('a stormy evening');
+    const sent2 = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Describe' }).click();
+    expect((await sent2).postDataJSON().text).toBe('a stormy evening');
+    await expect(scene).not.toHaveValue('a stormy evening', { timeout: 120_000 });
+    await shot(page, 'compose-describe');
+  });
+
   test('Library: Upload adds your pictures to the Library', async () => {
     await page.goto('/#/library');
     const before = (await (await page.request.get('/api/items?limit=1')).json()).total;

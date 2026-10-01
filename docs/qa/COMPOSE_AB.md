@@ -32,3 +32,15 @@ the sketch a real cottage. So Reimagine with an empty description first asks the
 scene the canvas stands for (`scene` task in `presets/vlm_prompts.json`: flat areas are the real things at full size,
 keep the layout and colours, never call it a drawing). Same strokes, same model: a real house on a field (right).
 The **Describe** button runs the same thing on demand, so the text can be edited before rendering.
+
+## Describe again (v3.2)
+
+Reported by JP: after erasing a sketch and painting a new one, Describe kept the old description. Three causes:
+the text already in the box was sent back as "the artist's idea" (which the model follows), a stroke on a selected
+but hidden paint layer went into that hidden layer (so the visible canvas stayed empty), and on an empty canvas the
+model invented a scene out of the prompt's own examples (sun, bird, red-roofed house). Now Describe knows its own
+text (`described` in the composition) and only passes words you typed or edited; painting on a hidden layer starts a
+new one; Describe refuses an empty canvas; the prompt has general rules instead of copyable examples and asks for
+only what is on the canvas (temperature 0.3). Checked: cottage sketch, sailboat sketch and car collage each get their
+own accurate description (~5 s). A note says when the canvas has changed since it was described, and Reimagine
+describes again by itself in that case.

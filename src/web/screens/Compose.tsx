@@ -27,7 +27,7 @@ import { importFailedMessage, importPictures, waitForItem } from '../lib/importe
 import { alphaBox, flatten, layerUrl, loadImg, makeCanvas, paintCoverage, PAPER, seamMask, toBlob, hitsLayer, backgroundIndex } from '../lib/composeCanvas';
 import { go } from '../router';
 import { onJob, toast, useApp } from '../store';
-import { ASPECTS, autoMode, canvasSizeFor, coverLayer, emptyDoc, MODES, placeLayer, renderPlan, type ComposeDoc, type ComposeLayer, type Composition, type RenderMode } from '../../shared/compose';
+import { ASPECTS, autoMode, canvasKey, canvasSizeFor, coverLayer, emptyDoc, isDescribedText, MODES, placeLayer, renderPlan, type ComposeDoc, type ComposeLayer, type Composition, type RenderMode } from '../../shared/compose';
 
 type Tool = 'move' | 'brush' | 'eraser';
 const SWATCHES = ['#1d1d1b', '#ffffff', '#b8352b', '#e5892f', '#ffd23f', '#5fae4f', '#2f7d32', '#7fb8e8', '#2b5aa8', '#8a5a3b', '#a89c86', '#d58fb0'];
@@ -460,7 +460,8 @@ function ComposeEditor({ id }: { id: string }) {
         erasePicture(sel, p, p);
         return;
       }
-      const target = sel?.kind === 'paint' ? sel.id : null;
+      // a hidden paint layer is never painted on blind: the stroke starts a new layer instead
+      const target = sel?.kind === 'paint' && !sel.hidden ? sel.id : null;
       if (erase && !target) return toast('Select a picture, cut-out or paint layer to erase from.', 'info');
       setDrag({ kind: 'paint', id: target, erase, last: p, before: doc });
       strokeTo(p, p, erase, target ? paint(target)! : null);
@@ -588,7 +589,8 @@ function ComposeEditor({ id }: { id: string }) {
     setRendering(true);
     try {
       let description = doc.description;
-      if (mode === 'reimagine' && !description.trim()) {
+      // Reimagine needs words for the scene: none yet, or Describe's text is for a canvas that has changed since
+      if (mode === 'reimagine' && (!description.trim() || (isDescribedText(doc) && doc.described!.canvas !== canvasKey(doc)))) {
         toast('Describing the scene first, so the paint becomes the real thing…', 'info');
         description = (await describe()) ?? '';
       }
@@ -617,12 +619,20 @@ function ComposeEditor({ id }: { id: string }) {
   /** The local vision model reads the canvas as a plan for a real photo and writes the scene (the box is filled in). */
   const describe = async (): Promise<string | null> => {
     const d = docRef.current!;
+    // an empty canvas would only get an invented scene back
+    if (!d.layers.some((l) => !l.hidden && (l.kind === 'picture' || l.paint))) {
+      toast('Nothing visible on the canvas to describe.', 'info');
+      return null;
+    }
     setDescribing(true);
     try {
       const input = (await api.upload(await toBlob(await flatten(d, paint)), 'composition.png')).name;
-      const r = await api.vlm({ task: 'scene', variant: 'default', input, text: d.description });
+      // text Describe wrote earlier is not your idea: describe the canvas afresh (otherwise it repeats the old scene)
+      const idea = isDescribedText(d) ? '' : d.description;
+      const r = await api.vlm({ task: 'scene', variant: 'default', input, text: idea });
       const text = r.text.trim();
-      setDocState((cur) => (cur ? { ...cur, description: text } : cur));
+      const canvas = canvasKey(d);
+      setDocState((cur) => (cur ? { ...cur, description: text, described: { text, canvas } } : cur));
       return text;
     } catch (e) {
       toast(`Could not describe the scene: ${(e as Error).message}`, 'error');
@@ -954,6 +964,9 @@ function ComposeEditor({ id }: { id: string }) {
             value={doc.description}
             onChange={(e) => setDocState({ ...doc, description: e.target.value })}
           />
+          {isDescribedText(doc) && doc.described!.canvas !== canvasKey(doc) && (
+            <p className="note warn">The canvas changed since this was described. Press Describe again{mode === 'reimagine' ? ' (Reimagine will do it for you)' : ''}.</p>
+          )}
           <button className="btn primary big" onClick={() => void render()} disabled={rendering || describing || !doc.layers.length}>
             {rendering ? <Loader2 size={18} className="spin" /> : null} Render · ~{SECONDS[mode]} s
           </button>
