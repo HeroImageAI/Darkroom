@@ -85,7 +85,7 @@ export const api = {
   /** Video Takes: hide failed / cancelled / lost renders. */
   dismissJobs: (body: { ids: string[] } | { failedOfKind: string }) => api.post<{ dismissed: string[] }>('/api/jobs/dismiss', body),
   purgeItems: (body: { ids: string[] } | { all: true }) => api.post<{ purged: number; recycled: number; failed: string[] }>('/api/items/purge', body),
-  vlm: (body: { task: 'caption' | 'reverse' | 'enhance' | 'motion' | 'edit_enhance' | 'compose'; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; save?: boolean; input2?: string; inputs?: string[] }) =>
+  vlm: (body: { task: 'caption' | 'reverse' | 'enhance' | 'motion' | 'edit_enhance' | 'compose' | 'scene'; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; save?: boolean; input2?: string; inputs?: string[] }) =>
     api.post<{ text: string; seconds: number; model?: string; ratio?: string; aspect?: string | null }>('/api/vlm', body),
   outpaintPrepare: (body: { itemId: string; pad: { left: number; top: number; right: number; bottom: number }; feather?: number; step: 8 | 32 }) =>
     api.post<{

@@ -125,7 +125,7 @@ export function renderPlan(mode: RenderMode, description: string): RenderPlan {
   return {
     workflow: 'klein_edit',
     model: 'Klein 9B',
-    prompt: `Turn this rough collage and painting into a realistic photograph. Keep the composition: the position, size and colour of every shape. Painted shapes become the real things they suggest. Natural light, real textures, coherent perspective and shadows.${scene}`,
+    prompt: `Turn this rough collage and painting into a realistic photograph of a real, full-size scene. Keep the composition: the position, size and colour of every shape. Every painted shape becomes the real thing it stands for, at real-world scale. Natural light, real textures, coherent perspective and shadows.${scene}`,
     mask: false,
   };
 }
@@ -157,7 +157,8 @@ export function sanitiseDoc(raw: unknown): ComposeDoc | null {
     if (!kind) continue;
     const src = str(l.src, 300);
     const paint = str(l.paint, 24 * 1024 * 1024);
-    if (kind === 'picture' && (!src || /[\\/]|\.\./.test(src))) continue;
+    // input names may have a subfolder (darkroom/…), never a way out of the input folder
+    if (kind === 'picture' && (!src || /\\|\.\.|^\/|:/.test(src))) continue;
     if (kind === 'paint' && paint && !paint.startsWith('data:image/png;base64,')) continue;
     layers.push({
       id: str(l.id, 64) || Math.random().toString(36).slice(2),

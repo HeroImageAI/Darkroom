@@ -38,8 +38,14 @@ export function Compose({ id }: { id?: string }) {
 }
 
 /** Create a composition on the server and open it. */
-async function createComposition(doc: ComposeDoc, name = 'Untitled composition'): Promise<void> {
+async function createComposition(doc: ComposeDoc, name?: string): Promise<void> {
   const id = crypto.randomUUID();
+  if (!name) {
+    const taken = new Set((await api.get<{ name: string }[]>('/api/compositions')).map((c) => c.name));
+    let n = 1;
+    while (taken.has(`Composition ${n}`)) n++;
+    name = `Composition ${n}`;
+  }
   await api.put(`/api/compositions/${id}`, { name, doc });
   go('compose', id);
 }
@@ -201,6 +207,7 @@ function ComposeEditor({ id }: { id: string }) {
   const [busyLayer, setBusyLayer] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [rendering, setRendering] = useState(false);
+  const [describing, setDescribing] = useState(false);
   const [fileOver, setFileOver] = useState(false);
   const jobs = useApp((s) => s.jobs);
   const previews = useApp((s) => s.previews);
@@ -507,9 +514,14 @@ function ComposeEditor({ id }: { id: string }) {
     if (!doc) return;
     if (!doc.layers.some((l) => !l.hidden)) return toast('Add a picture or paint something first.', 'info');
     if (!online) return toast('Start ComfyUI first (top right).', 'info');
-    const plan = renderPlan(mode, doc.description);
     setRendering(true);
     try {
+      let description = doc.description;
+      if (mode === 'reimagine' && !description.trim()) {
+        toast('Describing the scene first, so the paint becomes the real thing…', 'info');
+        description = (await describe()) ?? '';
+      }
+      const plan = renderPlan(mode, description);
       const params: Record<string, string | number> = { seed: randomSeed(), prompt: plan.prompt };
       if (plan.mask) {
         const m = await seamMask(doc, paint);
@@ -522,13 +534,30 @@ function ComposeEditor({ id }: { id: string }) {
       const j: Job = await api.submit({
         workflow: plan.workflow,
         params,
-        meta: { mode: 'compose', model: `${plan.model} · ${label}`, prompt: doc.description.trim() || `${name} (${label})`, ui: { compositionId: id, composeMode: mode }, estimateSec: SECONDS[mode] },
+        meta: { mode: 'compose', model: `${plan.model} · ${label}`, prompt: description.trim() || `${name} (${label})`, ui: { compositionId: id, composeMode: mode }, estimateSec: SECONDS[mode] },
       });
       setJobIds((ids) => [j.id, ...ids]);
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
       setRendering(false);
+    }
+  };
+  /** The local vision model reads the canvas as a plan for a real photo and writes the scene (the box is filled in). */
+  const describe = async (): Promise<string | null> => {
+    const d = docRef.current!;
+    setDescribing(true);
+    try {
+      const input = (await api.upload(await toBlob(await flatten(d, paint)), 'composition.png')).name;
+      const r = await api.vlm({ task: 'scene', variant: 'default', input, text: d.description });
+      const text = r.text.trim();
+      setDocState((cur) => (cur ? { ...cur, description: text } : cur));
+      return text;
+    } catch (e) {
+      toast(`Could not describe the scene: ${(e as Error).message}`, 'error');
+      return null;
+    } finally {
+      setDescribing(false);
     }
   };
   /** A render becomes the new background; what was under it is hidden (not deleted), so you can keep adding pieces. */
@@ -830,15 +859,21 @@ function ComposeEditor({ id }: { id: string }) {
             {MODES.find((m) => m.id === mode)!.text}
             {doc.mode === 'auto' ? ` Suggested because ${auto.why}.` : ''}
           </p>
+          <div className="row" style={{ justifyContent: 'space-between' }}>
+            <span className="note">Scene</span>
+            <button className="btn ghost sm" onClick={() => void describe()} disabled={describing || !doc.layers.length} title="Let the local vision model describe the real scene your canvas stands for">
+              {describing ? <Loader2 size={14} className="spin" /> : null} Describe
+            </button>
+          </div>
           <textarea
             className="input"
-            rows={2}
+            rows={3}
             placeholder="What should the scene be? (optional) e.g. a quiet harbour at dusk"
             aria-label="Scene description"
             value={doc.description}
             onChange={(e) => setDocState({ ...doc, description: e.target.value })}
           />
-          <button className="btn primary big" onClick={() => void render()} disabled={rendering || !doc.layers.length}>
+          <button className="btn primary big" onClick={() => void render()} disabled={rendering || describing || !doc.layers.length}>
             {rendering ? <Loader2 size={18} className="spin" /> : null} Render · ~{SECONDS[mode]} s
           </button>
         </div>

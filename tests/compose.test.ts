@@ -52,12 +52,14 @@ describe('sanitiseDoc', () => {
       layers: [
         { id: 'a', kind: 'picture', name: 'Room', src: 'room.png', x: 0, y: 0, w: 1216, h: 832 },
         { id: 'b', kind: 'picture', src: '../evil.png', x: 0, y: 0, w: 5, h: 5 },
+        { id: 'b2', kind: 'picture', src: 'C:/x.png', x: 0, y: 0, w: 5, h: 5 },
+        { id: 'f', kind: 'picture', src: 'darkroom/in_1.png', x: 0, y: 0, w: 5, h: 5 },
         { id: 'c', kind: 'paint', paint: 'data:image/png;base64,AAAA', x: 0, y: 0, w: 1216, h: 832 },
         { id: 'd', kind: 'paint', paint: 'javascript:alert(1)' },
         { id: 'e', kind: 'video' },
       ],
     })!;
-    expect(doc.layers.map((l) => l.id)).toEqual(['a', 'c']);
+    expect(doc.layers.map((l) => l.id)).toEqual(['a', 'f', 'c']);
     expect(doc.mode).toBe('blend');
   });
   it('refuses a document without a size', () => {

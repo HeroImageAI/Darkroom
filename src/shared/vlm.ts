@@ -53,7 +53,7 @@ export function buildVlmRequest(p: VlmPrompts, task: VlmTask, variant: string, t
 // v2 (Addenda Phase 7): per-task engine routing, real system prompts, official Qwen-Image 2.1 prompt enhancers.
 
 export type VlmEngine = 'general' | 'pe_t2i' | 'pe_i2i';
-export type Vlm2Task = VlmTask | 'edit_enhance' | 'compose';
+export type Vlm2Task = VlmTask | 'edit_enhance' | 'compose' | 'scene';
 
 export interface Vlm2Entry extends Partial<VlmEntry> {
   /** Which model answers (vlm_prompts.json "models"); default "general". */
