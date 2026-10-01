@@ -32,7 +32,7 @@ import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
 import { go } from '../router';
 import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
 import { planEnhance } from '../../shared/enhance';
-import { doubledTarget, isBig, sharpenPlan } from '../../shared/fullsize';
+import { doubledTarget, isBig, planLargeRestore, sharpenPlan } from '../../shared/fullsize';
 import { maskBBox, planCrop } from '../../shared/cropstitch';
 import { snapPad } from '../../shared/outpaint';
 import { detectPixelBlock } from '../../shared/pixelblock';
@@ -581,7 +581,17 @@ function Editor({ item }: { item: Item }) {
         params.denoise = effDenoise;
         if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
       }
-      const workflow = wfFor(restore ? 'enhance' : 'enhance_subtle');
+      // Klein Restore of a large photo: Klein + the restore LoRA at up to 4 MP (DECISIONS 83). Small pictures,
+      // Subtle and Qwen keep their own path.
+      const large = restore && em === 'klein' ? planLargeRestore(W, H, enhanceKind === 'restore_upscale') : null;
+      if (large) {
+        params.megapixels = large.megapixels;
+        if (large.exact) {
+          params.target_w = large.exact.w;
+          params.target_h = large.exact.h;
+        }
+      }
+      const workflow = large ? 'klein_enhance_large' : wfFor(restore ? 'enhance' : 'enhance_subtle');
       // Restore rebuilds detail itself; only the img2img touch-up needs a SeedVR2 pre-upscale for small sources
       const preScale = restore ? null : plan.preScale;
       const label = `${modelLabel} ${{ restore: 'restore', restore_upscale: 'restore + upscale', subtle: 'subtle enhance' }[enhanceKind]}`;
@@ -589,11 +599,15 @@ function Editor({ item }: { item: Item }) {
       // large photo: Enhance draws at ~1-2 MP, so SeedVR2 brings the result back to the photo's own size (or double
       // it for Restore + upscale) instead of handing back a smaller picture (DECISIONS 79)
       const big = isBig(W, H);
-      const chain = big
-        ? { kind: 'upscale', to: enhanceKind === 'restore_upscale' ? doubledTarget(W, H) : { w: W, h: H } }
-        : enhanceKind === 'restore_upscale'
-          ? { kind: 'upscale' }
-          : undefined;
+      const chain = large
+        ? large.chainTo
+          ? { kind: 'upscale', to: large.chainTo }
+          : undefined
+        : big
+          ? { kind: 'upscale', to: enhanceKind === 'restore_upscale' ? doubledTarget(W, H) : { w: W, h: H } }
+          : enhanceKind === 'restore_upscale'
+            ? { kind: 'upscale' }
+            : undefined;
       const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain };
       try {
         const inp = await api.asInput(item.id);
@@ -607,6 +621,9 @@ function Editor({ item }: { item: Item }) {
           : await api.submit({ workflow, params: { image_1: inp.name, seed: randomSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
         setJobId(j.id);
         if (preScale) toast(`Small picture: upscaling ${preScale}× with SeedVR2 first, then enhancing — the enhanced version opens when it is ready.`, 'info', 7000);
+        else if (large?.exact) toast(`Large picture: restoring at full size (${W}×${H}) with the restore LoRA, about a minute.`, 'info', 8000);
+        else if (large?.chainTo)
+          toast(`Large picture: restoring at 4 MP with the restore LoRA, then SeedVR2 takes it to ${large.chainTo.w}×${large.chainTo.h}. The full-size version opens when it is ready.`, 'info', 8000);
         else if (big) {
           const t = enhanceKind === 'restore_upscale' ? doubledTarget(W, H) : { w: W, h: H };
           toast(`Large picture: enhancing at about 2 MP, then SeedVR2 rebuilds it at ${t.w}×${t.h}. The full-size version opens when it is ready.`, 'info', 8000);
@@ -1221,7 +1238,14 @@ function Editor({ item }: { item: Item }) {
               </p>
               {isBig(W, H) && (
                 <p className="note" style={{ marginTop: 6 }}>
-                  Large picture ({((W * H) / 1e6).toFixed(0)} MP): the models work at about 2 MP, so SeedVR2 then rebuilds the result at {enhanceKind === 'restore_upscale' ? `${doubledTarget(W, H).w}×${doubledTarget(W, H).h}` : `the full ${W}×${H}`}. Fine detail is re-created, not copied from the original.
+                  {(() => {
+                    const mp = ((W * H) / 1e6).toFixed(0);
+                    const lp = enhanceKind !== 'subtle' && editModel === 'klein' ? planLargeRestore(W, H, enhanceKind === 'restore_upscale') : null;
+                    if (lp?.exact) return `Large picture (${mp} MP): Klein restores it at its full ${W}×${H} with the restore LoRA (about a minute).`;
+                    if (lp?.chainTo)
+                      return `Large picture (${mp} MP): Klein restores it at 4 MP with the restore LoRA, then SeedVR2 takes it to ${lp.chainTo.w}×${lp.chainTo.h}. Fine detail beyond 4 MP is re-created, not copied from the original.`;
+                    return `Large picture (${mp} MP): the models work at about 2 MP, so SeedVR2 then rebuilds the result at ${enhanceKind === 'restore_upscale' ? `${doubledTarget(W, H).w}×${doubledTarget(W, H).h}` : `the full ${W}×${H}`}. Fine detail is re-created, not copied from the original.`;
+                  })()}
                 </p>
               )}
               {enhanceKind === 'subtle' && (
