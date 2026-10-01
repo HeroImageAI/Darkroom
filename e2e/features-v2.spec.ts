@@ -490,12 +490,64 @@ test.describe.serial('Darkroom v2 features', () => {
     }
   });
 
+  // Boards (DECISIONS 84)
+  test('Boards: the working board receives new pictures, versions stay with their picture, deleting a board keeps its pictures', async () => {
+    const boardsApi = async () => (await (await page.request.get('/api/boards')).json()).boards as any[];
+    await page.goto('/#/library');
+    await page.getByLabel('Working board').selectOption('__new__');
+    await page.getByLabel('Board name').fill('e2e board');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('New pictures now go to "e2e board".').last()).toBeVisible();
+    const board = (await boardsApi()).find((b) => b.name === 'e2e board');
+    try {
+      await expect(page.getByLabel('Working board')).toHaveValue(board.id);
+      // an upload goes to the working board
+      await page.getByLabel('Upload pictures to the Library').setInputFiles('tests/golden/09_car.png');
+      await expect(page.getByText(/1 picture added to your Library/).last()).toBeVisible({ timeout: 60_000 });
+      const up = (await (await page.request.get(`/api/items?limit=1&board=${board.id}`)).json()).items[0];
+      expect(up).toBeTruthy();
+      // a new version of it stays in its board even when the working board is "No board"
+      await page.getByLabel('Working board').selectOption('');
+      const inp = await (await page.request.post(`/api/items/${up.id}/as-input`, { data: { which: 'main' } })).json();
+      const job = await (
+        await page.request.post('/api/jobs', { data: { workflow: 'crop', params: { image_1: inp.name, x: 0, y: 0, width: 400, height: 300 }, meta: { mode: 'edit:crop', model: 'Crop', parentId: up.id, boardId: null } } })
+      ).json();
+      await expect
+        .poll(async () => ((await (await page.request.get(`/api/jobs/${job.id}/items`)).json()) as any[])[0]?.board_id, { timeout: 60_000 })
+        .toBe(board.id);
+      // the board in the Library, then moving two more pictures in
+      const row = page.getByRole('group', { name: 'Boards' });
+      await row.getByRole('button', { name: /e2e board/ }).click();
+      await expect(page.getByRole('list').getByRole('listitem')).toHaveCount(2);
+      await shot(page, 'library-board');
+      await row.getByRole('button', { name: 'All boards' }).click();
+      const tiles = page.getByRole('list').getByRole('listitem');
+      await tiles.nth(4).click();
+      await tiles.nth(5).click({ modifiers: ['Shift'] });
+      await page.getByLabel('Move to board').selectOption({ label: 'e2e board' });
+      await expect(page.getByText('2 items moved to "e2e board".').last()).toBeVisible();
+      expect((await boardsApi()).find((b) => b.id === board.id).count).toBe(4);
+      // delete the board: every picture stays in the Library
+      const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
+      await row.getByRole('button', { name: /e2e board/ }).click();
+      await page.getByRole('button', { name: 'Delete board' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Delete board' }).click();
+      await expect(page.getByText(/Board "e2e board" deleted/).last()).toBeVisible();
+      expect((await (await page.request.get('/api/items?limit=1')).json()).total).toBe(before);
+    } finally {
+      // never leave a test board behind in the shared test library
+      if ((await boardsApi()).some((b) => b.id === board.id)) await page.request.delete(`/api/boards/${board.id}`);
+      await page.getByLabel('Working board').selectOption('').catch(() => undefined);
+    }
+  });
+
   test('Library: Upload adds your pictures to the Library', async () => {
     await page.goto('/#/library');
     const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
     await page.getByLabel('Upload pictures to the Library').setInputFiles('tests/golden/03_text_scene.png');
-    await expect(page.getByText('1 picture added to your Library. Double-click to edit.')).toBeVisible({ timeout: 60_000 });
-    expect((await (await page.request.get('/api/items?limit=1')).json()).total).toBe(before + 1);
+    // wait for the count itself: an identical notice from an earlier test may still be on screen
+    await expect.poll(async () => (await (await page.request.get('/api/items?limit=1')).json()).total, { timeout: 60_000 }).toBe(before + 1);
+    await expect(page.getByText('1 picture added to your Library. Double-click to edit.').last()).toBeVisible();
     await expect(page.getByRole('complementary', { name: 'Details' })).toContainText('03_text_scene');
   });
 
