@@ -208,9 +208,9 @@ const PHASES: Record<string, Group[]> = {
       id: 'klein-2mp',
       variants: [
         { id: '1mp', label: 'Klein at ~1 MP (Darkroom)', workflow: 'klein_t2i' },
-        { id: '2mp', label: 'Klein at ~2 MP', workflow: 'klein_t2i', build: (c) => ({ set: { width: KLEIN_2MP[c.key.split('@')[1]][0], height: KLEIN_2MP[c.key.split('@')[1]][1] } }) },
+        { id: '2mp', label: 'Klein at ~2 MP', workflow: 'klein_t2i', build: (c) => ({ set: { width: KLEIN_2MP[c.key.split('@')[1].replace('x', ':')][0], height: KLEIN_2MP[c.key.split('@')[1].replace('x', ':')][1] } }) },
       ],
-      cases: KLEIN_REVIEW.map(([key, prompt, ar], i) => ({ key: `${key}@${ar}`, set: { prompt, seed: 7000 + i, width: KLEIN_1MP[ar][0], height: KLEIN_1MP[ar][1] } })),
+      cases: KLEIN_REVIEW.map(([key, prompt, ar], i) => ({ key: `${key}@${ar.replace(':', 'x')}`, set: { prompt, seed: 7000 + i, width: KLEIN_1MP[ar][0], height: KLEIN_1MP[ar][1] } })),
     },
     {
       id: 'klein-steps',
@@ -219,6 +219,20 @@ const PHASES: Record<string, Group[]> = {
         { id: 's6', label: '6 steps', workflow: 'klein_t2i', set: { steps: 6 } },
       ],
       cases: KLEIN_REVIEW.map(([key, prompt, ar], i) => ({ key, set: { prompt, seed: 7000 + i, width: KLEIN_1MP[ar][0], height: KLEIN_1MP[ar][1] } })),
+    },
+    {
+      id: 'edit-worksize',
+      variants: [
+        { id: 'klein-1mp', label: 'Klein edit, works at 1 MP (Darkroom)', workflow: 'klein_edit' },
+        { id: 'klein-2mp', label: 'Klein edit, works at 2 MP', workflow: 'klein_edit', file: 'experiments/klein_edit.work2mp.json' },
+        { id: 'qwen-1mp', label: 'Qwen edit, works at 1 MP (Darkroom)', workflow: 'qwen_edit' },
+        { id: 'qwen-176', label: 'Qwen edit, works at 1.76 MP (native)', workflow: 'qwen_edit', file: 'experiments/qwen_edit.work176.json' },
+      ],
+      cases: [
+        { key: 'large-relight', set: { prompt: 'Relight the scene with warm golden late-afternoon sunlight from the left, source out of frame.' + KEEP, seed: 91 }, images: { image_1: g('13_large_2k') } },
+        { key: 'bakery-sign', set: { prompt: 'Change the sign text to "MOONLIGHT BAKERY".' + KEEP, seed: 92 }, images: { image_1: g('03_text_scene') } },
+        { key: 'interior-season', set: { prompt: 'Make it a snowy winter evening outside the window, with warm lamp light inside.' + KEEP, seed: 93 }, images: { image_1: g('10_interior') } },
+      ],
     },
     {
       id: 'qwen-decode-2k',

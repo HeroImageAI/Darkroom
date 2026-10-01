@@ -1,0 +1,321 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "qwen_image_2.1_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "DR_MODEL"
+    }
+  },
+  "2": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "device": "auto",
+      "dtype": "default"
+    },
+    "_meta": {
+      "title": "Prefix cache"
+    }
+  },
+  "3": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "DR_TEXT_ENCODER"
+    }
+  },
+  "4": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    },
+    "_meta": {
+      "title": "DR_VAE"
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_1"
+    }
+  },
+  "6": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "darkroom_placeholder.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_2"
+    }
+  },
+  "7": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": [
+        "5",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1.76,
+      "resolution_steps": 32
+    },
+    "_meta": {
+      "title": "Work size"
+    }
+  },
+  "8": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": [
+        "3",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ],
+      "prompt": "",
+      "negative_prompt": "",
+      "resolution": 0,
+      "images.image_1": [
+        "7",
+        0
+      ],
+      "images.image_2": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_PROMPT"
+    }
+  },
+  "9": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "7",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Encode picture"
+    }
+  },
+  "10": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "darkroom_placeholder.png",
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "DR_MASK"
+    }
+  },
+  "11": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
+        "10",
+        0
+      ],
+      "expand": 8,
+      "tapered_corners": true
+    },
+    "_meta": {
+      "title": "DR_MASK_GROW"
+    }
+  },
+  "12": {
+    "class_type": "SetLatentNoiseMask",
+    "inputs": {
+      "samples": [
+        "9",
+        0
+      ],
+      "mask": [
+        "11",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_MASK_LATENT"
+    }
+  },
+  "13": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "2",
+        0
+      ],
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "latent_image": [
+        "12",
+        0
+      ],
+      "seed": 0,
+      "steps": 25,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "DR_SAMPLER"
+    }
+  },
+  "14": {
+    "class_type": "VAEDecodeTiled",
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ],
+      "tile_size": 1024,
+      "overlap": 128,
+      "temporal_size": 64,
+      "temporal_overlap": 8
+    },
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "15": {
+    "class_type": "GetImageSize",
+    "inputs": {
+      "image": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Source dims"
+    }
+  },
+  "16": {
+    "class_type": "ImageScale",
+    "inputs": {
+      "image": [
+        "14",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "width": [
+        "15",
+        0
+      ],
+      "height": [
+        "15",
+        1
+      ],
+      "crop": "disabled"
+    },
+    "_meta": {
+      "title": "Back to source size"
+    }
+  },
+  "17": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": [
+        "11",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Mask to image (feather)"
+    }
+  },
+  "18": {
+    "class_type": "ImageBlur",
+    "inputs": {
+      "image": [
+        "17",
+        0
+      ],
+      "blur_radius": 6,
+      "sigma": 4.0
+    },
+    "_meta": {
+      "title": "DR_FEATHER"
+    }
+  },
+  "19": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "18",
+        0
+      ],
+      "channel": "red"
+    },
+    "_meta": {
+      "title": "Feathered mask"
+    }
+  },
+  "20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": [
+        "5",
+        0
+      ],
+      "source": [
+        "16",
+        0
+      ],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": [
+        "19",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "DR_MASK_COMPOSITE"
+    }
+  },
+  "21": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "20",
+        0
+      ],
+      "filename_prefix": "darkroom/edit"
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  }
+}
