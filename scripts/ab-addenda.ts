@@ -41,6 +41,17 @@ const KEEP = ' Keep the composition, the people and all other details exactly as
 // Qwen 2.1 sizes: Draft ≈ 1–1.2 MP, Native 2K from the official size table (multiples of 32)
 const QWEN_DRAFT: Record<string, [number, number]> = { '1:1': [1024, 1024], '3:2': [1248, 832], '16:9': [1376, 768], '4:3': [1152, 864] };
 const QWEN_2K: Record<string, [number, number]> = { '1:1': [2048, 2048], '3:2': [2528, 1696], '16:9': [2752, 1536], '4:3': [2400, 1792] };
+// Klein review sizes: Darkroom's ~1 MP aspects and ~2 MP ones (multiples of 16)
+const KLEIN_1MP: Record<string, [number, number]> = { '1:1': [1024, 1024], '3:2': [1248, 832], '16:9': [1344, 768], '4:5': [896, 1120] };
+const KLEIN_2MP: Record<string, [number, number]> = { '1:1': [1408, 1408], '3:2': [1728, 1152], '16:9': [1920, 1088], '4:5': [1264, 1584] };
+const KLEIN_REVIEW: [string, string, string][] = [
+  ['fox', ONE_NODE_FOX, '1:1'],
+  ['church', ONE_NODE_CHURCH, '16:9'],
+  ['portrait', GOLD['01_portrait'].prompt, '4:5'],
+  ['bakery-text', GOLD['03_text_scene'].prompt, '3:2'],
+  ['busy-street', GOLD['04_busy_street'].prompt, '16:9'],
+  ['fur', GOLD['06_fur'].prompt, '1:1'],
+];
 const QWEN_PROMPTS: [string, string, string][] = [
   ['bakery-text', GOLD['03_text_scene'].prompt, '3:2'],
   ['busy-street', GOLD['04_busy_street'].prompt, '16:9'],
@@ -174,6 +185,64 @@ const cacheVariants = (workflow: string): Variant[] =>
 const LORA_AUTHOR_PROMPT = 'restore the image quality, remove any compression artefacts, remove any haze and soft edges, enrich the original with new intricate detail in all textures and surfaces createing a professional photorealistic photograph with natral lighting and skin texture.';
 
 const PHASES: Record<string, Group[]> = {
+  // Full review (v3.3): Klein precision (fp8mixed vs the installed full bf16 model), Klein at 2 MP, Klein steps,
+  // and a whole-picture VAE decode instead of tiles. Same seeds throughout.
+  rv: [
+    {
+      id: 'klein-precision',
+      variants: [
+        { id: 'fp8mixed', label: 'Darkroom: klein-9b fp8mixed (9 GB)', workflow: 'klein_t2i' },
+        { id: 'bf16', label: 'klein-9b full bf16 (18 GB)', workflow: 'klein_t2i', file: 'experiments/klein_t2i.bf16.json' },
+      ],
+      cases: KLEIN_REVIEW.map(([key, prompt, ar], i) => ({ key, set: { prompt, seed: 7000 + i, width: KLEIN_1MP[ar][0], height: KLEIN_1MP[ar][1] } })),
+    },
+    {
+      id: 'klein-batch4',
+      variants: [
+        { id: 'fp8mixed', label: 'fp8mixed, batch of 4', workflow: 'klein_t2i', set: { batch: 4 } },
+        { id: 'bf16', label: 'bf16, batch of 4', workflow: 'klein_t2i', file: 'experiments/klein_t2i.bf16.json', set: { batch: 4 } },
+      ],
+      cases: [{ key: 'fox-x4', set: { prompt: ONE_NODE_FOX, seed: 7100, width: 1024, height: 1024 } }],
+    },
+    {
+      id: 'klein-2mp',
+      variants: [
+        { id: '1mp', label: 'Klein at ~1 MP (Darkroom)', workflow: 'klein_t2i' },
+        { id: '2mp', label: 'Klein at ~2 MP', workflow: 'klein_t2i', build: (c) => ({ set: { width: KLEIN_2MP[c.key.split('@')[1].replace('x', ':')][0], height: KLEIN_2MP[c.key.split('@')[1].replace('x', ':')][1] } }) },
+      ],
+      cases: KLEIN_REVIEW.map(([key, prompt, ar], i) => ({ key: `${key}@${ar.replace(':', 'x')}`, set: { prompt, seed: 7000 + i, width: KLEIN_1MP[ar][0], height: KLEIN_1MP[ar][1] } })),
+    },
+    {
+      id: 'klein-steps',
+      variants: [
+        { id: 's4', label: '4 steps (Darkroom)', workflow: 'klein_t2i', set: { steps: 4 } },
+        { id: 's6', label: '6 steps', workflow: 'klein_t2i', set: { steps: 6 } },
+      ],
+      cases: KLEIN_REVIEW.map(([key, prompt, ar], i) => ({ key, set: { prompt, seed: 7000 + i, width: KLEIN_1MP[ar][0], height: KLEIN_1MP[ar][1] } })),
+    },
+    {
+      id: 'edit-worksize',
+      variants: [
+        { id: 'klein-1mp', label: 'Klein edit, works at 1 MP (Darkroom)', workflow: 'klein_edit' },
+        { id: 'klein-2mp', label: 'Klein edit, works at 2 MP', workflow: 'klein_edit', file: 'experiments/klein_edit.work2mp.json' },
+        { id: 'qwen-1mp', label: 'Qwen edit, works at 1 MP (Darkroom)', workflow: 'qwen_edit' },
+        { id: 'qwen-176', label: 'Qwen edit, works at 1.76 MP (native)', workflow: 'qwen_edit', file: 'experiments/qwen_edit.work176.json' },
+      ],
+      cases: [
+        { key: 'large-relight', set: { prompt: 'Relight the scene with warm golden late-afternoon sunlight from the left, source out of frame.' + KEEP, seed: 91 }, images: { image_1: g('13_large_2k') } },
+        { key: 'bakery-sign', set: { prompt: 'Change the sign text to "MOONLIGHT BAKERY".' + KEEP, seed: 92 }, images: { image_1: g('03_text_scene') } },
+        { key: 'interior-season', set: { prompt: 'Make it a snowy winter evening outside the window, with warm lamp light inside.' + KEEP, seed: 93 }, images: { image_1: g('10_interior') } },
+      ],
+    },
+    {
+      id: 'qwen-decode-2k',
+      variants: [
+        { id: 'tiled', label: 'Tiled decode (Darkroom)', workflow: 'qwen_t2i', set: { steps: 40 } },
+        { id: 'whole', label: 'Whole-picture decode', workflow: 'qwen_t2i', file: 'experiments/qwen_t2i.vaedecode.json', set: { steps: 40 } },
+      ],
+      cases: QWEN_PROMPTS.slice(0, 2).map(([key, prompt, ar], i) => ({ key, set: { prompt, seed: 4000 + i, width: QWEN_2K[ar][0], height: QWEN_2K[ar][1] } })),
+    },
+  ],
   // "Ultimate Upscaler Klein-9b" LoRA (civitai.com/models/2474084, Flux2-Klein-Image-RestoreV1.safetensors) against
   // Darkroom's Klein Restore. The LoRA graph is the shipped one plus LoraLoaderModelOnly (strength 1, as the author
   // recommends) between the model and the sampler. Same seeds, same 4 steps.

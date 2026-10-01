@@ -946,7 +946,7 @@ function ComposeEditor({ id }: { id: string }) {
               </button>
             ))}
           </div>
-          <p className="note">
+          <p className="note compose-mode-note">
             {MODES.find((m) => m.id === mode)!.text}
             {doc.mode === 'auto' ? ` Suggested because ${auto.why}.` : ''}
           </p>
