@@ -25,6 +25,7 @@
 | **v2:** qwen_image_layered_vae.safetensors | vae | 0.24 GB |
 | **addenda:** qwen3.5_9b_qwen_image_2.1_pe_t2i.int8_convrot.safetensors | text_encoders | 9.5 GB (official Qwen-Image 2.1 prompt enhancer: Qwen Enhance + aspect ratio) |
 | **addenda:** qwen3.5_9b_qwen_image_2.1_pe_i2i.int8_convrot.safetensors | text_encoders | 9.5 GB (official edit-instruction enhancer: Qwen "Enhance instruction") |
+| **2026-10-01:** Flux2-Klein-Image-RestoreV1.safetensors | loras | 0.24 GB ("Ultimate Upscaler Klein-9b", civitai.com/models/2474084, non-commercial): Klein Restore of large photos (DECISIONS 83). Civitai only serves it to a logged-in account, so a re-download has to be done by hand in the browser; SHA-256 A8E6A1B80A5F07CF737C499A2E94BE84E0005D6D2280322AA3A2EAC368A9033D |
 
 The v2 VLM (Qwen3-VL 8B, `qwen3vl_8b_int8_convrot`) and Lucida matting were **already installed**. All three v2 downloads
 were fetched by `scripts/download-models-v2.sh`, the addenda files by `scripts/download-models-v3.sh`. Two addenda downloads that lost their A/B tests (the Qwen-Image 2.1 Fun
@@ -72,7 +73,7 @@ BENCHMARKS.md.
   `docs/qa/addenda/` (re-run with `npx tsx scripts/ab-addenda.ts <phase>`).
 - **UX review** (docs/UX_REVIEW.md): Library delete → Recently deleted (Undo, Restore, Delete forever to the Windows
   Recycle Bin), multi-select, Darkroom reopens on your last screen, prompt tools no longer cut off.
-- `npm test`: 289 unit tests. `npm run e2e`: 39 end-to-end tests in Edge against ComfyUI (v1, v2 and the addenda). If Darkroom is already open from the desktop shortcut, run the test stack beside it on
+- `npm test`: 295 unit tests. `npm run e2e`: 39 end-to-end tests in Edge against ComfyUI (v1, v2 and the addenda). If Darkroom is already open from the desktop shortcut, run the test stack beside it on
   another port with its own library: `DR_SERVER_PORT=5179 DR_DATA_DIR=data/e2e npm run dev`, then `npx playwright test`.
 - `docs/QA_REPORT.md`: every feature run on the golden test pictures (`tests/golden/`), with grids, timings, peak memory,
   a model-switching stress test and the remaining known issues. Re-run with `npx tsx scripts/qa-phase6.ts features`.
