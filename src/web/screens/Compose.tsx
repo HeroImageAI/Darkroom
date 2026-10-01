@@ -224,6 +224,7 @@ function ComposeEditor({ id }: { id: string }) {
   const canvasEl = useRef<HTMLDivElement>(null);
   const upload = useRef<HTMLInputElement>(null);
   const loaded = useRef(false);
+  const savedKey = useRef('');
   const paint = useCallback((lid: string) => paintEls.current.get(lid), []);
 
   // ---- load and save
@@ -231,6 +232,7 @@ function ComposeEditor({ id }: { id: string }) {
     api
       .get<Composition>(`/api/compositions/${id}`)
       .then((c) => {
+        savedKey.current = JSON.stringify([c.name, c.doc]);
         setName(c.name);
         setDocState(c.doc);
         loaded.current = true;
@@ -240,11 +242,15 @@ function ComposeEditor({ id }: { id: string }) {
 
   useEffect(() => {
     if (!doc || !loaded.current) return;
+    // opening (or undoing back to what is saved) doesn't save again, so it doesn't move up the list
+    const key = JSON.stringify([name, doc]);
+    if (key === savedKey.current) return setSaved('saved');
     setSaved('saving');
     const t = setTimeout(async () => {
       try {
         const small = await flatten(doc, paint, 360 / Math.max(doc.width, doc.height)).catch(() => null);
         await api.put(`/api/compositions/${id}`, { name, doc, thumb: small?.toDataURL('image/jpeg', 0.75) });
+        savedKey.current = key;
         setSaved('saved');
       } catch {
         setSaved('error');
