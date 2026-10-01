@@ -469,20 +469,24 @@ test.describe.serial('Darkroom v2 features', () => {
   test('Generate and Video: deleted work leaves the screen', async () => {
     const pics = (await (await page.request.get('/api/items?limit=20&filter=generated')).json()).items;
     const victim = pics[3];
-    // Generate: the picture on screen is deleted in the Library -> clean stage
-    await page.goto('/#/generate');
-    // History lists the same pictures in the same order (many test pictures share a prompt, so pick by position)
-    await page.getByRole('complementary', { name: 'History' }).locator('.rail-item').nth(3).getByRole('button').first().click();
-    await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
-    await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
-    await expect(page.getByText('Nothing developed yet')).toBeVisible();
-    // Video: a start frame picked from that picture goes too
-    await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
-    await page.goto(`/#/video?start=${victim.id}`);
-    await expect(page.getByAltText('Start frame')).toBeVisible({ timeout: 30_000 });
-    await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
-    await expect(page.getByAltText('Start frame')).toHaveCount(0);
-    await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
+    try {
+      // Generate: the picture on screen is deleted in the Library -> clean stage
+      await page.goto('/#/generate');
+      // History lists the same pictures in the same order (many test pictures share a prompt, so pick by position)
+      await page.getByRole('complementary', { name: 'History' }).locator('.rail-item').nth(3).getByRole('button').first().click();
+      await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+      await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
+      await expect(page.getByText('Nothing developed yet')).toBeVisible();
+      // Video: a start frame picked from that picture goes too
+      await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
+      await page.goto(`/#/video?start=${victim.id}`);
+      await expect(page.getByAltText('Start frame')).toBeVisible({ timeout: 30_000 });
+      await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
+      await expect(page.getByAltText('Start frame')).toHaveCount(0);
+    } finally {
+      // never leave the shared test library with a deleted picture, even when a step fails
+      await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
+    }
   });
 
   test('Library: Upload adds your pictures to the Library', async () => {
@@ -498,6 +502,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.goto('/#/library');
     const count = async (f = 'all') => (await (await page.request.get('/api/items?limit=1&filter=' + f)).json()).total as number;
     const before = await count();
+    const deletedBefore = await count('deleted'); // a test interrupted elsewhere may have left something there
     const tiles = page.getByRole('list').getByRole('listitem');
     // one item: click, press Delete, Undo
     await tiles.nth(0).click();
@@ -514,15 +519,15 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(bar).toContainText('3 selected');
     await bar.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText('3 items moved to Recently deleted.').last()).toBeVisible();
-    expect(await count('deleted')).toBe(3);
+    expect(await count('deleted')).toBe(deletedBefore + 3);
     // they wait in Recently deleted and come back with Restore
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
-    await expect(tiles).toHaveCount(3);
+    await expect(tiles).toHaveCount(deletedBefore + 3);
     await shot(page, 'library-recently-deleted');
     await page.keyboard.press('Control+a');
     await bar.getByRole('button', { name: 'Restore' }).click();
-    await expect(page.getByText('3 items restored to the Library.')).toBeVisible();
-    expect(await count()).toBe(before);
+    await expect(page.getByText(`${deletedBefore + 3} items restored to the Library.`)).toBeVisible();
+    expect(await count()).toBe(before + deletedBefore);
     expect(await count('deleted')).toBe(0);
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
   });
