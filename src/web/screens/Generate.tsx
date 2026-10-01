@@ -24,6 +24,8 @@ import {
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo, openLibrary } from '../lib/remove';
 import { expandVariations } from '../../shared/variations';
+import type { LoraUse } from '../../shared/loras';
+import { LoraPicker } from '../components/LoraPicker';
 
 /** Prompt variations: at most this many prompts, and this many pictures per click (variations × batch). */
 const MAX_VARIATIONS = 16;
@@ -56,6 +58,8 @@ export interface GenSettings {
   quality?: string;
   /** Qwen: transparent background (real alpha) */
   transparent?: boolean;
+  /** Your LoRAs, per model (a preference, like the style). */
+  loras?: Record<string, LoraUse[]>;
 }
 
 const DEFAULTS: GenSettings = {
@@ -353,6 +357,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
       batch: cur.batch,
     };
     cur.refs.forEach((r, i) => (params[`image_${i + 1}`] = r.name));
+    const loras = cur.loras?.[cur.model] ?? [];
+    if (loras.length) params.loras = JSON.stringify(loras);
     try {
       const ids: string[] = [];
       for (const text of variations.prompts) {
@@ -585,6 +591,10 @@ export function Generate({ query }: { query: URLSearchParams }) {
               onChange={(style) => update({ style })}
             />
           </div>
+
+          {(s.model === 'klein' || s.model === 'qwen') && (
+            <LoraPicker family={s.model} value={s.loras?.[s.model] ?? []} onChange={(v) => update({ loras: { ...(s.loras ?? {}), [s.model]: v } })} />
+          )}
 
           {model.quality && (
             <div>

@@ -298,3 +298,14 @@ button.logo svg { transition: transform .2s; }
 .variations ol { margin: 6px 0 0; padding-left: 20px; max-height: 160px; overflow-y: auto; color: var(--text); }
 .variations li { margin: 2px 0; }
 .variations-hint { margin: 6px 0 0; font-size: 12px; }
+
+/* ---- LoRAs ---- */
+.lora-picker .section-label .icon { min-height: 24px; padding: 0 6px; }
+.lora-row { display: grid; grid-template-columns: minmax(0, 1fr) 90px 38px 28px; align-items: center; gap: 6px; margin-bottom: 4px; }
+.lora-row .lora-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lora-row .lora-strength { font-size: 12px; color: var(--muted); text-align: right; }
+.lora-row .icon { min-height: 28px; padding: 0; width: 28px; }
+.lora-add { display: flex; align-items: center; gap: 6px; border: 1px dashed var(--input); border-radius: var(--r); padding: 0 10px; height: 36px; color: var(--muted); }
+.lora-add select { flex: 1; background: transparent; border: 0; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.lora-add option { background: var(--panel); }
+.lora-add:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }

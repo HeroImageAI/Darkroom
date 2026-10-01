@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
-import { useItemLoad } from '../lib/hooks';
+import { useItemLoad, usePersistent } from '../lib/hooks';
 import { CompareView } from '../components/Compare';
 import { LayerStack, LayersPanel, useLayerGroup } from '../components/LayersPanel';
 import { CropDialog, grabScreenFrame } from '../lib/capture';
@@ -39,6 +39,11 @@ import { detectPixelBlock } from '../../shared/pixelblock';
 import { CIRCLE_COLOUR, circleFor } from '../../shared/annotate';
 import { PresetPicker } from '../components/PresetPicker';
 import { importFailedMessage, importPictures } from '../lib/importer';
+import { LoraPicker } from '../components/LoraPicker';
+import type { LoraUse } from '../../shared/loras';
+
+/** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
+const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
@@ -126,6 +131,9 @@ function Editor({ item }: { item: Item }) {
   const [mode, setMode] = useState<Mode>(() => (sessionStorage.getItem('dr.edit.mode') as Mode) || 'instruct');
   const boot = useApp((s) => s.boot);
   const [editModel, setEditModel] = useState<string>(() => localStorage.getItem('dr.edit.model') || 'qwen');
+  // your own LoRAs per model (DECISIONS 86), used by Instruct, Inpaint, Outpaint and Enhance
+  const [editLoras, setEditLoras] = usePersistent<Record<string, LoraUse[]>>('edit.loras', {});
+  const lorasNow = (): LoraUse[] => (editModel === 'klein' || editModel === 'qwen' ? (editLoras[editModel] ?? []) : []);
   const [enhanceKind, setEnhanceKind] = useState<EnhanceKind>('restore');
   const [enhanceAdv, setEnhanceAdv] = useState(false);
   const [denoise, setDenoise] = useState<number | null>(null); // null = model default for the chosen strength
@@ -446,7 +454,7 @@ function Editor({ item }: { item: Item }) {
       const inp = await api.asInput(item.id);
       const j = await api.submit({
         workflow,
-        params: { image_1: inp.name, seed: randomSeed(), ...params },
+        params: { image_1: inp.name, seed: randomSeed(), ...params, ...(LORA_MODES.has(modeKey) && lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}) },
         meta: { mode: modeKey, model, prompt: promptText || item.prompt, parentId: item.id, ui: item.ui },
       });
       setJobId(j.id);
@@ -577,6 +585,7 @@ function Editor({ item }: { item: Item }) {
         prompt: composeImagePrompt(T, { model: em, mode: 'enhance', text: '', caption: cap, strength: restore ? 'restore' : 'subtle' }),
         megapixels: plan.megapixels,
       };
+      if (lorasNow().length) params.loras = JSON.stringify(lorasNow());
       if (!restore) {
         params.denoise = effDenoise;
         if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
@@ -1045,6 +1054,11 @@ function Editor({ item }: { item: Item }) {
                   </button>
                 ))}
               </div>
+              {(editModel === 'klein' || editModel === 'qwen') && (
+                <div style={{ marginTop: 12 }}>
+                  <LoraPicker family={editModel} value={editLoras[editModel] ?? []} onChange={(v) => setEditLoras((prev) => ({ ...prev, [editModel]: v }))} />
+                </div>
+              )}
             </div>
           )}
 
