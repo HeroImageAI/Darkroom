@@ -274,3 +274,5 @@ button.logo svg { transition: transform .2s; }
 .rail .rail-delete:hover, .take-delete:hover { background: var(--danger); color: var(--bg); }
 .rail .rail-more { width: auto; height: auto; min-height: 32px; padding: 4px 6px; font-size: 12px; white-space: normal; background: transparent; border: 0; }
 @media (hover: none) { .rail .rail-delete, .take-delete { opacity: 1; } }
+.section-label .new-btn { text-transform: none; letter-spacing: normal; min-height: 28px; padding: 0 8px; margin-right: -8px; }
+.step-title .new-btn { min-height: 28px; padding: 0 8px; font-size: 13px; font-family: inherit; font-weight: 400; }

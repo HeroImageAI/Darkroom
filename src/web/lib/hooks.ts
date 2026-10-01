@@ -66,3 +66,66 @@ export async function ensureNotifyPermission(): Promise<boolean> {
   if (Notification.permission === 'denied') return false;
   return (await Notification.requestPermission()) === 'granted';
 }
+
+/**
+ * Work in progress vs preferences (DECISIONS 82). One settings object; the keys in `sessionKeys` (the prompt, the
+ * pictures in use, what is on screen) live in sessionStorage, so they survive switching screens and reloads but a
+ * fresh launch of Darkroom starts with a clean workspace. Everything else (model, aspect, quality…) is a preference
+ * and stays in localStorage. Older versions kept everything in localStorage; those work-in-progress values are
+ * ignored.
+ */
+export function useWorkspace<T extends object>(key: string, initial: T, sessionKeys: (keyof T)[]): [T, (v: T | ((p: T) => T)) => void] {
+  const isSession = (k: string) => (sessionKeys as string[]).includes(k);
+  const read = (store: Storage) => {
+    try {
+      const raw = store.getItem('dr.' + key);
+      const v = raw ? JSON.parse(raw) : null;
+      return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+    } catch {
+      return {};
+    }
+  };
+  const [v, setV] = useState<T>(() => {
+    const prefs = Object.fromEntries(Object.entries(read(localStorage)).filter(([k]) => !isSession(k)));
+    const work = Object.fromEntries(Object.entries(read(sessionStorage)).filter(([k]) => isSession(k)));
+    return { ...initial, ...prefs, ...work };
+  });
+  const set = (next: T | ((p: T) => T)) => {
+    setV((prev) => {
+      const val = typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
+      const entries = Object.entries(val as Record<string, unknown>);
+      try {
+        localStorage.setItem('dr.' + key, JSON.stringify(Object.fromEntries(entries.filter(([k]) => !isSession(k)))));
+        sessionStorage.setItem('dr.' + key, JSON.stringify(Object.fromEntries(entries.filter(([k]) => isSession(k)))));
+      } catch {
+        /* storage full / blocked */
+      }
+      return val;
+    });
+  };
+  return [v, set];
+}
+
+/** A single work-in-progress value (what is on screen): kept for this launch only. */
+export function useSessionState<T>(key: string, initial: T): [T, (v: T | ((p: T) => T)) => void] {
+  const [v, setV] = useState<T>(() => {
+    try {
+      const raw = sessionStorage.getItem('dr.' + key);
+      return raw ? (JSON.parse(raw) as T) : initial;
+    } catch {
+      return initial;
+    }
+  });
+  const set = (next: T | ((p: T) => T)) => {
+    setV((prev) => {
+      const val = typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
+      try {
+        sessionStorage.setItem('dr.' + key, JSON.stringify(val));
+      } catch {
+        /* ignore */
+      }
+      return val;
+    });
+  };
+  return [v, set];
+}

@@ -17,9 +17,11 @@ async function firstItem(page: Page, pred: (i: any) => boolean): Promise<any> {
 test.describe.serial('Darkroom v2 features', () => {
   let page: Page;
   test.beforeAll(async ({ browser }) => {
-    page = await browser.newPage({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    // a real context (not browser.newPage) so a test can open a second tab, i.e. a fresh launch
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
   });
-  test.afterAll(async () => page.close());
+  test.afterAll(async () => page.context().close());
 
   test('Generate: Klein guidance is fixed, Qwen offers quality + transparency', async () => {
     await page.goto('/#/generate');
@@ -440,6 +442,53 @@ test.describe.serial('Darkroom v2 features', () => {
     await shot(page, 'video-takes');
   });
 
+  // Clean workspace (DECISIONS 82): work in progress is per launch, preferences stay, deleted work leaves the screen
+  test('Generate: a fresh launch starts clean but keeps preferences; New clears with Undo', async () => {
+    await page.goto('/#/generate');
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByLabel('Prompt').fill('a ceramic teapot on linen, morning light');
+    await page.getByRole('complementary', { name: 'History' }).locator('.rail-item').first().getByRole('button').first().click();
+    await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+
+    // a new tab = a fresh launch (sessionStorage is per tab, localStorage is shared)
+    const fresh = await page.context().newPage();
+    await fresh.goto('/#/generate');
+    await expect(fresh.getByLabel('Prompt')).toHaveValue('');
+    await expect(fresh.getByText('Nothing developed yet')).toBeVisible();
+    await expect(fresh.getByRole('button', { name: /^Klein 9B/ })).toHaveAttribute('aria-pressed', 'true');
+    await fresh.close();
+
+    await page.getByRole('button', { name: 'New', exact: true }).click();
+    await expect(page.getByLabel('Prompt')).toHaveValue('');
+    await expect(page.getByText('Nothing developed yet')).toBeVisible();
+    await page.getByRole('button', { name: 'Undo' }).last().click();
+    await expect(page.getByLabel('Prompt')).toHaveValue('a ceramic teapot on linen, morning light');
+    await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+  });
+
+  test('Generate and Video: deleted work leaves the screen', async () => {
+    const pics = (await (await page.request.get('/api/items?limit=20&filter=generated')).json()).items;
+    const victim = pics[3];
+    try {
+      // Generate: the picture on screen is deleted in the Library -> clean stage
+      await page.goto('/#/generate');
+      // History lists the same pictures in the same order (many test pictures share a prompt, so pick by position)
+      await page.getByRole('complementary', { name: 'History' }).locator('.rail-item').nth(3).getByRole('button').first().click();
+      await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+      await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
+      await expect(page.getByText('Nothing developed yet')).toBeVisible();
+      // Video: a start frame picked from that picture goes too
+      await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
+      await page.goto(`/#/video?start=${victim.id}`);
+      await expect(page.getByAltText('Start frame')).toBeVisible({ timeout: 30_000 });
+      await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
+      await expect(page.getByAltText('Start frame')).toHaveCount(0);
+    } finally {
+      // never leave the shared test library with a deleted picture, even when a step fails
+      await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
+    }
+  });
+
   test('Library: Upload adds your pictures to the Library', async () => {
     await page.goto('/#/library');
     const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
@@ -453,6 +502,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.goto('/#/library');
     const count = async (f = 'all') => (await (await page.request.get('/api/items?limit=1&filter=' + f)).json()).total as number;
     const before = await count();
+    const deletedBefore = await count('deleted'); // a test interrupted elsewhere may have left something there
     const tiles = page.getByRole('list').getByRole('listitem');
     // one item: click, press Delete, Undo
     await tiles.nth(0).click();
@@ -469,15 +519,15 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(bar).toContainText('3 selected');
     await bar.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText('3 items moved to Recently deleted.').last()).toBeVisible();
-    expect(await count('deleted')).toBe(3);
+    expect(await count('deleted')).toBe(deletedBefore + 3);
     // they wait in Recently deleted and come back with Restore
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
-    await expect(tiles).toHaveCount(3);
+    await expect(tiles).toHaveCount(deletedBefore + 3);
     await shot(page, 'library-recently-deleted');
     await page.keyboard.press('Control+a');
     await bar.getByRole('button', { name: 'Restore' }).click();
-    await expect(page.getByText('3 items restored to the Library.')).toBeVisible();
-    expect(await count()).toBe(before);
+    await expect(page.getByText(`${deletedBefore + 3} items restored to the Library.`)).toBeVisible();
+    expect(await count()).toBe(before + deletedBefore);
     expect(await count('deleted')).toBe(0);
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
   });

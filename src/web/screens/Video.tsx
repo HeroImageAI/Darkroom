@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Repeat, Sparkles, Undo2, Waves, X } from 'lucide-react';
+import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Plus, Repeat, Sparkles, Undo2, Waves, X } from 'lucide-react';
 import { LibraryPicker } from '../components/LibraryPicker';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo, openLibrary } from '../lib/remove';
 import { Dialog, formatDuration, ProgressBar, randomSeed, Segmented, timecode, useHotkey } from '../components/common';
-import { ensureNotifyPermission, notifyDesktop, useItem, usePersistent } from '../lib/hooks';
+import { ensureNotifyPermission, notifyDesktop, useItemLoad, useSessionState, useWorkspace } from '../lib/hooks';
 import { go } from '../router';
 import { onJob, toast, useApp } from '../store';
 import { planVideo, type VideoQuality } from '../../shared/manifest';
@@ -38,15 +38,43 @@ export function Video({ query }: { query: URLSearchParams }) {
   const jobs = useApp((s) => s.jobs);
   const online = useApp((s) => s.status?.comfy === 'online');
   const rev = useApp((s) => s.libraryRev);
-  const [s, setS] = usePersistent<VideoSettings>('video', DEFAULTS);
-  const [selected, setSelected] = usePersistent<string | null>('video.selected', null);
+  // frames, motion and camera are work in progress (this launch only); model, length, quality… are preferences
+  const [s, setS] = useWorkspace<VideoSettings>('video', DEFAULTS, ['start', 'end', 'motion', 'camera', 'seed', 'frameFit']);
+  const [selected, setSelected] = useSessionState<string | null>('video.selected', null);
   const [takes, setTakes] = useState<Job[]>([]);
   const [warning, setWarning] = useState<{ text: string; body: Parameters<typeof api.submit>[0] } | null>(null);
   const [suggesting, setSuggesting] = useState(false);
   const [picker, setPicker] = useState<null | 'start' | 'end'>(null);
   const [motionUndo, setMotionUndo] = useState<string[]>([]);
-  const selectedItem = useItem(selected);
+  const selectedLoad = useItemLoad(selected);
+  // a take deleted anywhere leaves the screen at once
+  const selectedItem = selectedLoad.item && !selectedLoad.item.deleted_at ? selectedLoad.item : null;
+  useEffect(() => {
+    if (selected && (selectedLoad.missing || selectedLoad.item?.deleted_at)) setSelected(null);
+  }, [selected, selectedLoad.missing, selectedLoad.item?.deleted_at]); // eslint-disable-line react-hooks/exhaustive-deps
   const update = (p: Partial<VideoSettings>) => setS((prev) => ({ ...prev, ...p }));
+  // a start / end frame picked from the Library goes away when that picture is deleted (it is a copy, so check it)
+  const startSrc = useItemLoad(s.start?.itemId ?? null);
+  const endSrc = useItemLoad(s.end?.itemId ?? null);
+  useEffect(() => {
+    const gone = (l: { item: { deleted_at?: number | null } | null; missing: boolean }) => l.missing || !!l.item?.deleted_at;
+    if (s.start?.itemId && gone(startSrc)) update({ start: null });
+    if (s.end?.itemId && gone(endSrc)) update({ end: null });
+  }, [startSrc.missing, startSrc.item?.deleted_at, endSrc.missing, endSrc.item?.deleted_at]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** New: an empty workspace (frames, motion, camera, take on screen); preferences stay. Undo puts it back. */
+  const startNew = () => {
+    const before = { s, selected };
+    setS((p) => ({ ...p, start: null, end: null, motion: '', camera: [], seed: 0, frameFit: undefined }));
+    setSelected(null);
+    toast('New video: frames, motion and the take on screen cleared. Your takes stay in the panel.', 'ok', 8000, {
+      label: 'Undo',
+      run: () => {
+        setS(before.s);
+        setSelected(before.selected);
+      },
+    });
+  };
   const animateRef = useRef<() => void>(() => undefined);
   useHotkey((e) => (e.ctrlKey || e.metaKey) && e.key === 'Enter', () => animateRef.current(), [], true);
 
@@ -317,6 +345,16 @@ export function Video({ query }: { query: URLSearchParams }) {
           <section>
             <h2 className="step-title">
               <span className="step-num">1</span> Frames
+              <button
+                type="button"
+                className="btn ghost sm new-btn"
+                style={{ marginLeft: 'auto' }}
+                onClick={startNew}
+                disabled={!s.start && !s.end && !s.motion && !s.camera.length && !selected}
+                title="Start a new video: clears the frames, motion, camera moves and the take on screen (your takes stay in the panel). Undo in the notice."
+              >
+                <Plus size={14} /> New
+              </button>
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <FrameSlot label="Start frame" frame={s.start} onFile={(f) => uploadFrame(f, 'start')} onItem={(id) => itemFrame(id, 'start')} onClear={() => update({ start: null })} />

@@ -19,12 +19,13 @@ import {
   Loader2,
   ScanText,
   X,
+  Plus,
 } from 'lucide-react';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo, openLibrary } from '../lib/remove';
 import { Pills, ProgressBar, Segmented, randomSeed, useHotkey } from '../components/common';
 import { CropDialog, grabScreenFrame } from '../lib/capture';
-import { useItem, usePersistent } from '../lib/hooks';
+import { useItemLoad, useSessionState, useWorkspace } from '../lib/hooks';
 import { go } from '../router';
 import { onJob, toast, useApp } from '../store';
 import { ASPECTS, type Aspect } from '../../shared/manifest';
@@ -70,7 +71,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const jobs = useApp((s) => s.jobs);
   const previews = useApp((s) => s.previews);
   const online = useApp((s) => s.status?.comfy === 'online');
-  const [s, setS] = usePersistent<GenSettings>('generate', DEFAULTS);
+  // prompt, references and seed are work in progress (this launch only); model, aspect, style… are preferences
+  const [s, setS] = useWorkspace<GenSettings>('generate', DEFAULTS, ['prompt', 'refs', 'seed', 'seedLocked']);
   // History = your latest Generate pictures in the Library (deleting anywhere removes them here too)
   const rev = useApp((s) => s.libraryRev);
   const [history, setHistory] = useState<Item[]>([]);
@@ -85,8 +87,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
     const gone = await deleteWithUndo([id], 'picture');
     if (gone.length && id === selected) setSelected(history[at + 1]?.id ?? history[at - 1]?.id ?? null);
   };
-  const [selected, setSelected] = usePersistent<string | null>('generate.selected', null);
-  const [jobId, setJobId] = usePersistent<string | null>('generate.job', null);
+  const [selected, setSelected] = useSessionState<string | null>('generate.selected', null);
+  const [jobId, setJobId] = useSessionState<string | null>('generate.job', null);
   const [strip, setStrip] = useState<Item[]>([]);
   const [capture, setCapture] = useState<HTMLCanvasElement | null>(null);
   const [busyRef, setBusyRef] = useState(false);
@@ -95,7 +97,28 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const reverseInput = useRef<HTMLInputElement>(null);
   const restoreInput = useRef<HTMLInputElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
-  const selectedItem = useItem(selected);
+  const selectedLoad = useItemLoad(selected);
+  // a picture deleted anywhere (Library, History) leaves the screen at once
+  const selectedItem = selectedLoad.item && !selectedLoad.item.deleted_at ? selectedLoad.item : null;
+  useEffect(() => {
+    if (selected && (selectedLoad.missing || selectedLoad.item?.deleted_at)) setSelected(null);
+  }, [selected, selectedLoad.missing, selectedLoad.item?.deleted_at]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** New: an empty workspace (prompt, references, picture on screen); preferences stay. Undo puts it back. */
+  const startNew = () => {
+    const before = { s, selected };
+    setS((p) => ({ ...p, prompt: '', refs: [], seedLocked: false, seed: randomSeed() }));
+    setSelected(null);
+    setPromptUndo([]);
+    toast('New picture: prompt, references and the picture on screen cleared. Your results stay in History.', 'ok', 8000, {
+      label: 'Undo',
+      run: () => {
+        setS(before.s);
+        setSelected(before.selected);
+      },
+    });
+    promptRef.current?.focus();
+  };
 
   const m = boot?.manifest;
   const model = m?.models[s.model] ?? m?.models.klein;
@@ -121,7 +144,10 @@ export function Generate({ query }: { query: URLSearchParams }) {
     }
     api
       .get<Item[]>(`/api/jobs/${selectedItem.job_id}/items`)
-      .then((items) => setStrip(items.length ? items : [selectedItem]))
+      .then((items) => {
+        const live = items.filter((i) => !i.deleted_at);
+        setStrip(live.length ? live : [selectedItem]);
+      })
       .catch(() => setStrip([selectedItem]));
   }, [selectedItem?.id, selectedItem?.job_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -374,7 +400,18 @@ export function Generate({ query }: { query: URLSearchParams }) {
           <div>
             {/* label on its own line, prompt tools in a wrapping row below it (they overflowed the 380 px panel) */}
             <div className="section-label" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
-              <label htmlFor="prompt">Prompt</label>
+              <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label htmlFor="prompt">Prompt</label>
+                <button
+                  type="button"
+                  className="btn ghost sm new-btn"
+                  onClick={startNew}
+                  disabled={!s.prompt && !s.refs.length && !selected}
+                  title="Start a new picture: clears the prompt, references and the picture on screen (your results stay in History). Undo in the notice."
+                >
+                  <Plus size={14} /> New
+                </button>
+              </span>
               <span className="prompt-tools" style={{ display: 'flex', gap: 2, flexWrap: 'wrap', marginLeft: -8, textTransform: 'none', letterSpacing: 'normal' }}>
                 {promptUndo.length > 0 && (
                   <button
