@@ -494,14 +494,15 @@ test.describe.serial('Darkroom v2 features', () => {
 
     const videos = async () => (await (await page.request.get('/api/items?limit=1&filter=videos')).json()).total as number;
     const before = await videos();
-    const cards = await takes.getByTestId('take').count();
+    // the panel lists the newest 30 takes, so follow the deleted take itself rather than the count
+    const id = await takes.getByTestId('take').first().getAttribute('data-job');
     await takes.getByTestId('take').first().hover();
     await takes.getByRole('button', { name: 'Delete this take' }).first().click();
     await expect(page.getByText('1 video moved to Recently deleted.').last()).toBeVisible();
-    await expect(takes.getByTestId('take')).toHaveCount(cards - 1);
+    await expect(takes.locator(`[data-job="${id}"]`)).toHaveCount(0);
     expect(await videos()).toBe(before - 1);
     await page.getByRole('button', { name: 'Undo' }).last().click();
-    await expect(takes.getByTestId('take')).toHaveCount(cards);
+    await expect(takes.locator(`[data-job="${id}"]`)).toHaveCount(1);
     expect(await videos()).toBe(before);
     await shot(page, 'video-takes');
   });

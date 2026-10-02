@@ -684,6 +684,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
     <div
       className="take"
       data-testid="take"
+      data-job={job.id}
       data-status={job.status}
       style={{ position: 'relative', display: 'grid', gridTemplateColumns: '84px 1fr', gap: 10, padding: 8, borderRadius: 10, border: `1px solid ${selected ? 'var(--accent)' : 'var(--input)'}`, background: 'var(--raised)' }}
     >
