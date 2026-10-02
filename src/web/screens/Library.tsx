@@ -83,7 +83,7 @@ export function Library() {
       if (filter !== 'all') setFilter('all');
       setSelected(ids[0]);
       const what = [p.ids.length ? `${p.ids.length === 1 ? '1 picture' : `${p.ids.length} pictures`}` : '', v.ids.length ? `${v.ids.length === 1 ? '1 video' : `${v.ids.length} videos`}` : ''].filter(Boolean).join(' and ');
-      toast(`${what} added to your Library. Double-click to open.`, 'ok');
+      toast(`${what} added to your Library. Double-click to ${v.ids.length ? 'open' : 'edit'}.`, 'ok');
     }
   };
 

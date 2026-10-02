@@ -276,6 +276,24 @@ export class JobManager {
       if (!ok) throw new WorkflowError(`${weights} is not a Klein 9B model on this PC.`);
       node.inputs.unet_name = weights;
     }
+    // Auto length (DECISIONS 100): LTX's duration head reads the prompt and picks the clip's length (2 s up to the
+    // number of seconds given, on LTX's 8n+1 frame grid); the clip's real length is read from the file afterwards
+    const autoMax = Number(req.params.auto_duration);
+    if (spec.family === 'ltx' && autoMax > 0) {
+      const [frames] = findByTitle(prompt, 'DR_FRAMES');
+      const [model] = findByTitle(prompt, 'DR_MODEL');
+      const [text] = findByTitle(prompt, 'DR_MOTION_PROMPT');
+      const [fps] = findByTitle(prompt, 'DR_FPS');
+      if (!frames || !model || !text || !fps) throw new WorkflowError('Auto length is not available for this kind of take.');
+      prompt.auto_head = { class_type: 'ModelPatchLoader', inputs: { name: 'ltx-2.5-duration-head-bf16.safetensors' }, _meta: { title: 'Duration head' } };
+      prompt.auto_len = {
+        class_type: 'LTXVDurationPredictor',
+        inputs: { model: [model, 0], positive: [text, 0], duration_head: ['auto_head', 0], frame_rate: [fps, 0], min_seconds: 2, max_seconds: Math.min(10, Math.max(2, autoMax)) },
+        _meta: { title: 'Auto length' },
+      };
+      for (const node of Object.values(prompt))
+        for (const [k, v] of Object.entries(node.inputs)) if (Array.isArray(v) && v[0] === frames && v[1] === 0) node.inputs[k] = ['auto_len', 0];
+    }
     // Slow motion (DECISIONS 98): LTX is told the motion's frame rate (fps / speed) while the clip still plays at fps
     const speed = Number(req.params.motion_speed);
     if (spec.family === 'ltx' && speed > 0 && speed < 1) {

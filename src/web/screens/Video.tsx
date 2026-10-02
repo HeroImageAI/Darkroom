@@ -26,6 +26,7 @@ interface VideoSettings {
   motion: string;
   camera: string[];
   model: string;
+  /** Seconds, or 0 = Auto (DECISIONS 100): LTX's duration head picks the length from the prompt. */
   seconds: number;
   quality: VideoQuality;
   notify: boolean;
@@ -248,7 +249,7 @@ export function Video({ query }: { query: URLSearchParams }) {
   });
 
   if (!m || !vm) return <div className="empty">Loading…</div>;
-  const plan = planVideo(vm, s.quality, s.seconds, s.start?.width ?? 16, s.start?.height ?? 9);
+  const plan = planVideo(vm, s.quality, s.seconds || 5, s.start?.width ?? 16, s.start?.height ?? 9);
   const endAllowed = vm.supportsEndFrame;
 
   const T = boot!.prompts;
@@ -271,7 +272,8 @@ export function Video({ query }: { query: URLSearchParams }) {
     if (!cur.start) return toast('Add a start frame first (step 1).', 'info');
     const model = m.video[cur.model] ?? m.video.ltx;
     if (model.unavailable) return toast(model.unavailable, 'error');
-    const p = planVideo(model, cur.quality, cur.seconds, cur.start.width, cur.start.height);
+    const auto = cur.seconds === 0;
+    const p = planVideo(model, cur.quality, auto ? model.maxSeconds : cur.seconds, cur.start.width, cur.start.height);
     const seed = override.seed ?? randomSeed();
     const fx = effectOf(cur, ltxCat);
     const composed = composeMotionPrompt(T, cams, { model: (m.video[cur.model] ? cur.model : 'ltx') as VideoModelKey, motion: cur.motion, camera: fx === 'cinemagraph' ? ['static'] : cur.camera, sound: cur.sound === 'describe' ? cur.soundText : '' });
@@ -292,6 +294,7 @@ export function Video({ query }: { query: URLSearchParams }) {
     };
     if (endName) params.end_image = endName;
     if (cur.sound === 'off') params.silent = 1;
+    if (auto) params.auto_duration = model.maxSeconds;
     const loras: LoraUse[] = [...(cur.loras ?? [])];
     if (fx === 'slowmo') {
       loras.push({ name: ltxCat!.slowmo!, strength: 1 });
@@ -661,7 +664,15 @@ export function Video({ query }: { query: URLSearchParams }) {
             <p className="section-label" style={{ marginTop: 14 }}>
               Length
             </p>
-            <Segmented label="Length" options={[3, 5, 8].map((n) => ({ value: n, label: `${n} s`, disabled: n > vm.maxSeconds }))} value={s.seconds} onChange={(seconds) => update({ seconds })} />
+            <Segmented
+              label="Length"
+              options={[
+                { value: 0, label: 'Auto', title: `LTX reads your prompt and picks the length that suits it (2 to ${vm.maxSeconds} s)` },
+                ...[3, 5, 8].map((n) => ({ value: n, label: `${n} s`, disabled: n > vm.maxSeconds })),
+              ]}
+              value={s.seconds}
+              onChange={(seconds) => update({ seconds })}
+            />
             <p className="section-label" style={{ marginTop: 14 }}>
               Quality
             </p>
@@ -679,8 +690,14 @@ export function Video({ query }: { query: URLSearchParams }) {
               {plan.width}×{plan.height}
             </b>
             <span>{plan.fps} fps</span>
-            <span>{plan.seconds.toFixed(1)} s</span>
-            <span>{plan.frames} frames</span>
+            {s.seconds === 0 ? (
+              <span>Auto length, 2–{vm.maxSeconds} s</span>
+            ) : (
+              <>
+                <span>{plan.seconds.toFixed(1)} s</span>
+                <span>{plan.frames} frames</span>
+              </>
+            )}
             <span>≈ {plan.estimateSec ? formatDuration(plan.estimateSec) : 'unmeasured'}</span>
           </div>
           <label className="check">
