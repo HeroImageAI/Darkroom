@@ -18,7 +18,7 @@ export interface ImageModel {
   quality?: Record<string, { label: string; note: string; steps?: number; aspects: Record<Aspect, [number, number]> }>;
 }
 
-export type VideoQuality = 'draft' | 'final';
+export type VideoQuality = 'draft' | 'final' | 'hd';
 export type Orientation = 'landscape' | 'portrait' | 'square';
 
 export interface VideoModel {
@@ -31,11 +31,12 @@ export interface VideoModel {
   framesFor: string;
   maxSeconds: number;
   unavailable?: string;
-  quality: Record<VideoQuality, { label: string; short: string } & Record<Orientation, [number, number]>>;
+  /** Per tier: sizes, and optionally its own graph (1080p = the two-stage graph) and time growth. A model may lack a tier. */
+  quality: Partial<Record<VideoQuality, { label: string; short: string; workflow?: string; timeExponent?: number } & Record<Orientation, [number, number]>>>;
   /** Seconds of compute per second of video, measured (BENCHMARKS.md). */
-  secondsPerSecond?: Record<VideoQuality, number>;
+  secondsPerSecond?: Partial<Record<VideoQuality, number>>;
   /** Fixed overhead (model load, decode) in seconds, measured. */
-  overheadSec?: Record<VideoQuality, number>;
+  overheadSec?: Partial<Record<VideoQuality, number>>;
   /** Time grows like seconds^exponent (attention cost); fitted from measurements. Default 1. */
   timeExponent?: number;
 }
@@ -70,14 +71,18 @@ export interface VideoPlan {
   fps: number;
   frames: number;
   seconds: number;
+  /** The graph for this tier (1080p has its own two-stage graph). */
+  workflow: string;
   estimateSec: number | null;
 }
 
 export function planVideo(model: VideoModel, quality: VideoQuality, seconds: number, srcW: number, srcH: number): VideoPlan {
-  const [width, height] = model.quality[quality][orientationOf(srcW, srcH)];
+  const tier = model.quality[quality] ?? model.quality.final!;
+  const [width, height] = tier[orientationOf(srcW, srcH)];
   const frames = framesFor(model, seconds);
   const realSeconds = (frames - 1) / model.fps;
   const sps = model.secondsPerSecond?.[quality];
   const over = model.overheadSec?.[quality] ?? 0;
-  return { width, height, fps: model.fps, frames, seconds: realSeconds, estimateSec: sps ? Math.round(over + sps * Math.pow(realSeconds, model.timeExponent ?? 1)) : null };
+  const exp = tier.timeExponent ?? model.timeExponent ?? 1;
+  return { width, height, fps: model.fps, frames, seconds: realSeconds, workflow: tier.workflow ?? model.workflow, estimateSec: sps ? Math.round(over + sps * Math.pow(realSeconds, exp)) : null };
 }

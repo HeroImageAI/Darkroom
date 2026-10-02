@@ -273,7 +273,7 @@ export function Video({ query }: { query: URLSearchParams }) {
     };
     if (endName) params.end_image = endName;
     void queue({
-      workflow: model.workflow,
+      workflow: p.workflow,
       params,
       meta: {
         mode: 'video',
@@ -491,7 +491,7 @@ export function Video({ query }: { query: URLSearchParams }) {
             </p>
             <Segmented
               label="Quality"
-              options={(['draft', 'final'] as const).map((q) => ({ value: q, label: `${vm.quality[q].label} (${vm.quality[q].short})` }))}
+              options={(['draft', 'final', 'hd'] as const).filter((q) => vm.quality[q]).map((q) => ({ value: q, label: q === 'hd' ? vm.quality[q]!.label : `${vm.quality[q]!.label} (${vm.quality[q]!.short})`, title: q === 'hd' ? 'Full HD, rendered in two stages (half size, then upscaled and refined): much finer detail, about 3 minutes for 5 s' : undefined }))}
               value={s.quality}
               onChange={(quality) => update({ quality })}
             />
@@ -524,24 +524,36 @@ export function Video({ query }: { query: URLSearchParams }) {
           <div className="stage-main">
             <div className="empty">
               <h2>No take selected</h2>
-              <p>Pick a start frame, describe the motion, then press Animate. Start with Draft to check the motion quickly, then render the final at 720p.</p>
+              <p>Pick a start frame, describe the motion, then press Animate. Start with Draft to check the motion quickly, then render it at 720p or 1080p.</p>
             </div>
           </div>
         )}
         {showFinalBar && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 20px', borderTop: '1px solid var(--line)', background: 'var(--panel)' }}>
             <Sparkles size={16} color="var(--accent)" />
-            <span style={{ flex: 1 }}>Happy with the motion? Render final at 720p with the same seed and settings.</span>
+            <span style={{ flex: 1 }}>Happy with the motion? Render it again with the same seed and settings: 720p, or 1080p for the finest detail (about 3 minutes for 5 s).</span>
             <button
-              className="btn primary"
+              className="btn"
               disabled={!online}
               onClick={async () => {
                 const ui = { ...DEFAULTS, ...selUi } as VideoSettings;
                 animate({ ...ui, quality: 'final', seed: sel!.seed ?? ui.seed }, sel!.id);
               }}
             >
-              Render final
+              Final 720p
             </button>
+            {vm.quality.hd && (
+              <button
+                className="btn primary"
+                disabled={!online}
+                onClick={async () => {
+                  const ui = { ...DEFAULTS, ...selUi } as VideoSettings;
+                  animate({ ...ui, quality: 'hd', seed: sel!.seed ?? ui.seed }, sel!.id);
+                }}
+              >
+                1080p
+              </button>
+            )}
           </div>
         )}
       </section>
@@ -701,7 +713,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
       <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <span style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {meta.mode === 'extend' ? 'Extended' : meta.mode === 'smooth' ? 'Smoothed' : meta.model ?? job.workflow}
-          {meta.ui?.quality ? ` · ${meta.ui.quality === 'final' ? 'Final' : 'Draft'}` : ''}
+          {meta.ui?.quality ? ` · ${({ final: 'Final', hd: '1080p', draft: 'Draft' } as Record<string, string>)[meta.ui.quality] ?? 'Draft'}` : ''}
         </span>
         <span className="mono muted" style={{ fontSize: 11 }}>
           {p.width ? `${p.width}×${p.height} · ` : ''}

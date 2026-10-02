@@ -37,7 +37,8 @@ node(43, 'LatentUpscaleModelLoader', 'Spatial upscaler', model_name='ltx-2.5-lat
 node(44, 'LTXVLatentUpsampler', 'Upscale x2', samples=['29', 2], upscale_model=['43', 0], vae=['3', 0])
 # stage 2, full size
 node(45, 'LTXVAddGuide', 'DR_START_GUIDE_2', positive=['29', 0], negative=['29', 1], vae=['3', 0], latent=['44', 0], image=['14', 0], frame_idx=0, strength=1.0)
-node(46, 'LTXVAddGuide', 'DR_END_GUIDE_2', positive=['45', 0], negative=['45', 1], vae=['3', 0], latent=['45', 2], image=['17', 0], frame_idx=-1, strength=0.9)
+node(46, 'LTXVAddGuide', 'DR_END_GUIDE',  # same title: the manifest bypasses both when there is no end frame
+     positive=['45', 0], negative=['45', 1], vae=['3', 0], latent=['45', 2], image=['17', 0], frame_idx=-1, strength=0.9)
 node(47, 'LTXVConcatAVLatent', 'AV latent 2', video_latent=['46', 2], audio_latent=['28', 1])
 node(48, 'LTXVDualCFGGuider', 'Guider 2', model=['1', 0], positive=['46', 0], negative=['46', 1], video_cfg=1.0, audio_cfg=1.0)
 node(49, 'RandomNoise', 'Stage 2 noise', noise_seed=42)

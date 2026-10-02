@@ -374,6 +374,23 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(page.getByText(/Motion prompt written for .* to suit Static/).last()).toBeVisible();
     await chips.click(); // off again
   });
+
+  test('Video: 1080p uses the two-stage graph at full HD (DECISIONS 96)', async () => {
+    // continues: frames are set
+    const quality = page.getByRole('group', { name: 'Quality' });
+    await quality.getByRole('button', { name: '1080p' }).click();
+    await page.getByLabel('Motion prompt').fill('Leaves sway gently in a light breeze.');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Animate Ctrl+Enter' }).click();
+    const req = await sent;
+    const body = req.postDataJSON();
+    expect(body.workflow).toBe('ltx25_i2v_hd');
+    expect(Math.max(body.params.width, body.params.height)).toBe(1920);
+    // no need to render it here: cancel straight away
+    const job = await (await req.response())!.json();
+    await page.request.post(`/api/jobs/${job.id}/cancel`);
+    await quality.getByRole('button', { name: /^Draft/ }).click();
+  });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
     await page.goto('/#/generate');

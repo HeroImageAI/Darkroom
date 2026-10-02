@@ -1,0 +1,158 @@
+[
+  {
+    "key": "portrait",
+    "variant": "single",
+    "ok": true,
+    "seconds": 120.1,
+    "peak": 24.2,
+    "cold": true,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-single\\ltx_00061_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-single\\ltx_poster_00061_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-single\\ltx_last_00061_.png"
+    ]
+  },
+  {
+    "key": "harbour",
+    "variant": "single",
+    "ok": true,
+    "seconds": 99,
+    "peak": 24.7,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-single\\ltx_00062_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-single\\ltx_poster_00062_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-single\\ltx_last_00062_.png"
+    ]
+  },
+  {
+    "key": "street",
+    "variant": "single",
+    "ok": true,
+    "seconds": 111,
+    "peak": 24.7,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-single\\ltx_00063_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-single\\ltx_poster_00063_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-single\\ltx_last_00063_.png"
+    ]
+  },
+  {
+    "key": "bakery",
+    "variant": "single",
+    "ok": true,
+    "seconds": 100,
+    "peak": 24.8,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-single\\ltx_00064_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-single\\ltx_poster_00064_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-single\\ltx_last_00064_.png"
+    ]
+  },
+  {
+    "key": "portrait",
+    "variant": "two",
+    "ok": true,
+    "seconds": 95.9,
+    "peak": 25.2,
+    "cold": true,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-two\\ltx_00066_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-two\\ltx_poster_00066_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-two\\ltx_last_00066_.png"
+    ]
+  },
+  {
+    "key": "harbour",
+    "variant": "two",
+    "ok": true,
+    "seconds": 85.3,
+    "peak": 25.3,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-two\\ltx_00067_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-two\\ltx_poster_00067_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-two\\ltx_last_00067_.png"
+    ]
+  },
+  {
+    "key": "street",
+    "variant": "two",
+    "ok": true,
+    "seconds": 87,
+    "peak": 25.2,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-two\\ltx_00068_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-two\\ltx_poster_00068_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-two\\ltx_last_00068_.png"
+    ]
+  },
+  {
+    "key": "bakery",
+    "variant": "two",
+    "ok": true,
+    "seconds": 83.2,
+    "peak": 25.3,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-two\\ltx_00069_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-two\\ltx_poster_00069_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-two\\ltx_last_00069_.png"
+    ]
+  },
+  {
+    "key": "portrait",
+    "variant": "two07",
+    "ok": true,
+    "seconds": 95.7,
+    "peak": 25.2,
+    "cold": true,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-two07\\ltx_00070_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-two07\\ltx_poster_00070_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\portrait-two07\\ltx_last_00070_.png"
+    ]
+  },
+  {
+    "key": "harbour",
+    "variant": "two07",
+    "ok": true,
+    "seconds": 77.8,
+    "peak": 25.4,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-two07\\ltx_00071_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-two07\\ltx_poster_00071_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\harbour-two07\\ltx_last_00071_.png"
+    ]
+  },
+  {
+    "key": "street",
+    "variant": "two07",
+    "ok": true,
+    "seconds": 82.2,
+    "peak": 25.4,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-two07\\ltx_00072_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-two07\\ltx_poster_00072_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\street-two07\\ltx_last_00072_.png"
+    ]
+  },
+  {
+    "key": "bakery",
+    "variant": "two07",
+    "ok": true,
+    "seconds": 78.4,
+    "peak": 25.4,
+    "cold": false,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-two07\\ltx_00073_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-two07\\ltx_poster_00073_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx\\bakery-two07\\ltx_last_00073_.png"
+    ]
+  }
+]
