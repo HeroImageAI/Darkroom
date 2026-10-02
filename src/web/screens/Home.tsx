@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Film, ImagePlus, Layers, Library as LibraryIcon, Loader2, Shapes, Wand2 } from 'lucide-react';
 import { api, thumbUrl, type Item } from '../api';
-import { importFailedMessage, importPictures } from '../lib/importer';
+import { importFailedMessage, importPictures, importVideos, isVideoFile } from '../lib/importer';
 import { go, lastRoute, type Screen } from '../router';
 import { toast, useApp } from '../store';
 
@@ -35,7 +35,18 @@ export function Home() {
 
   const bringIn = async (files: File[]) => {
     const pics = files.filter((f) => f.type.startsWith('image/'));
-    if (!pics.length) return toast('Choose picture files (JPG, PNG, WebP…).', 'info');
+    const vids = files.filter(isVideoFile);
+    // your own videos (DECISIONS 100): into the Library, then the first one opens on Video
+    if (!pics.length && vids.length) {
+      if (!online) return toast('Start ComfyUI first (top right): it saves your videos into your library.', 'info');
+      setBusy(vids.length === 1 ? 'Bringing in your video…' : `Bringing in 1 of ${vids.length} videos…`);
+      const { ids, failed } = await importVideos(vids, (done, total) => done < total && setBusy(`Bringing in ${done + 1} of ${total} videos…`));
+      setBusy(null);
+      if (failed.length) toast(`Could not bring in ${failed.join(', ')}. If it is an iPhone .mov, export it as MP4 (H.264) first.`, 'error', 12000);
+      if (ids[0]) go('video', undefined, { take: ids[0] });
+      return;
+    }
+    if (!pics.length) return toast('Choose picture or video files (JPG, PNG, WebP, MP4…).', 'info');
     if (!online) return toast('Start ComfyUI first (top right): it saves the pictures into your library.', 'info');
     setBusy(pics.length === 1 ? 'Bringing in your picture…' : `Bringing in 1 of ${pics.length}…`);
     const { ids, failed } = await importPictures(pics, (done, total) => done < total && setBusy(`Bringing in ${done + 1} of ${total}…`));
@@ -93,7 +104,7 @@ export function Home() {
               ref={input}
               className="sr"
               type="file"
-              accept="image/*"
+              accept="image/*,video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm"
               multiple
               aria-label="Upload pictures"
               onChange={(e) => {

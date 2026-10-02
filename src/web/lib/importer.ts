@@ -1,5 +1,5 @@
 import { api } from '../api';
-import { onJob } from '../store';
+import { getState, onJob } from '../store';
 
 /**
  * Bring your own pictures into the Library (Home, Edit, Library "Upload"). Each file is uploaded to ComfyUI's input
@@ -67,3 +67,66 @@ export function importFailedMessage(failed: string[]): string {
     .filter(Boolean)
     .join(' ');
 }
+
+/** A frame of a video file at time t (seconds; t < 0 = from the end), as a PNG blob, plus the video's size and length. */
+async function videoFrame(file: File, t: number): Promise<{ png: Blob; width: number; height: number; duration: number }> {
+  const url = URL.createObjectURL(file);
+  try {
+    const v = document.createElement('video');
+    v.muted = true;
+    v.preload = 'auto';
+    v.src = url;
+    await new Promise<void>((ok, bad) => {
+      v.onloadedmetadata = () => ok();
+      v.onerror = () => bad(new Error('unreadable'));
+    });
+    const at = t < 0 ? Math.max(0, v.duration + t) : Math.min(t, v.duration);
+    await new Promise<void>((ok, bad) => {
+      v.onseeked = () => ok();
+      v.onerror = () => bad(new Error('unreadable'));
+      v.currentTime = at;
+    });
+    const c = document.createElement('canvas');
+    c.width = v.videoWidth;
+    c.height = v.videoHeight;
+    c.getContext('2d')!.drawImage(v, 0, 0);
+    const png = await new Promise<Blob>((ok, bad) => c.toBlob((b) => (b ? ok(b) : bad(new Error('no frame'))), 'image/png'));
+    return { png, width: v.videoWidth, height: v.videoHeight, duration: v.duration };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/**
+ * Your own videos into the Library (DECISIONS 100). The file is kept as it is; the browser takes its first and last
+ * frames (thumbnail, Extend). Files the browser cannot play (some iPhone HEVC .mov) are reported, not stored.
+ */
+export async function importVideos(files: File[], onProgress?: (done: number, total: number) => void): Promise<{ ids: string[]; failed: string[] }> {
+  const vids = files.filter((f) => f.type.startsWith('video/') || /\.(mp4|mov|m4v|webm)$/i.test(f.name));
+  const ids: string[] = [];
+  const failed: string[] = [];
+  for (const [i, f] of vids.entries()) {
+    try {
+      const first = await videoFrame(f, 0.05);
+      const last = await videoFrame(f, -0.05);
+      const [video, poster, end] = [await api.upload(f, f.name), await api.upload(first.png, 'poster.png'), await api.upload(last.png, 'last.png')];
+      const item = await api.post<{ id: string }>('/api/import/video', {
+        video: video.name,
+        poster: poster.name,
+        last: end.name,
+        name: f.name.replace(/\.[a-z0-9]+$/i, ''),
+        width: first.width,
+        height: first.height,
+        duration: first.duration,
+        boardId: getState().board,
+      });
+      ids.push(item.id);
+    } catch {
+      failed.push(f.name);
+    }
+    onProgress?.(i + 1, vids.length);
+  }
+  return { ids, failed };
+}
+
+export const isVideoFile = (f: File) => f.type.startsWith('video/') || /\.(mp4|mov|m4v|webm)$/i.test(f.name);

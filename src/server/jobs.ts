@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
 import { checkMatte } from '../shared/matte.js';
+import { mp4Info } from './mp4info.js';
 import WebSocket from 'ws';
 import { ComfyClient, filesFromHistory, historyError, parseWsMessage, textFromHistory, type OutputFile } from '../shared/comfy.js';
 import { cleanVlmOutput } from '../shared/vlm.js';
@@ -452,6 +453,10 @@ export class JobManager {
           item.height = meta.height;
         }
       }
+      if (/\.(mp4|mov|m4v)$/i.test(vid.filename)) {
+        const real = await this.comfy!.view(ref(vid)).then((b) => mp4Info(Buffer.from(b))).catch(() => null);
+        if (real?.frames && real.fps) Object.assign(item, { fps: real.fps, frames: real.frames, duration: (real.frames - 1) / real.fps });
+      }
       this.store.insertItem(item);
       ids.push(item.id);
     } else {
@@ -633,6 +638,59 @@ export class JobManager {
   }
 
   /** The board a new result should go to, if it (still) exists. */
+  /**
+   * Your own video into the Library (DECISIONS 100). The uploaded file is the item's file (in ComfyUI's input
+   * folder); the browser supplies its first and last frames (poster, Extend); size, frame rate, frames and length come
+   * from the file's MP4 header when it has one, else from the browser.
+   */
+  async importVideo(a: { video: string; poster: string; last: string; name: string; boardId?: unknown; width?: number; height?: number; duration?: number }): Promise<Item> {
+    if (!this.comfy) throw new Error("ComfyUI isn't running.");
+    const input = (n: string): FileRef => {
+      const i = n.lastIndexOf('/');
+      return { filename: n.slice(i + 1), subfolder: i >= 0 ? n.slice(0, i) : '', type: 'input' };
+    };
+    const file = input(a.video);
+    const real = await this.comfy.view(file).then((b) => mp4Info(Buffer.from(b))).catch(() => null);
+    const fps = real?.fps ?? null;
+    const frames = real?.frames ?? null;
+    const item: Item = {
+      id: crypto.randomUUID(),
+      created_at: Date.now(),
+      kind: 'video',
+      mode: 'import',
+      workflow: 'import_video',
+      model: 'Imported',
+      family: 'util',
+      prompt: a.name.slice(0, 200),
+      negative: '',
+      seed: null,
+      width: real?.width ?? a.width ?? null,
+      height: real?.height ?? a.height ?? null,
+      duration: frames && fps ? (frames - 1) / fps : (a.duration ?? null),
+      fps,
+      frames,
+      params: { video: a.video },
+      ui: { model: 'imported', sound: real && !real.hasAudio ? 'off' : 'scene' },
+      api_prompt: null,
+      file,
+      poster: input(a.poster),
+      last_frame: input(a.last),
+      render_ms: null,
+      parent_id: null,
+      root_id: null,
+      version: 1,
+      favourite: false,
+      tags: [],
+      job_id: null,
+      input_name: a.video,
+      board_id: this.liveBoard(a.boardId),
+    };
+    await this.makeThumb(item.id, item.poster!).catch(() => null);
+    this.store.insertItem(item);
+    this.broadcast({ type: 'library' });
+    return item;
+  }
+
   private liveBoard(id: unknown): string | null {
     return typeof id === 'string' && id && this.store.board(id) ? id : null;
   }
