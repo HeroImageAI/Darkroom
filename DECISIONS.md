@@ -619,4 +619,10 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     of the Library while the clip is made and go to Recently deleted afterwards. Restore reimagines as much as it
     repairs: colours and fine detail are its best guess (it added modern taxis to an old street), so the dialog says so.
     *Auto length:* Length → Auto adds LTX's duration head (`ModelPatchLoader` + `LTXVDurationPredictor`, prompt only,
-    snapped to the 8n+1 grid, 2–8 s) in place of the fixed frame count.
+    snapped to the 8n+1 grid, 2–8 s) in place of the fixed frame count. Tested: "She blinks once and smiles" → 3.9 s
+    (89 frames), a walk across the room to read a letter → 7.4 s (177 frames); a second or two of extra work. The full
+    chain on the test library: 10 s of old footage → 3 parts (177 / 165 s) + join (25 s) → 241 frames at 1280×704, the
+    joins invisible (largest step 2.9 and 3.4 vs a median of 2.65). *Found on the way:* Darkroom picked a new ComfyUI
+    client id at every start, and ComfyUI tells only the client that queued a prompt when it finishes — so a render
+    running across a Darkroom restart stayed "running" forever (part 2 sat 20 minutes unnoticed). The id is now fixed
+    per library, active jobs are checked against ComfyUI's queue and history every 30 s, and a job is never ingested twice.

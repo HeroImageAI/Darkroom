@@ -246,7 +246,8 @@ export class Store {
   }
 
   listItems(q: LibraryQuery = {}): { items: Item[]; total: number } {
-    const where: string[] = [q.filter === 'deleted' ? 'deleted_at IS NOT NULL' : "deleted_at IS NULL AND mode != 'restore_part'"];
+    // restored parts are never shown: hidden while the clip is made, then put away (Delete forever still removes them)
+    const where: string[] = [q.filter === 'deleted' ? 'deleted_at IS NOT NULL' : 'deleted_at IS NULL', "mode != 'restore_part'"];
     const args: any[] = [];
     switch (q.filter) {
       case 'favourites':
