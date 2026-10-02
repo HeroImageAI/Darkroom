@@ -500,3 +500,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     peak. High sizes: 1408², 1264×1584, 1728×1152, 1920×1088, 1088×1920 (÷16). Steps stay with Klein's own Advanced
     control (4). Each model keeps its own quality (`kleinQuality` beside Qwen's `quality`), so Native 2K for Qwen never
     makes Klein High. Checked on the card: High ×4 batch 55 s / 20.2 GB peak; High with 3 references 39 s / 22.3 GB.
+90. **Library version stacks.** The grid was mostly v2…v5 of the same pictures. A picture and all its versions (edits,
+    upscales, crops: every item sharing `COALESCE(root_id, id)`) now show as one tile — the newest version that matches
+    the filter — with a count badge (`listItems({ stack })`, a window-function query; `stack_count` on each item).
+    Selecting it lists every version in Details (oldest first; an older version opens there even though it is not on
+    the grid) with "Delete all N versions" (to Recently deleted, Undo). Delete on a stacked tile deletes the version it
+    shows; the next newest takes its place. "Stacks" in the filter row turns it off (a preference); Recently deleted
+    is never stacked. Also: the Details panel only takes room when something is selected, and a "Composed" filter
+    (Compose renders). Test library: 674 tiles → 283.
