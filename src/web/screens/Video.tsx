@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Plus, Repeat, Sparkles, Undo2, Volume2, VolumeX, Waves, X } from 'lucide-react';
+import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Plus, Repeat, Sparkles, Scissors, Undo2, Volume2, VolumeX, Waves, X } from 'lucide-react';
 import { LibraryPicker } from '../components/LibraryPicker';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo, openLibrary } from '../lib/remove';
@@ -369,6 +369,41 @@ export function Video({ query }: { query: URLSearchParams }) {
     }
   };
 
+  /**
+   * Cut out (DECISIONS 99): Alpha-Gen makes the take's matte (saved in the Library too), then the server puts the
+   * take over the chosen background with it, keeping the sound. Background: a Library picture or a plain colour.
+   */
+  const [cutoutFor, setCutoutFor] = useState<Item | null>(null);
+  const [cutoutPick, setCutoutPick] = useState(false);
+  const cutOut = async (bg: { itemId: string } | { colour: string }) => {
+    const take = cutoutFor;
+    setCutoutFor(null);
+    setCutoutPick(false);
+    if (!take) return;
+    try {
+      let background: string;
+      if ('itemId' in bg) background = (await api.asInput(bg.itemId)).name;
+      else {
+        const c = document.createElement('canvas');
+        c.width = c.height = 64;
+        const g = c.getContext('2d')!;
+        g.fillStyle = bg.colour;
+        g.fillRect(0, 0, 64, 64);
+        const blob = await new Promise<Blob>((r) => c.toBlob((b) => r(b!), 'image/png'));
+        background = (await api.upload(blob, 'background.png')).name;
+      }
+      const inp = await api.asInput(take.id);
+      await queue({
+        workflow: 'ltx25_v2v_alpha',
+        params: { video: inp.name, motion_prompt: '', seed: randomSeed(), width: take.width ?? 864, height: take.height ?? 480, loras: '' },
+        meta: { mode: 'matte', model: 'LTX 2.5 · Alpha-Gen matte', prompt: take.prompt, parentId: take.id, ui: take.ui, notify: s.notify, durationSec: take.duration ?? undefined, estimateSec: Math.round(42 * (take.duration ?? 5)), chain: { kind: 'composite', firstItemId: take.id, background } },
+      });
+      toast('Cutting out: first the matte (it goes to your Library too), then the take over your background.', 'info', 7000);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
+
   const saveFrame = async (t: number) => {
     if (!sel) return;
     try {
@@ -610,7 +645,7 @@ export function Video({ query }: { query: URLSearchParams }) {
 
       <section className="stage" aria-label="Player">
         {sel ? (
-          <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={sel.workflow.startsWith('wan') ? undefined : extend} onSmooth={smooth} onRefine={ltxCat?.refine && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && !sel.workflow.startsWith('wan') ? refine : undefined} online={online} />
+          <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={sel.workflow.startsWith('wan') ? undefined : extend} onSmooth={smooth} onRefine={ltxCat?.refine && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && !sel.workflow.startsWith('wan') ? refine : undefined} onCutOut={ltxCat?.alpha && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && (sel.frames ?? 0) <= 145 && !sel.workflow.startsWith('wan') && sel.mode !== 'matte' ? () => setCutoutFor(sel) : undefined} online={online} />
         ) : (
           <div className="stage-main">
             <div className="empty">
@@ -678,6 +713,25 @@ export function Video({ query }: { query: URLSearchParams }) {
         </div>
       </aside>
 
+      {cutoutFor && !cutoutPick && (
+        <Dialog title="Cut out: the new background" onClose={() => setCutoutFor(null)}>
+          <p style={{ marginTop: 0 }}>The subject is cut out of this take and put over your background, with the take's sound. Its matte is saved to the Library as well, for video editors.</p>
+          <div className="compose-swatches" role="group" aria-label="Background colour">
+            {['#2fa45a', '#1f6feb', '#000000', '#ffffff', '#808080', '#f2f0ea'].map((c) => (
+              <button key={c} className="compose-swatch" style={{ background: c, width: 34, height: 34 }} aria-label={`Background ${c}`} onClick={() => void cutOut({ colour: c })} />
+            ))}
+          </div>
+          <div className="field-row" style={{ justifyContent: 'space-between' }}>
+            <button className="btn" onClick={() => setCutoutPick(true)}>
+              <ImagePlus size={14} /> A picture from the Library…
+            </button>
+            <button className="btn ghost" onClick={() => setCutoutFor(null)}>
+              Cancel
+            </button>
+          </div>
+        </Dialog>
+      )}
+      {cutoutFor && cutoutPick && <LibraryPicker title="Background picture" onClose={() => setCutoutPick(false)} onPick={(it) => void cutOut({ itemId: it.id })} />}
       {picker && (
         <LibraryPicker
           title={picker === 'start' ? 'Choose the start frame' : 'Choose the end frame'}
@@ -803,7 +857,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
       </div>
       <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <span style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {meta.mode === 'extend' ? 'Extended' : meta.mode === 'smooth' ? 'Smoothed' : meta.mode === 'refine' ? 'Refined' : meta.model ?? job.workflow}
+          {({ extend: 'Extended', smooth: 'Smoothed', refine: 'Refined', matte: 'Matte', cutout: 'Cut out' } as Record<string, string>)[meta.mode] ?? meta.model ?? job.workflow}
           {meta.ui?.quality ? ` · ${({ final: 'Final', hd: '1080p', draft: 'Draft' } as Record<string, string>)[meta.ui.quality] ?? 'Draft'}` : ''}{meta.ui?.sound === 'off' ? ' · Silent' : ''}
         </span>
         <span className="mono muted" style={{ fontSize: 11 }}>
@@ -846,7 +900,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
   );
 }
 
-function Player({ item, onSaveFrame, onExtend, onSmooth, onRefine, online }: { item: Item; onSaveFrame: (t: number) => void; onExtend?: () => void; onSmooth: () => void; onRefine?: () => void; online: boolean }) {
+function Player({ item, onSaveFrame, onExtend, onSmooth, onRefine, onCutOut, online }: { item: Item; onSaveFrame: (t: number) => void; onExtend?: () => void; onSmooth: () => void; onRefine?: () => void; onCutOut?: () => void; online: boolean }) {
   const vid = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [t, setT] = useState(0);
@@ -941,7 +995,7 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, onRefine, online }: { i
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, cursor: 'ew-resize', margin: 0 }}
           />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', rowGap: 6 }}>
           <button className="btn icon" onClick={toggle} aria-label={playing ? 'Pause (Space)' : 'Play (Space)'} title="Space">
             {playing ? <Pause size={18} /> : <Play size={18} />}
           </button>
@@ -974,6 +1028,11 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, onRefine, online }: { i
               <Sparkles size={14} /> Refine details
             </button>
           )}
+          {onCutOut && (
+            <button className="btn sm" onClick={onCutOut} disabled={!online} title="Cut the subject out (Lightricks' Alpha-Gen) and put it over a new background; the matte is saved too. Works best with a clear subject. About 3–4 minutes for 5 s.">
+              <Scissors size={14} /> Cut out
+            </button>
+          )}
           <a className="btn sm" href={downloadUrl(item.id)} download>
             <Download size={14} /> MP4
           </a>
@@ -993,11 +1052,12 @@ interface LtxFiles {
   slowmo?: string;
   cinemagraph?: string;
   refine?: string;
+  alpha?: string;
 }
 function ltxFiles(cat: Catalogue | null): LtxFiles | null {
   if (!cat) return null;
   const find = (list: { name: string }[] | undefined, re: RegExp) => list?.find((l) => re.test(l.name))?.name;
-  return { slowmo: find(cat.ltx, /slow-motion-control/i), cinemagraph: find(cat.ltx, /cinemagraph/i), refine: find(cat.ltxTools, /refine-details/i) };
+  return { slowmo: find(cat.ltx, /slow-motion-control/i), cinemagraph: find(cat.ltx, /cinemagraph/i), refine: find(cat.ltxTools, /refine-details/i), alpha: find(cat.ltxTools, /alpha-gen/i) };
 }
 /** The effect in use: the chosen one, if its LoRA is on this PC. */
 function effectOf(st: Pick<VideoSettings, 'effect'>, f: LtxFiles | null): 'none' | 'slowmo' | 'cinemagraph' {

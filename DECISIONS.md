@@ -587,3 +587,18 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     (None / Slow motion ½·¼·⅒ / Cinemagraph, shown when the LoRA is present), your own LTX LoRAs (the two effect LoRAs
     left out of that list), and "Refine details" on takes up to 720p. Restore needs footage you bring in (a video
     import, next); the pixel upscaler adds little now that 1080p renders natively (decision 96).
+99. **Cut out for video (Lightricks' Alpha-Gen IC-LoRA, JP's find).** `ltx-2.5-22b-ic-lora-alpha-gen-0.9` (1.31 GB,
+    downloaded by JP, complete) makes a black-and-white matte of a take: no prompt (the card says leave it empty), the
+    take as an in-context reference at its own size (`ltx25_v2v_alpha.json`, the Refine graph with this LoRA). Tested
+    (`docs/qa/ltx-alpha/`): boats with masts and rigging ropes cut cleanly, a portrait keeps the window out and soft
+    hair edges, mattes are steady (0.2–0.3 % change per frame); a wide street crowd gets no matte at all (the model
+    picks the subject itself — the card's limitation). 95–220 s for 5 s at up to 720p, 24.4 GB; the card's 1080p needs
+    data-centre cards, and ≤ 145 frames. One seed in five came out grey with the shading bleeding in (seed 4: level
+    0.29 on every frame; seeds 1, 2, 3, 5: 1.0), so the server checks the matte's first and last frames
+    (`checkMatte`): grey → it retires that matte to Recently deleted and makes it again with a new seed (twice at
+    most); empty → it stops and says no clear subject was found. Tested: seed 4 → retried → clean. Then
+    `video_composite.json` puts the take over the chosen background (a Library picture fitted by crop, or a plain
+    colour), keeping the take's sound. On Video: "Cut out" on takes up to 720p and 145 frames → choose the
+    background; the matte also stays in the Library for video editors. Videos made from a take (refine, matte, cut
+    out) now take its size, frame rate and length. The player's tool row wraps, so nothing runs off at 1280–1440 px
+    (Refine details was half hidden in v3.12).
