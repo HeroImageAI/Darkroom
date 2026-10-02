@@ -329,7 +329,10 @@ test.describe.serial('Darkroom v2 features', () => {
 
   test('Video: pick frames from the library, swap, aspect warning', async () => {
     await page.goto('/#/video');
-    await page.getByRole('button', { name: /^Wan 2.2/ }).click();
+    // LTX 2.5 is the only video model (DECISIONS 95): no model cards, no Wan
+    await expect(page.getByRole('group', { name: 'Video model' })).toHaveCount(0);
+    await expect(page.getByText('LTX 2.5 · length and quality')).toBeVisible();
+    await expect(page.getByText(/Wan 2.2/)).toHaveCount(0);
     await page.getByRole('button', { name: 'Start from library' }).click();
     await page.getByRole('dialog').getByRole('listitem').first().click();
     await expect(page.getByAltText('Start frame')).toBeVisible({ timeout: 30_000 });
@@ -478,7 +481,7 @@ test.describe.serial('Darkroom v2 features', () => {
     // a render cancelled straight away = a failed take (no video)
     const pic = (await (await page.request.get('/api/items?limit=50')).json()).items.find((i: any) => i.kind === 'image');
     const inp = await (await page.request.post(`/api/items/${pic.id}/as-input`, { data: { which: 'main' } })).json();
-    const job = await (await page.request.post('/api/jobs', { data: { workflow: 'wan22_i2v', params: { start_image: inp.name, prompt: 'e2e cancelled take', seed: 1 }, meta: { mode: 'video', model: 'Wan 2.2', prompt: 'e2e' } } })).json();
+    const job = await (await page.request.post('/api/jobs', { data: { workflow: 'ltx25_i2v', params: { start_image: inp.name, motion_prompt: 'e2e cancelled take', seed: 1 }, meta: { mode: 'video', model: 'LTX 2.5', prompt: 'e2e' } } })).json();
     await page.request.post(`/api/jobs/${job.id}/cancel`);
     await expect.poll(async () => ((await (await page.request.get('/api/jobs?kind=video&limit=5')).json()) as any[]).find((j) => j.id === job.id)?.status, { timeout: 30_000 }).toBe('cancelled');
 
@@ -491,14 +494,15 @@ test.describe.serial('Darkroom v2 features', () => {
 
     const videos = async () => (await (await page.request.get('/api/items?limit=1&filter=videos')).json()).total as number;
     const before = await videos();
-    const cards = await takes.getByTestId('take').count();
+    // the panel lists the newest 30 takes, so follow the deleted take itself rather than the count
+    const id = await takes.getByTestId('take').first().getAttribute('data-job');
     await takes.getByTestId('take').first().hover();
     await takes.getByRole('button', { name: 'Delete this take' }).first().click();
     await expect(page.getByText('1 video moved to Recently deleted.').last()).toBeVisible();
-    await expect(takes.getByTestId('take')).toHaveCount(cards - 1);
+    await expect(takes.locator(`[data-job="${id}"]`)).toHaveCount(0);
     expect(await videos()).toBe(before - 1);
     await page.getByRole('button', { name: 'Undo' }).last().click();
-    await expect(takes.getByTestId('take')).toHaveCount(cards);
+    await expect(takes.locator(`[data-job="${id}"]`)).toHaveCount(1);
     expect(await videos()).toBe(before);
     await shot(page, 'video-takes');
   });
@@ -821,13 +825,13 @@ test.describe.serial('Darkroom v2 features', () => {
 
     // the start page lists it with a thumbnail; delete with Undo
     await page.getByRole('button', { name: '← All compositions' }).click();
-    const item = page.getByRole('listitem').filter({ hasText: name });
+    const item = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) });
     await expect(item.locator('img')).toBeVisible();
     await shot(page, 'compose-list');
     await item.getByRole('button', { name: `Delete ${name}` }).click();
-    await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(0);
+    await expect(page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) })).toHaveCount(0);
     await page.getByRole('button', { name: 'Undo' }).last().click();
-    await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(1);
+    await expect(page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) })).toHaveCount(1);
   });
 
   test('Compose: Describe reads the canvas again after you change the sketch (its own old text is not your idea)', async () => {

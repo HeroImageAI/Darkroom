@@ -9,7 +9,7 @@ const CARDS: { screen: Screen; title: string; text: string; icon: typeof Wand2 }
   { screen: 'generate', title: 'Generate', text: 'Create a new picture from a prompt with Klein 9B or Qwen-Image 2.1.', icon: Wand2 },
   { screen: 'edit', title: 'Edit', text: 'Change, fix, extend or upscale a picture — one of yours or one you made.', icon: Layers },
   { screen: 'compose', title: 'Compose', text: 'Arrange pictures, cut-outs and rough paint, then render them into one picture.', icon: Shapes },
-  { screen: 'video', title: 'Video', text: 'Bring a picture to life as a clip with Wan 2.2 or LTX 2.5.', icon: Film },
+  { screen: 'video', title: 'Video', text: 'Bring a picture to life as a clip with LTX 2.5, with sound.', icon: Film },
   { screen: 'library', title: 'Library', text: 'Everything you have made or brought in, with its settings.', icon: LibraryIcon },
 ];
 
