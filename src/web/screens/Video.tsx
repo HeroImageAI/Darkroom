@@ -3,11 +3,13 @@ import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, Imag
 import { LibraryPicker } from '../components/LibraryPicker';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo, openLibrary } from '../lib/remove';
-import { Dialog, formatDuration, ProgressBar, randomSeed, Segmented, timecode, useHotkey } from '../components/common';
+import { Dialog, formatDuration, Pills, ProgressBar, randomSeed, Segmented, timecode, useHotkey } from '../components/common';
 import { ensureNotifyPermission, notifyDesktop, useItemLoad, usePersistent, useSessionState, useWorkspace } from '../lib/hooks';
 import { go } from '../router';
 import { onJob, toast, useApp } from '../store';
-import { planVideo, type VideoQuality } from '../../shared/manifest';
+import { orientationOf, planVideo, type VideoQuality } from '../../shared/manifest';
+import { LoraPicker, useLoraCatalogue, type Catalogue } from '../components/LoraPicker';
+import type { LoraUse } from '../../shared/loras';
 import { composeMotionPrompt, wordCount, type VideoModelKey } from '../../shared/prompts';
 
 interface Frame {
@@ -33,6 +35,12 @@ interface VideoSettings {
   sound?: 'scene' | 'describe' | 'off';
   /** Your sound description (work in progress, like the motion). */
   soundText?: string;
+  /** Effect (DECISIONS 98): slow motion (LoRA + speed) or cinemagraph (LoRA + trigger, locked camera). A preference. */
+  effect?: 'none' | 'slowmo' | 'cinemagraph';
+  /** Slow-motion speed: 0.5 = half speed, 0.25, 0.1. */
+  speed?: number;
+  /** Your own LTX 2.5 LoRAs (a preference). */
+  loras?: LoraUse[];
 }
 
 const DEFAULTS: VideoSettings = { start: null, end: null, motion: '', camera: [], model: 'ltx', seconds: 5, quality: 'draft', notify: true, seed: 0 };
@@ -89,6 +97,9 @@ export function Video({ query }: { query: URLSearchParams }) {
     if (m && !m.video[s.model]) update({ model: 'ltx' });
   }, [m, s.model]); // eslint-disable-line react-hooks/exhaustive-deps
   const cams = boot?.camera.camera ?? [];
+  // Lightricks' LTX 2.5 LoRAs on this PC (header-checked): the effects and the Refine tool appear only when present
+  const { cat: loraCat } = useLoraCatalogue();
+  const ltxCat = ltxFiles(loraCat);
 
   // Takes = a view of the Library: running and failed renders plus finished ones whose video is still in the Library
   // (deleting the video anywhere removes its take; dismissed failures stay hidden). Refreshed on every library change.
@@ -261,7 +272,10 @@ export function Video({ query }: { query: URLSearchParams }) {
     if (model.unavailable) return toast(model.unavailable, 'error');
     const p = planVideo(model, cur.quality, cur.seconds, cur.start.width, cur.start.height);
     const seed = override.seed ?? randomSeed();
-    const prompt = composeMotionPrompt(T, cams, { model: (m.video[cur.model] ? cur.model : 'ltx') as VideoModelKey, motion: cur.motion, camera: cur.camera, sound: cur.sound === 'describe' ? cur.soundText : '' });
+    const fx = effectOf(cur, ltxCat);
+    const composed = composeMotionPrompt(T, cams, { model: (m.video[cur.model] ? cur.model : 'ltx') as VideoModelKey, motion: cur.motion, camera: fx === 'cinemagraph' ? ['static'] : cur.camera, sound: cur.sound === 'describe' ? cur.soundText : '' });
+    // Cinemagraph: its trigger word first and a seamless loop asked for (model card)
+    const prompt = fx === 'cinemagraph' ? `CINEMAGRAPH_MOTION, ${composed} Seamless natural loop.` : composed;
     const fit = cur.frameFit === 'fit';
     const mismatch = (fr: Frame | null) => !!fr && Math.abs(fr.width / fr.height / (p.width / p.height) - 1) > 0.03;
     const startName = fit && mismatch(cur.start) ? await letterbox(cur.start, p.width, p.height) : cur.start.name;
@@ -277,6 +291,13 @@ export function Video({ query }: { query: URLSearchParams }) {
     };
     if (endName) params.end_image = endName;
     if (cur.sound === 'off') params.silent = 1;
+    const loras: LoraUse[] = [...(cur.loras ?? [])];
+    if (fx === 'slowmo') {
+      loras.push({ name: ltxCat!.slowmo!, strength: 1 });
+      params.motion_speed = cur.speed ?? 0.5;
+    }
+    if (fx === 'cinemagraph') loras.push({ name: ltxCat!.cinemagraph!, strength: 1.1 });
+    if (loras.length) params.loras = JSON.stringify(loras);
     void queue({
       workflow: p.workflow,
       params,
@@ -325,6 +346,23 @@ export function Video({ query }: { query: URLSearchParams }) {
         workflow: 'video_interp',
         params: { video: inp.name, multiplier: 2, fps: (sel.fps ?? 24) * 2 },
         meta: { mode: 'smooth', model: `${sel.model} · RIFE 2×`, prompt: sel.prompt, parentId: sel.id, ui: sel.ui, notify: s.notify, durationSec: sel.duration ?? undefined },
+      });
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
+
+  /** Refine details (DECISIONS 98): the take itself, redrawn sharp by the IC-LoRA at 720p; motion and sound stay. */
+  const refine = async () => {
+    if (!sel || !ltxCat?.refine) return;
+    try {
+      const inp = await api.asInput(sel.id);
+      const final = vm.quality.final!;
+      const [width, height] = final[orientationOf(sel.width ?? 16, sel.height ?? 9)];
+      await queue({
+        workflow: 'ltx25_v2v_refine',
+        params: { video: inp.name, motion_prompt: sel.prompt, seed: randomSeed(), width, height, loras: '' },
+        meta: { mode: 'refine', model: 'LTX 2.5 · Refined', prompt: sel.prompt, parentId: sel.id, ui: { ...(sel.ui ?? {}), quality: 'final' }, notify: s.notify, durationSec: sel.duration ?? undefined, estimateSec: Math.round(41 * (sel.duration ?? 5)) },
       });
     } catch (e) {
       toast((e as Error).message, 'error');
@@ -441,7 +479,7 @@ export function Video({ query }: { query: URLSearchParams }) {
                   setSuggesting(true);
                   try {
                     // the camera chips decide the camera; the writer describes the scene's motion to fit them (DECISIONS 94)
-                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name, ...(s.end ? { input2: s.end.name } : {}), camera: s.camera, sound: { mode: s.sound ?? 'scene', text: s.soundText ?? '' } });
+                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name, ...(s.end ? { input2: s.end.name } : {}), camera: effectOf(s, ltxCat) === 'cinemagraph' ? ['static'] : s.camera, sound: { mode: s.sound ?? 'scene', text: s.soundText ?? '' } });
                     setMotionUndo((u) => [...u.slice(-19), s.motion]);
                     update({ motion: r.text });
                     const camNames = s.camera.map((id) => cams.find((c) => c.id === id)?.label).filter(Boolean);
@@ -494,6 +532,30 @@ export function Video({ query }: { query: URLSearchParams }) {
                   onChange={(e) => update({ soundText: e.target.value })}
                 />
               )}
+            </div>
+            {(ltxCat?.slowmo || ltxCat?.cinemagraph) && (
+              <div style={{ marginTop: 14 }}>
+                <p className="section-label">Effect</p>
+                <Segmented
+                  label="Effect"
+                  options={[
+                    { value: 'none', label: 'None' },
+                    ...(ltxCat.slowmo ? [{ value: 'slowmo' as const, label: 'Slow motion', title: "Lightricks' slow-motion LoRA: the same action, played slower and smoother" }] : []),
+                    ...(ltxCat.cinemagraph ? [{ value: 'cinemagraph' as const, label: 'Cinemagraph', title: 'Everything still except what you say moves; a locked camera and a seamless loop' }] : []),
+                  ]}
+                  value={effectOf(s, ltxCat)}
+                  onChange={(effect) => update({ effect })}
+                />
+                {effectOf(s, ltxCat) === 'slowmo' && (
+                  <div style={{ marginTop: 8 }}>
+                    <Pills label="Slow-motion speed" options={[0.5, 0.25, 0.1].map((v) => ({ value: v, label: v === 0.5 ? '½ speed' : v === 0.25 ? '¼ speed' : '⅒ speed' }))} value={s.speed ?? 0.5} onChange={(speed) => update({ speed })} />
+                  </div>
+                )}
+                {effectOf(s, ltxCat) === 'cinemagraph' && <p className="note">Say what moves and what stays still; the camera is locked (camera moves are ignored) and the clip loops.</p>}
+              </div>
+            )}
+            <div style={{ marginTop: 14 }}>
+              <LoraPicker family="ltx" value={s.loras ?? []} onChange={(loras) => update({ loras })} exclude={/slow-motion-control|cinemagraph/i} />
             </div>
           </section>
 
@@ -548,7 +610,7 @@ export function Video({ query }: { query: URLSearchParams }) {
 
       <section className="stage" aria-label="Player">
         {sel ? (
-          <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={sel.workflow.startsWith('wan') ? undefined : extend} onSmooth={smooth} online={online} />
+          <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={sel.workflow.startsWith('wan') ? undefined : extend} onSmooth={smooth} onRefine={ltxCat?.refine && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && !sel.workflow.startsWith('wan') ? refine : undefined} online={online} />
         ) : (
           <div className="stage-main">
             <div className="empty">
@@ -741,7 +803,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
       </div>
       <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <span style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {meta.mode === 'extend' ? 'Extended' : meta.mode === 'smooth' ? 'Smoothed' : meta.model ?? job.workflow}
+          {meta.mode === 'extend' ? 'Extended' : meta.mode === 'smooth' ? 'Smoothed' : meta.mode === 'refine' ? 'Refined' : meta.model ?? job.workflow}
           {meta.ui?.quality ? ` · ${({ final: 'Final', hd: '1080p', draft: 'Draft' } as Record<string, string>)[meta.ui.quality] ?? 'Draft'}` : ''}{meta.ui?.sound === 'off' ? ' · Silent' : ''}
         </span>
         <span className="mono muted" style={{ fontSize: 11 }}>
@@ -784,7 +846,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
   );
 }
 
-function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item; onSaveFrame: (t: number) => void; onExtend?: () => void; onSmooth: () => void; online: boolean }) {
+function Player({ item, onSaveFrame, onExtend, onSmooth, onRefine, online }: { item: Item; onSaveFrame: (t: number) => void; onExtend?: () => void; onSmooth: () => void; onRefine?: () => void; online: boolean }) {
   const vid = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [t, setT] = useState(0);
@@ -907,6 +969,11 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item;
           <button className="btn sm" onClick={onSmooth} disabled={!online} title="Double the frame rate with RIFE interpolation">
             <Waves size={14} /> Smooth 2×
           </button>
+          {onRefine && (
+            <button className="btn sm" onClick={onRefine} disabled={!online} title="Redraw this take with sharp detail at 720p (Lightricks' Refine Details IC-LoRA): the motion and sound stay exactly as they are. About 3–4 minutes for 5 s.">
+              <Sparkles size={14} /> Refine details
+            </button>
+          )}
           <a className="btn sm" href={downloadUrl(item.id)} download>
             <Download size={14} /> MP4
           </a>
@@ -920,4 +987,22 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item;
 function hasSound(item: Item): boolean {
   const ui = (item.ui ?? {}) as Partial<VideoSettings>;
   return item.kind === 'video' && ui.model !== 'wan' && ui.sound !== 'off' && !item.workflow.startsWith('wan');
+}
+
+interface LtxFiles {
+  slowmo?: string;
+  cinemagraph?: string;
+  refine?: string;
+}
+function ltxFiles(cat: Catalogue | null): LtxFiles | null {
+  if (!cat) return null;
+  const find = (list: { name: string }[] | undefined, re: RegExp) => list?.find((l) => re.test(l.name))?.name;
+  return { slowmo: find(cat.ltx, /slow-motion-control/i), cinemagraph: find(cat.ltx, /cinemagraph/i), refine: find(cat.ltxTools, /refine-details/i) };
+}
+/** The effect in use: the chosen one, if its LoRA is on this PC. */
+function effectOf(st: Pick<VideoSettings, 'effect'>, f: LtxFiles | null): 'none' | 'slowmo' | 'cinemagraph' {
+  const e = st.effect ?? 'none';
+  if (e === 'slowmo' && f?.slowmo) return 'slowmo';
+  if (e === 'cinemagraph' && f?.cinemagraph) return 'cinemagraph';
+  return 'none';
 }

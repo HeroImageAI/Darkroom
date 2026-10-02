@@ -8,7 +8,7 @@ import { isVariantOf, MODEL_LABEL, OFFICIAL_KLEIN } from '../shared/finetunes.js
  * trained for. Darkroom reads each file's header (layer names and sizes, never the weights) and offers a LoRA only
  * under the model whose layers it actually matches: Klein 9B or Qwen-Image 2.1.
  */
-export type LoraFamily = 'klein' | 'qwen';
+export type LoraFamily = 'klein' | 'qwen' | 'ltx';
 
 export interface LoraInfo {
   /** ComfyUI's lora_name (relative to its loras folders, as ComfyUI lists it). */
@@ -23,6 +23,10 @@ export interface LoraInfo {
 export interface LoraCatalogue {
   klein: LoraInfo[];
   qwen: LoraInfo[];
+  /** LTX 2.5 LoRAs you add to a render (effects, styles). */
+  ltx: LoraInfo[];
+  /** LTX 2.5 IC-LoRAs: video-to-video tools that take a source clip (their file carries reference_downscale_factor). */
+  ltxTools: (LoraInfo & { downscale: number })[];
   /** LoRAs for other models (Flux.1, Wan, older Qwen-Image, …) or files that could not be read. */
   other: { name: string; reason: string }[];
 }
@@ -55,7 +59,7 @@ export interface FinetuneInfo {
 export class LoraLibrary {
   private models = new Map<string, Map<string, number>>();
   private variants = new Map<string, { key: string; ok: boolean }>();
-  private fits = new Map<string, { key: string; klein: LoraFit; qwen: LoraFit } | { key: string; error: string }>();
+  private fits = new Map<string, { key: string; klein: LoraFit; qwen: LoraFit; ltx: LoraFit; ic: number | null } | { key: string; error: string }>();
 
   constructor(private comfyUrl: () => string | null) {}
 
@@ -126,8 +130,8 @@ export class LoraLibrary {
       this.comfyJson<Record<string, any>>('/object_info/LoraLoaderModelOnly'),
     ]);
     const names: string[] = info.LoraLoaderModelOnly?.input?.required?.lora_name?.[0] ?? [];
-    const layers = { klein: await this.modelLayers(models.klein), qwen: await this.modelLayers(models.qwen) };
-    const out: LoraCatalogue = { klein: [], qwen: [], other: [] };
+    const layers = { klein: await this.modelLayers(models.klein), qwen: await this.modelLayers(models.qwen), ltx: await this.modelLayers(models.ltx) };
+    const out: LoraCatalogue = { klein: [], qwen: [], ltx: [], ltxTools: [], other: [] };
     for (const name of names) {
       const file = folders.map((d) => path.join(d, name)).find((f) => fs.existsSync(f));
       if (!file) continue;
@@ -137,7 +141,9 @@ export class LoraLibrary {
       if (!fit || fit.key !== key) {
         try {
           const h = readHeader(file);
-          fit = { key, klein: loraFit(h, layers.klein), qwen: loraFit(h, layers.qwen) };
+          const meta = (h.__metadata__ ?? {}) as Record<string, string>;
+          const ic = meta.reference_downscale_factor !== undefined ? Number(meta.reference_downscale_factor) || 1 : null;
+          fit = { key, klein: loraFit(h, layers.klein), qwen: loraFit(h, layers.qwen), ltx: loraFit(h, layers.ltx), ic };
         } catch (e) {
           fit = { key, error: (e as Error).message };
         }
@@ -151,10 +157,14 @@ export class LoraLibrary {
       const entry: LoraInfo = { name, label, sizeMB: Math.round(st.size / 1048576), declared: fit.klein.declared };
       if (fit.klein.score >= FIT) out.klein.push(entry);
       else if (fit.qwen.score >= FIT) out.qwen.push(entry);
+      else if (fit.ltx.score >= FIT) {
+        if (fit.ic !== null) out.ltxTools.push({ ...entry, downscale: fit.ic });
+        else out.ltx.push(entry);
+      }
       else out.other.push({ name, reason: fit.klein.declared ? `Made for ${fit.klein.declared}` : 'Made for another model' });
     }
     // the same file listed twice (e.g. at the top level and in a sub-folder): show it once
-    for (const fam of ['klein', 'qwen'] as const) {
+    for (const fam of ['klein', 'qwen', 'ltx'] as const) {
       const seen = new Set<string>();
       out[fam] = out[fam].filter((l) => (seen.has(`${l.label}:${l.sizeMB}`) ? false : (seen.add(`${l.label}:${l.sizeMB}`), true)));
       out[fam].sort((a, b) => a.label.localeCompare(b.label));

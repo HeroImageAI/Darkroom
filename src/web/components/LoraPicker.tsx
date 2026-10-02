@@ -10,9 +10,12 @@ interface LoraInfo {
   sizeMB: number;
   declared: string | null;
 }
-interface Catalogue {
+export interface Catalogue {
   klein: LoraInfo[];
   qwen: LoraInfo[];
+  ltx: LoraInfo[];
+  /** LTX IC-LoRAs (video tools) */
+  ltxTools: (LoraInfo & { downscale: number })[];
   other: { name: string; reason: string }[];
 }
 
@@ -40,15 +43,16 @@ export function useLoraCatalogue(): { cat: Catalogue | null; refresh: () => void
   return { cat, refresh: () => load(true), error };
 }
 
-const MODEL_NAME = { klein: 'Klein 9B', qwen: 'Qwen-Image 2.1' } as const;
+const MODEL_NAME = { klein: 'Klein 9B', qwen: 'Qwen-Image 2.1', ltx: 'LTX 2.5' } as const;
 
 /**
  * Your own LoRAs for the selected model (DECISIONS 86): only files whose layers match the model are offered, up to
  * three, each with a strength. Used on Generate and Edit.
  */
-export function LoraPicker({ family, value, onChange }: { family: 'klein' | 'qwen'; value: LoraUse[]; onChange: (v: LoraUse[]) => void }) {
+export function LoraPicker({ family, value, onChange, exclude }: { family: 'klein' | 'qwen' | 'ltx'; value: LoraUse[]; onChange: (v: LoraUse[]) => void; exclude?: RegExp }) {
   const { cat, refresh, error } = useLoraCatalogue();
-  const fits = cat?.[family] ?? [];
+  // LoRAs Darkroom drives itself (e.g. LTX's slow-motion, which needs its speed knob) stay out of the list
+  const fits = (cat?.[family] ?? []).filter((l) => !exclude?.test(l.name));
   // a LoRA chosen earlier that is no longer installed (or no longer fits) is dropped
   useEffect(() => {
     if (!cat) return;
@@ -57,7 +61,7 @@ export function LoraPicker({ family, value, onChange }: { family: 'klein' | 'qwe
   }, [cat, family]); // eslint-disable-line react-hooks/exhaustive-deps
   const free = fits.filter((f) => !value.some((v) => v.name === f.name));
   const label = (name: string) => fits.find((f) => f.name === name)?.label ?? name;
-  const others = cat ? cat.other.length + cat[family === 'klein' ? 'qwen' : 'klein'].length : 0;
+  const others = cat ? cat.other.length + (['klein', 'qwen', 'ltx'] as const).filter((f) => f !== family).reduce((n, f) => n + (cat[f]?.length ?? 0), 0) : 0;
   // none made for this model: one quiet line (the how-to is in its tooltip), not a paragraph on every visit
   if (cat && fits.length === 0 && !error)
     return (

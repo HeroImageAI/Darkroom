@@ -4644,6 +4644,87 @@
         "poster": "DR_POSTER",
         "last": "DR_LAST_FRAME"
       }
+    },
+    "ltx25_v2v_refine": {
+      "file": "ltx25_v2v_refine.json",
+      "family": "ltx",
+      "kind": "video",
+      "label": "LTX 2.5 video-to-video with an IC-LoRA (Refine details)",
+      "params": {
+        "video": {
+          "type": "video",
+          "label": "Video",
+          "targets": [
+            {
+              "title": "DR_VIDEO",
+              "input": "file"
+            }
+          ]
+        },
+        "motion_prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MOTION_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "width": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_WIDTH",
+              "input": "value"
+            }
+          ],
+          "default": 864,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "height": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_HEIGHT",
+              "input": "value"
+            }
+          ],
+          "default": 480,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/refined"
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
+      }
     }
   },
   "vramNeedGB": {
