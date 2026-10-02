@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loraFit, modelModules, type LoraFit } from '../shared/loras.js';
+import { isVariantOf, MODEL_LABEL, OFFICIAL_KLEIN } from '../shared/finetunes.js';
 
 /**
  * Your own LoRAs (DECISIONS 86). ComfyUI lists every LoRA it can see, but a LoRA only works on the model it was
@@ -44,8 +45,16 @@ function readHeader(file: string): Record<string, any> {
   }
 }
 
+export interface FinetuneInfo {
+  /** ComfyUI's unet_name */
+  name: string;
+  label: string;
+  sizeGB: number;
+}
+
 export class LoraLibrary {
   private models = new Map<string, Map<string, number>>();
+  private variants = new Map<string, { key: string; ok: boolean }>();
   private fits = new Map<string, { key: string; klein: LoraFit; qwen: LoraFit } | { key: string; error: string }>();
 
   constructor(private comfyUrl: () => string | null) {}
@@ -68,6 +77,46 @@ export class LoraLibrary {
     const layers = modelModules(readHeader(file));
     this.models.set(unetName, layers);
     return layers;
+  }
+
+  /**
+   * Your own fine-tunes of a model (DECISIONS 91): every diffusion model ComfyUI lists whose layers match the official
+   * one (headers only, cached by size and date). BFL's own files and KV builds are left out.
+   */
+  async finetunes(official: string): Promise<FinetuneInfo[]> {
+    const [folders, info] = await Promise.all([
+      this.comfyJson<Record<string, string[]>>('/internal/folder_paths').then((f) => f.diffusion_models ?? []),
+      this.comfyJson<Record<string, any>>('/object_info/UNETLoader'),
+    ]);
+    const names: string[] = info.UNETLoader?.input?.required?.unet_name?.[0] ?? [];
+    const ref = await this.modelLayers(official);
+    const out: FinetuneInfo[] = [];
+    const seen = new Set<string>();
+    for (const name of names) {
+      const base = path.basename(name);
+      if (name === official || OFFICIAL_KLEIN.test(base) || !/.safetensors$/i.test(name)) continue;
+      const file = folders.map((d) => path.join(d, name)).find((f) => fs.existsSync(f));
+      if (!file) continue;
+      const st = fs.statSync(file);
+      const key = `${st.size}:${st.mtimeMs}`;
+      let v = this.variants.get(file);
+      if (!v || v.key !== key) {
+        let ok = false;
+        try {
+          ok = isVariantOf(modelModules(readHeader(file)), ref);
+        } catch {
+          ok = false;
+        }
+        v = { key, ok };
+        this.variants.set(file, v);
+      }
+      const id = `${base}:${st.size}`;
+      if (v.ok && !seen.has(id)) {
+        seen.add(id);
+        out.push({ name, label: MODEL_LABEL(name), sizeGB: Math.round(st.size / 1e8) / 10 });
+      }
+    }
+    return out.sort((a, b) => a.label.localeCompare(b.label));
   }
 
   /** Every LoRA ComfyUI can see, sorted by the model it fits. */

@@ -508,3 +508,19 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     shows; the next newest takes its place. "Stacks" in the filter row turns it off (a preference); Recently deleted
     is never stacked. Also: the Details panel only takes room when something is selected, and a "Composed" filter
     (Compose renders). Test library: 674 tiles → 283.
+91. **Your own Klein 9B fine-tunes ("Klein version").** Any diffusion model ComfyUI lists whose layers match the official
+    Klein 9B (≥ 98 % of its 2-D layers with the same width, ≤ 5 % extra; headers only, cached by size and date —
+    `src/shared/finetunes.ts`, `LoraLibrary.finetunes`) is offered under the Klein card on Generate and Edit (Instruct,
+    Inpaint, Outpaint, Enhance). BFL's own copies and KV builds are left out. The job carries `klein_weights`; the
+    server re-checks the file and swaps the graph's DR_MODEL, so LoRAs, Quality and every Klein graph work unchanged.
+    The picture's model line names the fine-tune ("Klein 9B · nsfwKlein") and Reuse brings it back. On this PC it
+    finds one: DarkBeast-Klein9b-V2 (`nsfwKlein.safetensors`). A/B (`docs/qa/addenda/rv/klein-finetune.jpg`): it is
+    distilled like Klein — complete, clean pictures at Klein's 4 steps (8 adds nothing); softer, more flattering faces,
+    cleaner lettering; ~9 s vs 7.3 s; peak 24.8 GB vs 20.4 (plain fp8 without scales needs more working memory).
+92. **Klein KV fp8: tested, not adopted.** `black-forest-labs/FLUX.2-klein-9b-kv-fp8` (9.82 GB, downloaded with JP's OK)
+    with FluxKVCache, the model decision 63 waited for. From a cleared card it is faster with references (3 refs
+    18.6 s vs 27 s; edit + ref 15.6 s vs 20 s), but quality is uneven (`docs/qa/addenda/rv/klein-kvfp8*.jpg`): better
+    on a fur texture transfer, worse on an outfit swap (kept the scarf), and at High (2 MP) with 3 references the face
+    collapsed into the scarf. Using it only for reference jobs would also keep two Klein models fighting for memory
+    (102–140 s runs at a 25.1 GB peak). Quality first: Klein stays on fp8mixed. The file stays on disk (JP's to keep or
+    delete); the graphs stay in `workflows/experiments/*.kvfp8.json`.

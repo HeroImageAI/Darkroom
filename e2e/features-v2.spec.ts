@@ -890,6 +890,40 @@ test.describe.serial('Darkroom v2 features', () => {
     for (const id of ids) expect((await (await page.request.get(`/api/items/${id}`)).json()).item.deleted_at ?? null).toBeNull();
   });
 
+  // Your own Klein 9B fine-tunes (DECISIONS 91)
+  test('Klein version: your Klein 9B fine-tunes are offered, put on the graph, and anything else is refused', async () => {
+    const cat = await (await page.request.get('/api/models/klein')).json();
+    // files that are not Klein 9B never appear (Qwen, Klein 4B, the KV builds, BFL's own copies)
+    for (const f of cat.finetunes) expect(f.name).not.toMatch(/qwen|klein-4b|kv|^flux-2-klein-9b(-fp8|-fp8mixed)?\.safetensors$/i);
+    const refused = await page.request.post('/api/jobs', { data: { workflow: 'klein_t2i', params: { prompt: 'x', seed: 1, klein_weights: 'qwen_image_2.1_int8_convrot.safetensors' }, meta: { mode: 'generate', model: 'Klein' } } });
+    expect(refused.status()).toBe(400);
+    expect((await refused.json()).error).toMatch(/is not a Klein 9B model on this PC/);
+    await page.goto('/#/generate');
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
+    test.skip(!cat.finetunes.length, 'no Klein 9B fine-tune on this machine');
+    const pick = page.getByLabel('Klein version');
+    await expect(pick).toBeVisible();
+    const ft = cat.finetunes[0];
+    await pick.selectOption(ft.name);
+    await page.getByLabel('Prompt').fill('a red tulip in a glass vase on a wooden table, soft window light');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.params.klein_weights).toBe(ft.name);
+    expect(body.meta.model).toBe(`Klein 9B · ${ft.label}`);
+    let item: any;
+    await expect
+      .poll(async () => {
+        item = ((await (await page.request.get('/api/items?limit=5&filter=generated')).json()).items as any[]).find((i) => i.params?.klein_weights === ft.name);
+        return !!item;
+      }, { timeout: 120_000 })
+      .toBe(true);
+    const graph = await (await page.request.get(`/api/items/${item.id}/graph`)).json();
+    expect((Object.values(graph) as any[]).find((n) => n._meta?.title === 'DR_MODEL').inputs.unet_name).toBe(ft.name);
+    // back to the official model for the tests that follow
+    await pick.selectOption('');
+  });
+
   test('Library: Upload adds your pictures to the Library', async () => {
     await page.goto('/#/library');
     const before = (await (await page.request.get('/api/items?limit=1')).json()).total;

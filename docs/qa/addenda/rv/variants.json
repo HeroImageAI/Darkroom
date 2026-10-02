@@ -57,6 +57,40 @@
       "label": "Qwen edit, works at 1.76 MP (native)"
     }
   ],
+  "klein-kvfp8": [
+    {
+      "id": "fp8mixed",
+      "label": "Darkroom: klein-9b fp8mixed"
+    },
+    {
+      "id": "kvfp8",
+      "label": "klein-9b-kv fp8 + FluxKVCache"
+    }
+  ],
+  "klein-kvfp8-edit": [
+    {
+      "id": "fp8mixed",
+      "label": "Darkroom: Klein edit with a reference"
+    },
+    {
+      "id": "kvfp8",
+      "label": "KV fp8 edit with a reference"
+    }
+  ],
+  "klein-finetune": [
+    {
+      "id": "official",
+      "label": "Official Klein 9B, 4 steps"
+    },
+    {
+      "id": "ft4",
+      "label": "Fine-tune, 4 steps"
+    },
+    {
+      "id": "ft8",
+      "label": "Fine-tune, 8 steps"
+    }
+  ],
   "qwen-decode-2k": [
     {
       "id": "tiled",

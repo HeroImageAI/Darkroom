@@ -816,5 +816,368 @@
       "seed": 93
     },
     "file_out": "docs\\qa\\addenda\\rv\\edit-worksize\\interior-season-qwen-176\\edit_00331_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "fox",
+    "variant": "official",
+    "ok": true,
+    "seconds": 10.6,
+    "peak": 20.2,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7000,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\fox-official\\klein_00251_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-finetune",
+    "key": "church",
+    "variant": "official",
+    "ok": true,
+    "seconds": 7.3,
+    "peak": 20.4,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 7001,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\church-official\\klein_00252_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "portrait",
+    "variant": "official",
+    "ok": true,
+    "seconds": 7.2,
+    "peak": 20.8,
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 7002,
+      "width": 896,
+      "height": 1120
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\portrait-official\\klein_00253_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "bakery-text",
+    "variant": "official",
+    "ok": true,
+    "seconds": 7.4,
+    "peak": 20.6,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 7003,
+      "width": 1248,
+      "height": 832
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\bakery-text-official\\klein_00254_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "fox",
+    "variant": "ft4",
+    "ok": true,
+    "seconds": 12.8,
+    "peak": 24.5,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7000,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\fox-ft4\\klein_00255_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-finetune",
+    "key": "church",
+    "variant": "ft4",
+    "ok": true,
+    "seconds": 9.3,
+    "peak": 24.8,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 7001,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\church-ft4\\klein_00256_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "portrait",
+    "variant": "ft4",
+    "ok": true,
+    "seconds": 8.8,
+    "peak": 24.8,
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 7002,
+      "width": 896,
+      "height": 1120
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\portrait-ft4\\klein_00257_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "bakery-text",
+    "variant": "ft4",
+    "ok": true,
+    "seconds": 8.9,
+    "peak": 25.1,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 7003,
+      "width": 1248,
+      "height": 832
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\bakery-text-ft4\\klein_00258_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "fox",
+    "variant": "ft8",
+    "ok": true,
+    "seconds": 15.2,
+    "peak": 24.7,
+    "set": {
+      "prompt": "A young fox is gently peeking through tall, vibrant green wheat stalks. The fox stands out with its large, fuzzy ears as she holds a direct gaze into the camera. The scene is beautifully illuminated by soft natural light, while a blurred foreground elegantly frames the majestic animal.",
+      "seed": 7000,
+      "width": 1024,
+      "height": 1024,
+      "steps": 8
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\fox-ft8\\klein_00259_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-finetune",
+    "key": "church",
+    "variant": "ft8",
+    "ok": true,
+    "seconds": 13.7,
+    "peak": 24.7,
+    "set": {
+      "prompt": "A black and white landscape photograph of a steepled church atop a rolling hill, rising from a dense, glowing sea of low-lying fog. Dark trees flank the structure. Behind it, layers of forested ridges recede into misty mountain peaks under an overcast sky. The scene features profound atmospheric depth, contrasting the bright, sweeping mist against the sharply silhouetted terrain.",
+      "seed": 7001,
+      "width": 1344,
+      "height": 768,
+      "steps": 8
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\church-ft8\\klein_00260_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "portrait",
+    "variant": "ft8",
+    "ok": true,
+    "seconds": 13.8,
+    "peak": 25.2,
+    "set": {
+      "prompt": "Close-up portrait of an elderly woman with silver hair and deep laugh lines, wearing a knitted green scarf, soft window light from the left, natural skin texture.",
+      "seed": 7002,
+      "width": 896,
+      "height": 1120,
+      "steps": 8
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\portrait-ft8\\klein_00261_.png"
+  },
+  {
+    "group": "klein-finetune",
+    "key": "bakery-text",
+    "variant": "ft8",
+    "ok": true,
+    "seconds": 13.6,
+    "peak": 25.1,
+    "set": {
+      "prompt": "A small bakery storefront on a cobbled street. A painted wooden sign above the door reads \"SUNRISE BAKERY\" in cream serif letters, and a chalkboard beside the door says \"Fresh bread daily\" in white chalk handwriting. Morning light, realistic photography.",
+      "seed": 7003,
+      "width": 1248,
+      "height": 832,
+      "steps": 8
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-finetune\\bakery-text-ft8\\klein_00262_.png"
+  },
+  {
+    "group": "klein-kvfp8",
+    "key": "texture-2ref",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 22.7,
+    "peak": 21.8,
+    "set": {
+      "prompt": "Using image 1 as the subject and geometry reference and image 2 as the texture reference, replace the paint of the car in image 1 with the long grey fur of the cat in image 2. Keep the car shape, the house and the lighting from image 1 identical.",
+      "seed": 21,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8\\texture-2ref-fp8mixed\\klein_ref_00011_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-kvfp8",
+    "key": "room-2ref",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 20.1,
+    "peak": 21.5,
+    "set": {
+      "prompt": "Using image 1 as the person reference and image 2 as the room reference, show the woman from image 1 sitting on the green velvet sofa in the room from image 2, reading a book in warm evening light. Keep her face, hair and green scarf identical to image 1.",
+      "seed": 21,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8\\room-2ref-fp8mixed\\klein_ref_00012_.png"
+  },
+  {
+    "group": "klein-kvfp8",
+    "key": "scene-3ref",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 27.2,
+    "peak": 21.9,
+    "set": {
+      "prompt": "Using image 1 as the person, image 2 as the car and image 3 as the location, show the woman from image 1 leaning on the red car from image 2, parked in the harbour from image 3 on an overcast afternoon. Keep her face and scarf identical to image 1 and the car identical to image 2.",
+      "seed": 21,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8\\scene-3ref-fp8mixed\\klein_ref_00013_.png"
+  },
+  {
+    "group": "klein-kvfp8",
+    "key": "scene-3ref-high",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 35,
+    "peak": 21.1,
+    "set": {
+      "prompt": "Using image 1 as the person, image 2 as the car and image 3 as the location, show the woman from image 1 leaning on the red car from image 2, parked in the harbour from image 3 on an overcast afternoon. Keep her face and scarf identical to image 1 and the car identical to image 2.",
+      "seed": 21,
+      "width": 1920,
+      "height": 1088
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8\\scene-3ref-high-fp8mixed\\klein_ref_00014_.png"
+  },
+  {
+    "group": "klein-kvfp8",
+    "key": "texture-2ref",
+    "variant": "kvfp8",
+    "ok": true,
+    "seconds": 20,
+    "peak": 24.2,
+    "set": {
+      "prompt": "Using image 1 as the subject and geometry reference and image 2 as the texture reference, replace the paint of the car in image 1 with the long grey fur of the cat in image 2. Keep the car shape, the house and the lighting from image 1 identical.",
+      "seed": 21,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8\\texture-2ref-kvfp8\\klein_ref_00015_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-kvfp8",
+    "key": "room-2ref",
+    "variant": "kvfp8",
+    "ok": true,
+    "seconds": 15.3,
+    "peak": 24.6,
+    "set": {
+      "prompt": "Using image 1 as the person reference and image 2 as the room reference, show the woman from image 1 sitting on the green velvet sofa in the room from image 2, reading a book in warm evening light. Keep her face, hair and green scarf identical to image 1.",
+      "seed": 21,
+      "width": 1024,
+      "height": 1024
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8\\room-2ref-kvfp8\\klein_ref_00016_.png"
+  },
+  {
+    "group": "klein-kvfp8",
+    "key": "scene-3ref",
+    "variant": "kvfp8",
+    "ok": true,
+    "seconds": 139.5,
+    "peak": 25.1,
+    "set": {
+      "prompt": "Using image 1 as the person, image 2 as the car and image 3 as the location, show the woman from image 1 leaning on the red car from image 2, parked in the harbour from image 3 on an overcast afternoon. Keep her face and scarf identical to image 1 and the car identical to image 2.",
+      "seed": 21,
+      "width": 1344,
+      "height": 768
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8\\scene-3ref-kvfp8\\klein_ref_00017_.png"
+  },
+  {
+    "group": "klein-kvfp8",
+    "key": "scene-3ref-high",
+    "variant": "kvfp8",
+    "ok": true,
+    "seconds": 21.7,
+    "peak": 20.6,
+    "set": {
+      "prompt": "Using image 1 as the person, image 2 as the car and image 3 as the location, show the woman from image 1 leaning on the red car from image 2, parked in the harbour from image 3 on an overcast afternoon. Keep her face and scarf identical to image 1 and the car identical to image 2.",
+      "seed": 21,
+      "width": 1920,
+      "height": 1088
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8\\scene-3ref-high-kvfp8\\klein_ref_00018_.png"
+  },
+  {
+    "group": "klein-kvfp8-edit",
+    "key": "outfit-ref",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 23,
+    "peak": 20.4,
+    "set": {
+      "prompt": "Dress the woman in image 1 in the outfit from image 2. Keep her face, hair, pose and the background identical.",
+      "seed": 31
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8-edit\\outfit-ref-fp8mixed\\edit_00348_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-kvfp8-edit",
+    "key": "texture-ref",
+    "variant": "fp8mixed",
+    "ok": true,
+    "seconds": 19.9,
+    "peak": 21.5,
+    "set": {
+      "prompt": "Give the car in image 1 the long grey fur of the cat in image 2. Keep the car shape, the house and the lighting identical.",
+      "seed": 32
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8-edit\\texture-ref-fp8mixed\\edit_00349_.png"
+  },
+  {
+    "group": "klein-kvfp8-edit",
+    "key": "outfit-ref",
+    "variant": "kvfp8",
+    "ok": true,
+    "seconds": 15.8,
+    "peak": 22.2,
+    "set": {
+      "prompt": "Dress the woman in image 1 in the outfit from image 2. Keep her face, hair, pose and the background identical.",
+      "seed": 31
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8-edit\\outfit-ref-kvfp8\\edit_00350_.png",
+    "cold": true
+  },
+  {
+    "group": "klein-kvfp8-edit",
+    "key": "texture-ref",
+    "variant": "kvfp8",
+    "ok": true,
+    "seconds": 102.1,
+    "peak": 25.1,
+    "set": {
+      "prompt": "Give the car in image 1 the long grey fur of the cat in image 2. Keep the car shape, the house and the lighting identical.",
+      "seed": 32
+    },
+    "file_out": "docs\\qa\\addenda\\rv\\klein-kvfp8-edit\\texture-ref-kvfp8\\edit_00351_.png"
   }
 ]
