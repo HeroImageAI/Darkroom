@@ -16,7 +16,7 @@ import { Store, type FileRef, type LibraryQuery } from './db.js';
 import { desktopRunning, launchDesktop, tailDesktopLog } from './desktop.js';
 import { discoverComfy } from './discovery.js';
 import { JobManager, publicJob, VramWarning, type SubmitRequest } from './jobs.js';
-import { buildVlm2Request, nearestAspect, parsePeJson, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
+import { buildVlm2Request, nearestAspect, parsePeJson, withEnhanceStyle, type Vlm2Entry, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
 import { validateTemplates } from '../shared/prompts.js';
 import { samPointsJson } from '../shared/workflow.js';
 import { layersToPsd, layersToZip, type LayerInput } from './layers.js';
@@ -212,7 +212,7 @@ app.post('/api/items/:id/as-input', async (req, reply) => {
  * body: { task, variant, text?, itemId?, input?, which? }  -> { text, seconds }
  */
 app.post('/api/vlm', async (req, reply) => {
-  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string; inputs?: string[] };
+  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; style?: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string; inputs?: string[] };
   if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
   let request;
   let pair = false;
@@ -222,6 +222,12 @@ app.post('/api/vlm', async (req, reply) => {
     // Video motion with an end frame: the "<variant>_pair" prompt, which asks for the motion from START to END
     pair = b.task === 'motion' && !!b.input2 && !!(prompts.motion as Record<string, unknown> | undefined)?.[`${b.variant}_pair`];
     request = buildVlm2Request(prompts, b.task, pair ? `${b.variant}_pair` : b.variant, b.text ?? '', (rel) => fs.readFileSync(path.join(cfg.paths.presets, rel), 'utf8'));
+    // Enhance with the style chosen on Generate (DECISIONS 93)
+    if (b.task === 'enhance' && b.style && b.style !== 'none') {
+      const st = readJson<{ styles: Record<string, string>[] }>(path.join(cfg.paths.presets, 'styles.json')).styles.find((x) => x.id === b.style);
+      const entry = (prompts.enhance as Record<string, Vlm2Entry> | undefined)?.[b.variant];
+      if (st?.[b.variant]) request = withEnhanceStyle(request, st[b.variant], !entry?.system_file);
+    }
   } catch (e) {
     return reply.code(400).send({ error: (e as Error).message });
   }

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, VLM_VARIANTS, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
+import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, VLM_VARIANTS, withEnhanceStyle, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
 
 const P = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'presets', 'vlm_prompts.json'), 'utf8')) as VlmPrompts;
 
@@ -123,5 +123,21 @@ describe('wrapping quotes', () => {
   it('keeps an answer that merely starts and ends with separate quotations', () => {
     const t = '"SUNRISE BAKERY" becomes "MOONLIGHT BAKERY"';
     expect(cleanVlmOutput(t)).toBe(t);
+  });
+});
+
+describe('Enhance with a style (DECISIONS 93)', () => {
+  const base = { workflow: 'vlm2_text' as const, params: { system: 'SYS', prompt: 'User input: a fox\nRewritten prompt:' }, modelLabel: 'm', output: 'text' as const };
+  it('the general engine gets the style in its instructions, the official Qwen enhancer after the idea', () => {
+    const k = withEnhanceStyle(base, 'Rendered as an ink sketch.', true);
+    expect(k.params.system).toMatch(/^SYS\n\nThe picture will be made in this style, which is added after your prompt automatically: "Rendered as an ink sketch\." /);
+    expect(k.params.system).toMatch(/Do not copy the style sentence itself\.$/);
+    expect(k.params.prompt).toBe(base.params.prompt);
+    const q = withEnhanceStyle(base, 'Style: ink.', false);
+    expect(q.params.system).toBe('SYS');
+    expect(q.params.prompt).toMatch(/^User input: a fox\nRewritten prompt:\n\nThe picture will be made in this style/);
+  });
+  it('no style, no change', () => {
+    expect(withEnhanceStyle(base, '  ', true)).toBe(base);
   });
 });
