@@ -3,7 +3,7 @@ import { Check, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, L
 import { api, type Board, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { Dialog, formatDuration, Pills } from '../components/common';
 import { BoardNameDialog, useBoards } from '../components/Boards';
-import { usePersistent } from '../lib/hooks';
+import { useItem, usePersistent } from '../lib/hooks';
 import { importFailedMessage, importPictures } from '../lib/importer';
 import { go } from '../router';
 import { toast, useApp } from '../store';
@@ -14,6 +14,7 @@ const FILTERS = [
   { value: 'klein', label: 'Klein' },
   { value: 'qwen', label: 'Qwen' },
   { value: 'edits', label: 'Edits' },
+  { value: 'composed', label: 'Composed' },
   { value: 'videos', label: 'Videos' },
   { value: 'deleted', label: 'Recently deleted' },
 ] as const;
@@ -47,6 +48,8 @@ export function Library() {
       toast((e as Error).message, 'error');
     }
   };
+  /** Version stacks (DECISIONS 90): one tile per picture, its newest version on top. A preference. */
+  const [stacked, setStacked] = usePersistent<boolean>('library.stacked', true);
   const [q, setQ] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
@@ -82,7 +85,7 @@ export function Library() {
     const t = setTimeout(() => {
       setLoading(true);
       api
-        .items({ filter, q, limit: PAGE, board: boardQuery })
+        .items({ filter, q, limit: PAGE, board: boardQuery, stack: stacked && filter !== 'deleted' ? 1 : undefined })
         .then((r) => {
           if (!live) return;
           setItems(r.items);
@@ -96,7 +99,7 @@ export function Library() {
       live = false;
       clearTimeout(t);
     };
-  }, [filter, q, rev, shownBoard]);
+  }, [filter, q, rev, shownBoard, stacked]);
   // switching filter drops the old list at once, so nothing from the previous view can be clicked or acted on
   useEffect(() => {
     setPicked([]);
@@ -106,11 +109,13 @@ export function Library() {
   }, [filter]);
 
   const more = async () => {
-    const r = await api.items({ filter, q, limit: PAGE, offset: items.length, board: boardQuery });
+    const r = await api.items({ filter, q, limit: PAGE, offset: items.length, board: boardQuery, stack: stacked && filter !== 'deleted' ? 1 : undefined });
     setItems((x) => [...x, ...r.items]);
   };
 
-  const sel = items.find((i) => i.id === selected) ?? null;
+  const onGrid = items.find((i) => i.id === selected) ?? null;
+  const offGrid = useItem(!onGrid && selected ? selected : null);
+  const sel = onGrid ?? offGrid;
   /** What Delete / Restore acts on: the multi-selection, else the item open in the details panel. */
   const targets = picked.length ? picked : sel ? [sel.id] : [];
   const count = (n: number) => (n === 1 ? '1 item' : `${n} items`);
@@ -204,10 +209,15 @@ export function Library() {
         : `These ${confirm?.ids.length ?? 0} items`;
 
   return (
-    <div className="screen" style={{ gridTemplateColumns: '1fr minmax(340px, 420px)' }}>
+    <div className="screen" style={{ gridTemplateColumns: sel || picked.length > 1 ? '1fr minmax(340px, 420px)' : '1fr' }}>
       <section style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }} aria-label="Library">
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
           <Pills label="Filter" options={FILTERS.map((f) => ({ value: f.value, label: f.label }))} value={filter} onChange={setFilter} />
+          {!trash && (
+            <button className="pill" aria-pressed={stacked} onClick={() => setStacked(!stacked)} title="One tile per picture, its newest version on top. Turn off to see every version.">
+              <Layers size={13} style={{ verticalAlign: '-2px' }} /> Stacks
+            </button>
+          )}
           {/* the search box gives way first, so the header stays on one line at 1280–1440 px */}
           <label style={{ position: 'relative', flex: '1 1 180px', maxWidth: 320, marginLeft: 'auto' }}>
             <span className="sr">Search</span>
@@ -346,7 +356,7 @@ export function Library() {
               )}
             </div>
           ) : (
-            <div className="library-grid" role="list">
+            <div className="library-grid" role="list" aria-label="Library items">
               {items.map((it) => (
                 <Tile
                   key={it.id}
@@ -359,6 +369,7 @@ export function Library() {
                     setSelected(it.id);
                   }}
                   onDelete={trash ? undefined : () => void remove([it.id])}
+                  stacked={stacked && !trash}
                 />
               ))}
             </div>
@@ -372,6 +383,7 @@ export function Library() {
           )}
         </div>
       </section>
+      {(sel || picked.length > 1) && (
       <aside className="panel right" aria-label="Details">
         {picked.length > 1 ? (
           <div className="empty" style={{ margin: 'auto' }}>
@@ -379,14 +391,21 @@ export function Library() {
             <p>Ctrl-click to add or remove, Shift-click for a range. Press Delete to {trash ? 'delete them for good' : 'move them to Recently deleted'}.</p>
           </div>
         ) : sel ? (
-          <Detail item={sel} comfyUrl={comfyUrl} boards={boards} onMove={(boardId) => void moveTo([sel.id], boardId)} trash={!!sel.deleted_at} onDelete={() => void remove([sel.id])} onRestore={() => void restore([sel.id])} onPurge={() => setConfirm({ ids: [sel.id] })} />
-        ) : (
-          <div className="empty" style={{ margin: 'auto' }}>
-            <h2>No item selected</h2>
-            <p>Click a picture or video to see its settings and actions. Ctrl-click or Shift-click to select several, then press Delete to tidy up.</p>
-          </div>
-        )}
+          <Detail
+            item={sel}
+            comfyUrl={comfyUrl}
+            boards={boards}
+            onMove={(boardId) => void moveTo([sel.id], boardId)}
+            trash={!!sel.deleted_at}
+            onDelete={() => void remove([sel.id])}
+            onRestore={() => void restore([sel.id])}
+            onPurge={() => setConfirm({ ids: [sel.id] })}
+            onOpenVersion={(id) => setSelected(id)}
+            onDeleteVersions={(ids) => void remove(ids)}
+          />
+        ) : null}
       </aside>
+      )}
       {boardDialog && (
         <BoardNameDialog
           title={boardDialog === 'new' ? 'New board' : 'Rename board'}
@@ -520,6 +539,7 @@ function Tile({
   onPick,
   onSelect,
   onDelete,
+  stacked,
 }: {
   item: Item;
   selected: boolean;
@@ -527,6 +547,7 @@ function Tile({
   onPick: (e: React.MouseEvent) => void;
   onSelect: () => void;
   onDelete?: () => void;
+  stacked?: boolean;
 }) {
   const vid = useRef<HTMLVideoElement>(null);
   const [hover, setHover] = useState(false);
@@ -577,6 +598,11 @@ function Tile({
             v{item.version}
           </span>
         )}
+        {stacked && (item.stack_count ?? 1) > 1 && (
+          <span className="mono stack-badge" title={`${item.stack_count} versions — select to see them all`} aria-label={`${item.stack_count} versions`}>
+            <Layers size={11} /> {item.stack_count}
+          </span>
+        )}
       </span>
       {item.favourite && <Heart size={16} fill="#F0B44C" color="#F0B44C" style={{ position: 'absolute', right: 8, top: 8 }} />}
       {picked && (
@@ -614,6 +640,8 @@ function Detail({
   onDelete,
   onRestore,
   onPurge,
+  onOpenVersion,
+  onDeleteVersions,
 }: {
   item: Item;
   comfyUrl: string | null;
@@ -623,6 +651,8 @@ function Detail({
   onDelete: () => void;
   onRestore: () => void;
   onPurge: () => void;
+  onOpenVersion: (id: string) => void;
+  onDeleteVersions: (ids: string[]) => void;
 }) {
   const [fav, setFav] = useState(item.favourite);
   const [vlm, setVlm] = useState<{ busy: string | null; text: string | null; label: string }>({ busy: null, text: (item.ui as any)?.caption ?? null, label: 'Caption' });
@@ -638,6 +668,19 @@ function Detail({
     }
   };
   useEffect(() => setFav(item.favourite), [item.id, item.favourite]);
+  // every version of this picture (the original, its edits and upscales), oldest first
+  const rev = useApp((s) => s.libraryRev);
+  const [versions, setVersions] = useState<Item[]>([]);
+  useEffect(() => {
+    let live = true;
+    api
+      .item(item.id)
+      .then((r) => live && setVersions(r.lineage))
+      .catch(() => live && setVersions([]));
+    return () => {
+      live = false;
+    };
+  }, [item.id, rev]);
   const p = item.params as Record<string, unknown>;
   const hidden = new Set(['prompt', 'motion_prompt', 'negative', 'output']);
   return (
@@ -707,6 +750,32 @@ function Detail({
                 <Trash2 size={14} /> Delete
               </button>
             </div>
+            {versions.length > 1 && (
+              <div>
+                <p className="section-label">
+                  Versions <span className="mono">{versions.length}</span>
+                </p>
+                <div className="version-strip" role="list" aria-label="Versions">
+                  {versions.map((v, i) => (
+                    <button
+                      key={v.id}
+                      role="listitem"
+                      className="version-chip"
+                      aria-pressed={v.id === item.id}
+                      onClick={() => onOpenVersion(v.id)}
+                      title={`${MODE_LABEL[v.mode] ?? v.mode} · ${v.model}`}
+                      aria-label={`Version ${i + 1}`}
+                    >
+                      <img src={thumbUrl(v.id)} alt="" />
+                      <span className="mono">v{i + 1}</span>
+                    </button>
+                  ))}
+                </div>
+                <button className="btn ghost sm danger-text" style={{ marginTop: 6 }} onClick={() => onDeleteVersions(versions.map((v) => v.id))} title="Move every version of this picture to Recently deleted">
+                  <Trash2 size={14} /> Delete all {versions.length} versions
+                </button>
+              </div>
+            )}
             <label className="field">
               <span>Board</span>
               <select className="input" aria-label="Board" value={item.board_id ?? ''} onChange={(e) => onMove(e.target.value || null)}>

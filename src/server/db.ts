@@ -45,6 +45,8 @@ export interface Item {
   deleted_at?: number | null;
   /** Board (collection) the item belongs to; null = no board. */
   board_id?: string | null;
+  /** Library version stacks: how many versions of this picture match the view (listItems with `stack`). */
+  stack_count?: number;
 }
 
 export interface Board {
@@ -147,12 +149,14 @@ function decode<T>(row: Record<string, any> | undefined, jsonCols: readonly stri
 }
 
 export interface LibraryQuery {
-  filter?: 'all' | 'favourites' | 'klein' | 'qwen' | 'edits' | 'videos' | 'deleted' | 'generated';
+  filter?: 'all' | 'favourites' | 'klein' | 'qwen' | 'edits' | 'composed' | 'videos' | 'deleted' | 'generated';
   q?: string;
   limit?: number;
   offset?: number;
   /** A board id, or 'none' for items without a board; unset = every board. */
   board?: string;
+  /** Version stacks: one item per picture (its newest matching version), with `stack_count`. Never in Recently deleted. */
+  stack?: boolean;
 }
 
 export class Store {
@@ -260,6 +264,9 @@ export class Store {
       case 'videos':
         where.push("kind = 'video'");
         break;
+      case 'composed':
+        where.push("mode = 'compose'");
+        break;
       case 'generated':
         // Generate's History panel: pictures made on the Generate screen
         where.push("mode = 'generate'");
@@ -281,6 +288,14 @@ export class Store {
       }
     }
     const w = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    if (q.stack && q.filter !== 'deleted') {
+      // a picture and its versions share COALESCE(root_id, id); show the newest one that matches, with the count
+      const grouped = `SELECT *, ROW_NUMBER() OVER (PARTITION BY COALESCE(root_id, id) ORDER BY created_at DESC, id DESC) AS stack_rank,
+          COUNT(*) OVER (PARTITION BY COALESCE(root_id, id)) AS stack_count FROM items ${w}`;
+      const total = (this.db.prepare(`SELECT COUNT(*) AS n FROM (${grouped}) WHERE stack_rank = 1`).get(...args) as any).n as number;
+      const rows = this.db.prepare(`SELECT * FROM (${grouped}) WHERE stack_rank = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(...args, q.limit ?? 60, q.offset ?? 0) as any[];
+      return { items: rows.map(({ stack_rank: _r, ...r }) => decode<Item>(r, JSON_ITEM)!), total };
+    }
     const total = (this.db.prepare(`SELECT COUNT(*) AS n FROM items ${w}`).get(...args) as any).n as number;
     const rows = this.db
       .prepare(`SELECT * FROM items ${w} ORDER BY ${q.filter === 'deleted' ? 'deleted_at DESC, ' : ''}created_at DESC LIMIT ? OFFSET ?`)

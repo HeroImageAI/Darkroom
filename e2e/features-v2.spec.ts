@@ -543,10 +543,15 @@ test.describe.serial('Darkroom v2 features', () => {
       // the board in the Library, then moving two more pictures in
       const row = page.getByRole('group', { name: 'Boards' });
       await row.getByRole('button', { name: /e2e board/ }).click();
-      await expect(page.getByRole('list').getByRole('listitem')).toHaveCount(2);
+      // the upload and its crop are one picture: one tile, a stack of 2 (DECISIONS 90)
+      await expect(page.getByRole('list', { name: 'Library items' }).getByRole('listitem')).toHaveCount(1);
+      await expect(page.getByLabel('2 versions')).toBeVisible();
+      await page.getByRole('button', { name: 'Stacks' }).click();
+      await expect(page.getByRole('list', { name: 'Library items' }).getByRole('listitem')).toHaveCount(2);
+      await page.getByRole('button', { name: 'Stacks' }).click();
       await shot(page, 'library-board');
       await row.getByRole('button', { name: 'All boards' }).click();
-      const tiles = page.getByRole('list').getByRole('listitem');
+      const tiles = page.getByRole('list', { name: 'Library items' }).getByRole('listitem');
       await tiles.nth(4).click();
       await tiles.nth(5).click({ modifiers: ['Shift'] });
       await page.getByLabel('Move to board').selectOption({ label: 'e2e board' });
@@ -850,6 +855,41 @@ test.describe.serial('Darkroom v2 features', () => {
     await shot(page, 'compose-describe');
   });
 
+  test('Library: version stacks — one tile per picture, every version in Details, Delete all versions with Undo', async () => {
+    await page.goto('/#/library');
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All', exact: true }).click();
+    await page.getByRole('group', { name: 'Boards' }).getByRole('button', { name: 'All boards' }).click();
+    const stacks = page.getByRole('button', { name: 'Stacks' });
+    await expect(stacks).toHaveAttribute('aria-pressed', 'true');
+    const stacked = (await (await page.request.get('/api/items?limit=60&stack=1')).json()).items as any[];
+    const all = (await (await page.request.get('/api/items?limit=1')).json()).total as number;
+    const pic = stacked.find((i) => (i.stack_count ?? 1) >= 2 && i.kind === 'image');
+    test.skip(!pic, 'no picture with versions in the test library');
+    expect(stacked.length).toBeLessThanOrEqual(all);
+    // nothing selected: the grid has the whole width
+    await page.evaluate(() => localStorage.removeItem('dr.library.selected'));
+    await page.reload();
+    await expect(page.getByRole('complementary', { name: 'Details' })).toHaveCount(0);
+    const tile = page.locator('.tile').filter({ has: page.getByLabel(`${pic.stack_count} versions`) }).first();
+    await tile.click();
+    const details = page.getByRole('complementary', { name: 'Details' });
+    const strip = details.getByRole('list', { name: 'Versions' });
+    await expect(strip.getByRole('listitem')).toHaveCount(pic.stack_count);
+    await expect(strip.getByRole('listitem').last()).toHaveAttribute('aria-pressed', 'true');
+    // an older version opens in Details although it is not on the grid
+    await strip.getByRole('listitem').first().click();
+    await expect(strip.getByRole('listitem').first()).toHaveAttribute('aria-pressed', 'true');
+    await shot(page, 'library-stacks');
+    // delete the whole picture, then Undo
+    const ids = ((await (await page.request.get(`/api/items/${pic.id}`)).json()).lineage as any[]).map((v) => v.id);
+    await details.getByRole('button', { name: `Delete all ${ids.length} versions` }).click();
+    await expect(page.getByText(`${ids.length} items moved to Recently deleted.`).last()).toBeVisible();
+    for (const id of ids) expect((await (await page.request.get(`/api/items/${id}`)).json()).item.deleted_at).toBeTruthy();
+    await page.getByRole('button', { name: 'Undo' }).last().click();
+    await expect.poll(async () => ((await (await page.request.get(`/api/items/${ids[0]}`)).json()).item.deleted_at ?? null)).toBeNull();
+    for (const id of ids) expect((await (await page.request.get(`/api/items/${id}`)).json()).item.deleted_at ?? null).toBeNull();
+  });
+
   test('Library: Upload adds your pictures to the Library', async () => {
     await page.goto('/#/library');
     const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
@@ -865,7 +905,7 @@ test.describe.serial('Darkroom v2 features', () => {
     const count = async (f = 'all') => (await (await page.request.get('/api/items?limit=1&filter=' + f)).json()).total as number;
     const before = await count();
     const deletedBefore = await count('deleted'); // a test interrupted elsewhere may have left something there
-    const tiles = page.getByRole('list').getByRole('listitem');
+    const tiles = page.getByRole('list', { name: 'Library items' }).getByRole('listitem');
     // one item: click, press Delete, Undo
     await tiles.nth(0).click();
     await page.keyboard.press('Delete');
@@ -909,8 +949,8 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.request.post('/api/items/delete', { data: { ids } });
     await page.goto('/#/library');
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
-    await expect(page.getByRole('list').getByRole('listitem')).toHaveCount(1);
-    await page.getByRole('list').getByRole('listitem').first().click();
+    await expect(page.getByRole('list', { name: 'Library items' }).getByRole('listitem')).toHaveCount(1);
+    await page.getByRole('list', { name: 'Library items' }).getByRole('listitem').first().click();
     await page.getByRole('complementary', { name: 'Details' }).getByRole('button', { name: 'Delete forever' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Delete forever' }).click();
     await expect(page.getByText(/Deleted 1 item for good. The files are in the Windows Recycle Bin./)).toBeVisible({ timeout: 30_000 });

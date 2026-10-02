@@ -235,6 +235,42 @@ const PHASES: Record<string, Group[]> = {
       ],
     },
     {
+      // the fp8 KV model decision 63 waited for (black-forest-labs/FLUX.2-klein-9b-kv-fp8): references are encoded
+      // once and cached, so edits with references should get faster; quality must stay the same
+      id: 'klein-kvfp8',
+      variants: [
+        { id: 'fp8mixed', label: 'Darkroom: klein-9b fp8mixed', workflow: 'klein_ref' },
+        { id: 'kvfp8', label: 'klein-9b-kv fp8 + FluxKVCache', workflow: 'klein_ref', file: 'experiments/klein_ref.v2.kvfp8.json' },
+      ],
+      cases: [
+        { key: 'texture-2ref', set: { prompt: 'Using image 1 as the subject and geometry reference and image 2 as the texture reference, replace the paint of the car in image 1 with the long grey fur of the cat in image 2. Keep the car shape, the house and the lighting from image 1 identical.', seed: 21, width: 1344, height: 768 }, images: { image_1: g('09_car'), image_2: g('06_fur') } },
+        { key: 'room-2ref', set: { prompt: 'Using image 1 as the person reference and image 2 as the room reference, show the woman from image 1 sitting on the green velvet sofa in the room from image 2, reading a book in warm evening light. Keep her face, hair and green scarf identical to image 1.', seed: 21, width: 1024, height: 1024 }, images: { image_1: g('01_portrait'), image_2: g('10_interior') } },
+        { key: 'scene-3ref', set: { prompt: 'Using image 1 as the person, image 2 as the car and image 3 as the location, show the woman from image 1 leaning on the red car from image 2, parked in the harbour from image 3 on an overcast afternoon. Keep her face and scarf identical to image 1 and the car identical to image 2.', seed: 21, width: 1344, height: 768 }, images: { image_1: g('01_portrait'), image_2: g('09_car'), image_3: g('08_lowres_src') } },
+        { key: 'scene-3ref-high', set: { prompt: 'Using image 1 as the person, image 2 as the car and image 3 as the location, show the woman from image 1 leaning on the red car from image 2, parked in the harbour from image 3 on an overcast afternoon. Keep her face and scarf identical to image 1 and the car identical to image 2.', seed: 21, width: 1920, height: 1088 }, images: { image_1: g('01_portrait'), image_2: g('09_car'), image_3: g('08_lowres_src') } },
+      ],
+    },
+    {
+      id: 'klein-kvfp8-edit',
+      variants: [
+        { id: 'fp8mixed', label: 'Darkroom: Klein edit with a reference', workflow: 'klein_edit' },
+        { id: 'kvfp8', label: 'KV fp8 edit with a reference', workflow: 'klein_edit', file: 'experiments/klein_edit.v2.kvfp8.json' },
+      ],
+      cases: [
+        { key: 'outfit-ref', set: { prompt: 'Dress the woman in image 1 in the outfit from image 2. Keep her face, hair, pose and the background identical.', seed: 31 }, images: { image_1: g('01_portrait'), image_2: g('16_outfit') } },
+        { key: 'texture-ref', set: { prompt: 'Give the car in image 1 the long grey fur of the cat in image 2. Keep the car shape, the house and the lighting identical.', seed: 32 }, images: { image_1: g('09_car'), image_2: g('06_fur') } },
+      ],
+    },
+    {
+      // a Klein 9B fine-tune on this PC (DarkBeast-Klein9b-V2, fp8): does it run on Darkroom's distilled 4-step graph?
+      id: 'klein-finetune',
+      variants: [
+        { id: 'official', label: 'Official Klein 9B, 4 steps', workflow: 'klein_t2i' },
+        { id: 'ft4', label: 'Fine-tune, 4 steps', workflow: 'klein_t2i', file: 'experiments/klein_t2i.finetune.json' },
+        { id: 'ft8', label: 'Fine-tune, 8 steps', workflow: 'klein_t2i', file: 'experiments/klein_t2i.finetune.json', set: { steps: 8 } },
+      ],
+      cases: KLEIN_REVIEW.slice(0, 4).map(([key, prompt, ar], i) => ({ key, set: { prompt, seed: 7000 + i, width: KLEIN_1MP[ar][0], height: KLEIN_1MP[ar][1] } })),
+    },
+    {
       id: 'qwen-decode-2k',
       variants: [
         { id: 'tiled', label: 'Tiled decode (Darkroom)', workflow: 'qwen_t2i', set: { steps: 40 } },
