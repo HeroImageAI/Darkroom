@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Plus, Repeat, Sparkles, Undo2, Waves, X } from 'lucide-react';
+import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Plus, Repeat, Sparkles, Undo2, Volume2, VolumeX, Waves, X } from 'lucide-react';
 import { LibraryPicker } from '../components/LibraryPicker';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo, openLibrary } from '../lib/remove';
 import { Dialog, formatDuration, ProgressBar, randomSeed, Segmented, timecode, useHotkey } from '../components/common';
-import { ensureNotifyPermission, notifyDesktop, useItemLoad, useSessionState, useWorkspace } from '../lib/hooks';
+import { ensureNotifyPermission, notifyDesktop, useItemLoad, usePersistent, useSessionState, useWorkspace } from '../lib/hooks';
 import { go } from '../router';
 import { onJob, toast, useApp } from '../store';
 import { planVideo, type VideoQuality } from '../../shared/manifest';
@@ -29,6 +29,10 @@ interface VideoSettings {
   seed: number;
   /** How frames with a different aspect are fitted: crop to fill (default) or letterbox with bars. */
   frameFit?: 'crop' | 'fit';
+  /** Sound (DECISIONS 97): from the scene (LTX's own), your description, or silent. A preference. */
+  sound?: 'scene' | 'describe' | 'off';
+  /** Your sound description (work in progress, like the motion). */
+  soundText?: string;
 }
 
 const DEFAULTS: VideoSettings = { start: null, end: null, motion: '', camera: [], model: 'ltx', seconds: 5, quality: 'draft', notify: true, seed: 0 };
@@ -39,7 +43,7 @@ export function Video({ query }: { query: URLSearchParams }) {
   const online = useApp((s) => s.status?.comfy === 'online');
   const rev = useApp((s) => s.libraryRev);
   // frames, motion and camera are work in progress (this launch only); model, length, quality… are preferences
-  const [s, setS] = useWorkspace<VideoSettings>('video', DEFAULTS, ['start', 'end', 'motion', 'camera', 'seed', 'frameFit']);
+  const [s, setS] = useWorkspace<VideoSettings>('video', DEFAULTS, ['start', 'end', 'motion', 'camera', 'seed', 'frameFit', 'soundText']);
   const [selected, setSelected] = useSessionState<string | null>('video.selected', null);
   const [takes, setTakes] = useState<Job[]>([]);
   const [warning, setWarning] = useState<{ text: string; body: Parameters<typeof api.submit>[0] } | null>(null);
@@ -257,7 +261,7 @@ export function Video({ query }: { query: URLSearchParams }) {
     if (model.unavailable) return toast(model.unavailable, 'error');
     const p = planVideo(model, cur.quality, cur.seconds, cur.start.width, cur.start.height);
     const seed = override.seed ?? randomSeed();
-    const prompt = composeMotionPrompt(T, cams, { model: (m.video[cur.model] ? cur.model : 'ltx') as VideoModelKey, motion: cur.motion, camera: cur.camera });
+    const prompt = composeMotionPrompt(T, cams, { model: (m.video[cur.model] ? cur.model : 'ltx') as VideoModelKey, motion: cur.motion, camera: cur.camera, sound: cur.sound === 'describe' ? cur.soundText : '' });
     const fit = cur.frameFit === 'fit';
     const mismatch = (fr: Frame | null) => !!fr && Math.abs(fr.width / fr.height / (p.width / p.height) - 1) > 0.03;
     const startName = fit && mismatch(cur.start) ? await letterbox(cur.start, p.width, p.height) : cur.start.name;
@@ -272,6 +276,7 @@ export function Video({ query }: { query: URLSearchParams }) {
       height: p.height,
     };
     if (endName) params.end_image = endName;
+    if (cur.sound === 'off') params.silent = 1;
     void queue({
       workflow: p.workflow,
       params,
@@ -436,7 +441,7 @@ export function Video({ query }: { query: URLSearchParams }) {
                   setSuggesting(true);
                   try {
                     // the camera chips decide the camera; the writer describes the scene's motion to fit them (DECISIONS 94)
-                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name, ...(s.end ? { input2: s.end.name } : {}), camera: s.camera });
+                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name, ...(s.end ? { input2: s.end.name } : {}), camera: s.camera, sound: { mode: s.sound ?? 'scene', text: s.soundText ?? '' } });
                     setMotionUndo((u) => [...u.slice(-19), s.motion]);
                     update({ motion: r.text });
                     const camNames = s.camera.map((id) => cams.find((c) => c.id === id)?.label).filter(Boolean);
@@ -465,6 +470,30 @@ export function Video({ query }: { query: URLSearchParams }) {
                   {c.label}
                 </button>
               ))}
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <p className="section-label">Sound</p>
+              <Segmented
+                label="Sound"
+                options={[
+                  { value: 'scene', label: 'From the scene', title: 'LTX makes sound that fits what happens (and anything your motion text says about sound)' },
+                  { value: 'describe', label: 'Describe', title: 'Say what it should sound like: sounds, music, a line of speech in "double quotes"' },
+                  { value: 'off', label: 'Silent', title: 'No audio track' },
+                ]}
+                value={s.sound ?? 'scene'}
+                onChange={(sound) => update({ sound })}
+              />
+              {s.sound === 'describe' && (
+                <textarea
+                  className="input"
+                  rows={2}
+                  style={{ marginTop: 8 }}
+                  aria-label="Sound description"
+                  placeholder={'e.g. Rain on the window, a distant train. She whispers "Not yet."'}
+                  value={s.soundText ?? ''}
+                  onChange={(e) => update({ soundText: e.target.value })}
+                />
+              )}
             </div>
           </section>
 
@@ -713,7 +742,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
       <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <span style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {meta.mode === 'extend' ? 'Extended' : meta.mode === 'smooth' ? 'Smoothed' : meta.model ?? job.workflow}
-          {meta.ui?.quality ? ` · ${({ final: 'Final', hd: '1080p', draft: 'Draft' } as Record<string, string>)[meta.ui.quality] ?? 'Draft'}` : ''}
+          {meta.ui?.quality ? ` · ${({ final: 'Final', hd: '1080p', draft: 'Draft' } as Record<string, string>)[meta.ui.quality] ?? 'Draft'}` : ''}{meta.ui?.sound === 'off' ? ' · Silent' : ''}
         </span>
         <span className="mono muted" style={{ fontSize: 11 }}>
           {p.width ? `${p.width}×${p.height} · ` : ''}
@@ -761,6 +790,8 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item;
   const [t, setT] = useState(0);
   const [dur, setDur] = useState(item.duration ?? 0);
   const [loop, setLoop] = useState(true);
+  // remembered across takes and launches
+  const [muted, setMuted] = usePersistent<boolean>('video.muted', false);
   const [strip, setStrip] = useState<string[]>([]);
   const fps = item.fps ?? 24;
   const src = fileUrl(item.id);
@@ -816,6 +847,7 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item;
             src={src}
             poster={item.poster ? fileUrl(item.id, 'poster') : undefined}
             loop={loop}
+            muted={muted}
             playsInline
             onClick={toggle}
             onPlay={() => setPlaying(true)}
@@ -860,6 +892,11 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item;
           <button className={`btn sm ${loop ? 'on' : ''}`} aria-pressed={loop} onClick={() => setLoop((l) => !l)}>
             <Repeat size={14} /> Loop
           </button>
+          {hasSound(item) && (
+            <button className="btn sm icon" onClick={() => setMuted((x) => !x)} aria-label={muted ? 'Sound on' : 'Mute'} title={muted ? 'Sound on' : 'Mute'} aria-pressed={!muted}>
+              {muted ? <VolumeX size={15} /> : <Volume2 size={15} />}
+            </button>
+          )}
           <div style={{ flex: 1 }} />
           <button className="btn sm" onClick={() => onSaveFrame(t)} disabled={!online} title="Save the current frame to the Library as an image">
             <Camera size={14} /> Save frame
@@ -877,4 +914,10 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item;
       </div>
     </>
   );
+}
+
+/** Does this take have a sound track? LTX takes do, unless made Silent; Wan takes never did. */
+function hasSound(item: Item): boolean {
+  const ui = (item.ui ?? {}) as Partial<VideoSettings>;
+  return item.kind === 'video' && ui.model !== 'wan' && ui.sound !== 'off' && !item.workflow.startsWith('wan');
 }

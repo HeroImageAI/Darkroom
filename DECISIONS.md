@@ -561,3 +561,13 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     estimate (39 s per second), and the "Happy with the motion?" bar offers 720p or 1080p. One 1080p run started on a
     card still holding the previous clip took 32 minutes; Darkroom frees the card before every video job, so in the app
     it starts clean (re-run: 198 s).
+97. **Sound on Video.** LTX 2.5 always made sound and Darkroom muxed it into the MP4, but you could not steer it, mute
+    it or keep it through Extend. Now: a Sound control — From the scene (LTX's own, as before), Describe (your words —
+    sounds, music, a line of speech in quotes — added after motion and camera as their own sentence), or Silent (the
+    clip is saved without an audio track: the server drops CreateVideo's audio input). Suggest / Improve motion are
+    told the choice (`withSound`): Silent writes no sounds; with your description it writes none of its own, and any
+    sentence that copies your description is dropped (`dropCopiedSound` — it did copy it, like the camera sentence).
+    Extend joins the sound too when both clips have it (`video_join_audio.json`: AudioConcat of both tracks; the old
+    `video_join.json` stays for silent and Wan takes). Checked: Silent → no audio stream; Describe → audio; Extend of
+    two 3 s LTX takes → 6.04 s video with 6.06 s audio. The player gets Mute / Sound on (remembered); Silent takes say
+    so in Takes. Smooth 2× already kept the sound.

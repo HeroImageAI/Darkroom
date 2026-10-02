@@ -4589,6 +4589,61 @@
         "poster": "DR_POSTER",
         "last": "DR_LAST_FRAME"
       }
+    },
+    "video_join_audio": {
+      "file": "video_join_audio.json",
+      "family": "util",
+      "kind": "video",
+      "label": "Join two clips with their sound (Extend)",
+      "params": {
+        "video": {
+          "type": "video",
+          "label": "First clip",
+          "targets": [
+            {
+              "title": "DR_VIDEO",
+              "input": "file"
+            }
+          ]
+        },
+        "video_2": {
+          "type": "video",
+          "label": "Second clip",
+          "targets": [
+            {
+              "title": "DR_VIDEO_2",
+              "input": "file"
+            }
+          ]
+        },
+        "fps": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_FPS",
+              "input": "value"
+            }
+          ],
+          "default": 16,
+          "min": 8,
+          "max": 60
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/extended"
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
+      }
     }
   },
   "vramNeedGB": {

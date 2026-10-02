@@ -391,6 +391,38 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.request.post(`/api/jobs/${job.id}/cancel`);
     await quality.getByRole('button', { name: /^Draft/ }).click();
   });
+
+  test('Video: Sound — Silent, or your own description; Suggest motion leaves it alone (DECISIONS 97)', async () => {
+    // continues: frames are set
+    const sound = page.getByRole('group', { name: 'Sound' });
+    await page.getByLabel('Motion prompt').fill('Leaves sway gently in a light breeze.');
+    const animate = async () => {
+      const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+      await page.getByRole('button', { name: 'Animate Ctrl+Enter' }).click();
+      const req = await sent;
+      const job = await (await req.response())!.json();
+      await page.request.post(`/api/jobs/${job.id}/cancel`);
+      return req.postDataJSON();
+    };
+    await sound.getByRole('button', { name: 'Silent' }).click();
+    const silent = await animate();
+    expect(silent.params.silent).toBe(1);
+    expect(silent.meta.ui.sound).toBe('off');
+    await sound.getByRole('button', { name: 'Describe' }).click();
+    await page.getByLabel('Sound description').fill('rain on the window and a distant train');
+    const described = await animate();
+    expect(described.params.silent).toBeUndefined();
+    expect(described.params.motion_prompt).toMatch(/Leaves sway gently in a light breeze\. .*Rain on the window and a distant train\.$/);
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
+    await page.getByLabel('Motion prompt').fill('');
+    await page.getByRole('button', { name: 'Suggest motion' }).click();
+    expect((await sent).postDataJSON().sound).toEqual({ mode: 'describe', text: 'rain on the window and a distant train' });
+    await expect(page.getByLabel('Motion prompt')).not.toHaveValue('', { timeout: 120_000 });
+    // it keeps no copy of the description (Video adds it itself)
+    expect(await page.getByLabel('Motion prompt').inputValue()).not.toMatch(/rain on the window and a distant train/i);
+    await shot(page, 'video-sound');
+    await sound.getByRole('button', { name: 'From the scene' }).click();
+  });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
     await page.goto('/#/generate');
