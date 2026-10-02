@@ -205,3 +205,26 @@ export function completeSentences(s: string): string {
   // keep the fragment if cutting would throw away most of the answer
   return cut >= s.length * 0.5 ? s.slice(0, cut) : s;
 }
+
+/**
+ * Enhance with a style (DECISIONS 93). Generate adds the style's own sentence after the prompt when it renders, so the
+ * prompt writer is told the style to write *for* — details, materials, light and composition that suit it — and not to
+ * restate it (which would double it). The general engine gets this in its instructions; the official Qwen prompt
+ * enhancer (a fixed system prompt) gets it after the user's idea.
+ */
+export function enhanceStyleNote(styleText: string): string {
+  return `The picture will be made in this style, which is added after your prompt automatically: "${styleText.trim()}" Describe the subject, composition, materials and lighting in the language of this medium (brushwork and paint for a painting, line, hatching and paper for a drawing, lens and light for a photograph, print layers and flat inks for a print) and leave out words that belong to other media. Do not copy the style sentence itself.`;
+}
+
+export function withEnhanceStyle(req: Vlm2Request, styleText: string, viaSystem: boolean): Vlm2Request {
+  if (!styleText.trim()) return req;
+  const note = enhanceStyleNote(styleText);
+  const params = { ...req.params };
+  if (viaSystem) params.system = `${params.system}
+
+${note}`;
+  else params.prompt = `${params.prompt}
+
+${note}`;
+  return { ...req, params };
+}

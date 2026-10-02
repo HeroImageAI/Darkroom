@@ -204,15 +204,17 @@ export function Generate({ query }: { query: URLSearchParams }) {
 
   const enhance = async () => {
     if (!s.prompt.trim()) return toast('Type a short idea first, then press Enhance.', 'info');
+    const styleName = s.style !== 'none' ? styles.find((x) => x.id === s.style)?.label : undefined;
     setVlmBusy('enhance');
     try {
-      const r = await api.vlm({ task: 'enhance', variant: s.model, text: s.prompt });
+      // the chosen style shapes the enhanced prompt (DECISIONS 93); Generate still adds the style's own sentence
+      const r = await api.vlm({ task: 'enhance', variant: s.model, text: s.prompt, style: s.style });
       replacePrompt(r.text);
       // Qwen: the official PE-T2I also picks the frame (wh_ratio); follow it, snapped to Darkroom's aspects
       const aspect = r.aspect as Aspect | null | undefined;
       if (aspect && aspect !== s.aspect && ASPECTS.includes(aspect)) update({ aspect });
       toast(
-        `Prompt enhanced by ${r.model ?? 'the local model'} in ${r.seconds}s${aspect && r.ratio ? `; frame set to ${aspect} (suggested ${r.ratio})` : ''}. Edit it freely; Undo brings back yours.`,
+        `Prompt enhanced${styleName ? ` for ${styleName}` : ''} by ${r.model ?? 'the local model'} in ${r.seconds}s${aspect && r.ratio ? `; frame set to ${aspect} (suggested ${r.ratio})` : ''}. Edit it freely; Undo brings back yours.`,
         'ok',
         8000,
       );

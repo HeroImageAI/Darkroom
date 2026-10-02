@@ -74,6 +74,26 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(box).toHaveValue('poster for a jazz night called "Blue Hour"');
   });
 
+  test('Generate: Enhance writes for the chosen style (Klein, Ink sketch)', async () => {
+    await page.goto('/#/generate');
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
+    const style = page.getByRole('group', { name: 'Style preset' });
+    await style.getByRole('button', { name: 'Ink sketch' }).click();
+    const box = page.getByLabel('Prompt');
+    await box.fill('a fox in a snowy forest at dawn');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
+    await page.getByRole('button', { name: /Enhance/ }).first().click();
+    expect((await sent).postDataJSON()).toMatchObject({ task: 'enhance', variant: 'klein', style: 'ink' });
+    await expect(box).not.toHaveValue('a fox in a snowy forest at dawn', { timeout: 120_000 });
+    // written for a drawing: the language of ink, not of a camera
+    const text = await box.inputValue();
+    expect(text).toMatch(/ink|line|hatch|sketch|paper|stroke/i);
+    expect(text).not.toMatch(/\b(lens|bokeh|aperture)\b/i);
+    await expect(page.getByText(/Prompt enhanced for Ink sketch/).last()).toBeVisible();
+    await style.getByRole('button', { name: 'None' }).click();
+    await box.fill('');
+  });
+
   test('Generate: with references, "From references" writes a prompt that names each one', async () => {
     const pics = (await (await page.request.get('/api/items?limit=200')).json()).items.filter((i: any) => i.kind === 'image' && i.mode === 'generate');
     await page.goto('/#/generate');

@@ -524,3 +524,13 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     collapsed into the scarf. Using it only for reference jobs would also keep two Klein models fighting for memory
     (102–140 s runs at a 25.1 GB peak). Quality first: Klein stays on fp8mixed. The file stays on disk (JP's to keep or
     delete); the graphs stay in `workflows/experiments/*.kvfp8.json`.
+93. **Enhance writes for the chosen style** (JP's request). Generate's Enhance now sends the style picked on Generate;
+    the prompt writer is told the style (its own sentence, which Generate still adds after the prompt when it renders)
+    and asked to describe subject, composition, materials and light in that medium's language and to leave out other
+    media's words — not to copy the style sentence, so nothing is doubled (`withEnhanceStyle`, `src/shared/vlm.ts`).
+    The general engine (Klein) gets it in its instructions; the official Qwen prompt enhancer, whose system prompt is
+    fixed, gets it after the idea. A first wording ("without repeating the style") made Klein avoid style words
+    altogether; naming each medium's vocabulary fixed it. Same seeds, same style at render
+    (`docs/qa/enhance-style.jpg`): Ink sketch turns from coloured, sunlit pictures into real ink drawings, Screen print
+    into a flat-colour print, Concept art more painterly; the old photographic wording ("35 mm lens") no longer fights
+    the style. One miss in six: a screen print still slipped in "lens" and looks photographic.
