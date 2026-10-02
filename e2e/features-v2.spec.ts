@@ -825,13 +825,13 @@ test.describe.serial('Darkroom v2 features', () => {
 
     // the start page lists it with a thumbnail; delete with Undo
     await page.getByRole('button', { name: '← All compositions' }).click();
-    const item = page.getByRole('listitem').filter({ hasText: name });
+    const item = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) });
     await expect(item.locator('img')).toBeVisible();
     await shot(page, 'compose-list');
     await item.getByRole('button', { name: `Delete ${name}` }).click();
-    await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(0);
+    await expect(page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) })).toHaveCount(0);
     await page.getByRole('button', { name: 'Undo' }).last().click();
-    await expect(page.getByRole('listitem').filter({ hasText: name })).toHaveCount(1);
+    await expect(page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) })).toHaveCount(1);
   });
 
   test('Compose: Describe reads the canvas again after you change the sketch (its own old text is not your idea)', async () => {
