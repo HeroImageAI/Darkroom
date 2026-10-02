@@ -41,7 +41,9 @@ export interface SubmitRequest {
 
 export type Broadcast = (msg: unknown) => void;
 
-const CLIENT_ID = 'darkroom-server-' + crypto.randomBytes(4).toString('hex');
+// One client id per library, kept across restarts: ComfyUI tells only the client that queued a prompt when it finishes,
+// so a restarted Darkroom (a new id) would never hear about a render that was already running.
+const clientIdFor = (dir: string) => 'darkroom-server-' + crypto.createHash('sha1').update(path.resolve(dir)).digest('hex').slice(0, 8);
 const FREE_FAMILIES_IGNORED = new Set(['util']);
 
 export class VramWarning extends Error {
@@ -81,7 +83,14 @@ export class JobManager {
     private broadcast: Broadcast,
   ) {
     fs.mkdirSync(thumbsDir, { recursive: true });
+    this.clientId = clientIdFor(thumbsDir);
+    // safety net for a missed "finished" message: settle active jobs against ComfyUI's queue and history now and then
+    setInterval(() => {
+      if (this.connected && this.store.activeJobs().some((j) => j.prompt_id)) void this.resync();
+    }, 30_000).unref();
   }
+  private clientId: string;
+  private ingesting = new Set<string>();
 
   template(file: string): ApiPrompt {
     // Re-read when the file changes so a re-exported workflow is picked up without restart.
@@ -106,7 +115,7 @@ export class JobManager {
   }
 
   private connect(url: string): void {
-    const ws = new WebSocket(url.replace(/^http/, 'ws') + '/ws?clientId=' + CLIENT_ID);
+    const ws = new WebSocket(url.replace(/^http/, 'ws') + '/ws?clientId=' + this.clientId);
     this.ws = ws;
     ws.on('open', () => void this.resync());
     ws.on('message', (data, isBinary) => this.onMessage(isBinary ? new Uint8Array(data as Buffer) : data.toString()));
@@ -375,7 +384,7 @@ export class JobManager {
           job: id,
         },
       };
-      const promptId = await this.comfy.queuePrompt(prompt, CLIENT_ID, pngInfo, 'latent2rgb');
+      const promptId = await this.comfy.queuePrompt(prompt, this.clientId, pngInfo, 'latent2rgb');
       this.patch(id, { prompt_id: promptId });
     } catch (e) {
       this.fail(id, (e as Error).message);
@@ -394,8 +403,18 @@ export class JobManager {
     }
   }
 
-  /** Pull outputs of a finished job into the library. */
+  /** Pull outputs of a finished job into the library (once, even when the message and a resync both see it). */
   async ingest(jobId: string): Promise<void> {
+    if (this.ingesting.has(jobId)) return;
+    this.ingesting.add(jobId);
+    try {
+      await this.ingestNow(jobId);
+    } finally {
+      this.ingesting.delete(jobId);
+    }
+  }
+
+  private async ingestNow(jobId: string): Promise<void> {
     const job = this.store.getJob(jobId);
     if (!job || !job.prompt_id || !this.comfy || job.status === 'done') return;
     const h = await this.comfy.history(job.prompt_id);
