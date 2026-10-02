@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, VLM_VARIANTS, withEnhanceStyle, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
+import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, VLM_VARIANTS, withEnhanceStyle, dropCameraSentences, withCameraMoves, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
 
 const P = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'presets', 'vlm_prompts.json'), 'utf8')) as VlmPrompts;
 
@@ -139,5 +139,22 @@ describe('Enhance with a style (DECISIONS 93)', () => {
   });
   it('no style, no change', () => {
     expect(withEnhanceStyle(base, '  ', true)).toBe(base);
+  });
+});
+
+describe('Motion with camera chips (DECISIONS 94)', () => {
+  const base = { workflow: 'vlm2_image' as const, params: { system: 'SYS', prompt: 'P' }, modelLabel: 'm', output: 'text' as const };
+  it('the writer is told the camera move and to leave the camera alone', () => {
+    const r = withCameraMoves(base, ['The camera slowly pushes in toward the subject.']);
+    expect(r.params.system).toMatch(/^SYS\n\nThe camera movement is already decided and is added after your text automatically: "The camera slowly pushes in toward the subject\." /);
+    expect(r.params.system).toMatch(/Do not describe any camera movement/);
+    expect(withCameraMoves(base, [])).toBe(base);
+  });
+  it('drops the copied chip sentence and any other camera sentence, keeps the rest', () => {
+    const t = 'The camera is locked off on a tripod and does not move. Gentle ripples disturb the water.\nA small orange buoy bobs. The camera holds steady on the boats. A gull cries "hello" overhead.';
+    expect(dropCameraSentences(t)).toBe('Gentle ripples disturb the water. A small orange buoy bobs. A gull cries "hello" overhead.');
+  });
+  it('never empties the text', () => {
+    expect(dropCameraSentences('The camera pans left.')).toBe('The camera pans left.');
   });
 });
