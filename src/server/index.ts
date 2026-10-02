@@ -180,7 +180,7 @@ app.post('/api/upload', async (req, reply) => {
   const part = await req.file();
   if (!part) return reply.code(400).send({ error: 'No file' });
   const buf = await part.toBuffer();
-  const ext = path.extname(part.filename || '') || (part.mimetype === 'video/mp4' ? '.mp4' : '.png');
+  const ext = (path.extname(part.filename || '') || (part.mimetype === 'video/mp4' ? '.mp4' : part.mimetype === 'video/quicktime' ? '.mov' : '.png')).toLowerCase();
   const name = `dr_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}${ext}`;
   const up = await jobs.comfy.upload('image', new Blob([new Uint8Array(buf)]), name, { subfolder: 'darkroom' });
   let width: number | null = null;
@@ -191,6 +191,20 @@ app.post('/api/upload', async (req, reply) => {
     height = m?.height ?? null;
   }
   return { name: inputName(up), width, height };
+});
+
+/** Your own video into the Library (DECISIONS 100): the uploaded file plus its first and last frames from the browser. */
+app.post('/api/import/video', async (req, reply) => {
+  const b = (req.body ?? {}) as Record<string, unknown>;
+  const str = (k: string) => (typeof b[k] === 'string' && !/\.\.|\\/.test(b[k] as string) ? (b[k] as string) : '');
+  if (!str('video') || !str('poster') || !str('last')) return reply.code(400).send({ error: 'Video and its frames are needed.' });
+  try {
+    const num = (k: string) => (typeof b[k] === 'number' && Number.isFinite(b[k]) ? (b[k] as number) : undefined);
+    const item = await jobs.importVideo({ video: str('video'), poster: str('poster'), last: str('last'), name: str('name') || 'Video', boardId: b.boardId, width: num('width'), height: num('height'), duration: num('duration') });
+    return slim(item);
+  } catch (e) {
+    return reply.code(500).send({ error: (e as Error).message });
+  }
 });
 
 /** Make a library item usable as a workflow input (uploads it once to ComfyUI's input folder). */

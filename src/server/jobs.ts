@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
 import { checkMatte } from '../shared/matte.js';
+import { mp4Info } from './mp4info.js';
+import { restoreJoinPrompt, type RestoreWindow } from '../shared/restore.js';
 import WebSocket from 'ws';
 import { ComfyClient, filesFromHistory, historyError, parseWsMessage, textFromHistory, type OutputFile } from '../shared/comfy.js';
 import { cleanVlmOutput } from '../shared/vlm.js';
@@ -39,7 +41,9 @@ export interface SubmitRequest {
 
 export type Broadcast = (msg: unknown) => void;
 
-const CLIENT_ID = 'darkroom-server-' + crypto.randomBytes(4).toString('hex');
+// One client id per library, kept across restarts: ComfyUI tells only the client that queued a prompt when it finishes,
+// so a restarted Darkroom (a new id) would never hear about a render that was already running.
+const clientIdFor = (dir: string) => 'darkroom-server-' + crypto.createHash('sha1').update(path.resolve(dir)).digest('hex').slice(0, 8);
 const FREE_FAMILIES_IGNORED = new Set(['util']);
 
 export class VramWarning extends Error {
@@ -79,7 +83,14 @@ export class JobManager {
     private broadcast: Broadcast,
   ) {
     fs.mkdirSync(thumbsDir, { recursive: true });
+    this.clientId = clientIdFor(thumbsDir);
+    // safety net for a missed "finished" message: settle active jobs against ComfyUI's queue and history now and then
+    setInterval(() => {
+      if (this.connected && this.store.activeJobs().some((j) => j.prompt_id)) void this.resync();
+    }, 30_000).unref();
   }
+  private clientId: string;
+  private ingesting = new Set<string>();
 
   template(file: string): ApiPrompt {
     // Re-read when the file changes so a re-exported workflow is picked up without restart.
@@ -104,7 +115,7 @@ export class JobManager {
   }
 
   private connect(url: string): void {
-    const ws = new WebSocket(url.replace(/^http/, 'ws') + '/ws?clientId=' + CLIENT_ID);
+    const ws = new WebSocket(url.replace(/^http/, 'ws') + '/ws?clientId=' + this.clientId);
     this.ws = ws;
     ws.on('open', () => void this.resync());
     ws.on('message', (data, isBinary) => this.onMessage(isBinary ? new Uint8Array(data as Buffer) : data.toString()));
@@ -255,7 +266,15 @@ export class JobManager {
         this.broadcast({ type: 'toast', kind: 'info', text: `The ${(p.label ?? name).toLowerCase()} picture is no longer available, so it was left out.` });
       }
     }
-    const prompt = buildPrompt(this.template(spec.file), spec, req.params);
+    let prompt = buildPrompt(this.template(spec.file), spec, req.params);
+    // Restore (DECISIONS 100): the join is built for exactly the restored parts
+    if (req.workflow === 'video_restore_join') {
+      const parts = JSON.parse(String(req.params.parts ?? '[]')) as string[];
+      const windows = JSON.parse(String(req.params.windows ?? '[]')) as RestoreWindow[];
+      if (!parts.length || parts.length !== windows.length) throw new WorkflowError('The restored parts do not match their windows.');
+      const silent = req.params.silent === true || req.params.silent === 1 || req.params.silent === 'true';
+      prompt = restoreJoinPrompt({ source: String(req.params.video), parts, windows, sound: !silent, output: String(req.params.output ?? 'darkroom/video/restored') });
+    }
     // your own Klein 9B fine-tune (DECISIONS 91): only a file whose layers match Klein 9B replaces the graph's model
     const weights = typeof req.params.klein_weights === 'string' ? req.params.klein_weights : '';
     if (weights) {
@@ -265,6 +284,24 @@ export class JobManager {
       const ok = (await this.loraLibrary.finetunes(this.loraModels().klein)).some((f) => f.name === weights);
       if (!ok) throw new WorkflowError(`${weights} is not a Klein 9B model on this PC.`);
       node.inputs.unet_name = weights;
+    }
+    // Auto length (DECISIONS 100): LTX's duration head reads the prompt and picks the clip's length (2 s up to the
+    // number of seconds given, on LTX's 8n+1 frame grid); the clip's real length is read from the file afterwards
+    const autoMax = Number(req.params.auto_duration);
+    if (spec.family === 'ltx' && autoMax > 0) {
+      const [frames] = findByTitle(prompt, 'DR_FRAMES');
+      const [model] = findByTitle(prompt, 'DR_MODEL');
+      const [text] = findByTitle(prompt, 'DR_MOTION_PROMPT');
+      const [fps] = findByTitle(prompt, 'DR_FPS');
+      if (!frames || !model || !text || !fps) throw new WorkflowError('Auto length is not available for this kind of take.');
+      prompt.auto_head = { class_type: 'ModelPatchLoader', inputs: { name: 'ltx-2.5-duration-head-bf16.safetensors' }, _meta: { title: 'Duration head' } };
+      prompt.auto_len = {
+        class_type: 'LTXVDurationPredictor',
+        inputs: { model: [model, 0], positive: [text, 0], duration_head: ['auto_head', 0], frame_rate: [fps, 0], min_seconds: 2, max_seconds: Math.min(10, Math.max(2, autoMax)) },
+        _meta: { title: 'Auto length' },
+      };
+      for (const node of Object.values(prompt))
+        for (const [k, v] of Object.entries(node.inputs)) if (Array.isArray(v) && v[0] === frames && v[1] === 0) node.inputs[k] = ['auto_len', 0];
     }
     // Slow motion (DECISIONS 98): LTX is told the motion's frame rate (fps / speed) while the clip still plays at fps
     const speed = Number(req.params.motion_speed);
@@ -347,7 +384,7 @@ export class JobManager {
           job: id,
         },
       };
-      const promptId = await this.comfy.queuePrompt(prompt, CLIENT_ID, pngInfo, 'latent2rgb');
+      const promptId = await this.comfy.queuePrompt(prompt, this.clientId, pngInfo, 'latent2rgb');
       this.patch(id, { prompt_id: promptId });
     } catch (e) {
       this.fail(id, (e as Error).message);
@@ -366,8 +403,18 @@ export class JobManager {
     }
   }
 
-  /** Pull outputs of a finished job into the library. */
+  /** Pull outputs of a finished job into the library (once, even when the message and a resync both see it). */
   async ingest(jobId: string): Promise<void> {
+    if (this.ingesting.has(jobId)) return;
+    this.ingesting.add(jobId);
+    try {
+      await this.ingestNow(jobId);
+    } finally {
+      this.ingesting.delete(jobId);
+    }
+  }
+
+  private async ingestNow(jobId: string): Promise<void> {
     const job = this.store.getJob(jobId);
     if (!job || !job.prompt_id || !this.comfy || job.status === 'done') return;
     const h = await this.comfy.history(job.prompt_id);
@@ -451,6 +498,10 @@ export class JobManager {
           item.width = meta.width;
           item.height = meta.height;
         }
+      }
+      if (/\.(mp4|mov|m4v)$/i.test(vid.filename)) {
+        const real = await this.comfy!.view(ref(vid)).then((b) => mp4Info(Buffer.from(b))).catch(() => null);
+        if (real?.frames && real.fps) Object.assign(item, { fps: real.fps, frames: real.frames, duration: (real.frames - 1) / real.fps });
       }
       this.store.insertItem(item);
       ids.push(item.id);
@@ -572,6 +623,56 @@ export class JobManager {
       }
       return;
     }
+    // Restore (DECISIONS 100): the next window, guided by this one's last 17 restored frames; after the last, the join
+    if (chain?.kind === 'restore' && newIds[0] && chain.firstItemId) {
+      const c = chain as { kind: string; firstItemId: string; windows: RestoreWindow[]; index?: number; parts?: string[]; partJobs?: string[] };
+      const src = this.store.getItem(c.firstItemId);
+      const part = this.store.getItem(newIds[0]);
+      if (!src || !part || !this.comfy) return;
+      const parts = [...(c.parts ?? []), part.id];
+      const partJobs = [...(c.partJobs ?? []), job.id];
+      const next = (c.index ?? 0) + 1;
+      try {
+        if (next < c.windows.length) {
+          const w = c.windows[next];
+          await this.submit({
+            workflow: job.workflow,
+            params: { ...(job.params as Record<string, string | number>), prev: await this.asInput(part), start: w.start, length: w.length },
+            meta: { ...(job.meta as { mode: string }), model: `LTX 2.5 · Restore, part ${next + 1} of ${c.windows.length}`, followOf: job.id, chain: { ...c, index: next, parts, partJobs } },
+          });
+        } else {
+          const items = parts.map((id) => this.store.getItem(id)).filter((x): x is Item => !!x);
+          const sound = await this.comfy.view(src.file).then((b) => mp4Info(Buffer.from(b)).hasAudio).catch(() => false);
+          await this.submit({
+            workflow: 'video_restore_join',
+            params: { video: await this.asInput(src), parts: JSON.stringify(await Promise.all(items.map((it) => this.asInput(it)))), windows: JSON.stringify(c.windows), ...(sound ? {} : { silent: 1 }) },
+            meta: {
+              mode: 'restore',
+              model: 'LTX 2.5 · Restore',
+              prompt: src.prompt,
+              parentId: src.id,
+              ui: { ...(src.ui ?? {}), sound: sound ? 'scene' : 'off' },
+              notify: !!job.meta.notify,
+              followOf: job.id,
+              chain: { kind: 'restore_done', parts, partJobs },
+            },
+          });
+        }
+      } catch (e) {
+        this.broadcast({ type: 'toast', kind: 'error', text: 'Restore stopped: ' + friendlyError((e as Error).message) + ' The restored parts are in Recently deleted.' });
+        this.store.softDelete(parts);
+        this.broadcast({ type: 'library' });
+      }
+      return;
+    }
+    // the restored clip is joined: its parts go to Recently deleted and their takes are put away
+    if (chain?.kind === 'restore_done' && newIds[0]) {
+      const c = chain as { parts?: string[]; partJobs?: string[] };
+      this.store.softDelete(c.parts ?? []);
+      this.store.dismissJobs(c.partJobs ?? []);
+      this.broadcast({ type: 'library' });
+      return;
+    }
     if (chain?.kind === 'upscale' && newIds[0]) {
       const it = this.store.getItem(newIds[0]);
       if (!it) return;
@@ -630,6 +731,59 @@ export class JobManager {
     } catch (e) {
       this.broadcast({ type: 'toast', kind: 'error', text: 'Could not join the clips: ' + friendlyError((e as Error).message) });
     }
+  }
+
+  /**
+   * Your own video into the Library (DECISIONS 100). The uploaded file is the item's file (in ComfyUI's input
+   * folder); the browser supplies its first and last frames (poster, Extend); size, frame rate, frames and length come
+   * from the file's MP4 header when it has one, else from the browser.
+   */
+  async importVideo(a: { video: string; poster: string; last: string; name: string; boardId?: unknown; width?: number; height?: number; duration?: number }): Promise<Item> {
+    if (!this.comfy) throw new Error("ComfyUI isn't running.");
+    const input = (n: string): FileRef => {
+      const i = n.lastIndexOf('/');
+      return { filename: n.slice(i + 1), subfolder: i >= 0 ? n.slice(0, i) : '', type: 'input' };
+    };
+    const file = input(a.video);
+    const real = await this.comfy.view(file).then((b) => mp4Info(Buffer.from(b))).catch(() => null);
+    const fps = real?.fps ?? null;
+    const frames = real?.frames ?? null;
+    const item: Item = {
+      id: crypto.randomUUID(),
+      created_at: Date.now(),
+      kind: 'video',
+      mode: 'import',
+      workflow: 'import_video',
+      model: 'Imported',
+      family: 'util',
+      prompt: a.name.slice(0, 200),
+      negative: '',
+      seed: null,
+      width: real?.width ?? a.width ?? null,
+      height: real?.height ?? a.height ?? null,
+      duration: frames && fps ? (frames - 1) / fps : (a.duration ?? null),
+      fps,
+      frames,
+      params: { video: a.video },
+      ui: { model: 'imported', sound: real && !real.hasAudio ? 'off' : 'scene' },
+      api_prompt: null,
+      file,
+      poster: input(a.poster),
+      last_frame: input(a.last),
+      render_ms: null,
+      parent_id: null,
+      root_id: null,
+      version: 1,
+      favourite: false,
+      tags: [],
+      job_id: null,
+      input_name: a.video,
+      board_id: this.liveBoard(a.boardId),
+    };
+    await this.makeThumb(item.id, item.poster!).catch(() => null);
+    this.store.insertItem(item);
+    this.broadcast({ type: 'library' });
+    return item;
   }
 
   /** The board a new result should go to, if it (still) exists. */

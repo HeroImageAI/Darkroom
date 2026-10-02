@@ -485,6 +485,56 @@ test.describe.serial('Darkroom v2 features', () => {
     const job = await (await req.response())!.json();
     await page.request.post(`/api/jobs/${job.id}/cancel`);
   });
+
+  test('Video: Auto length — LTX picks the length from the prompt, up to the longest allowed (DECISIONS 100)', async () => {
+    // continues: frames are set
+    await page.goto('/#/video');
+    const length = page.getByRole('group', { name: 'Length' });
+    await length.getByRole('button', { name: 'Auto' }).click();
+    await expect(page.locator('.readout')).toContainText('Auto length, 2–8 s');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Animate Ctrl+Enter' }).click();
+    const req = await sent;
+    expect(req.postDataJSON().params.auto_duration).toBe(8);
+    const job = await (await req.response())!.json();
+    expect(job.status).not.toBe('failed'); // the server accepted the duration head on the graph
+    await page.request.post(`/api/jobs/${job.id}/cancel`);
+    await length.getByRole('button', { name: '5 s' }).click();
+  });
+
+  test('Library: Upload brings your own video in as it is, with its real size, frame rate and length (DECISIONS 100)', async () => {
+    await page.goto('/#/library');
+    const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
+    await page.getByLabel('Upload pictures to the Library').setInputFiles('tests/fixtures/old-footage-10s.mp4');
+    await expect.poll(async () => (await (await page.request.get('/api/items?limit=1')).json()).total, { timeout: 60_000 }).toBe(before + 1);
+    await expect(page.getByText('1 video added to your Library. Double-click to open.').last()).toBeVisible();
+    const it = await firstItem(page, (i) => i.mode === 'import' && i.kind === 'video');
+    expect(it).toMatchObject({ width: 640, height: 352, frames: 242, fps: 24 });
+    expect(it.ui.sound).toBe('off'); // the file has no sound track
+  });
+
+  test('Video: Restore — old footage in 4-second parts that continue from each other (DECISIONS 100)', async () => {
+    const cat = await (await page.request.get('/api/loras')).json();
+    test.skip(!cat.ltxTools.some((l: any) => /ic-lora-restore/.test(l.name)), 'The Restore IC-LoRA is not on this machine');
+    const take = await firstItem(page, (i) => i.mode === 'import' && i.kind === 'video' && i.frames === 242);
+    await page.goto(`/#/video?take=${take.id}`);
+    await page.getByRole('button', { name: 'Restore', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Restore old footage' });
+    await expect(dialog).toContainText('1280×704');
+    await expect(dialog).toContainText('3 parts of 4 seconds');
+    await dialog.getByLabel("What's in the clip (optional)").fill('A fishing harbour in the 1950s.');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await dialog.getByRole('button', { name: 'Restore' }).click();
+    const req = await sent;
+    const body = req.postDataJSON();
+    expect(body.workflow).toBe('ltx25_v2v_restore');
+    expect(body.params).toMatchObject({ start: 0, length: 97, width: 1280, height: 704 });
+    expect(body.params.motion_prompt).toMatch(/^A fishing harbour in the 1950s\. Restored film footage/);
+    expect(body.meta).toMatchObject({ mode: 'restore_part', chain: { kind: 'restore', firstItemId: take.id } });
+    expect(body.meta.chain.windows.map((w: any) => w.start)).toEqual([0, 80, 160]);
+    const job = await (await req.response())!.json();
+    await page.request.post(`/api/jobs/${job.id}/cancel`);
+  });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
     await page.goto('/#/generate');

@@ -4,7 +4,7 @@ import { api, type Board, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } 
 import { Dialog, formatDuration, Pills } from '../components/common';
 import { BoardNameDialog, useBoards } from '../components/Boards';
 import { useItem, usePersistent } from '../lib/hooks';
-import { importFailedMessage, importPictures } from '../lib/importer';
+import { importFailedMessage, importPictures, importVideos, isVideoFile } from '../lib/importer';
 import { go } from '../router';
 import { toast, useApp } from '../store';
 
@@ -67,16 +67,23 @@ export function Library() {
   /** Bring your own pictures into the Library (they appear at the top, ready to edit). */
   const upload = async (files: File[]) => {
     const pics = files.filter((f) => f.type.startsWith('image/'));
-    if (!pics.length) return;
-    if (!online) return toast('Start ComfyUI first (top right): it saves the pictures into your library.', 'info');
-    setUploading(`0 of ${pics.length}`);
-    const { ids, failed } = await importPictures(pics, (done, total) => setUploading(`${done} of ${total}`));
+    const vids = files.filter(isVideoFile);
+    if (!pics.length && !vids.length) return;
+    if (!online) return toast('Start ComfyUI first (top right): it saves your files into your library.', 'info');
+    const total = pics.length + vids.length;
+    setUploading(`0 of ${total}`);
+    const p = await importPictures(pics, (done) => setUploading(`${done} of ${total}`));
+    // your own videos are kept as they are (DECISIONS 100)
+    const v = await importVideos(vids, (done) => setUploading(`${pics.length + done} of ${total}`));
     setUploading(null);
-    if (failed.length) toast(importFailedMessage(failed), 'error', 12000);
+    if (p.failed.length) toast(importFailedMessage(p.failed), 'error', 12000);
+    if (v.failed.length) toast(`Could not bring in ${v.failed.join(', ')}. If it is an iPhone .mov, export it as MP4 (H.264) first.`, 'error', 12000);
+    const ids = [...p.ids, ...v.ids];
     if (ids.length) {
       if (filter !== 'all') setFilter('all');
       setSelected(ids[0]);
-      toast(`${ids.length === 1 ? '1 picture' : `${ids.length} pictures`} added to your Library. Double-click to edit.`, 'ok');
+      const what = [p.ids.length ? `${p.ids.length === 1 ? '1 picture' : `${p.ids.length} pictures`}` : '', v.ids.length ? `${v.ids.length === 1 ? '1 video' : `${v.ids.length} videos`}` : ''].filter(Boolean).join(' and ');
+      toast(`${what} added to your Library. Double-click to ${v.ids.length ? 'open' : 'edit'}.`, 'ok');
     }
   };
 
@@ -228,7 +235,7 @@ export function Library() {
             ref={uploadRef}
             className="sr"
             type="file"
-            accept="image/*"
+            accept="image/*,video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm"
             multiple
             aria-label="Upload pictures to the Library"
             onChange={(e) => {
@@ -269,7 +276,7 @@ export function Library() {
               </span>
             )}
             <span className="mono muted item-count">{total} items</span>
-            <button className="btn sm upload-btn" disabled={!!uploading} onClick={() => uploadRef.current?.click()} title="Add your own pictures to the Library (or drop them on the grid)">
+            <button className="btn sm upload-btn" disabled={!!uploading} onClick={() => uploadRef.current?.click()} title="Add your own pictures and videos to the Library (or drop them on the grid)">
               {uploading ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {uploading ? `Adding ${uploading}…` : 'Upload'}
             </button>
           </div>

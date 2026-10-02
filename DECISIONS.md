@@ -602,3 +602,27 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     background; the matte also stays in the Library for video editors. Videos made from a take (refine, matte, cut
     out) now take its size, frame rate and length. The player's tool row wraps, so nothing runs off at 1280–1440 px
     (Refine details was half hidden in v3.12).
+100. **Step 5 of the LTX plan: your own videos, Restore, Auto length.** *Import:* Library Upload and Home take MP4 / MOV /
+    M4V / WebM as they are (no re-encode: long phone clips would not fit through ComfyUI frame by frame); the browser
+    grabs the first and last frames (poster, Extend) and the server reads the file's own facts from its MP4 header
+    (`mp4info.ts`: size, frame rate, frame count, sound track) — now also for every video Darkroom makes, so lengths are
+    the real ones. *Restore* (Lightricks' Restore IC-LoRA, downloaded by JP): the clip is resized (lanczos) to a canvas
+    of up to 1280 px on the long side and goes in as the in-context reference (`ltx25_v2v_restore.json`, 8 distilled
+    sigmas). Long clips go in windows of 97 frames (4 s at 24 fps) with 17 frames of overlap, at most 8 windows (about
+    27 s); each window after the first is guided by the previous window's last 17 restored frames (`DR_PREV_GUIDE`),
+    so colours and details carry on. Tested on a synthetic damaged 10 s clip (sepia, grain, flicker, scratches, a scene
+    cut; `docs/qa/ltx-restore/`): scratches, flicker and grain gone, natural colour, the cut kept; 162–189 s per window
+    at 1280×704, 24 GB. A hard cut between windows still showed a step (7.6 / 255 mean change vs 2.0 for a normal
+    frame: the guided frames come back slightly different through the VAE), so the server-built join
+    (`restoreJoinPrompt`) crossfades the 17 overlap frames with a mask ramp — steps across the join 1.5–2.6, like any
+    other frame — encodes once and puts the source's sound back (trimmed to the restored length). The parts stay out
+    of the Library while the clip is made and go to Recently deleted afterwards. Restore reimagines as much as it
+    repairs: colours and fine detail are its best guess (it added modern taxis to an old street), so the dialog says so.
+    *Auto length:* Length → Auto adds LTX's duration head (`ModelPatchLoader` + `LTXVDurationPredictor`, prompt only,
+    snapped to the 8n+1 grid, 2–8 s) in place of the fixed frame count. Tested: "She blinks once and smiles" → 3.9 s
+    (89 frames), a walk across the room to read a letter → 7.4 s (177 frames); a second or two of extra work. The full
+    chain on the test library: 10 s of old footage → 3 parts (177 / 165 s) + join (25 s) → 241 frames at 1280×704, the
+    joins invisible (largest step 2.9 and 3.4 vs a median of 2.65). *Found on the way:* Darkroom picked a new ComfyUI
+    client id at every start, and ComfyUI tells only the client that queued a prompt when it finishes — so a render
+    running across a Darkroom restart stayed "running" forever (part 2 sat 20 minutes unnoticed). The id is now fixed
+    per library, active jobs are checked against ComfyUI's queue and history every 30 s, and a job is never ingested twice.

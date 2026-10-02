@@ -4859,6 +4859,186 @@
         "poster": "DR_POSTER",
         "last": "DR_LAST_FRAME"
       }
+    },
+    "ltx25_v2v_restore": {
+      "file": "ltx25_v2v_restore.json",
+      "family": "ltx",
+      "kind": "video",
+      "label": "LTX 2.5 Restore (IC-LoRA), one window of a clip",
+      "params": {
+        "video": {
+          "type": "video",
+          "label": "Video",
+          "targets": [
+            {
+              "title": "DR_VIDEO",
+              "input": "file"
+            }
+          ]
+        },
+        "prev": {
+          "type": "video",
+          "label": "Previous restored window",
+          "targets": [
+            {
+              "title": "DR_PREV",
+              "input": "file"
+            }
+          ],
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_PREV_GUIDE",
+                "input": "positive",
+                "outputSlot": 0
+              },
+              {
+                "title": "DR_PREV_GUIDE",
+                "input": "negative",
+                "outputSlot": 1
+              },
+              {
+                "title": "DR_PREV_GUIDE",
+                "input": "latent",
+                "outputSlot": 2
+              }
+            ],
+            "remove": [
+              "DR_PREV"
+            ]
+          }
+        },
+        "start": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_START",
+              "input": "value"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 100000
+        },
+        "length": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_LENGTH",
+              "input": "value"
+            }
+          ],
+          "default": 97,
+          "min": 9,
+          "max": 145
+        },
+        "motion_prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MOTION_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "width": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_WIDTH",
+              "input": "value"
+            }
+          ],
+          "default": 864,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "height": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_HEIGHT",
+              "input": "value"
+            }
+          ],
+          "default": 480,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/restore_part"
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
+      }
+    },
+    "video_restore_join": {
+      "file": "video_restore_join.json",
+      "family": "util",
+      "kind": "video",
+      "label": "Join restored windows (built for the parts by the server)",
+      "params": {
+        "video": {
+          "type": "video",
+          "label": "Source clip",
+          "targets": [
+            {
+              "title": "DR_VIDEO",
+              "input": "file"
+            }
+          ]
+        },
+        "parts": {
+          "type": "string",
+          "targets": [],
+          "default": "[]"
+        },
+        "windows": {
+          "type": "string",
+          "targets": [],
+          "default": "[]"
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/restored"
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
+      }
     }
   },
   "vramNeedGB": {
