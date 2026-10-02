@@ -34,6 +34,31 @@ test.describe.serial('Darkroom v2 features', () => {
     await shot(page, 'generate-qwen-options');
   });
 
+  test('Generate: Klein Quality High renders ~2 MP; each model keeps its own quality', async () => {
+    await page.goto('/#/generate');
+    await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await page.getByRole('group', { name: 'Quality' }).getByRole('button', { name: 'Draft' }).click();
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
+    const quality = page.getByRole('group', { name: 'Quality' });
+    await expect(page.getByLabel('Transparent background')).toHaveCount(0); // Qwen only
+    await quality.getByRole('button', { name: 'High' }).click();
+    await page.getByRole('group', { name: 'Aspect ratio' }).getByRole('button', { name: '3:2' }).click();
+    await expect(page.getByText('1728 × 1152')).toBeVisible();
+    await page.getByLabel('Prompt').fill('a bakery storefront with a hand-painted sign reading "SUNRISE BAKERY", cobbled street');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
+    const body = (await sent).postDataJSON();
+    expect([body.params.width, body.params.height, body.params.steps]).toEqual([1728, 1152, 4]);
+    await expect.poll(async () => ((await (await page.request.get('/api/items?limit=5&filter=generated')).json()).items as any[]).some((i) => i.width === 1728 && i.height === 1152), { timeout: 120_000 }).toBe(true);
+    // Qwen kept Draft: Klein's High is its own setting
+    await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await expect(page.getByRole('group', { name: 'Quality' }).getByRole('button', { name: 'Draft' })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: /^Klein 9B/ }).click();
+    await expect(quality.getByRole('button', { name: 'High' })).toHaveAttribute('aria-pressed', 'true');
+    await quality.getByRole('button', { name: 'Standard' }).click();
+    await page.getByRole('group', { name: 'Aspect ratio' }).getByRole('button', { name: '1:1' }).click();
+  });
+
   test('Generate: Enhance rewrites the prompt with the local VLM, Undo restores it', async () => {
     await page.goto('/#/generate');
     await page.getByRole('button', { name: /^Qwen-Image 2.1/ }).click();

@@ -495,3 +495,8 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     clear gain (text, fur, skin, crowds; 13–14 s) and is proposed as a Klein Quality choice. UI: the top bar no longer
     pushes the app past 1280 px, the LoRA list fits its panel, an empty LoRA section is one line, Generate's Quality
     sits under Model, Compose's Render area is compact on short screens.
+89. **Klein Quality: Standard (~1 MP) / High (~2 MP).** From the v3 review (decision 88, `docs/qa/addenda/rv/klein-2mp.jpg`):
+    at ~2 MP Klein spells signs right, and fur, skin and crowds are finer; 13–14 s instead of 7.5 s at the same memory
+    peak. High sizes: 1408², 1264×1584, 1728×1152, 1920×1088, 1088×1920 (÷16). Steps stay with Klein's own Advanced
+    control (4). Each model keeps its own quality (`kleinQuality` beside Qwen's `quality`), so Native 2K for Qwen never
+    makes Klein High. Checked on the card: High ×4 batch 55 s / 20.2 GB peak; High with 3 references 39 s / 22.3 GB.

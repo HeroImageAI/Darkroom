@@ -54,8 +54,10 @@ export interface GenSettings {
   steps: number;
   cfg: number;
   refs: Ref[];
-  /** Qwen: 'standard' | 'high' */
+  /** Qwen: 'standard' (Draft) | 'high' (Native 2K) */
   quality?: string;
+  /** Klein: 'standard' (~1 MP) | 'high' (~2 MP). Its own setting, so Native 2K for Qwen never makes Klein High. */
+  kleinQuality?: string;
   /** Qwen: transparent background (real alpha) */
   transparent?: boolean;
   /** Your LoRAs, per model (a preference, like the style). */
@@ -138,7 +140,9 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const job: Job | undefined = jobId ? jobs[jobId] : undefined;
   const running = !!job && (job.status === 'queued' || job.status === 'running');
   const aspectsFor = (mm: typeof model, quality?: string) => mm?.quality?.[quality ?? 'standard']?.aspects ?? mm?.aspects;
-  const [w, h] = model ? aspectsFor(model, s.quality)![s.aspect] : [1024, 1024];
+  /** Each model keeps its own quality choice. */
+  const qualityOf = (st: Pick<GenSettings, 'model' | 'quality' | 'kleinQuality'>) => (st.model === 'klein' ? st.kleinQuality : st.quality) ?? 'standard';
+  const [w, h] = model ? aspectsFor(model, qualityOf(s))![s.aspect] : [1024, 1024];
   const T = boot?.prompts;
 
   const update = (p: Partial<GenSettings>) => setS((prev) => ({ ...prev, ...p }));
@@ -346,11 +350,11 @@ export function Generate({ query }: { query: URLSearchParams }) {
         transparent: cur.model === 'qwen' && !!cur.transparent,
       });
     const wf = cur.refs.length ? mm.ref : mm.t2i;
-    const q = mm.quality?.[cur.quality ?? 'standard'];
-    const [ww, hh] = aspectsFor(mm, cur.quality)![cur.aspect];
+    const q = mm.quality?.[qualityOf(cur)];
+    const [ww, hh] = aspectsFor(mm, qualityOf(cur))![cur.aspect];
     const params: Record<string, string | number> = {
       seed,
-      steps: q ? q.steps : cur.steps,
+      steps: q?.steps ?? cur.steps,
       cfg: mm.ranges.cfg[0] === mm.ranges.cfg[1] ? mm.ranges.cfg[0] : cur.cfg,
       width: ww,
       height: hh,
@@ -579,18 +583,20 @@ export function Generate({ query }: { query: URLSearchParams }) {
           {model.quality && (
             <div>
               <p className="section-label">
-                Quality <span className="mono">{model.quality[s.quality ?? 'standard']?.note}</span>
+                Quality <span className="mono">{model.quality[qualityOf(s)]?.note}</span>
               </p>
               <Segmented
                 label="Quality"
                 options={Object.entries(model.quality).map(([k, v]) => ({ value: k, label: v.label, title: v.note }))}
-                value={s.quality ?? 'standard'}
-                onChange={(quality) => update({ quality })}
+                value={qualityOf(s)}
+                onChange={(q) => update(s.model === 'klein' ? { kleinQuality: q } : { quality: q })}
               />
-              <label className="check" title="Qwen-Image 2.1 can paint a real transparent background (saved as PNG with alpha)">
-                <input type="checkbox" checked={!!s.transparent} onChange={(e) => update({ transparent: e.target.checked })} />
-                Transparent background
-              </label>
+              {s.model === 'qwen' && (
+                <label className="check" title="Qwen-Image 2.1 can paint a real transparent background (saved as PNG with alpha)">
+                  <input type="checkbox" checked={!!s.transparent} onChange={(e) => update({ transparent: e.target.checked })} />
+                  Transparent background
+                </label>
+              )}
             </div>
           )}
 
