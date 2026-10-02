@@ -549,3 +549,15 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     slowly — start an LTX take from their last frame instead). Wan's model files (two 14.3 GB experts, the lightx2v
     LoRAs, umt5 and the Wan VAE, ~37 GB) go to the Windows Recycle Bin at JP's request. Found on the way: Extend's join
     drops the sound (fixed with the sound work, decision 97).
+96. **LTX 2.5: single pass stays for Draft and Final; a new 1080p tier renders in two stages.** A/B on four start frames
+    (portrait, harbour, busy street, bakery), Final 720p, 5 s, same seeds (`docs/qa/ltx/*.jpg`, `scripts/ab-ltx.ts`):
+    the official two-stage structure (half size → x2 latent spatial upscaler → 3-step refine, euler ancestral) is ~20 %
+    faster at 720p (78–96 s vs 99–120 s) but softer (middle-frame sharpness 1034–1132 vs 1938 on the street) and on the
+    portrait it wandered off the likeness. Its value is resolution: a single pass already peaks at 24.8 GB at 720p, but
+    two stages reach true 1080p (1920×1088 / 1088×1920) at 25.6 GB — 5 s in ~198 s, 8 s in 312 s — with far finer
+    crowds, cars and skin than 720p enlarged (`street-1080.jpg`, `portrait-1080*.jpg`). So Quality gets "1080p": its
+    own graph (`workflows/ltx25_i2v_hd.json`, built by `workflows/experiments/build_ltx_twostage.py`, end frame
+    supported — both stages' end guides share the DR_END_GUIDE title so the manifest bypasses both), linear time
+    estimate (39 s per second), and the "Happy with the motion?" bar offers 720p or 1080p. One 1080p run started on a
+    card still holding the previous clip took 32 minutes; Darkroom frees the card before every video job, so in the app
+    it starts clean (re-run: 198 s).

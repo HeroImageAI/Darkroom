@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { framesFor, orientationOf, planVideo, type VideoModel } from '../src/shared/manifest';
 
@@ -38,5 +40,22 @@ describe('video planning', () => {
     const p = planVideo(wan, 'draft', 5, 1600, 900);
     expect(p).toMatchObject({ width: 832, height: 480, fps: 16, frames: 81, seconds: 5 });
     expect(p.estimateSec).toBe(70);
+  });
+});
+
+describe('LTX 1080p tier (DECISIONS 96)', () => {
+  const real = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'workflows', 'manifest.json'), 'utf8'));
+  const ltx = real.video.ltx;
+  it('Wan is gone; LTX has Draft, Final and 1080p', () => {
+    expect(Object.keys(real.video)).toEqual(['ltx']);
+    expect(Object.keys(ltx.quality)).toEqual(['draft', 'final', 'hd']);
+  });
+  it('1080p runs the two-stage graph at full HD with its own (linear) time estimate', () => {
+    const p = planVideo(ltx, 'hd', 5, 1920, 1080);
+    expect([p.width, p.height, p.workflow]).toEqual([1920, 1088, 'ltx25_i2v_hd']);
+    expect(p.estimateSec).toBe(195);
+    expect(planVideo(ltx, 'hd', 8, 1080, 1920).estimateSec).toBe(312);
+    expect(planVideo(ltx, 'final', 5, 1920, 1080).workflow).toBe('ltx25_i2v');
+    expect(real.workflows.ltx25_i2v_hd.file).toBe('ltx25_i2v_hd.json');
   });
 });

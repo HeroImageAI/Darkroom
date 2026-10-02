@@ -242,18 +242,38 @@
             960,
             960
           ]
+        },
+        "hd": {
+          "label": "1080p",
+          "short": "1080p",
+          "landscape": [
+            1920,
+            1088
+          ],
+          "portrait": [
+            1088,
+            1920
+          ],
+          "square": [
+            1440,
+            1440
+          ],
+          "workflow": "ltx25_i2v_hd",
+          "timeExponent": 1
         }
       },
       "secondsPerSecond": {
         "draft": 7,
-        "final": 12.9
+        "final": 12.9,
+        "hd": 39
       },
       "overheadSec": {
         "draft": 0,
-        "final": 0
+        "final": 0,
+        "hd": 0
       },
       "timeExponent": 1.3,
-      "measured": "k*s^1.3 fitted to 480p 3 s = 29 s (warm), 720p 5 s = 105 s; first run after loading adds ~25 s (RTX 3090). See BENCHMARKS.md"
+      "measured": "k*s^1.3 fitted to 480p 3 s = 29 s (warm), 720p 5 s = 105 s; first run after loading adds ~25 s (RTX 3090). See BENCHMARKS.md 1080p (two-stage): 5 s = 199 s (cold), 8 s = 312 s, peak 25.6 GB."
     }
   },
   "workflows": {
@@ -4430,6 +4450,144 @@
       },
       "outputs": {
         "image": "DR_OUTPUT"
+      }
+    },
+    "ltx25_i2v_hd": {
+      "file": "ltx25_i2v_hd.json",
+      "family": "ltx",
+      "kind": "video",
+      "label": "LTX 2.5 1080p (two-stage: half size, x2 latent upscale, refine)",
+      "params": {
+        "start_image": {
+          "type": "image",
+          "label": "Start frame",
+          "targets": [
+            {
+              "title": "DR_START_IMAGE",
+              "input": "image"
+            }
+          ]
+        },
+        "end_image": {
+          "type": "image",
+          "label": "End frame",
+          "targets": [
+            {
+              "title": "DR_END_IMAGE",
+              "input": "image"
+            }
+          ],
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_END_GUIDE",
+                "input": "positive",
+                "outputSlot": 0
+              },
+              {
+                "title": "DR_END_GUIDE",
+                "input": "negative",
+                "outputSlot": 1
+              },
+              {
+                "title": "DR_END_GUIDE",
+                "input": "latent",
+                "outputSlot": 2
+              }
+            ],
+            "remove": [
+              "DR_END_IMAGE"
+            ]
+          }
+        },
+        "motion_prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MOTION_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "frames": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_FRAMES",
+              "input": "value"
+            }
+          ],
+          "default": 121,
+          "min": 25,
+          "max": 241,
+          "step": 8
+        },
+        "fps": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_FPS",
+              "input": "value"
+            }
+          ],
+          "default": 24,
+          "min": 8,
+          "max": 50
+        },
+        "width": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_WIDTH",
+              "input": "value"
+            }
+          ],
+          "default": 864,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "height": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_HEIGHT",
+              "input": "value"
+            }
+          ],
+          "default": 480,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/ltx"
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
       }
     }
   },

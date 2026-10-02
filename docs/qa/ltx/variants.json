@@ -1,0 +1,14 @@
+[
+  {
+    "id": "single",
+    "label": "Darkroom today: single pass at full size"
+  },
+  {
+    "id": "two",
+    "label": "Two-stage (half size, x2 latent upscale, 3-step refine)"
+  },
+  {
+    "id": "two07",
+    "label": "Two-stage, start held at 0.7 in stage 1 (official)"
+  }
+]
