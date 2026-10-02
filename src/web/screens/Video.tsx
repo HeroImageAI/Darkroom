@@ -431,10 +431,12 @@ export function Video({ query }: { query: URLSearchParams }) {
                 onClick={async () => {
                   setSuggesting(true);
                   try {
-                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name, ...(s.end ? { input2: s.end.name } : {}) });
+                    // the camera chips decide the camera; the writer describes the scene's motion to fit them (DECISIONS 94)
+                    const r = await api.vlm({ task: 'motion', variant: vKey, text: s.motion, input: s.start!.name, ...(s.end ? { input2: s.end.name } : {}), camera: s.camera });
                     setMotionUndo((u) => [...u.slice(-19), s.motion]);
                     update({ motion: r.text });
-                    toast(`Motion prompt written for ${vm.label} in ${r.seconds}s.`, 'ok');
+                    const camNames = s.camera.map((id) => cams.find((c) => c.id === id)?.label).filter(Boolean);
+                    toast(`Motion prompt written for ${vm.label}${camNames.length ? ` to suit ${camNames.join(' + ')}` : ''} in ${r.seconds}s.`, 'ok');
                   } catch (e) {
                     toast((e as Error).message, 'error');
                   } finally {

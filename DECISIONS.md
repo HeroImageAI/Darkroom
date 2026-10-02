@@ -534,3 +534,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     (`docs/qa/enhance-style.jpg`): Ink sketch turns from coloured, sunlit pictures into real ink drawings, Screen print
     into a flat-colour print, Concept art more painterly; the old photographic wording ("35 mm lens") no longer fights
     the style. One miss in six: a screen print still slipped in "lens" and looks photographic.
+94. **Suggest / Improve motion leave the camera to the camera chips** (JP's question). The motion writer never saw the
+    chips, and its instructions ask it to describe camera moves, so with Static chosen it could write "the camera drifts
+    forward" — and Video then added Static's sentence too, two contradicting instructions. Now Video sends the chips;
+    the writer is told the camera move is decided and added automatically, and to describe only what moves in the
+    scene, fitted to it (`withCameraMoves`). It still copied the chip's sentence as its first line, so with chips any
+    sentence starting "The camera" is dropped from the written motion (`dropCameraSentences`; never empties it). No
+    chips: unchanged. Same seed, LTX Draft, Static (`docs/qa/motion-camera.jpg`): with the old suggestion the camera
+    pushed in anyway (hillside change 40.5 / 255 first→last frame); with the new one the shot stays put (7.6).

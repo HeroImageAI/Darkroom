@@ -228,3 +228,29 @@ ${note}`;
 ${note}`;
   return { ...req, params };
 }
+
+/**
+ * Suggest / Improve motion with the camera chips chosen on Video (DECISIONS 94). Video adds each chip's own camera
+ * sentence after the motion prompt when it renders, so the motion writer is told the camera move and asked to describe
+ * only what moves in the scene, fitted to that move, and no camera movement of its own (which would contradict it).
+ */
+export function cameraMovesNote(sentences: string[]): string {
+  return `The camera movement is already decided and is added after your text automatically: "${sentences.map((x) => x.trim()).join(' ')}" Describe only what moves in the scene (people, animals, objects, water, hair, cloth, light) so that it suits this camera movement. Do not describe any camera movement, zoom, pan, tilt or change of framing yourself, and do not repeat the camera sentence.`;
+}
+
+export function withCameraMoves(req: Vlm2Request, sentences: string[]): Vlm2Request {
+  const s = sentences.filter((x) => x.trim());
+  if (!s.length) return req;
+  return { ...req, params: { ...req.params, system: `${req.params.system}\n\n${cameraMovesNote(s)}` } };
+}
+
+/**
+ * With camera chips chosen, the camera belongs to them: drop any sentence of the written motion that is about the
+ * camera ("The camera …"). The model tends to copy the chip's sentence as its first line despite being told not to,
+ * and Video adds that sentence itself at render time, so it would otherwise appear twice.
+ */
+export function dropCameraSentences(text: string): string {
+  const sentences = text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?]["”']?)\s+(?=[A-Z"“])/);
+  const kept = sentences.filter((s) => !/^["“]?the camera\b/i.test(s.trim()));
+  return (kept.length ? kept : sentences).join(' ').trim();
+}

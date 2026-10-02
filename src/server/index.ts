@@ -16,7 +16,7 @@ import { Store, type FileRef, type LibraryQuery } from './db.js';
 import { desktopRunning, launchDesktop, tailDesktopLog } from './desktop.js';
 import { discoverComfy } from './discovery.js';
 import { JobManager, publicJob, VramWarning, type SubmitRequest } from './jobs.js';
-import { buildVlm2Request, nearestAspect, parsePeJson, withEnhanceStyle, type Vlm2Entry, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
+import { buildVlm2Request, nearestAspect, parsePeJson, dropCameraSentences, withCameraMoves, withEnhanceStyle, type Vlm2Entry, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
 import { validateTemplates } from '../shared/prompts.js';
 import { samPointsJson } from '../shared/workflow.js';
 import { layersToPsd, layersToZip, type LayerInput } from './layers.js';
@@ -212,7 +212,7 @@ app.post('/api/items/:id/as-input', async (req, reply) => {
  * body: { task, variant, text?, itemId?, input?, which? }  -> { text, seconds }
  */
 app.post('/api/vlm', async (req, reply) => {
-  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; style?: string; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string; inputs?: string[] };
+  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; style?: string; camera?: string[]; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string; inputs?: string[] };
   if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
   let request;
   let pair = false;
@@ -222,6 +222,12 @@ app.post('/api/vlm', async (req, reply) => {
     // Video motion with an end frame: the "<variant>_pair" prompt, which asks for the motion from START to END
     pair = b.task === 'motion' && !!b.input2 && !!(prompts.motion as Record<string, unknown> | undefined)?.[`${b.variant}_pair`];
     request = buildVlm2Request(prompts, b.task, pair ? `${b.variant}_pair` : b.variant, b.text ?? '', (rel) => fs.readFileSync(path.join(cfg.paths.presets, rel), 'utf8'));
+    // Motion with the camera chips chosen on Video (DECISIONS 94): the writer leaves the camera to them
+    if (b.task === 'motion' && Array.isArray(b.camera) && b.camera.length) {
+      const cams = readJson<{ camera: Record<string, string>[] }>(path.join(cfg.paths.presets, 'camera.json')).camera;
+      const model = b.variant === 'ltx' ? 'ltx' : 'wan';
+      request = withCameraMoves(request, b.camera.map((id) => cams.find((c) => c.id === id)?.[model] ?? '').filter(Boolean));
+    }
     // Enhance with the style chosen on Generate (DECISIONS 93)
     if (b.task === 'enhance' && b.style && b.style !== 'none') {
       const st = readJson<{ styles: Record<string, string>[] }>(path.join(cfg.paths.presets, 'styles.json')).styles.find((x) => x.id === b.style);
@@ -280,6 +286,8 @@ ${params.prompt}`;
     if (done.status !== 'done') return reply.code(500).send({ error: done.error ?? 'The model did not answer.' });
     const meta = done.meta as Record<string, unknown>;
     let text = String(meta.text ?? '');
+    // camera chips own the camera (DECISIONS 94): the written motion keeps none of its own
+    if (b.task === 'motion' && Array.isArray(b.camera) && b.camera.length) text = dropCameraSentences(text);
     let ratio: string | null = null;
     if (request.output === 'json_ratio') ({ text, ratio } = parsePeJson(String(meta.raw ?? text)));
     if (b.save && b.itemId && b.task === 'caption') store.updateItem(b.itemId, { caption: text });

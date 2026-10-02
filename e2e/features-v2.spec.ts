@@ -356,6 +356,21 @@ test.describe.serial('Darkroom v2 features', () => {
     expect((await page.getByLabel('Motion prompt').inputValue()).split(/\s+/).length).toBeGreaterThan(15);
     await shot(page, 'video-motion-endframe');
   });
+
+  test('Video: with camera chips, Suggest motion leaves the camera to them (DECISIONS 94)', async () => {
+    // continues: frames are set; choose Static
+    const chips = page.getByRole('button', { name: 'Static', exact: true });
+    if ((await chips.getAttribute('aria-pressed')) !== 'true') await chips.click();
+    await page.getByLabel('Motion prompt').fill('');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Suggest motion' }).click();
+    expect((await sent).postDataJSON().camera).toEqual(['static']);
+    await expect(page.getByLabel('Motion prompt')).not.toHaveValue('', { timeout: 120_000 });
+    // no camera sentence of its own: Static's sentence is added at render time
+    expect(await page.getByLabel('Motion prompt').inputValue()).not.toMatch(/(^|[.!?]\s+)the camera\b/i);
+    await expect(page.getByText(/Motion prompt written for .* to suit Static/).last()).toBeVisible();
+    await chips.click(); // off again
+  });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
     await page.goto('/#/generate');
