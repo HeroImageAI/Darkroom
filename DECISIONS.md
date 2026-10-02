@@ -571,3 +571,19 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     `video_join.json` stays for silent and Wan takes). Checked: Silent → no audio stream; Describe → audio; Extend of
     two 3 s LTX takes → 6.04 s video with 6.06 s audio. The player gets Mute / Sound on (remembered); Silent takes say
     so in Takes. Smooth 2× already kept the sound.
+98. **Lightricks' LTX 2.5 LoRAs.** JP downloaded five (gated): Slow-Motion Control, Cinemagraph and the IC-LoRAs Refine
+    Details, Restore and Pixel Spatial Upscaler — all complete, all 100 % LTX 2.5 layers. The LoRA catalogue now
+    knows LTX 2.5 (`ltx`) and keeps IC-LoRAs apart (`ltxTools`: their files carry `reference_downscale_factor`);
+    LTX jobs accept LoRAs like Klein and Qwen (header-checked, injected after DR_MODEL). Tested on Darkroom's distilled
+    graph (`docs/qa/ltx-loras/`): **Slow motion** — the model card's "speed" is the motion frame rate LTX is told
+    (fps ÷ speed) while the clip plays at 24 fps; the server inserts that (`motion_speed`). Motion per frame 2.67 →
+    1.80 (½) → 1.27 (⅕); the frame-rate trick alone slows it as much, the LoRA keeps moving things a little cleaner
+    (less smear), so both are used, as Lightricks advise. **Cinemagraph** — its trigger `CINEMAGRAPH_MOTION`, a locked
+    camera and "seamless natural loop" (card), strength 1.1: the still parts stay still and the loop closes better
+    (last-vs-first 12.2 vs 16.5). **Refine details** — a take goes in as an in-context reference (resized to the 720p
+    canvas, GetICLoRAParameters → LTXVAddGuide, 8 distilled sigmas) and comes back redrawn: the 480p street draft's
+    smeared crowd becomes individual people (sharpness 567 → 1028), same motion (5.8 / 255 difference at thumbnail
+    size) and the same sound; 205 s for 5 s, 24.3 GB (`workflows/ltx25_v2v_refine.json`). On Video: an Effect control
+    (None / Slow motion ½·¼·⅒ / Cinemagraph, shown when the LoRA is present), your own LTX LoRAs (the two effect LoRAs
+    left out of that list), and "Refine details" on takes up to 720p. Restore needs footage you bring in (a video
+    import, next); the pixel upscaler adds little now that 1080p renders natively (decision 96).

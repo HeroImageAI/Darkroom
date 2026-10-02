@@ -63,7 +63,7 @@ export class JobManager {
       const node = Object.values(this.template(spec.file)).find((n) => n._meta?.title === 'DR_MODEL');
       return String(node?.inputs.unet_name ?? '');
     };
-    return { klein: unet('klein_t2i'), qwen: unet('qwen_t2i') };
+    return { klein: unet('klein_t2i'), qwen: unet('qwen_t2i'), ltx: unet('ltx25_i2v') };
   }
   private ws: WebSocket | null = null;
   private lastFamily: string | null = null;
@@ -265,6 +265,16 @@ export class JobManager {
       if (!ok) throw new WorkflowError(`${weights} is not a Klein 9B model on this PC.`);
       node.inputs.unet_name = weights;
     }
+    // Slow motion (DECISIONS 98): LTX is told the motion's frame rate (fps / speed) while the clip still plays at fps
+    const speed = Number(req.params.motion_speed);
+    if (spec.family === 'ltx' && speed > 0 && speed < 1) {
+      for (const [id, node] of Object.entries(prompt)) {
+        if (node.class_type !== 'LTXVConditioning') continue;
+        const mathId = `${id}_motion_fps`;
+        prompt[mathId] = { class_type: 'ComfyMathExpression', inputs: { expression: `a / ${speed}`, 'values.a': node.inputs.frame_rate }, _meta: { title: 'Motion fps' } };
+        node.inputs.frame_rate = [mathId, 0];
+      }
+    }
     // Silent (DECISIONS 97): the clip is saved without its audio track
     if (req.params.silent === true || req.params.silent === 1 || req.params.silent === 'true') {
       for (const node of Object.values(prompt)) if (node.class_type === 'CreateVideo') delete node.inputs.audio;
@@ -272,11 +282,11 @@ export class JobManager {
     // your own LoRAs (DECISIONS 86): only ones made for this job's model, put on the graph's model
     const loras = parseLoras(req.params.loras);
     if (loras.length) {
-      const family = spec.family === 'klein' ? 'klein' : spec.family.startsWith('qwen') ? 'qwen' : null;
-      if (!family || !findByTitle(prompt, 'DR_MODEL').length) throw new WorkflowError('LoRAs can only be used with Klein 9B and Qwen-Image 2.1.');
+      const family = spec.family === 'klein' ? 'klein' : spec.family.startsWith('qwen') ? 'qwen' : spec.family === 'ltx' ? 'ltx' : null;
+      if (!family || !findByTitle(prompt, 'DR_MODEL').length) throw new WorkflowError('LoRAs can only be used with Klein 9B, Qwen-Image 2.1 and LTX 2.5.');
       const fits = new Set((await this.loraLibrary.catalogue(this.loraModels()))[family].map((l) => l.name));
       const wrong = loras.filter((l) => !fits.has(l.name));
-      if (wrong.length) throw new WorkflowError(`${wrong.map((l) => l.name).join(', ')} is not a ${family === 'klein' ? 'Klein 9B' : 'Qwen-Image 2.1'} LoRA.`);
+      if (wrong.length) throw new WorkflowError(`${wrong.map((l) => l.name).join(', ')} is not a ${({ klein: 'Klein 9B', qwen: 'Qwen-Image 2.1', ltx: 'LTX 2.5' } as const)[family]} LoRA.`);
       injectLoras(prompt, loras);
     }
 

@@ -623,6 +623,7 @@ const MODE_LABEL: Record<string, string> = {
   'edit:remove_bg': 'Background removed',
   'edit:crop': 'Crop',
   compose: 'Composed',
+  refine: 'Refined video',
   upscale: 'Upscale',
   video: 'Video',
   smooth: 'Smoothed video',

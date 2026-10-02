@@ -1,0 +1,68 @@
+[
+  {
+    "key": "cine-plain",
+    "ok": true,
+    "seconds": 71.5,
+    "peak": 24.5,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\cine-plain\\ltx_00083_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\cine-plain\\ltx_poster_00083_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\cine-plain\\ltx_last_00083_.png"
+    ]
+  },
+  {
+    "key": "cine-lora",
+    "ok": true,
+    "seconds": 47.3,
+    "peak": 25.3,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\cine-lora\\ltx_00084_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\cine-lora\\ltx_poster_00084_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\cine-lora\\ltx_last_00084_.png"
+    ]
+  },
+  {
+    "key": "street-base",
+    "ok": true,
+    "seconds": 47.6,
+    "peak": 25.5,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-base\\ltx_00085_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-base\\ltx_poster_00085_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-base\\ltx_last_00085_.png"
+    ]
+  },
+  {
+    "key": "street-slow0.5",
+    "ok": true,
+    "seconds": 41.6,
+    "peak": 24.7,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-slow0.5\\ltx_00086_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-slow0.5\\ltx_poster_00086_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-slow0.5\\ltx_last_00086_.png"
+    ]
+  },
+  {
+    "key": "street-slow0.2",
+    "ok": true,
+    "seconds": 36.8,
+    "peak": 24.5,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-slow0.2\\ltx_00087_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-slow0.2\\ltx_poster_00087_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-slow0.2\\ltx_last_00087_.png"
+    ]
+  },
+  {
+    "key": "street-fps0.2-nolora",
+    "ok": true,
+    "seconds": 46.1,
+    "peak": 24.4,
+    "files": [
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-fps0.2-nolora\\ltx_00088_.mp4",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-fps0.2-nolora\\ltx_poster_00088_.png",
+      "E:\\Darkroom\\docs\\qa\\ltx-loras\\street-fps0.2-nolora\\ltx_last_00088_.png"
+    ]
+  }
+]

@@ -423,6 +423,48 @@ test.describe.serial('Darkroom v2 features', () => {
     await shot(page, 'video-sound');
     await sound.getByRole('button', { name: 'From the scene' }).click();
   });
+
+  test("Video: Lightricks' LTX LoRAs — Slow motion, Cinemagraph, Refine details (DECISIONS 98)", async () => {
+    const cat = await (await page.request.get('/api/loras')).json();
+    const has = (re: RegExp, list: any[]) => list.some((l: any) => re.test(l.name));
+    test.skip(!has(/slow-motion-control/, cat.ltx) || !has(/cinemagraph/, cat.ltx) || !has(/refine-details/, cat.ltxTools), "Lightricks' LTX LoRAs are not on this machine");
+    // continues: frames are set
+    const effect = page.getByRole('group', { name: 'Effect' });
+    await page.getByLabel('Motion prompt').fill('Pedestrians cross the street.');
+    const animate = async () => {
+      const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+      await page.getByRole('button', { name: 'Animate Ctrl+Enter' }).click();
+      const req = await sent;
+      const job = await (await req.response())!.json();
+      await page.request.post(`/api/jobs/${job.id}/cancel`);
+      return req.postDataJSON();
+    };
+    await effect.getByRole('button', { name: 'Slow motion' }).click();
+    await page.getByRole('group', { name: 'Slow-motion speed' }).getByRole('button', { name: '¼ speed' }).click();
+    const slow = await animate();
+    expect(slow.params.motion_speed).toBe(0.25);
+    expect(JSON.parse(slow.params.loras)[0].name).toMatch(/slow-motion-control/);
+    await effect.getByRole('button', { name: 'Cinemagraph' }).click();
+    const cine = await animate();
+    expect(cine.params.motion_prompt).toMatch(/^CINEMAGRAPH_MOTION, Pedestrians cross the street\. The camera holds a locked-off static shot.* Seamless natural loop\.$/);
+    expect(JSON.parse(cine.params.loras)[0]).toMatchObject({ strength: 1.1 });
+    expect(cine.params.motion_speed).toBeUndefined();
+    await effect.getByRole('button', { name: 'None' }).click();
+    // the effect LoRAs are driven by the Effect control, not offered in the LoRA list
+    await expect(page.locator('.lora-picker')).not.toContainText(/slow-motion|cinemagraph/i);
+    // Refine details on a take up to 720p: the take itself goes in, at the Final size
+    const take = ((await (await page.request.get('/api/items?limit=50&filter=videos')).json()).items as any[]).find((i) => i.workflow?.startsWith('ltx') && Math.max(i.width, i.height) <= 1280);
+    await page.goto(`/#/video?take=${take.id}`);
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Refine details' }).click();
+    const req = await sent;
+    const body = req.postDataJSON();
+    expect(body.workflow).toBe('ltx25_v2v_refine');
+    expect(body.meta).toMatchObject({ mode: 'refine', parentId: take.id });
+    expect(Math.max(body.params.width, body.params.height)).toBe(1280);
+    const job = await (await req.response())!.json();
+    await page.request.post(`/api/jobs/${job.id}/cancel`);
+  });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
     await page.goto('/#/generate');
