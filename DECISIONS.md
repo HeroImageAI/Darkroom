@@ -542,3 +542,10 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     sentence starting "The camera" is dropped from the written motion (`dropCameraSentences`; never empties it). No
     chips: unchanged. Same seed, LTX Draft, Static (`docs/qa/motion-camera.jpg`): with the old suggestion the camera
     pushed in anyway (hillside change 40.5 / 255 first→last frame); with the new one the shot stays put (7.6).
+95. **LTX 2.5 is Darkroom's only video model** (JP's call after using both). Wan 2.2 leaves the Video screen: the model
+    cards go (one model), the section reads "LTX 2.5 · length and quality", an older "wan" preference falls back to
+    LTX, and Home says "with sound". Wan's graphs stay in `workflows/` and the manifest's workflow list, so old Wan
+    takes keep their settings and "Open graph"; Extend is off on them (16 fps Wan + 24 fps LTX would play the new part
+    slowly — start an LTX take from their last frame instead). Wan's model files (two 14.3 GB experts, the lightx2v
+    LoRAs, umt5 and the Wan VAE, ~37 GB) go to the Windows Recycle Bin at JP's request. Found on the way: Extend's join
+    drops the sound (fixed with the sound work, decision 97).
