@@ -122,6 +122,12 @@ describe('motion', () => {
       'She turns her head. The camera slowly pushes in toward the subject until it fills most of the frame.',
     );
   });
+  it('adds your sound description after motion and camera (DECISIONS 97)', () => {
+    expect(composeMotionPrompt(T, cams, { model: 'ltx', motion: 'She turns her head', camera: ['push'], sound: 'rain on the window, she whispers "not yet"' })).toBe(
+      'She turns her head. The camera slowly pushes in toward the subject until it fills most of the frame. Rain on the window, she whispers "not yet".',
+    );
+    expect(composeMotionPrompt(T, cams, { model: 'ltx', motion: 'She turns her head', camera: [], sound: ' ' })).toBe('She turns her head.');
+  });
   it('falls back to a model-specific default when empty', () => {
     expect(composeMotionPrompt(T, cams, { model: 'wan', motion: '', camera: [] })).toBe(T.wan.fallback);
     expect(composeMotionPrompt(T, cams, { model: 'ltx', motion: '  ', camera: [] })).toBe(T.ltx.fallback);

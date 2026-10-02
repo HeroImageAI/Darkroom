@@ -265,6 +265,10 @@ export class JobManager {
       if (!ok) throw new WorkflowError(`${weights} is not a Klein 9B model on this PC.`);
       node.inputs.unet_name = weights;
     }
+    // Silent (DECISIONS 97): the clip is saved without its audio track
+    if (req.params.silent === true || req.params.silent === 1 || req.params.silent === 'true') {
+      for (const node of Object.values(prompt)) if (node.class_type === 'CreateVideo') delete node.inputs.audio;
+    }
     // your own LoRAs (DECISIONS 86): only ones made for this job's model, put on the graph's model
     const loras = parseLoras(req.params.loras);
     if (loras.length) {
@@ -557,9 +561,11 @@ export class JobManager {
     try {
       const a = await this.asInput(first);
       const b = await this.asInput(second);
+      // both clips have sound (LTX, not silent): join the sound too (DECISIONS 97); otherwise frames only
+      const sounded = (it: Item) => (it.ui as Record<string, unknown>)?.model !== 'wan' && (it.ui as Record<string, unknown>)?.sound !== 'off' && !it.workflow.startsWith('wan');
       await this.submit({
-        workflow: 'video_join',
-        params: { video: a, video_2: b, fps: first.fps ?? second.fps ?? 16 },
+        workflow: sounded(first) && sounded(second) ? 'video_join_audio' : 'video_join',
+        params: { video: a, video_2: b, fps: first.fps ?? second.fps ?? 24 },
         meta: {
           mode: 'extend',
           model: first.model,

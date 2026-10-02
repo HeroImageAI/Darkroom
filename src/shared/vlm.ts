@@ -254,3 +254,35 @@ export function dropCameraSentences(text: string): string {
   const kept = sentences.filter((s) => !/^["“]?the camera\b/i.test(s.trim()));
   return (kept.length ? kept : sentences).join(' ').trim();
 }
+
+/**
+ * Suggest / Improve motion with the sound chosen on Video (DECISIONS 97): with the user's own sound description the
+ * writer leaves sound alone (Video adds the description itself); with Silent it writes no sound at all.
+ */
+export type SoundMode = 'scene' | 'describe' | 'off';
+export function withSound(req: Vlm2Request, mode: SoundMode | undefined, text = ''): Vlm2Request {
+  const note =
+    mode === 'off'
+      ? 'The clip will have no sound: describe only what is seen, never sounds, music or speech.'
+      : mode === 'describe' && text.trim()
+        ? `The sound is already decided and is added after your text automatically: "${text.trim()}" Do not describe any sounds, music or speech yourself, and do not repeat it.`
+        : '';
+  if (!note) return req;
+  return { ...req, params: { ...req.params, system: `${req.params.system}\n\n${note}` } };
+}
+
+/**
+ * With your own sound description, the motion writer tends to copy it into its text; Video adds it itself, so any
+ * sentence of the written motion that repeats it (same words, ignoring case and punctuation) is dropped.
+ */
+export function dropCopiedSound(text: string, sound: string): string {
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const s = norm(sound);
+  if (!s) return text;
+  const sentences = text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?]["”']?)\s+(?=[A-Z"“])/);
+  const kept = sentences.filter((x) => {
+    const n = norm(x);
+    return !(n.length >= 8 && s.includes(n));
+  });
+  return (kept.length ? kept : sentences).join(' ').trim();
+}

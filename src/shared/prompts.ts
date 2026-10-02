@@ -191,6 +191,8 @@ export interface ComposeMotionArgs {
   model: VideoModelKey;
   motion: string;
   camera: string[]; // camera preset ids
+  /** What the clip should sound like (DECISIONS 97), added after motion and camera; speech in double quotes. */
+  sound?: string;
 }
 
 export function composeMotionPrompt(t: PromptTemplates, cams: CameraPreset[], a: ComposeMotionArgs): string {
@@ -200,7 +202,11 @@ export function composeMotionPrompt(t: PromptTemplates, cams: CameraPreset[], a:
     .filter((c): c is CameraPreset => !!c)
     .map((c) => c[a.model]);
   const motion = sentence(a.motion) || (phrases.length ? '' : tpl.fallback);
-  return fill(tpl.motion, { motion, camera: phrases.join(' ') }) || tidy(tpl.fallback);
+  const body = fill(tpl.motion, { motion, camera: phrases.join(' ') }) || tidy(tpl.fallback);
+  // the sound description reads as its own sentence: capital first, a full stop unless it ends in . ! ? (inside or outside quotes)
+  const raw = (a.sound ?? '').trim().replace(/\s+/g, ' ');
+  const sound = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) + (/[.!?]["”']?$/.test(raw) ? '' : '.') : '';
+  return sound ? `${body} ${sound}` : body;
 }
 
 export function wordCount(s: string): number {

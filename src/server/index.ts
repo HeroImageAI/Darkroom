@@ -16,7 +16,7 @@ import { Store, type FileRef, type LibraryQuery } from './db.js';
 import { desktopRunning, launchDesktop, tailDesktopLog } from './desktop.js';
 import { discoverComfy } from './discovery.js';
 import { JobManager, publicJob, VramWarning, type SubmitRequest } from './jobs.js';
-import { buildVlm2Request, nearestAspect, parsePeJson, dropCameraSentences, withCameraMoves, withEnhanceStyle, type Vlm2Entry, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
+import { buildVlm2Request, nearestAspect, parsePeJson, dropCameraSentences, dropCopiedSound, withCameraMoves, withSound, type SoundMode, withEnhanceStyle, type Vlm2Entry, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
 import { validateTemplates } from '../shared/prompts.js';
 import { samPointsJson } from '../shared/workflow.js';
 import { layersToPsd, layersToZip, type LayerInput } from './layers.js';
@@ -212,7 +212,7 @@ app.post('/api/items/:id/as-input', async (req, reply) => {
  * body: { task, variant, text?, itemId?, input?, which? }  -> { text, seconds }
  */
 app.post('/api/vlm', async (req, reply) => {
-  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; style?: string; camera?: string[]; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string; inputs?: string[] };
+  const b = (req.body ?? {}) as { task: Vlm2Task; variant: string; style?: string; camera?: string[]; sound?: { mode: SoundMode; text?: string }; text?: string; itemId?: string; input?: string; which?: 'main' | 'poster' | 'last'; seed?: number; save?: boolean; input2?: string; inputs?: string[] };
   if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
   let request;
   let pair = false;
@@ -222,6 +222,8 @@ app.post('/api/vlm', async (req, reply) => {
     // Video motion with an end frame: the "<variant>_pair" prompt, which asks for the motion from START to END
     pair = b.task === 'motion' && !!b.input2 && !!(prompts.motion as Record<string, unknown> | undefined)?.[`${b.variant}_pair`];
     request = buildVlm2Request(prompts, b.task, pair ? `${b.variant}_pair` : b.variant, b.text ?? '', (rel) => fs.readFileSync(path.join(cfg.paths.presets, rel), 'utf8'));
+    // Motion with the sound chosen on Video (DECISIONS 97)
+    if (b.task === 'motion' && b.sound) request = withSound(request, b.sound.mode, b.sound.text);
     // Motion with the camera chips chosen on Video (DECISIONS 94): the writer leaves the camera to them
     if (b.task === 'motion' && Array.isArray(b.camera) && b.camera.length) {
       const cams = readJson<{ camera: Record<string, string>[] }>(path.join(cfg.paths.presets, 'camera.json')).camera;
@@ -288,6 +290,8 @@ ${params.prompt}`;
     let text = String(meta.text ?? '');
     // camera chips own the camera (DECISIONS 94): the written motion keeps none of its own
     if (b.task === 'motion' && Array.isArray(b.camera) && b.camera.length) text = dropCameraSentences(text);
+    // your sound description is added by Video itself (DECISIONS 97): the written motion keeps no copy of it
+    if (b.task === 'motion' && b.sound?.mode === 'describe' && b.sound.text) text = dropCopiedSound(text, b.sound.text);
     let ratio: string | null = null;
     if (request.output === 'json_ratio') ({ text, ratio } = parsePeJson(String(meta.raw ?? text)));
     if (b.save && b.itemId && b.task === 'caption') store.updateItem(b.itemId, { caption: text });

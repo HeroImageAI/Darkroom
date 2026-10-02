@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, VLM_VARIANTS, withEnhanceStyle, dropCameraSentences, withCameraMoves, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
+import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, VLM_VARIANTS, withEnhanceStyle, dropCameraSentences, withCameraMoves, withSound, dropCopiedSound, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
 
 const P = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'presets', 'vlm_prompts.json'), 'utf8')) as VlmPrompts;
 
@@ -156,5 +156,25 @@ describe('Motion with camera chips (DECISIONS 94)', () => {
   });
   it('never empties the text', () => {
     expect(dropCameraSentences('The camera pans left.')).toBe('The camera pans left.');
+  });
+});
+
+describe('Motion with the chosen sound (DECISIONS 97)', () => {
+  const base = { workflow: 'vlm2_image' as const, params: { system: 'SYS', prompt: 'P' }, modelLabel: 'm', output: 'text' as const };
+  it('Silent: no sounds; Describe: leave sound to the description; From the scene: unchanged', () => {
+    expect(withSound(base, 'off').params.system).toMatch(/no sound: describe only what is seen/);
+    expect(withSound(base, 'describe', 'rain on the window').params.system).toMatch(/already decided .*"rain on the window" Do not describe any sounds/);
+    expect(withSound(base, 'describe', '  ')).toBe(base);
+    expect(withSound(base, 'scene')).toBe(base);
+    expect(withSound(base, undefined)).toBe(base);
+  });
+});
+
+describe('dropCopiedSound', () => {
+  it('drops a copied sound sentence, keeps the motion', () => {
+    const t = 'The boats bob gently. The orange buoy bobs near the dock. Gulls cry and a ship horn sounds twice.';
+    expect(dropCopiedSound(t, 'Gulls cry and a ship horn sounds twice.')).toBe('The boats bob gently. The orange buoy bobs near the dock.');
+    expect(dropCopiedSound(t, '')).toBe(t);
+    expect(dropCopiedSound('Gulls cry.', 'Gulls cry.')).toBe('Gulls cry.'); // never empties it
   });
 });
