@@ -463,6 +463,16 @@ app.patch('/api/items/:id', async (req, reply) => {
 });
 
 // ---- Your own LoRAs, sorted by the model they fit (DECISIONS 86)
+/** Your own Klein 9B fine-tunes (DECISIONS 91). */
+app.get('/api/models/klein', async (_req, reply) => {
+  try {
+    const official = jobs.loraModels().klein;
+    return { official, finetunes: await jobs.loraLibrary.finetunes(official) };
+  } catch (e) {
+    return reply.code(503).send({ error: (e as Error).message });
+  }
+});
+
 app.get('/api/loras', async (_req, reply) => {
   if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
   try {

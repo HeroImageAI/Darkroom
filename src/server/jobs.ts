@@ -255,6 +255,16 @@ export class JobManager {
       }
     }
     const prompt = buildPrompt(this.template(spec.file), spec, req.params);
+    // your own Klein 9B fine-tune (DECISIONS 91): only a file whose layers match Klein 9B replaces the graph's model
+    const weights = typeof req.params.klein_weights === 'string' ? req.params.klein_weights : '';
+    if (weights) {
+      const nodeId = findByTitle(prompt, 'DR_MODEL')[0];
+      const node = nodeId ? prompt[nodeId] : undefined;
+      if (spec.family !== 'klein' || !node) throw new WorkflowError('A Klein 9B fine-tune can only be used with Klein 9B.');
+      const ok = (await this.loraLibrary.finetunes(this.loraModels().klein)).some((f) => f.name === weights);
+      if (!ok) throw new WorkflowError(`${weights} is not a Klein 9B model on this PC.`);
+      node.inputs.unet_name = weights;
+    }
     // your own LoRAs (DECISIONS 86): only ones made for this job's model, put on the graph's model
     const loras = parseLoras(req.params.loras);
     if (loras.length) {

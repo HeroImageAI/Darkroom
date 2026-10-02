@@ -26,6 +26,7 @@ import { deleteWithUndo, openLibrary } from '../lib/remove';
 import { expandVariations } from '../../shared/variations';
 import type { LoraUse } from '../../shared/loras';
 import { LoraPicker } from '../components/LoraPicker';
+import { KleinWeights, kleinLabel, useFinetunes } from '../components/KleinWeights';
 
 /** Prompt variations: at most this many prompts, and this many pictures per click (variations × batch). */
 const MAX_VARIATIONS = 16;
@@ -58,6 +59,8 @@ export interface GenSettings {
   quality?: string;
   /** Klein: 'standard' (~1 MP) | 'high' (~2 MP). Its own setting, so Native 2K for Qwen never makes Klein High. */
   kleinQuality?: string;
+  /** Klein: your fine-tune's file (DECISIONS 91); '' = official Klein 9B. */
+  kleinWeights?: string;
   /** Qwen: transparent background (real alpha) */
   transparent?: boolean;
   /** Your LoRAs, per model (a preference, like the style). */
@@ -134,6 +137,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
     promptRef.current?.focus();
   };
 
+  const finetunes = useFinetunes();
   const m = boot?.manifest;
   const model = m?.models[s.model] ?? m?.models.klein;
   const styles = boot?.styles.styles ?? [];
@@ -363,6 +367,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
     cur.refs.forEach((r, i) => (params[`image_${i + 1}`] = r.name));
     const loras = cur.loras?.[cur.model] ?? [];
     if (loras.length) params.loras = JSON.stringify(loras);
+    if (cur.model === 'klein' && cur.kleinWeights) params.klein_weights = cur.kleinWeights;
+    const modelLabel = cur.model === 'klein' ? kleinLabel(cur.kleinWeights, finetunes) : mm.label;
     try {
       const ids: string[] = [];
       for (const text of variations.prompts) {
@@ -372,7 +378,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
           params: { ...params, prompt: fullPrompt },
           meta: {
             mode: 'generate',
-            model: cur.refs.length ? `${mm.label} + refs` : mm.label,
+            model: cur.refs.length ? `${modelLabel} + refs` : modelLabel,
             prompt: fullPrompt,
             parentId,
             // the settings keep the prompt as typed (with its {a|b} groups), so Reuse / Restore bring the template back
@@ -578,6 +584,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
               ))}
             </div>
           </div>
+
+          {s.model === 'klein' && <KleinWeights value={s.kleinWeights ?? ''} onChange={(v) => update({ kleinWeights: v })} />}
 
           {/* quality sits with the model: it is the biggest quality choice after the model itself */}
           {model.quality && (

@@ -40,6 +40,7 @@ import { CIRCLE_COLOUR, circleFor } from '../../shared/annotate';
 import { PresetPicker } from '../components/PresetPicker';
 import { importFailedMessage, importPictures } from '../lib/importer';
 import { LoraPicker } from '../components/LoraPicker';
+import { KleinWeights, kleinLabel, useFinetunes } from '../components/KleinWeights';
 import type { LoraUse } from '../../shared/loras';
 
 /** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
@@ -134,6 +135,10 @@ function Editor({ item }: { item: Item }) {
   // your own LoRAs per model (DECISIONS 86), used by Instruct, Inpaint, Outpaint and Enhance
   const [editLoras, setEditLoras] = usePersistent<Record<string, LoraUse[]>>('edit.loras', {});
   const lorasNow = (): LoraUse[] => (editModel === 'klein' || editModel === 'qwen' ? (editLoras[editModel] ?? []) : []);
+  // your Klein 9B fine-tune (DECISIONS 91), a preference like the LoRAs
+  const [kleinWeights, setKleinWeights] = usePersistent<string>('edit.kleinWeights', '');
+  const finetunes = useFinetunes();
+  const weightsNow = (): Record<string, string> => (editModel === 'klein' && kleinWeights ? { klein_weights: kleinWeights } : {});
   const [enhanceKind, setEnhanceKind] = useState<EnhanceKind>('restore');
   const [enhanceAdv, setEnhanceAdv] = useState(false);
   const [denoise, setDenoise] = useState<number | null>(null); // null = model default for the chosen strength
@@ -144,7 +149,7 @@ function Editor({ item }: { item: Item }) {
       /* storage blocked */
     }
   }, [editModel]);
-  const modelLabel = boot?.manifest.models[editModel]?.label ?? editModel;
+  const modelLabel = editModel === 'klein' ? kleinLabel(kleinWeights, finetunes) : (boot?.manifest.models[editModel]?.label ?? editModel);
   const wfFor = (m: 'instruct' | 'inpaint' | 'outpaint' | 'enhance' | 'enhance_subtle') =>
     boot?.manifest.edit?.[m]?.[editModel] ??
     { instruct: 'qwen_edit', inpaint: 'inpaint', outpaint: 'outpaint', enhance: 'qwen_enhance_edit', enhance_subtle: 'qwen_enhance' }[m];
@@ -454,7 +459,7 @@ function Editor({ item }: { item: Item }) {
       const inp = await api.asInput(item.id);
       const j = await api.submit({
         workflow,
-        params: { image_1: inp.name, seed: randomSeed(), ...params, ...(LORA_MODES.has(modeKey) && lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}) },
+        params: { image_1: inp.name, seed: randomSeed(), ...params, ...(LORA_MODES.has(modeKey) && lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(LORA_MODES.has(modeKey) ? weightsNow() : {}) },
         meta: { mode: modeKey, model, prompt: promptText || item.prompt, parentId: item.id, ui: item.ui },
       });
       setJobId(j.id);
@@ -586,6 +591,7 @@ function Editor({ item }: { item: Item }) {
         megapixels: plan.megapixels,
       };
       if (lorasNow().length) params.loras = JSON.stringify(lorasNow());
+      Object.assign(params, weightsNow());
       if (!restore) {
         params.denoise = effDenoise;
         if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / effDenoise));
@@ -1054,6 +1060,7 @@ function Editor({ item }: { item: Item }) {
                   </button>
                 ))}
               </div>
+              {editModel === 'klein' && <KleinWeights value={kleinWeights} onChange={setKleinWeights} />}
               {(editModel === 'klein' || editModel === 'qwen') && (
                 <div style={{ marginTop: 12 }}>
                   <LoraPicker family={editModel} value={editLoras[editModel] ?? []} onChange={(v) => setEditLoras((prev) => ({ ...prev, [editModel]: v }))} />
