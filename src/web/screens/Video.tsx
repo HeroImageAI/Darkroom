@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeftRight, Bell, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Plus, Repeat, Sparkles, Scissors, Undo2, Volume2, VolumeX, Waves, X } from 'lucide-react';
+import { ArrowLeftRight, Bell, Brush, Camera, Clapperboard, Download, FastForward, ImagePlus, Loader2, Pause, Play, Plus, Repeat, Sparkles, Scissors, Undo2, Volume2, VolumeX, Waves, X } from 'lucide-react';
 import { LibraryPicker } from '../components/LibraryPicker';
 import { api, ApiError, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo, openLibrary } from '../lib/remove';
@@ -11,6 +11,7 @@ import { orientationOf, planVideo, type VideoQuality } from '../../shared/manife
 import { LoraPicker, useLoraCatalogue, type Catalogue } from '../components/LoraPicker';
 import type { LoraUse } from '../../shared/loras';
 import { composeMotionPrompt, wordCount, type VideoModelKey } from '../../shared/prompts';
+import { restoreCanvas, restoredFrames, restoreWindows } from '../../shared/restore';
 
 interface Frame {
   name: string;
@@ -404,6 +405,55 @@ export function Video({ query }: { query: URLSearchParams }) {
     }
   };
 
+  /**
+   * Restore (DECISIONS 100): Lightricks' Restore IC-LoRA repairs old or damaged footage (scratches, grain, flicker,
+   * faded colour) at up to 1280 px, in 4-second parts that continue from each other; the server joins them and puts
+   * the clip's own sound back.
+   */
+  const [restoreFor, setRestoreFor] = useState<Item | null>(null);
+  const [restoreText, setRestoreText] = useState('');
+  const restorePlan = (it: Item) => {
+    const frames = it.frames ?? Math.round((it.duration ?? 5) * (it.fps ?? 24)) + 1;
+    const windows = restoreWindows(frames);
+    return { frames, windows, covered: restoredFrames(windows), canvas: restoreCanvas(it.width ?? 1280, it.height ?? 720) };
+  };
+  const restore = async () => {
+    const take = restoreFor;
+    setRestoreFor(null);
+    if (!take || !ltxCat?.restore) return;
+    const { windows, canvas } = restorePlan(take);
+    if (!windows.length) return toast('This clip is too short to restore (it needs at least 9 frames).', 'error');
+    try {
+      const inp = await api.asInput(take.id);
+      const what = restoreText.trim();
+      await queue({
+        workflow: 'ltx25_v2v_restore',
+        params: {
+          video: inp.name,
+          start: windows[0].start,
+          length: windows[0].length,
+          motion_prompt: (what ? what.replace(/[.\s]+$/, '') + '. ' : '') + 'Restored film footage in natural colour: clean and sharp, no scratches, no grain, no flicker, steady exposure.',
+          seed: randomSeed(),
+          width: canvas.width,
+          height: canvas.height,
+        },
+        meta: {
+          mode: 'restore_part',
+          model: windows.length > 1 ? `LTX 2.5 · Restore, part 1 of ${windows.length}` : 'LTX 2.5 · Restore',
+          prompt: take.prompt,
+          ui: take.ui,
+          notify: s.notify,
+          durationSec: take.duration ?? undefined,
+          estimateSec: 190,
+          chain: { kind: 'restore', firstItemId: take.id, windows },
+        },
+      });
+      toast(windows.length > 1 ? `Restoring in ${windows.length} parts; Darkroom joins them when the last is done.` : 'Restoring…', 'info', 7000);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
+
   const saveFrame = async (t: number) => {
     if (!sel) return;
     try {
@@ -645,7 +695,7 @@ export function Video({ query }: { query: URLSearchParams }) {
 
       <section className="stage" aria-label="Player">
         {sel ? (
-          <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={sel.workflow.startsWith('wan') ? undefined : extend} onSmooth={smooth} onRefine={ltxCat?.refine && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && !sel.workflow.startsWith('wan') ? refine : undefined} onCutOut={ltxCat?.alpha && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && (sel.frames ?? 0) <= 145 && !sel.workflow.startsWith('wan') && sel.mode !== 'matte' ? () => setCutoutFor(sel) : undefined} online={online} />
+          <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={sel.workflow.startsWith('wan') ? undefined : extend} onSmooth={smooth} onRefine={ltxCat?.refine && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && !sel.workflow.startsWith('wan') ? refine : undefined} onCutOut={ltxCat?.alpha && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && (sel.frames ?? 0) <= 145 && !sel.workflow.startsWith('wan') && sel.mode !== 'matte' ? () => setCutoutFor(sel) : undefined} onRestore={ltxCat?.restore && sel.mode !== 'matte' ? () => setRestoreFor(sel) : undefined} online={online} />
         ) : (
           <div className="stage-main">
             <div className="empty">
@@ -731,6 +781,34 @@ export function Video({ query }: { query: URLSearchParams }) {
           </div>
         </Dialog>
       )}
+      {restoreFor &&
+        (() => {
+          const p = restorePlan(restoreFor);
+          const fps = restoreFor.fps ?? 24;
+          return (
+            <Dialog title="Restore old footage" onClose={() => setRestoreFor(null)}>
+              <p style={{ marginTop: 0 }}>
+                Lightricks' Restore removes scratches, grain, flicker and blur and brings back colour, at {p.canvas.width}×{p.canvas.height}. The colours and fine detail are its best guess, not the original's.
+              </p>
+              <label htmlFor="restore-what" style={{ display: 'block', fontSize: 13, marginBottom: 4 }}>
+                What's in the clip (optional)
+              </label>
+              <textarea id="restore-what" className="input" rows={2} value={restoreText} onChange={(e) => setRestoreText(e.target.value)} placeholder="e.g. A fishing harbour in the 1950s, boats at the quay, a sunny day" />
+              <p className="muted" style={{ fontSize: 13 }}>
+                {p.windows.length > 1 ? `${p.windows.length} parts of 4 seconds, joined at the end` : 'One part'} · about {Math.max(1, Math.round((p.windows.length * 190) / 60))} min
+                {p.covered < p.frames - 7 ? ` · only the first ${(p.covered / fps).toFixed(0)} s of ${(p.frames / fps).toFixed(0)} s are restored` : ''}
+              </p>
+              <div className="field-row" style={{ justifyContent: 'flex-end' }}>
+                <button className="btn ghost" onClick={() => setRestoreFor(null)}>
+                  Cancel
+                </button>
+                <button className="btn primary" onClick={() => void restore()} disabled={!online || !p.windows.length}>
+                  <Brush size={14} /> Restore
+                </button>
+              </div>
+            </Dialog>
+          );
+        })()}
       {cutoutFor && cutoutPick && <LibraryPicker title="Background picture" onClose={() => setCutoutPick(false)} onPick={(it) => void cutOut({ itemId: it.id })} />}
       {picker && (
         <LibraryPicker
@@ -857,7 +935,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
       </div>
       <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <span style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {({ extend: 'Extended', smooth: 'Smoothed', refine: 'Refined', matte: 'Matte', cutout: 'Cut out' } as Record<string, string>)[meta.mode] ?? meta.model ?? job.workflow}
+          {({ extend: 'Extended', smooth: 'Smoothed', refine: 'Refined', matte: 'Matte', cutout: 'Cut out', restore: 'Restored', restore_part: 'Restoring' } as Record<string, string>)[meta.mode] ?? meta.model ?? job.workflow}
           {meta.ui?.quality ? ` · ${({ final: 'Final', hd: '1080p', draft: 'Draft' } as Record<string, string>)[meta.ui.quality] ?? 'Draft'}` : ''}{meta.ui?.sound === 'off' ? ' · Silent' : ''}
         </span>
         <span className="mono muted" style={{ fontSize: 11 }}>
@@ -900,7 +978,7 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
   );
 }
 
-function Player({ item, onSaveFrame, onExtend, onSmooth, onRefine, onCutOut, online }: { item: Item; onSaveFrame: (t: number) => void; onExtend?: () => void; onSmooth: () => void; onRefine?: () => void; onCutOut?: () => void; online: boolean }) {
+function Player({ item, onSaveFrame, onExtend, onSmooth, onRefine, onCutOut, onRestore, online }: { item: Item; onSaveFrame: (t: number) => void; onExtend?: () => void; onSmooth: () => void; onRefine?: () => void; onCutOut?: () => void; onRestore?: () => void; online: boolean }) {
   const vid = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [t, setT] = useState(0);
@@ -1033,6 +1111,11 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, onRefine, onCutOut, onl
               <Scissors size={14} /> Cut out
             </button>
           )}
+          {onRestore && (
+            <button className="btn sm" onClick={onRestore} disabled={!online} title="Repair old or damaged footage: scratches, grain, flicker, blur and faded colour (Lightricks' Restore IC-LoRA). About 3 minutes per 4 seconds.">
+              <Brush size={14} /> Restore
+            </button>
+          )}
           <a className="btn sm" href={downloadUrl(item.id)} download>
             <Download size={14} /> MP4
           </a>
@@ -1053,11 +1136,12 @@ interface LtxFiles {
   cinemagraph?: string;
   refine?: string;
   alpha?: string;
+  restore?: string;
 }
 function ltxFiles(cat: Catalogue | null): LtxFiles | null {
   if (!cat) return null;
   const find = (list: { name: string }[] | undefined, re: RegExp) => list?.find((l) => re.test(l.name))?.name;
-  return { slowmo: find(cat.ltx, /slow-motion-control/i), cinemagraph: find(cat.ltx, /cinemagraph/i), refine: find(cat.ltxTools, /refine-details/i), alpha: find(cat.ltxTools, /alpha-gen/i) };
+  return { slowmo: find(cat.ltx, /slow-motion-control/i), cinemagraph: find(cat.ltx, /cinemagraph/i), refine: find(cat.ltxTools, /refine-details/i), alpha: find(cat.ltxTools, /alpha-gen/i), restore: find(cat.ltxTools, /ic-lora-restore/i) };
 }
 /** The effect in use: the chosen one, if its LoRA is on this PC. */
 function effectOf(st: Pick<VideoSettings, 'effect'>, f: LtxFiles | null): 'none' | 'slowmo' | 'cinemagraph' {

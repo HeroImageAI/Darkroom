@@ -4996,6 +4996,49 @@
         "poster": "DR_POSTER",
         "last": "DR_LAST_FRAME"
       }
+    },
+    "video_restore_join": {
+      "file": "video_restore_join.json",
+      "family": "util",
+      "kind": "video",
+      "label": "Join restored windows (built for the parts by the server)",
+      "params": {
+        "video": {
+          "type": "video",
+          "label": "Source clip",
+          "targets": [
+            {
+              "title": "DR_VIDEO",
+              "input": "file"
+            }
+          ]
+        },
+        "parts": {
+          "type": "string",
+          "targets": [],
+          "default": "[]"
+        },
+        "windows": {
+          "type": "string",
+          "targets": [],
+          "default": "[]"
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/restored"
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
+      }
     }
   },
   "vramNeedGB": {

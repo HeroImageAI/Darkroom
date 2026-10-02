@@ -246,7 +246,7 @@ export class Store {
   }
 
   listItems(q: LibraryQuery = {}): { items: Item[]; total: number } {
-    const where: string[] = [q.filter === 'deleted' ? 'deleted_at IS NOT NULL' : 'deleted_at IS NULL'];
+    const where: string[] = [q.filter === 'deleted' ? 'deleted_at IS NOT NULL' : "deleted_at IS NULL AND mode != 'restore_part'"];
     const args: any[] = [];
     switch (q.filter) {
       case 'favourites':

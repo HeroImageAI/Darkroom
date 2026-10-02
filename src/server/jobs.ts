@@ -4,6 +4,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { checkMatte } from '../shared/matte.js';
 import { mp4Info } from './mp4info.js';
+import { restoreJoinPrompt, type RestoreWindow } from '../shared/restore.js';
 import WebSocket from 'ws';
 import { ComfyClient, filesFromHistory, historyError, parseWsMessage, textFromHistory, type OutputFile } from '../shared/comfy.js';
 import { cleanVlmOutput } from '../shared/vlm.js';
@@ -256,7 +257,15 @@ export class JobManager {
         this.broadcast({ type: 'toast', kind: 'info', text: `The ${(p.label ?? name).toLowerCase()} picture is no longer available, so it was left out.` });
       }
     }
-    const prompt = buildPrompt(this.template(spec.file), spec, req.params);
+    let prompt = buildPrompt(this.template(spec.file), spec, req.params);
+    // Restore (DECISIONS 100): the join is built for exactly the restored parts
+    if (req.workflow === 'video_restore_join') {
+      const parts = JSON.parse(String(req.params.parts ?? '[]')) as string[];
+      const windows = JSON.parse(String(req.params.windows ?? '[]')) as RestoreWindow[];
+      if (!parts.length || parts.length !== windows.length) throw new WorkflowError('The restored parts do not match their windows.');
+      const silent = req.params.silent === true || req.params.silent === 1 || req.params.silent === 'true';
+      prompt = restoreJoinPrompt({ source: String(req.params.video), parts, windows, sound: !silent, output: String(req.params.output ?? 'darkroom/video/restored') });
+    }
     // your own Klein 9B fine-tune (DECISIONS 91): only a file whose layers match Klein 9B replaces the graph's model
     const weights = typeof req.params.klein_weights === 'string' ? req.params.klein_weights : '';
     if (weights) {
@@ -577,6 +586,56 @@ export class JobManager {
       }
       return;
     }
+    // Restore (DECISIONS 100): the next window, guided by this one's last 17 restored frames; after the last, the join
+    if (chain?.kind === 'restore' && newIds[0] && chain.firstItemId) {
+      const c = chain as { kind: string; firstItemId: string; windows: RestoreWindow[]; index?: number; parts?: string[]; partJobs?: string[] };
+      const src = this.store.getItem(c.firstItemId);
+      const part = this.store.getItem(newIds[0]);
+      if (!src || !part || !this.comfy) return;
+      const parts = [...(c.parts ?? []), part.id];
+      const partJobs = [...(c.partJobs ?? []), job.id];
+      const next = (c.index ?? 0) + 1;
+      try {
+        if (next < c.windows.length) {
+          const w = c.windows[next];
+          await this.submit({
+            workflow: job.workflow,
+            params: { ...(job.params as Record<string, string | number>), prev: await this.asInput(part), start: w.start, length: w.length },
+            meta: { ...(job.meta as { mode: string }), model: `LTX 2.5 · Restore, part ${next + 1} of ${c.windows.length}`, followOf: job.id, chain: { ...c, index: next, parts, partJobs } },
+          });
+        } else {
+          const items = parts.map((id) => this.store.getItem(id)).filter((x): x is Item => !!x);
+          const sound = await this.comfy.view(src.file).then((b) => mp4Info(Buffer.from(b)).hasAudio).catch(() => false);
+          await this.submit({
+            workflow: 'video_restore_join',
+            params: { video: await this.asInput(src), parts: JSON.stringify(await Promise.all(items.map((it) => this.asInput(it)))), windows: JSON.stringify(c.windows), ...(sound ? {} : { silent: 1 }) },
+            meta: {
+              mode: 'restore',
+              model: 'LTX 2.5 · Restore',
+              prompt: src.prompt,
+              parentId: src.id,
+              ui: { ...(src.ui ?? {}), sound: sound ? 'scene' : 'off' },
+              notify: !!job.meta.notify,
+              followOf: job.id,
+              chain: { kind: 'restore_done', parts, partJobs },
+            },
+          });
+        }
+      } catch (e) {
+        this.broadcast({ type: 'toast', kind: 'error', text: 'Restore stopped: ' + friendlyError((e as Error).message) + ' The restored parts are in Recently deleted.' });
+        this.store.softDelete(parts);
+        this.broadcast({ type: 'library' });
+      }
+      return;
+    }
+    // the restored clip is joined: its parts go to Recently deleted and their takes are put away
+    if (chain?.kind === 'restore_done' && newIds[0]) {
+      const c = chain as { parts?: string[]; partJobs?: string[] };
+      this.store.softDelete(c.parts ?? []);
+      this.store.dismissJobs(c.partJobs ?? []);
+      this.broadcast({ type: 'library' });
+      return;
+    }
     if (chain?.kind === 'upscale' && newIds[0]) {
       const it = this.store.getItem(newIds[0]);
       if (!it) return;
@@ -637,7 +696,6 @@ export class JobManager {
     }
   }
 
-  /** The board a new result should go to, if it (still) exists. */
   /**
    * Your own video into the Library (DECISIONS 100). The uploaded file is the item's file (in ComfyUI's input
    * folder); the browser supplies its first and last frames (poster, Extend); size, frame rate, frames and length come
@@ -691,6 +749,7 @@ export class JobManager {
     return item;
   }
 
+  /** The board a new result should go to, if it (still) exists. */
   private liveBoard(id: unknown): string | null {
     return typeof id === 'string' && id && this.store.board(id) ? id : null;
   }
