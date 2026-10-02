@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { restoreCanvas, restoredFrames, restoreWindows } from '../src/shared/restore';
+import { restoreCanvas, restoredFrames, restoreWindows, restoreJoinPrompt } from '../src/shared/restore';
 
 describe('restore windows', () => {
   it('a short clip is one window', () => {
@@ -29,5 +29,26 @@ describe('restore canvas', () => {
     expect(restoreCanvas(1920, 1080)).toEqual({ width: 1280, height: 704 });
     expect(restoreCanvas(1080, 1920)).toEqual({ width: 704, height: 1280 });
     expect(restoreCanvas(640, 480)).toEqual({ width: 1280, height: 960 });
+  });
+});
+
+describe('restoreJoinPrompt', () => {
+  const cls = (g: Record<string, { class_type: string }>, c: string) => Object.values(g).filter((n) => n.class_type === c).length;
+  it('one part: no crossfade, the whole part', () => {
+    const g = restoreJoinPrompt({ source: 's.mp4', parts: ['p1.mp4'], windows: restoreWindows(73), sound: false });
+    expect(cls(g, 'SolidMask')).toBe(0);
+    expect(cls(g, 'TrimAudioDuration')).toBe(0);
+    const part = Object.values(g).find((n) => n._meta?.title === 'Part 1 frames')!;
+    expect(part.inputs).toMatchObject({ batch_index: 0, length: 73 });
+  });
+  it('three parts: own frames plus two 17-frame crossfades add up to the restored length, with sound', () => {
+    const windows = restoreWindows(242);
+    const g = restoreJoinPrompt({ source: 's.mp4', parts: ['a', 'b', 'c'], windows, sound: true });
+    expect(cls(g, 'SolidMask')).toBe(17);
+    expect(cls(g, 'ImageCompositeMasked')).toBe(2);
+    const joined = Object.values(g).find((n) => n.class_type === 'BatchImagesNode')!;
+    const lengths = Object.values(joined.inputs).map((r) => (g[(r as [string, number])[0]].class_type === 'ImageCompositeMasked' ? 17 : (g[(r as [string, number])[0]].inputs.length as number)));
+    expect(lengths.reduce((x, y) => x + y, 0)).toBe(restoredFrames(windows));
+    expect(cls(g, 'TrimAudioDuration')).toBe(1);
   });
 });
