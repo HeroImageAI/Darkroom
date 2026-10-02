@@ -10,6 +10,7 @@ import sys
 
 LORA = sys.argv[1] if len(sys.argv) > 1 else 'ltx-2.5-22b-ic-lora-refine-details-1.0.safetensors'
 OUT = sys.argv[2] if len(sys.argv) > 2 else 'experiments/ltx25_v2v_refine.json'
+PREFIX = sys.argv[3] if len(sys.argv) > 3 else 'darkroom/video/refined'
 
 b = json.load(open('ltx25_i2v.v2.json'))
 n = {k: b[k] for k in ['1', '2', '3', '4', '5', '6', '8', '9', '10', '24', '25', '26']}
@@ -38,10 +39,10 @@ node(28, 'LTXVSeparateAVLatent', 'Split AV', av_latent=['27', 1])
 node(29, 'LTXVCropGuides', 'Crop guides', positive=['19', 0], negative=['19', 1], latent=['28', 0])
 node(30, 'VAEDecodeTiled', 'Decode', samples=['29', 2], vae=['3', 0], tile_size=512, overlap=64, temporal_size=64, temporal_overlap=16)
 node(32, 'CreateVideo', 'Create video', images=['30', 0], fps=['71', 2], audio=['71', 1])
-n['33'] = json.loads(json.dumps(b['33'])); n['33']['inputs']['filename_prefix'] = 'darkroom/video/refined'
+n['33'] = json.loads(json.dumps(b['33'])); n['33']['inputs']['filename_prefix'] = PREFIX
 node(34, 'ImageFromBatch', 'Poster frame', image=['30', 0], batch_index=0, length=1)
-node(35, 'SaveImage', 'DR_POSTER', images=['34', 0], filename_prefix='darkroom/video/refined_poster')
+node(35, 'SaveImage', 'DR_POSTER', images=['34', 0], filename_prefix=PREFIX + '_poster')
 node(36, 'ImageFromBatch', 'Last frame', image=['30', 0], batch_index=4095, length=1)
-node(37, 'SaveImage', 'DR_LAST_FRAME', images=['36', 0], filename_prefix='darkroom/video/refined_last')
+node(37, 'SaveImage', 'DR_LAST_FRAME', images=['36', 0], filename_prefix=PREFIX + '_last')
 json.dump(n, open(OUT, 'w'), indent=2)
 print(OUT, len(n), 'nodes')

@@ -4725,6 +4725,140 @@
         "poster": "DR_POSTER",
         "last": "DR_LAST_FRAME"
       }
+    },
+    "ltx25_v2v_alpha": {
+      "file": "ltx25_v2v_alpha.json",
+      "family": "ltx",
+      "kind": "video",
+      "label": "LTX 2.5 Alpha-Gen: a matte for a take (IC-LoRA)",
+      "params": {
+        "video": {
+          "type": "video",
+          "label": "Video",
+          "targets": [
+            {
+              "title": "DR_VIDEO",
+              "input": "file"
+            }
+          ]
+        },
+        "motion_prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MOTION_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "width": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_WIDTH",
+              "input": "value"
+            }
+          ],
+          "default": 864,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "height": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_HEIGHT",
+              "input": "value"
+            }
+          ],
+          "default": 480,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/matte"
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
+      }
+    },
+    "video_composite": {
+      "file": "video_composite.json",
+      "family": "util",
+      "kind": "video",
+      "label": "Cut out: a take over a new background, by its matte",
+      "params": {
+        "video": {
+          "type": "video",
+          "label": "Take",
+          "targets": [
+            {
+              "title": "DR_VIDEO",
+              "input": "file"
+            }
+          ]
+        },
+        "video_2": {
+          "type": "video",
+          "label": "Matte",
+          "targets": [
+            {
+              "title": "DR_VIDEO_2",
+              "input": "file"
+            }
+          ]
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Background",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/cutout"
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
+      }
     }
   },
   "vramNeedGB": {

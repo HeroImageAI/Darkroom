@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
+import { checkMatte } from '../shared/matte.js';
 import WebSocket from 'ws';
 import { ComfyClient, filesFromHistory, historyError, parseWsMessage, textFromHistory, type OutputFile } from '../shared/comfy.js';
 import { cleanVlmOutput } from '../shared/vlm.js';
@@ -427,15 +428,15 @@ export class JobManager {
       if (!vid) return this.fail(jobId, 'ComfyUI finished but produced no video.');
       const poster = role('poster')[0] ?? null;
       const last = role('last')[0] ?? null;
-      const fps = Number(p.fps) || null;
-      const metaDur = typeof job.meta.durationSec === 'number' ? (job.meta.durationSec as number) : null;
+      const fps = Number(p.fps) || parent?.fps || null;
+      const metaDur = typeof job.meta.durationSec === 'number' ? (job.meta.durationSec as number) : (parent?.duration ?? null);
       const frames = Number(p.frames) || (metaDur && fps ? Math.round(metaDur * fps) + 1 : null);
       const item: Item = {
         ...base,
         id: crypto.randomUUID(),
         kind: 'video',
-        width: Number(p.width) || null,
-        height: Number(p.height) || null,
+        width: Number(p.width) || parent?.width || null,
+        height: Number(p.height) || parent?.height || null,
         fps,
         frames,
         duration: fps && frames ? (frames - 1) / fps : null,
@@ -528,6 +529,46 @@ export class JobManager {
         });
       } catch (e) {
         this.broadcast({ type: 'toast', kind: 'error', text: 'Could not make the background plate: ' + friendlyError((e as Error).message) });
+      }
+      return;
+    }
+    // Cut out (DECISIONS 99): the matte is done; put the take over the chosen background with it
+    if (chain?.kind === 'composite' && newIds[0] && chain.firstItemId) {
+      const take = this.store.getItem(chain.firstItemId);
+      const matte = this.store.getItem(newIds[0]);
+      const c = chain as Record<string, unknown>;
+      const background = String(c.background ?? '');
+      if (!take || !matte || !background || !this.comfy) return;
+      // some seeds give a grey matte (the picture's shading bleeding in): check its first and last frames, and make
+      // it again with another seed (twice at most) rather than turning the subject into a see-through ghost
+      try {
+        const checks = await Promise.all(
+          [matte.poster, matte.last_frame].filter((f): f is FileRef => !!f).map(async (f) => checkMatte(new Uint8Array(await sharp(Buffer.from(await this.comfy!.view(f))).greyscale().raw().toBuffer()))),
+        );
+        const attempt = Number(c.attempt ?? 0);
+        if (checks.length && checks.every((x) => x.foreground < 0.005)) {
+          this.broadcast({ type: 'toast', kind: 'error', text: 'Cut out: Alpha-Gen found no clear subject in this take (wide scenes and crowds often have none). The matte is in the Library.' });
+          return;
+        }
+        if (checks.some((x) => !x.ok) && attempt < 2) {
+          this.store.softDelete([matte.id]);
+          this.broadcast({ type: 'library' });
+          this.broadcast({ type: 'toast', kind: 'info', text: `Cut out: the matte came out unsure (grey), so Darkroom is making it again${attempt ? ' once more' : ''}.` });
+          await this.submit({ workflow: job.workflow, params: { ...job.params, seed: Math.floor(Math.random() * 2 ** 31) } as Record<string, string | number>, meta: { ...(job.meta as { mode: string }), chain: { ...c, attempt: attempt + 1 } } });
+          return;
+        }
+      } catch (e) {
+        // the check is a safeguard: if it cannot run, carry on with the matte as it is
+        this.broadcast({ type: 'toast', kind: 'info', text: 'Cut out: could not check the matte (' + friendlyError((e as Error).message) + '); using it as it is.' });
+      }
+      try {
+        await this.submit({
+          workflow: 'video_composite',
+          params: { video: await this.asInput(take), video_2: await this.asInput(matte), image_1: background },
+          meta: { mode: 'cutout', model: `${take.model} · cut out`, prompt: take.prompt, parentId: take.id, ui: take.ui, durationSec: take.duration ?? undefined, notify: !!job.meta.notify, followOf: job.id },
+        });
+      } catch (e) {
+        this.broadcast({ type: 'toast', kind: 'error', text: 'Could not put the cut-out on its background: ' + friendlyError((e as Error).message) });
       }
       return;
     }

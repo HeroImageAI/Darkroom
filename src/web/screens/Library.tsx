@@ -624,6 +624,8 @@ const MODE_LABEL: Record<string, string> = {
   'edit:crop': 'Crop',
   compose: 'Composed',
   refine: 'Refined video',
+  matte: 'Matte (Alpha-Gen)',
+  cutout: 'Cut out, new background',
   upscale: 'Upscale',
   video: 'Video',
   smooth: 'Smoothed video',

@@ -465,6 +465,26 @@ test.describe.serial('Darkroom v2 features', () => {
     const job = await (await req.response())!.json();
     await page.request.post(`/api/jobs/${job.id}/cancel`);
   });
+
+  test('Video: Cut out — Alpha-Gen matte, then the take over a new background (DECISIONS 99)', async () => {
+    const cat = await (await page.request.get('/api/loras')).json();
+    test.skip(!cat.ltxTools.some((l: any) => /alpha-gen/.test(l.name)), 'Alpha-Gen is not on this machine');
+    const take = ((await (await page.request.get('/api/items?limit=50&filter=videos')).json()).items as any[]).find((i) => i.workflow === 'ltx25_i2v' && Math.max(i.width, i.height) <= 1280 && i.frames <= 145);
+    await page.goto(`/#/video?take=${take.id}`);
+    await page.getByRole('button', { name: 'Cut out' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Cut out: the new background' });
+    await expect(dialog).toBeVisible();
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await dialog.getByRole('button', { name: 'Background #2fa45a' }).click();
+    const req = await sent;
+    const body = req.postDataJSON();
+    expect(body.workflow).toBe('ltx25_v2v_alpha');
+    expect(body.params).toMatchObject({ motion_prompt: '', width: take.width, height: take.height });
+    expect(body.meta).toMatchObject({ mode: 'matte', parentId: take.id, chain: { kind: 'composite', firstItemId: take.id } });
+    expect(body.meta.chain.background).toBeTruthy(); // the plain-colour picture Darkroom made and uploaded
+    const job = await (await req.response())!.json();
+    await page.request.post(`/api/jobs/${job.id}/cancel`);
+  });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
     await page.goto('/#/generate');
