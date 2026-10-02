@@ -202,62 +202,9 @@
     }
   },
   "video": {
-    "wan": {
-      "label": "Wan 2.2",
-      "tagline": "Best motion quality",
-      "workflow": "wan22_i2v",
-      "supportsEndFrame": true,
-      "fps": 16,
-      "framesFor": "fps*s+1",
-      "maxSeconds": 8,
-      "quality": {
-        "draft": {
-          "label": "Draft",
-          "short": "480p",
-          "landscape": [
-            832,
-            480
-          ],
-          "portrait": [
-            480,
-            832
-          ],
-          "square": [
-            640,
-            640
-          ]
-        },
-        "final": {
-          "label": "Final",
-          "short": "720p",
-          "landscape": [
-            1280,
-            720
-          ],
-          "portrait": [
-            720,
-            1280
-          ],
-          "square": [
-            960,
-            960
-          ]
-        }
-      },
-      "secondsPerSecond": {
-        "draft": 21.3,
-        "final": 74.8
-      },
-      "overheadSec": {
-        "draft": 0,
-        "final": 0
-      },
-      "timeExponent": 1.225,
-      "measured": "k·s^1.225 fitted to 480p 3 s = 82 s, 5 s = 153 s; 720p 5 s = 538 s (RTX 3090). See BENCHMARKS.md"
-    },
     "ltx": {
       "label": "LTX 2.5",
-      "tagline": "Fast drafts",
+      "tagline": "Image to video, with sound",
       "workflow": "ltx25_i2v",
       "supportsEndFrame": true,
       "fps": 24,

@@ -94,7 +94,8 @@ test.describe.serial('Darkroom end to end', () => {
     await expect(page.getByAltText('Start frame')).toBeVisible({ timeout: 30_000 });
     await page.getByLabel('Motion prompt').fill('Waves crash against the rocks and the raincoat flaps in the wind.');
     await page.getByRole('button', { name: 'Slow push-in' }).click();
-    await page.getByRole('button', { name: new RegExp(process.env.DR_E2E_VIDEO_MODEL ?? 'LTX 2.5') }).click();
+    // LTX 2.5 is the only video model (DECISIONS 95)
+    await expect(page.getByText('LTX 2.5 · length and quality')).toBeVisible();
     await page.getByRole('button', { name: '3 s' }).click();
     await page.getByRole('button', { name: /Draft/ }).click();
     await page.getByLabel('Notify when done').uncheck();

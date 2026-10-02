@@ -31,7 +31,7 @@ interface VideoSettings {
   frameFit?: 'crop' | 'fit';
 }
 
-const DEFAULTS: VideoSettings = { start: null, end: null, motion: '', camera: [], model: 'wan', seconds: 5, quality: 'draft', notify: true, seed: 0 };
+const DEFAULTS: VideoSettings = { start: null, end: null, motion: '', camera: [], model: 'ltx', seconds: 5, quality: 'draft', notify: true, seed: 0 };
 
 export function Video({ query }: { query: URLSearchParams }) {
   const boot = useApp((s) => s.boot);
@@ -79,7 +79,11 @@ export function Video({ query }: { query: URLSearchParams }) {
   useHotkey((e) => (e.ctrlKey || e.metaKey) && e.key === 'Enter', () => animateRef.current(), [], true);
 
   const m = boot?.manifest;
-  const vm = m?.video[s.model] ?? m?.video.wan;
+  // LTX 2.5 is Darkroom's video model (DECISIONS 95); an older "wan" preference falls back to it
+  const vm = m?.video[s.model] ?? m?.video.ltx;
+  useEffect(() => {
+    if (m && !m.video[s.model]) update({ model: 'ltx' });
+  }, [m, s.model]); // eslint-disable-line react-hooks/exhaustive-deps
   const cams = boot?.camera.camera ?? [];
 
   // Takes = a view of the Library: running and failed renders plus finished ones whose video is still in the Library
@@ -232,7 +236,7 @@ export function Video({ query }: { query: URLSearchParams }) {
   const endAllowed = vm.supportsEndFrame;
 
   const T = boot!.prompts;
-  const vKey = (s.model === 'ltx' ? 'ltx' : 'wan') as VideoModelKey;
+  const vKey = (m?.video[s.model] ? s.model : 'ltx') as VideoModelKey;
   const words = wordCount(s.motion);
 
   const queue = async (body: Parameters<typeof api.submit>[0]) => {
@@ -249,11 +253,11 @@ export function Video({ query }: { query: URLSearchParams }) {
   const animate = async (override: Partial<VideoSettings> = {}, parentId: string | null = null, chain?: Record<string, unknown>) => {
     const cur = { ...s, ...override };
     if (!cur.start) return toast('Add a start frame first (step 1).', 'info');
-    const model = m.video[cur.model];
+    const model = m.video[cur.model] ?? m.video.ltx;
     if (model.unavailable) return toast(model.unavailable, 'error');
     const p = planVideo(model, cur.quality, cur.seconds, cur.start.width, cur.start.height);
     const seed = override.seed ?? randomSeed();
-    const prompt = composeMotionPrompt(T, cams, { model: (cur.model === 'ltx' ? 'ltx' : 'wan') as VideoModelKey, motion: cur.motion, camera: cur.camera });
+    const prompt = composeMotionPrompt(T, cams, { model: (m.video[cur.model] ? cur.model : 'ltx') as VideoModelKey, motion: cur.motion, camera: cur.camera });
     const fit = cur.frameFit === 'fit';
     const mismatch = (fr: Frame | null) => !!fr && Math.abs(fr.width / fr.height / (p.width / p.height) - 1) > 0.03;
     const startName = fit && mismatch(cur.start) ? await letterbox(cur.start, p.width, p.height) : cur.start.name;
@@ -314,7 +318,7 @@ export function Video({ query }: { query: URLSearchParams }) {
       const inp = await api.asInput(sel.id);
       await queue({
         workflow: 'video_interp',
-        params: { video: inp.name, multiplier: 2, fps: (sel.fps ?? 16) * 2 },
+        params: { video: inp.name, multiplier: 2, fps: (sel.fps ?? 24) * 2 },
         meta: { mode: 'smooth', model: `${sel.model} · RIFE 2×`, prompt: sel.prompt, parentId: sel.id, ui: sel.ui, notify: s.notify, durationSec: sel.duration ?? undefined },
       });
     } catch (e) {
@@ -466,8 +470,9 @@ export function Video({ query }: { query: URLSearchParams }) {
 
           <section>
             <h2 className="step-title">
-              <span className="step-num">3</span> Model
+              <span className="step-num">3</span> {Object.keys(m.video).length > 1 ? 'Model' : `${vm.label} · length and quality`}
             </h2>
+            {Object.keys(m.video).length > 1 && (
             <div className="cards" role="group" aria-label="Video model">
               {Object.entries(m.video).map(([key, v]) => (
                 <button key={key} type="button" className="card" aria-pressed={s.model === key} onClick={() => update({ model: key })} title={v.unavailable ?? v.tagline} disabled={!!v.unavailable}>
@@ -476,6 +481,7 @@ export function Video({ query }: { query: URLSearchParams }) {
                 </button>
               ))}
             </div>
+            )}
             <p className="section-label" style={{ marginTop: 14 }}>
               Length
             </p>
@@ -513,7 +519,7 @@ export function Video({ query }: { query: URLSearchParams }) {
 
       <section className="stage" aria-label="Player">
         {sel ? (
-          <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={extend} onSmooth={smooth} online={online} />
+          <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={sel.workflow.startsWith('wan') ? undefined : extend} onSmooth={smooth} online={online} />
         ) : (
           <div className="stage-main">
             <div className="empty">
@@ -736,14 +742,14 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
   );
 }
 
-function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item; onSaveFrame: (t: number) => void; onExtend: () => void; onSmooth: () => void; online: boolean }) {
+function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item; onSaveFrame: (t: number) => void; onExtend?: () => void; onSmooth: () => void; online: boolean }) {
   const vid = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [t, setT] = useState(0);
   const [dur, setDur] = useState(item.duration ?? 0);
   const [loop, setLoop] = useState(true);
   const [strip, setStrip] = useState<string[]>([]);
-  const fps = item.fps ?? 16;
+  const fps = item.fps ?? 24;
   const src = fileUrl(item.id);
 
   // Filmstrip: sample frames from a hidden video element.
@@ -845,7 +851,7 @@ function Player({ item, onSaveFrame, onExtend, onSmooth, online }: { item: Item;
           <button className="btn sm" onClick={() => onSaveFrame(t)} disabled={!online} title="Save the current frame to the Library as an image">
             <Camera size={14} /> Save frame
           </button>
-          <button className="btn sm" onClick={onExtend} disabled={!online || !item.last_frame} title="Continue from the last frame and join the clips">
+          <button className="btn sm" onClick={onExtend} disabled={!online || !item.last_frame || !onExtend} title={onExtend ? 'Continue from the last frame and join the clips' : 'Made with Wan 2.2, which Darkroom no longer uses: start a new LTX take from its last frame instead (Save frame, then use it as the start frame)'}>
             <FastForward size={14} /> Extend +5 s
           </button>
           <button className="btn sm" onClick={onSmooth} disabled={!online} title="Double the frame rate with RIFE interpolation">
