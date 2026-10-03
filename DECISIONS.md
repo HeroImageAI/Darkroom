@@ -634,3 +634,15 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     Favourite / Unfavourite next to Move to board and Delete. The details panel stays closed while selecting, so the
     grid does not jump under the pointer. The drag uses window listeners, not pointer capture: with capture, the first
     click after a drag was lost.
+102. **Comfy Desktop 1.1.6 and ComfyUI 0.38.2 (JP's request), and videos saved at CRF 18.** Updated through Desktop's own
+    updater (ComfyUI first, with Desktop's snapshot to roll back to, then Desktop's restart-and-update). 0.38.2 only adds
+    paid partner nodes (FLUX 3 Image via BFL's API, a Grok video model) and newer templates: one new node type, none
+    removed, no custom nodes to break. Desktop 1.1.5/1.1.6 are fixes (one stops a ComfyUI left running by an earlier
+    Desktop before launching). `check-nodes.ts`: all 45 workflows and 26 model files compatible, once it understood
+    numbered autogrow inputs (`masks.mask0`) and skipped the retired Wan entry; e2e 58/58 and a real Restore join on
+    0.38.2. Taken from ComfyUI's next release (#16663): Save Video encodes H.264 at x264's default CRF 23 unless told
+    otherwise, and upstream is moving to 18. Measured on the Restore join (`scripts/try-video-crf.ts`): CRF 18 gives
+    +1.7 dB PSNR and keeps all the fine detail (Laplacian energy 100 % vs 98 %), files about 45 % larger. Darkroom
+    encodes clips again in several places (Restore parts and join, Extend, Refine, Cut out), where the loss compounds,
+    so the server now sets re-encode at CRF 18 on every H.264 SaveVideo (checked in a take's x264 header: crf=18.0).
+    Also in the next release, not yet in stable: higher-quality EXR, MiniMax-H3 VAE support, an `--offline` flag.

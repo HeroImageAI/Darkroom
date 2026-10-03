@@ -9,7 +9,9 @@ const url = process.argv[2] ?? 'http://127.0.0.1:8188';
 const info = (await (await fetch(`${url}/object_info`)).json()) as Record<string, { input: { required?: Record<string, any>; optional?: Record<string, any> } }>;
 const manifest = JSON.parse(fs.readFileSync('workflows/manifest.json', 'utf8'));
 const W = manifest.workflows ?? manifest;
-const files = [...new Set(Object.values(W).map((w: any) => w.file as string))];
+// Wan 2.2 left Darkroom (DECISIONS 95): its entry stays for old items' settings, its model files are gone
+const RETIRED = new Set(['wan22_i2v']);
+const files = [...new Set(Object.entries(W).filter(([k]) => !RETIRED.has(k)).map(([, w]: [string, any]) => w.file as string))];
 let problems = 0;
 for (const f of files) {
   const g = JSON.parse(fs.readFileSync(path.join('workflows', f), 'utf8')) as Record<string, { class_type: string; inputs: Record<string, unknown>; _meta?: { title?: string } }>;
@@ -25,7 +27,10 @@ for (const f of files) {
     for (const [k, v] of Object.entries(n.inputs)) {
       const base = k.split('.')[0]; // dynamic combo children like "resize_type.multiplier", autogrow "images.image_1"
       const parent = spec[base];
-      if (Array.isArray(parent) && parent[0] === 'COMFY_AUTOGROW_V3' && k.includes('.') && !parent[1]?.template?.names?.includes(k.split('.')[1])) {
+      // autogrow children are named from a list ("values.a") or a prefix and a number ("masks.mask0")
+      const tpl = Array.isArray(parent) && parent[0] === 'COMFY_AUTOGROW_V3' ? parent[1]?.template : null;
+      const child = k.split('.')[1] ?? '';
+      if (tpl && k.includes('.') && !tpl.names?.includes(child) && !(tpl.prefix && new RegExp(`^${tpl.prefix}_?[0-9]+$`).test(child))) {
         console.log(`UNKNOWN INPUT ${where}: ${k}`);
         problems++;
         continue;

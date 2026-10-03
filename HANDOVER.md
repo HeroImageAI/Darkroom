@@ -84,7 +84,7 @@ BENCHMARKS.md.
 
 Comfy Desktop updates ComfyUI by itself. Afterwards run `npx tsx scripts/check-nodes.ts` (every node, input, dropdown
 value and model file the workflows use, checked against the running ComfyUI) and `npm run e2e`. Checked up to
-ComfyUI 0.38.1 (DECISIONS 80).
+ComfyUI 0.38.2 with Comfy Desktop 1.1.6 (DECISIONS 102).
 
 ## Known limitations
 
