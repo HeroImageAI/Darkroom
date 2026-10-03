@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2, Plus } from 'lucide-react';
+import { Check, CheckSquare, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2, Plus } from 'lucide-react';
 import { api, type Board, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { Dialog, formatDuration, Pills } from '../components/common';
 import { BoardNameDialog, useBoards } from '../components/Boards';
@@ -57,6 +57,12 @@ export function Library() {
   /** Multi-select (Ctrl/Cmd-click toggles, Shift-click selects a range); drives the selection bar and Delete. */
   const [picked, setPicked] = useState<string[]>([]);
   const [anchor, setAnchor] = useState<string | null>(null);
+  /** Select mode: a plain click ticks a tile instead of opening it (on while anything is ticked, too). */
+  const [selecting, setSelecting] = useState(false);
+  const selectMode = selecting || picked.length > 0;
+  /** Drag a box over empty space in the grid to tick every tile it touches. */
+  const [band, setBand] = useState<{ x0: number; y0: number; x1: number; y1: number; base: string[] } | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const [confirm, setConfirm] = useState<{ ids: string[] } | { all: true } | null>(null);
   const [loading, setLoading] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -164,6 +170,64 @@ export function Library() {
     }
   };
 
+  const toggle = (id: string) => {
+    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+    setAnchor(id);
+  };
+  const clearSelection = () => {
+    setPicked([]);
+    setSelecting(false);
+  };
+  const favouriteAll = async (ids: string[], favourite: boolean) => {
+    try {
+      await Promise.all(ids.map((id) => api.favourite(id, favourite)));
+      setItems((xs) => xs.map((x) => (ids.includes(x.id) ? { ...x, favourite } : x)));
+      toast(`${count(ids.length)} ${favourite ? 'added to' : 'taken out of'} Favourites.`, 'ok');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
+  // rubber band: tiles whose box meets the dragged rectangle are ticked (added to what was ticked before)
+  // (in Select mode it may start on a tile too; it only takes over once the pointer has moved, so a click still ticks)
+  const bandStart = (e: React.PointerEvent) => {
+    const el = e.target as HTMLElement;
+    const onTile = !!el.closest('.tile-wrap');
+    if (e.button !== 0 || el.closest('.tile-tick, a, input, select') || (el.closest('button') && !onTile) || (onTile && !selectMode)) return;
+    const x = e.clientX;
+    const y = e.clientY;
+    const base = e.ctrlKey || e.metaKey || e.shiftKey || onTile ? picked : [];
+    let active = false;
+    // window listeners (no pointer capture): the drag can leave the grid, and the next click is never lost
+    const move = (ev: PointerEvent) => {
+      if (!active && Math.abs(ev.clientX - x) < 6 && Math.abs(ev.clientY - y) < 6) return;
+      active = true;
+      const [l, r, t, b] = [Math.min(x, ev.clientX), Math.max(x, ev.clientX), Math.min(y, ev.clientY), Math.max(y, ev.clientY)];
+      setBand({ x0: x, y0: y, x1: ev.clientX, y1: ev.clientY, base });
+      const hit = [...(gridRef.current?.querySelectorAll<HTMLElement>('.tile-wrap') ?? [])]
+        .filter((t2) => {
+          const q = t2.getBoundingClientRect();
+          return q.right > l && q.left < r && q.bottom > t && q.top < b;
+        })
+        .map((t2) => t2.dataset.id!);
+      setPicked([...new Set([...base, ...hit])]);
+    };
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      setBand(null);
+      if (active) {
+        // the click that ends a drag must not also tick or open the tile under it
+        const stop = (c: MouseEvent) => c.stopPropagation();
+        window.addEventListener('click', stop, { capture: true, once: true });
+        setTimeout(() => window.removeEventListener('click', stop, { capture: true }), 0);
+      } else if (!onTile && !(ev.target as HTMLElement).closest('button') && picked.length && !selecting) setPicked([]); // a click on empty space clears
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  };
+
   const pick = (it: Item, e: React.MouseEvent) => {
     if (e.shiftKey && anchor) {
       const a = items.findIndex((i) => i.id === anchor);
@@ -172,9 +236,8 @@ export function Library() {
       setPicked((p) => [...new Set([...p, ...range])]);
       return;
     }
-    if (e.ctrlKey || e.metaKey) {
-      setPicked((p) => (p.includes(it.id) ? p.filter((x) => x !== it.id) : [...p, it.id]));
-      setAnchor(it.id);
+    if (e.ctrlKey || e.metaKey || selectMode) {
+      toggle(it.id);
       return;
     }
     setPicked([]);
@@ -197,8 +260,9 @@ export function Library() {
         e.preventDefault();
         if (st.trash) setConfirm({ ids: st.targets });
         else void st.remove(st.targets);
-      } else if (e.key === 'Escape' && st.picked.length && !st.confirm) {
+      } else if (e.key === 'Escape' && !st.confirm) {
         setPicked([]);
+        setSelecting(false);
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a' && !typing) {
         e.preventDefault();
         setPicked(st.items.map((i) => i.id));
@@ -216,7 +280,7 @@ export function Library() {
         : `These ${confirm?.ids.length ?? 0} items`;
 
   return (
-    <div className="screen" style={{ gridTemplateColumns: sel || picked.length > 1 ? '1fr minmax(340px, 420px)' : '1fr' }}>
+    <div className="screen" style={{ gridTemplateColumns: sel && !selectMode ? '1fr minmax(340px, 420px)' : '1fr' }}>
       <section style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }} aria-label="Library">
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
           <Pills label="Filter" options={FILTERS.map((f) => ({ value: f.value, label: f.label }))} value={filter} onChange={setFilter} />
@@ -276,38 +340,43 @@ export function Library() {
               </span>
             )}
             <span className="mono muted item-count">{total} items</span>
+            <button className="btn sm" aria-pressed={selectMode} onClick={() => (selectMode ? clearSelection() : setSelecting(true))} title="Tick several pictures and videos to delete, move or favourite them together. Tip: drag a box over the grid, Ctrl-click, or Shift-click for a range.">
+              <CheckSquare size={14} /> {selectMode ? 'Done' : 'Select'}
+            </button>
             <button className="btn sm upload-btn" disabled={!!uploading} onClick={() => uploadRef.current?.click()} title="Add your own pictures and videos to the Library (or drop them on the grid)">
               {uploading ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {uploading ? `Adding ${uploading}…` : 'Upload'}
             </button>
           </div>
         )}
-        {(picked.length > 0 || trash) && (
+        {(selectMode || trash) && (
           <div className="selection-bar" role="toolbar" aria-label="Selection">
-            {picked.length > 0 ? (
+            {selectMode ? (
               <>
-                <span>
-                  <b>{picked.length}</b> selected
-                </span>
+                <span>{picked.length ? <><b>{picked.length}</b> selected</> : <span className="muted">Click pictures and videos to tick them, or drag a box over them</span>}</span>
                 <button className="btn sm ghost" onClick={() => setPicked(items.map((i) => i.id))}>
                   Select all
                 </button>
-                <button className="btn sm ghost" onClick={() => setPicked([])}>
-                  Clear
+                <button className="btn sm ghost" onClick={clearSelection}>
+                  {picked.length ? 'Clear' : 'Cancel'}
                 </button>
                 <div style={{ flex: 1 }} />
                 {trash ? (
                   <>
-                    <button className="btn sm" onClick={() => void restore(picked)}>
+                    <button className="btn sm" disabled={!picked.length} onClick={() => void restore(picked)}>
                       <RotateCcw size={14} /> Restore
                     </button>
-                    <button className="btn sm danger" onClick={() => setConfirm({ ids: picked })}>
+                    <button className="btn sm danger" disabled={!picked.length} onClick={() => setConfirm({ ids: picked })}>
                       <Trash2 size={14} /> Delete forever
                     </button>
                   </>
                 ) : (
                   <>
+                    <button className="btn sm" disabled={!picked.length} onClick={() => void favouriteAll(picked, !picked.every((id) => items.find((i) => i.id === id)?.favourite))}>
+                      <Heart size={14} /> {picked.length && picked.every((id) => items.find((i) => i.id === id)?.favourite) ? 'Unfavourite' : 'Favourite'}
+                    </button>
                     <select
                       className="input sm"
+                      disabled={!picked.length}
                       aria-label="Move to board"
                       value=""
                       onChange={(e) => e.target.value && void moveTo(picked, e.target.value === '__none__' ? null : e.target.value)}
@@ -320,7 +389,7 @@ export function Library() {
                       ))}
                       <option value="__none__">No board</option>
                     </select>
-                    <button className="btn sm danger" onClick={() => void remove(picked)}>
+                    <button className="btn sm danger" disabled={!picked.length} onClick={() => void remove(picked)}>
                       <Trash2 size={14} /> Delete
                     </button>
                   </>
@@ -338,7 +407,9 @@ export function Library() {
           </div>
         )}
         <div
-          style={{ overflowY: 'auto', padding: 20, flex: 1 }}
+          ref={gridRef}
+          style={{ overflowY: 'auto', padding: 20, flex: 1, position: 'relative', userSelect: band ? 'none' : undefined }}
+          onPointerDown={bandStart}
           onDragOver={(e) => [...e.dataTransfer.types].includes('Files') && e.preventDefault()}
           onDrop={(e) => {
             if (!e.dataTransfer.files.length) return;
@@ -371,6 +442,9 @@ export function Library() {
                   selected={it.id === selected && !picked.length}
                   picked={picked.includes(it.id)}
                   onPick={(e) => pick(it, e)}
+                  onToggle={() => toggle(it.id)}
+                  selectMode={selectMode}
+                  draggable={!selectMode}
                   onSelect={() => {
                     setPicked([]);
                     setSelected(it.id);
@@ -381,6 +455,13 @@ export function Library() {
               ))}
             </div>
           )}
+          {band && (
+            <div
+              className="select-band"
+              aria-hidden
+              style={{ position: 'fixed', left: Math.min(band.x0, band.x1), top: Math.min(band.y0, band.y1), width: Math.abs(band.x1 - band.x0), height: Math.abs(band.y1 - band.y0) }}
+            />
+          )}
           {items.length < total && (
             <div style={{ display: 'grid', placeItems: 'center', padding: 20 }}>
               <button className="btn" onClick={more}>
@@ -390,14 +471,9 @@ export function Library() {
           )}
         </div>
       </section>
-      {(sel || picked.length > 1) && (
+      {sel && !selectMode && (
       <aside className="panel right" aria-label="Details">
-        {picked.length > 1 ? (
-          <div className="empty" style={{ margin: 'auto' }}>
-            <h2>{picked.length} selected</h2>
-            <p>Ctrl-click to add or remove, Shift-click for a range. Press Delete to {trash ? 'delete them for good' : 'move them to Recently deleted'}.</p>
-          </div>
-        ) : sel ? (
+        {sel ? (
           <Detail
             item={sel}
             comfyUrl={comfyUrl}
@@ -544,6 +620,9 @@ function Tile({
   selected,
   picked,
   onPick,
+  onToggle,
+  selectMode,
+  draggable,
   onSelect,
   onDelete,
   stacked,
@@ -552,6 +631,9 @@ function Tile({
   selected: boolean;
   picked: boolean;
   onPick: (e: React.MouseEvent) => void;
+  onToggle: () => void;
+  selectMode: boolean;
+  draggable: boolean;
   onSelect: () => void;
   onDelete?: () => void;
   stacked?: boolean;
@@ -560,10 +642,9 @@ function Tile({
   const [hover, setHover] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   return (
-    <>
+    <div role="listitem" className={`tile-wrap${selectMode ? ' selecting' : ''}${picked ? ' picked' : ''}`} data-id={item.id} style={{ position: 'relative' }} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
     {menu && <UseAsMenu item={item} x={menu.x} y={menu.y} onClose={() => setMenu(null)} onDelete={onDelete} />}
     <button
-      role="listitem"
       className="tile"
       onContextMenu={(e) => {
         if (item.kind !== 'image') return;
@@ -572,10 +653,8 @@ function Tile({
         setMenu({ x: e.clientX, y: e.clientY });
       }}
       onClick={onPick}
-      onDoubleClick={() => (item.kind === 'video' ? go('video', undefined, { take: item.id }) : go('edit', item.id))}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      draggable
+      onDoubleClick={() => !selectMode && (item.kind === 'video' ? go('video', undefined, { take: item.id }) : go('edit', item.id))}
+      draggable={draggable}
       onDragStart={(e) => e.dataTransfer.setData('application/x-darkroom-item', item.id)}
       aria-pressed={selected || picked}
       aria-label={`${item.kind} ${item.prompt || item.mode}`}
@@ -592,7 +671,7 @@ function Tile({
       {item.kind === 'video' && hover ? (
         <video ref={vid} src={fileUrl(item.id)} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       ) : (
-        <img src={thumbUrl(item.id)} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        <img src={thumbUrl(item.id)} alt="" loading="lazy" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       )}
       <span style={{ position: 'absolute', left: 6, bottom: 6, display: 'flex', gap: 4 }}>
         {item.kind === 'video' && (
@@ -612,13 +691,22 @@ function Tile({
         )}
       </span>
       {item.favourite && <Heart size={16} fill="#F0B44C" color="#F0B44C" style={{ position: 'absolute', right: 8, top: 8 }} />}
-      {picked && (
-        <span className="tile-check" aria-hidden>
-          <Check size={14} strokeWidth={3} />
-        </span>
-      )}
     </button>
-    </>
+    <button
+      type="button"
+      className="tile-tick"
+      role="checkbox"
+      aria-checked={picked}
+      aria-label={`Select ${item.prompt || item.mode}`}
+      title={picked ? 'Untick' : 'Tick to select'}
+      onClick={(e) => {
+        e.stopPropagation();
+        onToggle();
+      }}
+    >
+      {picked && <Check size={14} strokeWidth={3} />}
+    </button>
+    </div>
   );
 }
 

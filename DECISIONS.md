@@ -626,3 +626,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     client id at every start, and ComfyUI tells only the client that queued a prompt when it finishes — so a render
     running across a Darkroom restart stayed "running" forever (part 2 sat 20 minutes unnoticed). The id is now fixed
     per library, active jobs are checked against ComfyUI's queue and history every 30 s, and a job is never ingested twice.
+101. **Library selection you can find (JP: "no quick way to select a couple of images or videos to delete").** Multi-select
+    existed but only through Ctrl- and Shift-click. Now: a tick box on every tile (on hover, always while selecting),
+    a **Select** button (plain clicks then tick instead of opening; on by itself as soon as anything is ticked; Done,
+    Clear or Esc ends it), and a box dragged over the grid ticks every tile it touches (from empty space any time; from
+    a tile too while selecting — tiles are only draggable onto boards outside Select mode). The selection bar adds
+    Favourite / Unfavourite next to Move to board and Delete. The details panel stays closed while selecting, so the
+    grid does not jump under the pointer. The drag uses window listeners, not pointer capture: with capture, the first
+    click after a drag was lost.
