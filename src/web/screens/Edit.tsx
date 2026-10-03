@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
-import { useItemLoad, usePersistent } from '../lib/hooks';
+import { useItemLoad, usePersistent, useSessionState } from '../lib/hooks';
 import { CompareView } from '../components/Compare';
 import { LayerStack, LayersPanel, useLayerGroup } from '../components/LayersPanel';
 import { CropDialog, grabScreenFrame } from '../lib/capture';
@@ -142,7 +142,8 @@ function Editor({ item }: { item: Item }) {
   const [kleinWeights, setKleinWeights] = usePersistent<string>('edit.kleinWeights', '');
   // Seed (P1, test-suite run 2026-10-03): like Generate's — type one to lock it; unlocked, every run takes a new
   // random seed and shows it, so a result you like can be repeated
-  const [editSeed, setEditSeed] = useState<{ seed: number; locked: boolean }>(() => ({ seed: randomSeed(), locked: false }));
+  // kept for the session, so a locked seed stays locked when Edit moves on to the new version (test-suite finding 1)
+  const [editSeed, setEditSeed] = useSessionState<{ seed: number; locked: boolean }>('edit.seed', { seed: randomSeed(), locked: false });
   const seedRef = useRef(editSeed);
   seedRef.current = editSeed;
   const nextSeed = () => {

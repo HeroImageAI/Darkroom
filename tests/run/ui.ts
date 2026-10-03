@@ -175,6 +175,53 @@ async function runEdit(kind: 'instruct' | 'inpaint' | 'enhance' | 'outpaint') {
   return { id, seconds };
 }
 
+/** Generate: model, aspect, style None, seed (Advanced), prompt → the new picture at the top of the History rail. */
+async function generate() {
+  const title = a.title as string;
+  const existing = await findTitled(title);
+  if (existing) return { skipped: true, id: existing };
+  if (a.board) {
+    await library(a.board);
+    await setBoard(a.board);
+  }
+  await page.goto(URL + '/#/generate');
+  await page.getByRole('group', { name: 'Model' }).getByRole('button', { name: a.model === 'klein' ? /^Klein 9B/ : /^Qwen-Image 2\.1/ }).click();
+  await page.getByRole('group', { name: 'Aspect ratio' }).getByRole('button', { name: a.aspect ?? '16:9', exact: true }).click();
+  await page.getByRole('group', { name: 'Style preset' }).getByRole('button', { name: 'None', exact: true }).click();
+  const seed = page.getByLabel('Seed');
+  if (!(await seed.isVisible())) await page.getByText('Advanced').click();
+  await seed.fill(String(a.seed));
+  await page.getByLabel('Prompt').fill(a.prompt);
+  const rail = page.getByRole('complementary', { name: 'History' }).locator('.rail-item img').first();
+  const topId = async () => (/\/api\/items\/([0-9a-f-]{36})\/thumb/.exec((await rail.getAttribute('src').catch(() => null)) ?? '') ?? [])[1] ?? null;
+  const before = await topId();
+  const settings = await shot(a.testId, `${title} · settings`);
+  const t0 = Date.now();
+  await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
+  let id: string | null = null;
+  for (;;) {
+    const now = await topId();
+    if (now && now !== before) {
+      id = now;
+      break;
+    }
+    if (await errorToast().count()) break;
+    if (Date.now() - t0 > (TIMEOUT[a.model] ?? 240_000)) break;
+    await page.waitForTimeout(1500);
+  }
+  const seconds = Math.round((Date.now() - t0) / 1000);
+  await page.waitForTimeout(1200);
+  const after = await shot(a.testId, `${title} · result`);
+  if (!id) {
+    log({ test_id: a.testId, model: modelName(a.model), seed: a.seed, prompt_resolved: a.prompt, library_item_name: title, status: 'FAILED', notes: (await errorToast().textContent().catch(() => null)) ?? `no result after ${seconds} s`, screenshot_paths: [settings, after] });
+    return { failed: true };
+  }
+  await annotate(id, { title, notes: notesFor(a) + `
+aspect ${a.aspect ?? '16:9'}, default quality`, board: a.board });
+  log({ test_id: a.testId, model: modelName(a.model), seed: a.seed, variable: a.variable ?? null, prompt_resolved: a.prompt, prompt_enhance_state: 'enhance off; style none (Generate sends the prompt as written)', input_files: [], library_item_name: title, library_item_id: id, resolution: a.aspect ?? '16:9', status: 'OK', score: null, provisional_best: false, notes: `${seconds} s`, screenshot_paths: [settings, after] });
+  return { id, seconds };
+}
+
 /** Edit · Crop: drag a box on the picture (fractions of it), Apply crop → a new version stacked on the source. */
 async function crop() {
   const title = a.title as string;
@@ -305,6 +352,7 @@ try {
   else if (action === 'instruct' || action === 'inpaint' || action === 'enhance' || action === 'outpaint') result = await runEdit(action);
   else if (action === 'compare') result = await compare();
   else if (action === 'crop') result = await crop();
+  else if (action === 'generate') result = await generate();
   else if (action === 'video') result = await video();
   else if (action === 'annotate') {
     await annotate(a.id, a);

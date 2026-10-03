@@ -692,3 +692,6 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     tile, searched with the prompt. **P3 Compare two pictures:** tick exactly two in the Library → Compare: side by
     side or on a slider, and **Save as picture** makes one labelled sheet (each side's title, or model and seed) in the
     Library on the working board (mode `compare`). Run settings chosen by Koos: seed 42 only, videos at Final 720p.
+106. **A locked Edit seed stays locked after a run** (Apparel pilot finding 1, Koos: "fix the seed lock"). Edit moves to
+    the new version after every run, which rebuilt the screen and drew a fresh random seed; the seed now lives in the
+    session (`useSessionState('edit.seed')`), so 42 stays 42 and locked until you unlock it. e2e covers a finished run.
