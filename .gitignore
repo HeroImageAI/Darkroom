@@ -18,3 +18,7 @@ docs/qa/addenda/*/*/
 
 # outpaint canvases are rebuilt by scripts/ab-addenda.ts setup
 tests/golden/outpaint/
+
+# test-suite run: browser profile and the user-supplied inputs
+tests/results/.edge-profile/
+test-inputs/
