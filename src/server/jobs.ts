@@ -868,6 +868,48 @@ export class JobManager {
     return item;
   }
 
+  /** A finished picture file into the Library (P3 compare sheets). */
+  async addPicture(a: { file: FileRef; name: string; title?: string; mode: string; model: string; params: Record<string, unknown>; boardId?: unknown }): Promise<Item> {
+    const item: Item = {
+      id: crypto.randomUUID(),
+      created_at: Date.now(),
+      kind: 'image',
+      mode: a.mode,
+      workflow: a.mode,
+      model: a.model,
+      family: 'util',
+      prompt: a.name.slice(0, 300),
+      negative: '',
+      seed: null,
+      width: null,
+      height: null,
+      duration: null,
+      fps: null,
+      frames: null,
+      params: a.params,
+      ui: {},
+      api_prompt: null,
+      file: a.file,
+      poster: null,
+      last_frame: null,
+      render_ms: null,
+      parent_id: null,
+      root_id: null,
+      version: 1,
+      favourite: false,
+      tags: [],
+      job_id: null,
+      input_name: null,
+      board_id: this.liveBoard(a.boardId),
+      title: a.title ?? null,
+    };
+    const meta = await this.makeThumb(item.id, a.file).catch(() => null);
+    if (meta) Object.assign(item, { width: meta.width, height: meta.height });
+    this.store.insertItem(item);
+    this.broadcast({ type: 'library' });
+    return item;
+  }
+
   /** The board a new result should go to, if it (still) exists. */
   private liveBoard(id: unknown): string | null {
     return typeof id === 'string' && id && this.store.board(id) ? id : null;

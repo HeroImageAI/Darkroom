@@ -1,0 +1,36 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- heading "What would you like to do?" [level=1]
+- navigation "Start":
+  - button "Generate Create a new picture from a prompt with Klein 9B or Qwen-Image 2.1."
+  - button "Edit Change, fix, extend or upscale a picture — one of yours or one you made."
+  - button "Compose Arrange pictures, cut-outs and rough paint, then render them into one picture."
+  - button "Video Bring a picture to life as a clip with LTX 2.5, with sound."
+  - button "Timeline Put your clips, your own videos and your own sound together into one film."
+  - button "Library Everything you have made or brought in, with its settings."
+- region "Edit your own picture":
+  - strong: Edit your own picture
+  - text: Drop photos here, paste (Ctrl+V) or browse — several at once. They stay on this PC and are added to your Library.
+  - button "Upload pictures"
+  - button "Upload pictures"
+- region "Recent":
+  - paragraph:
+    - text: Recent
+    - button "Open the Library"
+  - list:
+    - 'listitem "Open video: The donkey blinks slowly, its ears twitching as if listening to a distant trumpet, while the brim of its brown hat shimmers with a soft, studio light that glints off its worn leather band. A gentle breeze stirs the fur around its muzzle and lifts the edge of the hat slightly, causing the dust motes in the air to drift lazily in slow motion. The camera drifts forward on a smooth dolly shot, inching closer to the donkey’s curious eyes as it sways its head just enough to glance sideways. The ambient sound is the faint, rhythmic *thump-thump* of its hooves on the floor, punctuated by the soft rustle of fabric as the hat shifts with each subtle movement."': video
+    - 'listitem "Edit: donkey wearing a hat on white background."'
+    - 'listitem "Open video: 13621272_1920_1080_30fps"': video
+- status

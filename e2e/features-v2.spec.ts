@@ -1326,6 +1326,71 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(bar).toHaveCount(0);
   });
 
+  test('Edit: a seed you type is used and kept; unlocked, each run takes a new one (P1)', async () => {
+    const pic = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByLabel('Seed').fill('42');
+    await page.getByLabel('Instruction').fill('Make it a rainy day.');
+    const run = async () => {
+      const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+      await page.getByRole('button', { name: 'Apply instruction Ctrl+Enter' }).click();
+      const req = await sent;
+      const job = await (await req.response())!.json();
+      await page.request.post(`/api/jobs/${job.id}/cancel`);
+      return req.postDataJSON().params.seed as number;
+    };
+    expect(await run()).toBe(42);
+    expect(await run()).toBe(42); // locked: kept
+    await page.getByRole('button', { name: /^Seed locked/ }).click();
+    const s = await run();
+    expect(s).not.toBe(42);
+    await expect(page.getByLabel('Seed')).toHaveValue(String(s)); // the seed used is shown, ready to lock
+  });
+
+  test('Library: your title and notes on an item, shown on its tile and found by search (P2)', async () => {
+    await page.goto('/#/library');
+    const tiles = page.getByRole('list', { name: 'Library items' }).getByRole('listitem');
+    await tiles.first().click();
+    const details = page.getByRole('complementary', { name: 'Details' });
+    const title = `APP-IMG-01 · Klein · s42 · ${Date.now()}`;
+    await details.getByLabel('Title').fill(title);
+    await details.getByLabel('Notes').click(); // leaving the title saves it
+    await details.getByLabel('Notes').fill('Resolved prompt: … | enhance off');
+    await details.getByLabel('Title').click(); // leaving the notes saves them
+    const id = await tiles.first().getAttribute('data-id');
+    await expect.poll(async () => (await (await page.request.get(`/api/items/${id}`)).json()).item).toMatchObject({ title, notes: 'Resolved prompt: … | enhance off' });
+    await page.getByPlaceholder(/Search prompt/).fill(title.slice(0, 24));
+    await expect(tiles.first()).toHaveAttribute('data-id', id!);
+    await expect(tiles.first()).toContainText('APP-IMG-01');
+    await page.getByPlaceholder(/Search prompt/).fill('');
+  });
+
+  test('Library: compare two pictures side by side and on a slider, and save the comparison (P3)', async () => {
+    await page.goto('/#/library');
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Klein' }).click();
+    const tiles = page.getByRole('list', { name: 'Library items' }).getByRole('listitem');
+    await page.getByRole('button', { name: 'Select', exact: true }).click();
+    await tiles.nth(0).click();
+    await tiles.nth(1).click();
+    const bar = page.getByRole('toolbar', { name: 'Selection' });
+    await bar.getByRole('button', { name: 'Compare' }).click();
+    const dlg = page.getByRole('dialog', { name: 'Compare' });
+    await expect(dlg.locator('figure')).toHaveCount(2);
+    await dlg.getByRole('button', { name: 'Slider' }).click();
+    await expect(dlg.getByLabel('Compare split')).toBeVisible();
+    const saved = page.waitForResponse((r) => r.url().endsWith('/api/items/compare'));
+    await dlg.getByRole('button', { name: 'Save as picture' }).click();
+    const item = await (await saved).json();
+    expect(item).toMatchObject({ mode: 'compare', kind: 'image' });
+    expect(item.title).toMatch(/^Compare · .+ vs .+/);
+    expect(item.width).toBeGreaterThan(item.height); // two pictures next to each other
+    await dlg.getByRole('button', { name: 'Close compare' }).click();
+    await page.keyboard.press('Escape');
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
+  });
+
   test('Library: Delete forever sends the files to the Recycle Bin (a fresh crop made for this test)', async () => {
     const src = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
     const inp = await (await page.request.post(`/api/items/${src.id}/as-input`, { data: { which: 'main' } })).json();

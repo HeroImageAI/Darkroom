@@ -1,0 +1,44 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- region "Library":
+  - group "Filter":
+    - button "All" [pressed]
+    - button "Favourites"
+    - button "Klein"
+    - button "Qwen"
+    - button "Edits"
+    - button "Composed"
+    - button "Videos"
+    - button "Recently deleted"
+  - button "Stacks" [pressed]
+  - text: Search
+  - textbox "Search":
+    - /placeholder: Search prompt, seed or tag  ( / )
+  - button "Upload pictures to the Library"
+  - group "Boards":
+    - button "All boards" [pressed]
+    - button "No board 3"
+    - button "New board"
+    - text: 2 items
+    - button "Select"
+    - button "Upload"
+  - list "Library items":
+    - listitem:
+      - button "video The donkey blinks slowly, its ears twitching as if listening to a distant trumpet, while the brim of its brown hat shimmers with a soft, studio light that glints off its worn leather band. A gentle breeze stirs the fur around its muzzle and lifts the edge of the hat slightly, causing the dust motes in the air to drift lazily in slow motion. The camera drifts forward on a smooth dolly shot, inching closer to the donkey’s curious eyes as it sways its head just enough to glance sideways. The ambient sound is the faint, rhythmic *thump-thump* of its hooves on the floor, punctuated by the soft rustle of fabric as the hat shifts with each subtle movement.": 8.0s 2
+      - checkbox "Select The donkey blinks slowly, its ears twitching as if listening to a distant trumpet, while the brim of its brown hat shimmers with a soft, studio light that glints off its worn leather band. A gentle breeze stirs the fur around its muzzle and lifts the edge of the hat slightly, causing the dust motes in the air to drift lazily in slow motion. The camera drifts forward on a smooth dolly shot, inching closer to the donkey’s curious eyes as it sways its head just enough to glance sideways. The ambient sound is the faint, rhythmic *thump-thump* of its hooves on the floor, punctuated by the soft rustle of fabric as the hat shifts with each subtle movement."
+    - listitem:
+      - button "video 13621272_1920_1080_30fps": 37.3s
+      - checkbox "Select 13621272_1920_1080_30fps"
+- status

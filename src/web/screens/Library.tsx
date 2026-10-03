@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, CheckSquare, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2, Plus } from 'lucide-react';
+import { Check, CheckSquare, Columns2, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2, Plus } from 'lucide-react';
 import { api, type Board, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { Dialog, formatDuration, Pills } from '../components/common';
 import { BoardNameDialog, useBoards } from '../components/Boards';
 import { useItem, usePersistent } from '../lib/hooks';
 import { importFailedMessage, importPictures, importVideos, isVideoFile } from '../lib/importer';
 import { go } from '../router';
-import { toast, useApp } from '../store';
+import { getState, toast, useApp } from '../store';
 
 const FILTERS = [
   { value: 'all', label: 'All' },
@@ -64,6 +64,8 @@ export function Library() {
   const [band, setBand] = useState<{ x0: number; y0: number; x1: number; y1: number; base: string[] } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const [confirm, setConfirm] = useState<{ ids: string[] } | { all: true } | null>(null);
+  /** Compare two pictures (P3). */
+  const [comparing, setComparing] = useState<[Item, Item] | null>(null);
   const [loading, setLoading] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
@@ -371,6 +373,17 @@ export function Library() {
                   </>
                 ) : (
                   <>
+                    <button
+                      className="btn sm"
+                      disabled={picked.length !== 2 || picked.some((id) => items.find((i) => i.id === id)?.kind !== 'image')}
+                      title="Tick exactly two pictures to compare them side by side"
+                      onClick={() => {
+                        const two = picked.map((id) => items.find((i) => i.id === id)!) as [Item, Item];
+                        setComparing(two);
+                      }}
+                    >
+                      <Columns2 size={14} /> Compare
+                    </button>
                     <button className="btn sm" disabled={!picked.length} onClick={() => void favouriteAll(picked, !picked.every((id) => items.find((i) => i.id === id)?.favourite))}>
                       <Heart size={14} /> {picked.length && picked.every((id) => items.find((i) => i.id === id)?.favourite) ? 'Unfavourite' : 'Favourite'}
                     </button>
@@ -535,6 +548,7 @@ export function Library() {
           </div>
         </Dialog>
       )}
+      {comparing && <LibraryCompare a={comparing[0]} b={comparing[1]} onClose={() => setComparing(null)} />}
       {confirm && (
         <Dialog title="Delete for good?" onClose={() => setConfirm(null)}>
           <p style={{ marginTop: 0 }}>
@@ -657,7 +671,8 @@ function Tile({
       draggable={draggable}
       onDragStart={(e) => e.dataTransfer.setData('application/x-darkroom-item', item.id)}
       aria-pressed={selected || picked}
-      aria-label={`${item.kind} ${item.prompt || item.mode}`}
+      aria-label={`${item.kind} ${item.title || item.prompt || item.mode}`}
+      title={item.title || undefined}
       style={{
         position: 'relative',
         aspectRatio: '1',
@@ -691,6 +706,7 @@ function Tile({
         )}
       </span>
       {item.favourite && <Heart size={16} fill="#F0B44C" color="#F0B44C" style={{ position: 'absolute', right: 8, top: 8 }} />}
+      {item.title && <span className="tile-title">{item.title}</span>}
     </button>
     <button
       type="button"
@@ -848,6 +864,7 @@ function Detail({
                 <Trash2 size={14} /> Delete
               </button>
             </div>
+            <TitleNotes key={item.id} item={item} />
             {versions.length > 1 && (
               <div>
                 <p className="section-label">
@@ -1041,5 +1058,94 @@ function FragmentKV({ k, v }: { k: string; v: unknown }) {
       <dt>{k}</dt>
       <dd>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</dd>
     </>
+  );
+}
+
+/** Your own title and notes for an item (P2): saved when you leave the field, searchable in the Library. */
+function TitleNotes({ item }: { item: Item }) {
+  const [title, setTitle] = useState(item.title ?? '');
+  const [notes, setNotes] = useState(item.notes ?? '');
+  const save = async (patch: { title?: string; notes?: string }) => {
+    try {
+      await api.patch(`/api/items/${item.id}`, patch);
+    } catch (e) {
+      toast('Could not save: ' + (e as Error).message, 'error');
+    }
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <label className="field">
+        <span>Title</span>
+        <input className="input" aria-label="Title" placeholder={item.prompt?.slice(0, 60) || 'Untitled'} value={title} maxLength={120} onChange={(e) => setTitle(e.target.value)} onBlur={() => title !== (item.title ?? '') && void save({ title })} onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
+      </label>
+      <label className="field">
+        <span>Notes</span>
+        <textarea className="input" aria-label="Notes" rows={3} placeholder="Your notes" value={notes} maxLength={4000} onChange={(e) => setNotes(e.target.value)} onBlur={() => notes !== (item.notes ?? '') && void save({ notes })} />
+      </label>
+    </div>
+  );
+}
+
+/** Two pictures side by side or on a slider (P3); "Save as picture" keeps a labelled sheet in the Library. */
+function LibraryCompare({ a, b, onClose }: { a: Item; b: Item; onClose: () => void }) {
+  const [view, setView] = useState<'side' | 'slider'>('side');
+  const [split, setSplit] = useState(50);
+  const [saving, setSaving] = useState(false);
+  const label = (it: Item) => it.title || `${it.model}${it.seed != null ? ` · s${it.seed}` : ''}`;
+  const save = async () => {
+    setSaving(true);
+    try {
+      const it = await api.post<Item>('/api/items/compare', { a: a.id, b: b.id, boardId: getState().board });
+      toast(`Saved to your Library as "${it.title}".`, 'ok');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <div className="compare-overlay" role="dialog" aria-label="Compare">
+      <div className="compare-bar">
+        <strong>Compare</strong>
+        <div className="seg" role="group" aria-label="Compare view">
+          <button aria-pressed={view === 'side'} onClick={() => setView('side')}>
+            Side by side
+          </button>
+          <button aria-pressed={view === 'slider'} onClick={() => setView('slider')}>
+            Slider
+          </button>
+        </div>
+        <div style={{ flex: 1 }} />
+        <button className="btn sm primary" onClick={() => void save()} disabled={saving}>
+          {saving ? <Loader2 size={14} className="spin" /> : <Download size={14} />} Save as picture
+        </button>
+        <button className="btn sm" onClick={onClose} aria-label="Close compare">
+          Close
+        </button>
+      </div>
+      {view === 'side' ? (
+        <div className="compare-side">
+          {[a, b].map((it) => (
+            <figure key={it.id}>
+              <img src={fileUrl(it.id)} alt={label(it)} />
+              <figcaption>{label(it)}</figcaption>
+            </figure>
+          ))}
+        </div>
+      ) : (
+        <div className="compare-slider">
+          <div className="compare-stage">
+            <img src={fileUrl(b.id)} alt={label(b)} />
+            <img src={fileUrl(a.id)} alt={label(a)} style={{ clipPath: `inset(0 ${100 - split}% 0 0)` }} />
+            <span className="compare-split" style={{ left: `${split}%` }} />
+          </div>
+          <div className="field-row" style={{ justifyContent: 'center' }}>
+            <span className="mono">{label(a)}</span>
+            <input type="range" min={0} max={100} value={split} onChange={(e) => setSplit(Number(e.target.value))} aria-label="Compare split" style={{ width: 320 }} />
+            <span className="mono">{label(b)}</span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

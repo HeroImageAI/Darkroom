@@ -440,3 +440,18 @@ button.logo svg { transition: transform .2s; }
 .tl-ai { display: flex; flex-direction: column; gap: 10px; }
 .tl-key { display: grid; grid-template-columns: 44px 1fr auto auto; gap: 6px; align-items: center; margin-bottom: 6px; }
 .tl-key img { width: 44px; height: 30px; object-fit: cover; border-radius: 4px; }
+.tile-title { position: absolute; left: 0; right: 0; top: 0; padding: 6px 34px 14px 36px; font-size: 11px; color: #fff; text-align: left; background: linear-gradient(rgba(18,18,16,.85), transparent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+/* Library compare (P3) */
+.compare-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(12,12,11,.96); display: flex; flex-direction: column; padding: 16px 20px; gap: 12px; }
+.compare-bar { display: flex; align-items: center; gap: 12px; }
+.compare-bar .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.compare-bar .seg button { background: none; border: 0; color: var(--muted); padding: 6px 12px; }
+.compare-bar .seg button[aria-pressed='true'] { background: var(--raised); color: var(--text); }
+.compare-side { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.compare-side figure { margin: 0; display: flex; flex-direction: column; min-height: 0; gap: 8px; }
+.compare-side img { flex: 1; min-height: 0; width: 100%; object-fit: contain; background: #000; border-radius: 8px; }
+.compare-side figcaption { text-align: center; font-size: 14px; color: var(--muted); }
+.compare-slider { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+.compare-stage { position: relative; flex: 1; min-height: 0; }
+.compare-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.compare-split { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent); pointer-events: none; }

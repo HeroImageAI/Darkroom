@@ -685,3 +685,10 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     handles popped (step 4–8 vs 1–2 typical); with handles 1.8–4.0 (fill → sneaker 6.3 → 1.8, retake → creature 7.7 →
     3.8). A full industry film (captain + lip-sync, sneaker fill, runway extend, creature retake; 35 s) rendered and
     exported through Darkroom in 211 s of AI work plus the base takes.
+105. **For the test-suite run (Koos approved P1–P3 after Phase 0, `tests/ui-map.md`).** **P1 Seed in Edit:** a Seed
+    field under the Edit model, like Generate's — typing a seed locks it; unlocked, every run takes a new random seed
+    and shows it so a good result can be repeated (Instruct, Inpaint, Outpaint, Enhance, Layers). **P2 Title and notes
+    on Library items:** two columns (`title`, `notes`), edited in Details (saved on leaving the field), shown on the
+    tile, searched with the prompt. **P3 Compare two pictures:** tick exactly two in the Library → Compare: side by
+    side or on a slider, and **Save as picture** makes one labelled sheet (each side's title, or model and seed) in the
+    Library on the working board (mode `compare`). Run settings chosen by Koos: seed 42 only, videos at Final 720p.

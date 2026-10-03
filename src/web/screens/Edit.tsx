@@ -14,6 +14,9 @@ import {
   Maximize,
   Monitor,
   Loader2,
+  Lock,
+  Shuffle,
+  Unlock,
   Redo2,
   Sparkles,
   ScanSearch,
@@ -137,6 +140,18 @@ function Editor({ item }: { item: Item }) {
   const lorasNow = (): LoraUse[] => (editModel === 'klein' || editModel === 'qwen' ? (editLoras[editModel] ?? []) : []);
   // your Klein 9B fine-tune (DECISIONS 91), a preference like the LoRAs
   const [kleinWeights, setKleinWeights] = usePersistent<string>('edit.kleinWeights', '');
+  // Seed (P1, test-suite run 2026-10-03): like Generate's — type one to lock it; unlocked, every run takes a new
+  // random seed and shows it, so a result you like can be repeated
+  const [editSeed, setEditSeed] = useState<{ seed: number; locked: boolean }>(() => ({ seed: randomSeed(), locked: false }));
+  const seedRef = useRef(editSeed);
+  seedRef.current = editSeed;
+  const nextSeed = () => {
+    const cur = seedRef.current;
+    if (cur.locked) return cur.seed;
+    const seed = randomSeed();
+    setEditSeed({ seed, locked: false });
+    return seed;
+  };
   const finetunes = useFinetunes();
   const weightsNow = (): Record<string, string> => (editModel === 'klein' && kleinWeights ? { klein_weights: kleinWeights } : {});
   const [enhanceKind, setEnhanceKind] = useState<EnhanceKind>('restore');
@@ -459,7 +474,7 @@ function Editor({ item }: { item: Item }) {
       const inp = await api.asInput(item.id);
       const j = await api.submit({
         workflow,
-        params: { image_1: inp.name, seed: randomSeed(), ...params, ...(LORA_MODES.has(modeKey) && lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(LORA_MODES.has(modeKey) ? weightsNow() : {}) },
+        params: { image_1: inp.name, seed: nextSeed(), ...params, ...(LORA_MODES.has(modeKey) && lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(LORA_MODES.has(modeKey) ? weightsNow() : {}) },
         meta: { mode: modeKey, model, prompt: promptText || item.prompt, parentId: item.id, ui: item.ui },
       });
       setJobId(j.id);
@@ -633,7 +648,7 @@ function Editor({ item }: { item: Item }) {
               params: { image_1: inp.name, scale: preScale, seed: randomSeed() },
               meta: { mode: 'upscale', model: 'SeedVR2 7B', prompt: item.prompt, parentId: item.id, ui, chain: { kind: 'enhance', workflow, params, meta: enhanceMeta } },
             })
-          : await api.submit({ workflow, params: { image_1: inp.name, seed: randomSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
+          : await api.submit({ workflow, params: { image_1: inp.name, seed: nextSeed(), ...params }, meta: { ...enhanceMeta, parentId: item.id } });
         setJobId(j.id);
         if (preScale) toast(`Small picture: upscaling ${preScale}× with SeedVR2 first, then enhancing — the enhanced version opens when it is ready.`, 'info', 7000);
         else if (large?.exact) toast(`Large picture: restoring at full size (${W}×${H}) with the restore LoRA, about a minute.`, 'info', 8000);
@@ -700,7 +715,7 @@ function Editor({ item }: { item: Item }) {
           for (const l of layers) {
             const j = await api.submit({
               workflow: 'qwen_remove_bg',
-              params: { image_1: inp.name, prompt: l.prompt, seed: randomSeed(), output: 'darkroom/layers/qwen21' },
+              params: { image_1: inp.name, prompt: l.prompt, seed: nextSeed(), output: 'darkroom/layers/qwen21' },
               // the background is tagged as a plate so the Layers panel keeps it at the bottom of the stack
               meta: { mode: l.name === 'Background' ? 'edit:plate' : 'edit:layers', model: 'Qwen-Image 2.1 layer', prompt: l.name, parentId: item.id, ui: item.ui, groupId, layers: true },
             });
@@ -733,7 +748,7 @@ function Editor({ item }: { item: Item }) {
           const cap = await ensureCaption('short');
           const j = await api.submit({
             workflow: 'qwen_layered',
-            params: { image_1: inp.name, layers: layerCount, prompt: cap ?? '', seed: randomSeed() },
+            params: { image_1: inp.name, layers: layerCount, prompt: cap ?? '', seed: nextSeed() },
             meta: { mode: 'edit:layers', model: 'Qwen-Image-Layered', prompt: cap ?? '', parentId: item.id, ui: { ...item.ui, caption: cap ?? undefined }, layers: true },
           });
           setJobId(j.id);
@@ -1066,6 +1081,18 @@ function Editor({ item }: { item: Item }) {
                   <LoraPicker family={editModel} value={editLoras[editModel] ?? []} onChange={(v) => setEditLoras((prev) => ({ ...prev, [editModel]: v }))} />
                 </div>
               )}
+              <label className="field" style={{ marginTop: 12 }}>
+                <span>Seed</span>
+                <div className="field-row">
+                  <input className="input mono" inputMode="numeric" value={editSeed.seed} onChange={(e) => setEditSeed({ seed: Number(e.target.value.replace(/\D/g, '')) || 0, locked: true })} aria-label="Seed" />
+                  <button type="button" className={`btn icon ${editSeed.locked ? 'on' : ''}`} aria-pressed={editSeed.locked} title={editSeed.locked ? 'Seed locked — every run reuses it' : 'Seed unlocked — a new seed every run'} onClick={() => setEditSeed((x) => ({ ...x, locked: !x.locked }))}>
+                    {editSeed.locked ? <Lock size={16} /> : <Unlock size={16} />}
+                  </button>
+                  <button type="button" className="btn icon" title="New random seed" onClick={() => setEditSeed((x) => ({ ...x, seed: randomSeed() }))}>
+                    <Shuffle size={16} />
+                  </button>
+                </div>
+              </label>
             </div>
           )}
 
