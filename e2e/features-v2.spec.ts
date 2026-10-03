@@ -68,7 +68,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(box).not.toHaveValue('poster for a jazz night called "Blue Hour"', { timeout: 240_000 });
     const enhanced = await box.inputValue();
     expect(enhanced.length).toBeGreaterThan(80);
-    expect(enhanced).toMatch(/blue[sS]{0,60}hour/i); // the enhancer may set the title in capitals, or split over two lines
+    expect(enhanced).toMatch(/blue[\s\S]{0,60}hour/i); // the enhancer may set the title in capitals, or split over two lines
     await shot(page, 'generate-enhanced');
     await page.getByRole('button', { name: /^Undo/ }).click();
     await expect(box).toHaveValue('poster for a jazz night called "Blue Hour"');
