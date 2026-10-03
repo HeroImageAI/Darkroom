@@ -1343,6 +1343,13 @@ test.describe.serial('Darkroom v2 features', () => {
     };
     expect(await run()).toBe(42);
     expect(await run()).toBe(42); // locked: kept
+    // a run that finishes moves Edit to the new version: the seed stays 42 and locked (test-suite finding 1)
+    const from = page.url();
+    await page.getByRole('button', { name: 'Apply instruction Ctrl+Enter' }).click();
+    await expect(page).not.toHaveURL(from, { timeout: 180_000 });
+    await expect(page.getByLabel('Seed')).toHaveValue('42');
+    await expect(page.getByRole('button', { name: /^Seed locked/ })).toBeVisible();
+    await page.getByLabel('Instruction').fill('Make it a rainy day.');
     await page.getByRole('button', { name: /^Seed locked/ }).click();
     const s = await run();
     expect(s).not.toBe(42);
