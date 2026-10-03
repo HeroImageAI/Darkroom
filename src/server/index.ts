@@ -28,8 +28,9 @@ import { readDarkroomMeta } from '../shared/pngmeta.js';
 import { outputDirFromArgv, outputPath, recycle } from './trash.js';
 import { labelledSheet } from './framepair.js';
 import { sanitiseDoc } from '../shared/compose.js';
-import { duration as timelineDuration, exportSize, ordered, sanitiseTimeline } from '../shared/timeline.js';
-import { desktopPython, inputDirFromArgv, inside, runExport } from './timeline.js';
+import { duration as timelineDuration, endOf, exactFrames, exportSize, ordered, planGeneration, sanitiseTimeline, type GenerateRequest } from '../shared/timeline.js';
+import { planVideo } from '../shared/manifest.js';
+import { desktopPython, grabFrame, inputDirFromArgv, inside, runExport } from './timeline.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -633,6 +634,110 @@ app.post('/api/timelines/:id/export', async (req, reply) => {
     return reply.code(500).send({ error: 'The film could not be put together: ' + (e as Error).message });
   } finally {
     exporting = null;
+  }
+});
+
+/**
+ * Timeline AI tools (DECISIONS 104): fill a gap, extend a clip, retake a moment. The guide frames are read straight
+ * from the clips' files, LTX renders the new clip at exactly the right length, and a placeholder holds its place on
+ * the film until it lands (the job's chain swaps it in).
+ */
+app.post('/api/timelines/:id/generate', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  const t = store.timeline(id);
+  if (!t) return reply.code(404).send({ error: 'Timeline not found' });
+  const b = (req.body ?? {}) as { request?: GenerateRequest; prompt?: unknown; quality?: unknown; keyMoments?: { itemId: string; at: number }[]; soundSync?: unknown; seed?: unknown };
+  if (!b.request || !['fill', 'extend', 'retake'].includes(b.request.kind)) return reply.code(400).send({ error: 'What should be made?' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running. Start it from the status pill at the top." });
+  const python = desktopPython(cfg);
+  if (!python) return reply.code(500).send({ error: "Darkroom can't find Comfy Desktop's Python, which reads the clips' frames." });
+  const argv = ((await jobs.comfy.systemStats()) as SystemStats).system?.argv;
+  const outDir = outputDirFromArgv(argv);
+  const inDir = inputDirFromArgv(argv);
+  if (!outDir || !inDir) return reply.code(409).send({ error: "ComfyUI doesn't report its folders." });
+  const newId = () => crypto.randomBytes(6).toString('hex');
+  let plan;
+  try {
+    plan = planGeneration(t.doc, b.request, newId);
+  } catch (e) {
+    return reply.code(400).send({ error: (e as Error).message });
+  }
+  const pathOf = (itemId: string) => {
+    const f = store.getItem(itemId)?.file;
+    return !f ? null : (f.type ?? 'output') === 'input' ? inside(inDir, path.join(f.subfolder ?? '', f.filename)) : outputPath(outDir, f);
+  };
+  const stamp = Date.now().toString(36) + newId().slice(0, 4);
+  const frameFile = async (ref: { itemId: string; t: number } | null, tag: string) => {
+    if (!ref) return null;
+    const src = pathOf(ref.itemId);
+    if (!src || !fs.existsSync(src)) throw new Error('A clip next to it is no longer in the Library.');
+    const rel = `darkroom/tlf_${stamp}_${tag}.png`;
+    fs.mkdirSync(path.join(inDir, 'darkroom'), { recursive: true });
+    await grabFrame(python, src, ref.t, path.join(inDir, rel));
+    return rel;
+  };
+  try {
+    const first = await frameFile(plan.first, 'a');
+    const last = await frameFile(plan.last, 'b');
+    if (!first) return reply.code(400).send({ error: 'There is no picture to start from.' });
+    const m = manifest();
+    const model = (m as any).video?.ltx;
+    const quality = (['draft', 'final', 'hd'].includes(b.quality as string) ? b.quality : 'draft') as 'draft' | 'final' | 'hd';
+    const size = exportSize(t.doc, (itemId) => {
+      const it = store.getItem(itemId);
+      return it?.width && it.height ? { width: it.width, height: it.height } : null;
+    });
+    const vp = planVideo(model, quality, plan.seconds, size.width, size.height);
+    const ex = exactFrames(plan.seconds, t.doc.fps);
+    const keys = [];
+    for (const k of (Array.isArray(b.keyMoments) ? b.keyMoments : []).slice(0, 6)) {
+      const it = store.getItem(k.itemId);
+      if (!it || it.kind !== 'image') continue;
+      keys.push({ image: await jobs.asInput(it), frame: Math.round(Math.min(1, Math.max(0, k.at / plan.seconds)) * (ex.frames - 1)), strength: 0.7 });
+    }
+    let sound: { file: string; start: number; seconds: number } | null = null;
+    if (b.soundSync) {
+      const s = t.doc.sounds.find((x) => x.start <= plan.start + 0.05 && endOf(x) >= plan.start + plan.seconds - 0.05);
+      if (!s) return reply.code(400).send({ error: 'To animate to your sound, a sound on the sound track must cover the whole stretch.' });
+      sound = { file: s.file, start: Math.round((s.in + (plan.start - s.start)) * 1000) / 1000, seconds: plan.seconds };
+    }
+    let prompt = String(b.prompt ?? '').trim().slice(0, 2000) || 'Natural, continuous motion that carries on from what came before.';
+    // several pictures in one clip: ask for one continuous shot, or LTX may cut or dissolve between them (DECISIONS 104)
+    if (keys.length || (first && last)) prompt = `One continuous shot without any cuts. ${prompt}`;
+    const label = { fill: 'Filling the gap', extend: 'Extending', retake: 'Retaking' }[b.request.kind];
+    const pendingId = newId();
+    const job = await jobs.submit({
+      workflow: vp.workflow,
+      params: {
+        start_image: first,
+        ...(last ? { end_image: last } : {}),
+        motion_prompt: prompt,
+        seed: typeof b.seed === 'number' ? b.seed : Math.floor(Math.random() * 2 ** 31),
+        frames: ex.frames,
+        fps: ex.fps,
+        width: vp.width,
+        height: vp.height,
+        ...(keys.length ? { key_moments: JSON.stringify(keys) } : {}),
+        ...(sound ? { sound_sync: JSON.stringify(sound) } : {}),
+      },
+      meta: {
+        mode: 'timeline',
+        model: `LTX 2.5 · ${label.toLowerCase()}`,
+        // named after what you asked for (the "one continuous shot" lead-in is Darkroom's, not yours)
+        prompt: String(b.prompt ?? '').trim().slice(0, 300) || label,
+        ui: { model: 'ltx', quality, timelineId: id },
+        estimateSec: vp.estimateSec ?? undefined,
+        durationSec: plan.seconds,
+        chain: { kind: 'timeline', timelineId: id, pendingId, start: plan.start, seconds: plan.seconds, muted: !!sound },
+      },
+      force: true,
+    });
+    const doc = { ...plan.doc, pending: [...(plan.doc.pending ?? []), { id: pendingId, jobId: job.id, kind: b.request.kind, start: plan.start, length: plan.seconds, label, ...(plan.was ? { was: plan.was } : {}) }] };
+    const saved = store.saveTimeline(id, t.name, doc);
+    broadcast({ type: 'timeline', id, doc: saved.doc });
+    return { doc: saved.doc, job: publicJob(job) };
+  } catch (e) {
+    return reply.code(400).send({ error: (e as Error).message });
   }
 });
 

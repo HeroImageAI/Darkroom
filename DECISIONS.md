@@ -660,3 +660,28 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     fades (normalised only if it would clip), H.264 CRF 18 + AAC, poster and last frame; the film lands in the Library
     (mode `timeline`). 15 s of 720p exported in 20 s. ComfyUI is not used for this: its batches hold whole clips in
     memory. The top bar's compact layout now starts below 1520 px (seven tabs), so nothing runs off at 1280–1440.
+104. **Timeline AI tools: fill, extend, retake, key moments, animate to your sound** (stage 2 of decision 103). One
+    endpoint plans where the clip goes (`planGeneration`): **Fill** an empty stretch (guided by the frame before and the
+    frame after; a clip is needed before the gap — an opening shot is made on Video), **Extend** a clip (from its last
+    frame; later clips move to make room), **Retake** a moment from the playhead (the clip is cut there and the new take
+    is guided by the frames either side; stopping it puts the clip back whole). Guide frames are read straight from the
+    clips' files (`scripts/video_frame.py`, Desktop's Python). The clip lasts exactly the stretch: the nearest 8n+1 frame
+    count, with LTX's frame rate nudged to fit (a 2.3 s gap = 57 frames at 24.3 fps). A placeholder holds the place; the
+    job's chain swaps the clip in on the server and the screen follows. **Key moments**: more LTXVAddGuide pictures
+    chained after stage 1's last guide (both LTX graphs), strength 0.7, and "One continuous shot without any cuts" in
+    front of the prompt whenever a clip has two or more pictures. **Animate to my sound**: the sound track under the
+    stretch is encoded by LTX's audio VAE and frozen (LTXVFreezeLatent, in both stages of 1080p) in place of the empty
+    audio latent, plus Lightricks' LTXVModalityGuidance (scale 3) for lip-sync; the clip is muted on the timeline since
+    its sound is your track. **Handles**: an AI clip is made 4 frames longer at each end, guided by frames that far
+    inside its neighbours, and overlaps them, so the film crossfades over near-identical frames. Tested on JP's
+    industries (`docs/qa/timeline-ai/`, synthetic Klein inputs): **footwear** fill side → three-quarter, first and last
+    frames on their guides (7.3 / 7.5 mean difference vs 22.7 for the wrong picture), turning smoothly; **automotive**
+    key moment hits its frame exactly (frame 60 is the closest of 121 to the side-profile picture), but three views of a
+    rigid car far apart in angle come out as a cut (5 s) or a dissolve (8 s), and front ¾ → side as a hold-then-switch:
+    LTX bridges pose, action, expression and light from one viewpoint, not big camera moves around a rigid object —
+    those work from one picture with the move in the prompt (a smooth 30° orbit), continued with Extend; the dialog says
+    so. **Sci-fi captain** (gaming / movie): her mouth follows a recorded line (the clip's sound is the line, loudness
+    correlation 0.79 after the audio VAE); **apparel** runway extend and **movie** creature retake join up. Joins before
+    handles popped (step 4–8 vs 1–2 typical); with handles 1.8–4.0 (fill → sneaker 6.3 → 1.8, retake → creature 7.7 →
+    3.8). A full industry film (captain + lip-sync, sneaker fill, runway extend, creature retake; 35 s) rendered and
+    exported through Darkroom in 211 s of AI work plus the base takes.

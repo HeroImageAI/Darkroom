@@ -28,6 +28,18 @@ export interface TimelineSound {
   volume: number;
 }
 
+/** A clip being made by one of the AI tools (DECISIONS 104): a placeholder until its render lands. */
+export interface TimelinePending {
+  id: string;
+  jobId: string;
+  kind: GenerateKind;
+  start: number;
+  length: number;
+  label: string;
+  /** a retake's clip as it was before the moment was cut out (put back if the retake is removed) */
+  was?: TimelineClip;
+}
+
 export type TimelineSize = 'auto' | '1280x720' | '1920x1080' | '720x1280' | '1080x1920' | '1024x1024';
 
 export interface TimelineDoc {
@@ -36,6 +48,7 @@ export interface TimelineDoc {
   sounds: TimelineSound[];
   size: TimelineSize;
   fps: number;
+  pending?: TimelinePending[];
 }
 
 export const emptyTimeline = (): TimelineDoc => ({ v: 1, clips: [], sounds: [], size: 'auto', fps: 24 });
@@ -200,5 +213,113 @@ export function sanitiseTimeline(raw: unknown): TimelineDoc | null {
       volume: num(s.volume, 0, 1.5, 1),
     });
   }
-  return { v: 1, clips, sounds, size: SIZES.includes(d.size as TimelineSize) ? (d.size as TimelineSize) : 'auto', fps: num(d.fps, 8, 60, 24) };
+  const pending: TimelinePending[] = [];
+  for (const q of (Array.isArray(d.pending) ? d.pending : []).slice(0, 50) as Record<string, unknown>[]) {
+    if (!idOk(q?.id) || typeof q.jobId !== 'string' || !/^[0-9a-f-]{36}$/.test(q.jobId) || !KINDS.includes(q.kind as GenerateKind)) return null;
+    const w = q.was as Record<string, unknown> | undefined;
+    const was = w && idOk(w.id) && typeof w.itemId === 'string' && /^[0-9a-f-]{36}$/.test(w.itemId) ? { id: w.id as string, itemId: w.itemId, start: num(w.start, 0, 36000, 0), in: num(w.in, 0, 36000, 0), out: num(w.out, 0, 36000, 1), ...(w.muted ? { muted: true } : {}) } : undefined;
+    pending.push({ id: q.id as string, jobId: q.jobId, kind: q.kind as GenerateKind, start: num(q.start, 0, 36000, 0), length: num(q.length, 0.1, 60, 1), label: typeof q.label === 'string' ? q.label.slice(0, 80) : '', ...(was ? { was } : {}) });
+  }
+  return { v: 1, clips, sounds, size: SIZES.includes(d.size as TimelineSize) ? (d.size as TimelineSize) : 'auto', fps: num(d.fps, 8, 60, 24), ...(pending.length ? { pending } : {}) };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// AI tools (DECISIONS 104): where a generated clip goes, which frames guide it, and how the film makes room for it
+
+export type GenerateKind = 'fill' | 'extend' | 'retake';
+const KINDS: GenerateKind[] = ['fill', 'extend', 'retake'];
+
+export type GenerateRequest =
+  | { kind: 'fill'; start: number; end: number }
+  | { kind: 'extend'; clipId: string; seconds: number }
+  | { kind: 'retake'; clipId: string; from: number; to: number };
+
+/** A frame to guide with: this clip's source at this time. */
+export interface FrameRef {
+  clipId: string;
+  itemId: string;
+  t: number;
+}
+
+export interface GenerationPlan {
+  start: number;
+  seconds: number;
+  /** the clip's first frame (the picture before), and for fills and retakes its last frame (the picture after) */
+  first: FrameRef | null;
+  last: FrameRef | null;
+  /** the film with room made for the new clip (later clips moved for an extend, the moment cut out for a retake) */
+  doc: TimelineDoc;
+  /** a retake's clip before the cut */
+  was?: TimelineClip;
+}
+
+/** The longest stretch to make (LTX's 10 s less the handles) and the shortest worth making. */
+export const GEN_MAX = 9.5;
+/** Frames of overlap an AI clip gets with each neighbour (crossfaded). */
+export const HANDLE_FRAMES = 4;
+export const GEN_MIN = 1;
+
+export function planGeneration(doc: TimelineDoc, req: GenerateRequest, newId: () => string): GenerationPlan {
+  const frame = 1 / doc.fps;
+  // handles: the new clip is made a few frames longer at each end, guided by frames that far inside its neighbours,
+  // and overlaps them by that much, so the film crossfades over near-identical frames instead of popping at the join
+  const H = HANDLE_FRAMES / doc.fps;
+  const handle = (room: number) => (room >= H + MIN_LENGTH ? H : 0);
+  const list = ordered(doc.clips);
+  if (req.kind === 'fill') {
+    const gap = r3(req.end - req.start);
+    if (gap < GEN_MIN || gap > GEN_MAX) throw new Error(`A gap to fill must be ${GEN_MIN} to ${GEN_MAX} seconds long (this one is ${gap.toFixed(1)} s).`);
+    if (list.some((c) => c.start < req.end - 1e-3 && endOf(c) > req.start + 1e-3)) throw new Error('That stretch is not empty.');
+    const before = [...list].reverse().find((c) => endOf(c) <= req.start + 1e-3 && endOf(c) >= req.start - 0.05);
+    const after = list.find((c) => c.start >= req.end - 0.05 && c.start <= req.end + 1e-3);
+    if (!before) throw new Error('A gap to fill needs a clip just before it (an opening shot is made on Video).');
+    const hb = handle(lengthOf(before));
+    const ha = after ? handle(lengthOf(after)) : 0;
+    return {
+      start: r3(req.start - hb),
+      seconds: r3(gap + hb + ha),
+      first: { clipId: before.id, itemId: before.itemId, t: r3(Math.max(before.in, before.out - frame - hb)) },
+      last: after ? { clipId: after.id, itemId: after.itemId, t: r3(after.in + ha) } : null,
+      doc,
+    };
+  }
+  const c = list.find((x) => x.id === req.clipId);
+  if (!c) throw new Error('That clip is not on the timeline any more.');
+  if (req.kind === 'extend') {
+    const seconds = r3(req.seconds);
+    if (seconds < GEN_MIN || seconds > GEN_MAX) throw new Error(`Extend by ${GEN_MIN} to ${GEN_MAX} seconds.`);
+    const at = endOf(c);
+    const hb = handle(lengthOf(c));
+    // make room: everything that starts at or after the clip's end moves later
+    const moved = { ...doc, clips: doc.clips.map((x) => (x.id !== c.id && x.start >= at - 1e-3 ? { ...x, start: r3(x.start + seconds) } : x)) };
+    return { start: r3(at - hb), seconds: r3(seconds + hb), first: { clipId: c.id, itemId: c.itemId, t: r3(Math.max(c.in, c.out - frame - hb)) }, last: null, doc: moved };
+  }
+  // retake: cut the moment out of the clip; the new clip goes in the hole, guided by the frames either side of it
+  const from = Math.max(req.from, c.start);
+  const to = Math.min(req.to, endOf(c));
+  const seconds = r3(to - from);
+  if (seconds < GEN_MIN || seconds > GEN_MAX) throw new Error(`A retake must be ${GEN_MIN} to ${GEN_MAX} seconds long.`);
+  const src = (t: number) => c.in + (t - c.start);
+  const left = from - c.start >= MIN_LENGTH ? { ...c, out: r3(src(from)) } : null;
+  const right = endOf(c) - to >= MIN_LENGTH ? { ...c, id: newId(), start: r3(to), in: r3(src(to)) } : null;
+  const hb = left ? handle(lengthOf(left)) : 0;
+  const ha = right ? handle(lengthOf(right)) : 0;
+  const clips = [...doc.clips.filter((x) => x.id !== c.id), ...(left ? [left] : []), ...(right ? [right] : [])];
+  return {
+    start: r3(from - hb),
+    seconds: r3(seconds + hb + ha),
+    first: { clipId: c.id, itemId: c.itemId, t: r3(Math.max(c.in, src(from) - frame - hb)) },
+    last: { clipId: c.id, itemId: c.itemId, t: r3(Math.min(c.out - frame, src(to) + ha)) },
+    doc: { ...doc, clips },
+    was: c,
+  };
+}
+
+/**
+ * LTX frame count and frame rate for a clip that must last exactly `seconds`: the nearest 8n+1 frame count at the
+ * film's rate, then the rate nudged so those frames fill the time exactly (a 2.3 s gap is 57 frames at 24.3 fps).
+ */
+export function exactFrames(seconds: number, fps = 24): { frames: number; fps: number } {
+  const frames = Math.max(9, Math.round((seconds * fps) / 8) * 8 + 1);
+  return { frames, fps: Math.round(((frames - 1) / seconds) * 1000) / 1000 };
 }

@@ -171,6 +171,10 @@ describe('Motion with the chosen sound (DECISIONS 97)', () => {
 });
 
 describe('dropCopiedSound', () => {
+  it('also drops a sentence that rewords around the description (e2e, 2026-10-03)', () => {
+    const t = 'Gentle rain streaks down the windows. The ambient sound of rain on the window and a distant train hums beneath the visual transformation.';
+    expect(dropCopiedSound(t, 'Rain on the window and a distant train.')).toBe('Gentle rain streaks down the windows.');
+  });
   it('drops a copied sound sentence, keeps the motion', () => {
     const t = 'The boats bob gently. The orange buoy bobs near the dock. Gulls cry and a ship horn sounds twice.';
     expect(dropCopiedSound(t, 'Gulls cry and a ship horn sounds twice.')).toBe('The boats bob gently. The orange buoy bobs near the dock.');

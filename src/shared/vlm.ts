@@ -280,9 +280,12 @@ export function dropCopiedSound(text: string, sound: string): string {
   const s = norm(sound);
   if (!s) return text;
   const sentences = text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?]["”']?)\s+(?=[A-Z"“])/);
+  // a copy, whole or reworded around it: the sentence repeats four or more words of the description in a row
+  const words = s.split(' ');
+  const runs = words.length >= 4 ? words.slice(0, -3).map((_, i) => ` ${words.slice(i, i + 4).join(' ')} `) : [];
   const kept = sentences.filter((x) => {
     const n = norm(x);
-    return !(n.length >= 8 && s.includes(n));
+    return !(n.length >= 8 && s.includes(n)) && !runs.some((r) => ` ${n} `.includes(r));
   });
   return (kept.length ? kept : sentences).join(' ').trim();
 }

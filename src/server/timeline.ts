@@ -73,3 +73,14 @@ export function runExport(python: string, job: ExportJob, onProgress: (p: number
     });
   });
 }
+
+/** The frame of a video showing at time t, as a PNG (the guide pictures for the Timeline's AI tools). */
+export function grabFrame(python: string, video: string, t: number, out: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const p = spawn(python, [path.join(ROOT, 'scripts', 'video_frame.py'), video, String(Math.max(0, t)), out], { windowsHide: true });
+    let err = '';
+    p.stderr.on('data', (d: Buffer) => (err = (err + d.toString()).slice(-2000)));
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 && fs.existsSync(out) ? resolve() : reject(new Error(err.trim().split(/\r?\n/).pop() || 'Could not read a frame of the clip.'))));
+  });
+}

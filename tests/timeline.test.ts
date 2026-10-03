@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clipsAt, closeGaps, crossfade, duration, emptyTimeline, exportSize, fadeInOf, moveTo, rippleDelete, sanitiseTimeline, split, trim, type TimelineClip, type TimelineDoc } from '../src/shared/timeline';
+import { clipsAt, closeGaps, crossfade, duration, emptyTimeline, exactFrames, exportSize, fadeInOf, moveTo, ordered, planGeneration, rippleDelete, sanitiseTimeline, split, trim, type TimelineClip, type TimelineDoc } from '../src/shared/timeline';
 
 const ID = '00000000-0000-4000-8000-000000000001';
 const clip = (id: string, start: number, inn: number, out: number): TimelineClip => ({ id, itemId: ID, start, in: inn, out });
@@ -71,5 +71,48 @@ describe('timeline', () => {
     expect(sanitiseTimeline(good)?.sounds[0].volume).toBe(1.5);
     expect(sanitiseTimeline({ ...good, sounds: [{ ...good.sounds[0], file: '../x.mp3' }] })).toBeNull();
     expect(sanitiseTimeline({ ...good, clips: [{ ...good.clips[0], itemId: 'nope' }] })).toBeNull();
+  });
+});
+
+describe('timeline AI tools: planning', () => {
+  const ids = (() => {
+    let n = 0;
+    return () => `n${++n}`;
+  })();
+  const H = 4 / 24;
+  it('fill: guided by frames a handle inside each neighbour, overlapping both by it; refuses a gap that is not empty or too long', () => {
+    const d = doc(clip('a', 0, 1, 5), clip('b', 7, 2, 6));
+    const p = planGeneration(d, { kind: 'fill', start: 4, end: 7 }, ids);
+    expect(p.start).toBeCloseTo(4 - H, 2);
+    expect(p.seconds).toBeCloseTo(3 + 2 * H, 2);
+    expect(p.first).toMatchObject({ clipId: 'a' });
+    expect(p.first!.t).toBeCloseTo(5 - 1 / 24 - H, 2);
+    expect(p.last!.t).toBeCloseTo(2 + H, 2);
+    expect(() => planGeneration(d, { kind: 'fill', start: 3, end: 7 }, ids)).toThrow(/not empty/);
+    expect(() => planGeneration(doc(clip('a', 0, 0, 2), clip('b', 20, 0, 2)), { kind: 'fill', start: 2, end: 20 }, ids)).toThrow(/1 to 9.5 seconds/);
+  });
+  it('extend: from a handle before the end of the clip, later clips make room for the stretch asked for', () => {
+    const p = planGeneration(doc(clip('a', 0, 0, 4), clip('b', 4, 0, 2), clip('c', 9, 0, 1)), { kind: 'extend', clipId: 'a', seconds: 3 }, ids);
+    expect(p.start).toBeCloseTo(4 - H, 2);
+    expect(p.seconds).toBeCloseTo(3 + H, 2);
+    expect(p.last).toBeNull();
+    expect(p.doc.clips.map((c) => c.start)).toEqual([0, 7, 12]);
+  });
+  it('retake: the moment is cut out of the clip; the new take overlaps both sides by a handle', () => {
+    const p = planGeneration(doc(clip('a', 10, 2, 8)), { kind: 'retake', clipId: 'a', from: 11, to: 13.5 }, ids);
+    expect(p.start).toBeCloseTo(11 - H, 2);
+    expect(p.seconds).toBeCloseTo(2.5 + 2 * H, 2);
+    expect(p.first!.t).toBeCloseTo(3 - 1 / 24 - H, 2);
+    expect(p.last!.t).toBeCloseTo(5.5 + H, 2);
+    expect(ordered(p.doc.clips).map((c) => [c.start, c.in, c.out])).toEqual([
+      [10, 2, 3],
+      [13.5, 5.5, 8],
+    ]);
+  });
+  it('exact frames: 8n+1 frames with the rate nudged to fill the time', () => {
+    expect(exactFrames(3)).toEqual({ frames: 73, fps: 24 });
+    const e = exactFrames(2.3);
+    expect((e.frames - 1) % 8).toBe(0);
+    expect((e.frames - 1) / e.fps).toBeCloseTo(2.3, 2);
   });
 });

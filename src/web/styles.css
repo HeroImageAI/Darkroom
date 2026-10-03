@@ -433,3 +433,10 @@ button.logo svg { transition: transform .2s; }
 .tl-list { display: flex; flex-direction: column; gap: 6px; max-width: 720px; }
 .tl-list-item { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
 .tl-tips { padding-left: 18px; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.tl-gap { position: absolute; top: 6px; bottom: 6px; border: 2px dashed var(--accent); border-radius: 6px; background: rgba(240,180,76,.08); pointer-events: none; }
+.tl-pending { position: absolute; top: 6px; bottom: 6px; border-radius: 6px; border: 2px solid rgba(240,180,76,.6); background: repeating-linear-gradient(135deg, rgba(240,180,76,.28) 0 10px, rgba(240,180,76,.1) 10px 20px); cursor: pointer; overflow: hidden; }
+.tl-pending.failed { border-color: #c0392b; background: repeating-linear-gradient(135deg, rgba(192,57,43,.3) 0 10px, rgba(192,57,43,.1) 10px 20px); }
+.tl-pending.selected { border-color: var(--accent); }
+.tl-ai { display: flex; flex-direction: column; gap: 10px; }
+.tl-key { display: grid; grid-template-columns: 44px 1fr auto auto; gap: 6px; align-items: center; margin-bottom: 6px; }
+.tl-key img { width: 44px; height: 30px; object-fit: cover; border-radius: 4px; }

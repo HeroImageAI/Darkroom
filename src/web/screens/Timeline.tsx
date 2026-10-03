@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Download, Film, Loader2, Music, Pause, Play, Plus, Redo2, Scissors, SkipBack, Trash2, Undo2, Upload, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Download, Film, ImagePlus, Loader2, Music, Pause, Play, Plus, Redo2, Scissors, SkipBack, Sparkles, Trash2, Undo2, Upload, Volume2, VolumeX, X } from 'lucide-react';
+import { LibraryPicker } from '../components/LibraryPicker';
 import { api, fileUrl, inputUrl, thumbUrl, type Item } from '../api';
 import { formatDuration, ProgressBar, Segmented, timecode } from '../components/common';
 import { openLibrary } from '../lib/remove';
 import { go } from '../router';
-import { getState, toast, useApp } from '../store';
+import { getState, onTimeline, toast, useApp } from '../store';
 import {
   clipsAt,
   closeGaps,
@@ -22,6 +23,9 @@ import {
   snapPoints,
   split,
   trim,
+  GEN_MAX,
+  GEN_MIN,
+  type GenerateRequest,
   type TimelineClip,
   type TimelineDoc,
   type TimelineSize,
@@ -121,7 +125,7 @@ function TimelineStart() {
 // ---------------------------------------------------------------------------------------------------------------
 // Editor
 
-type Sel = { kind: 'clip' | 'sound'; id: string } | null;
+type Sel = { kind: 'clip' | 'sound' | 'pending'; id: string } | { kind: 'gap'; start: number; end: number } | null;
 type Drag =
   | { kind: 'move'; track: 'clip' | 'sound'; id: string; x0: number; start0: number; before: TimelineDoc }
   | { kind: 'trim'; track: 'clip' | 'sound'; id: string; edge: 'left' | 'right'; before: TimelineDoc }
@@ -152,6 +156,14 @@ function TimelineEditor({ id }: { id: string }) {
       })
       .catch(() => setMissing(true));
   }, [id]);
+  useEffect(
+    () =>
+      onTimeline((msg) => {
+        if (msg.id !== id) return;
+        setDocState(msg.doc as TimelineDoc);
+      }),
+    [id],
+  );
   const need = useMemo(() => [...new Set(doc?.clips.map((c) => c.itemId) ?? [])].filter((x) => !items[x]), [doc, items]);
   useEffect(() => {
     for (const itemId of need)
@@ -199,6 +211,45 @@ function TimelineEditor({ id }: { id: string }) {
   const srcLen = (c: TimelineClip) => items[c.itemId]?.duration ?? c.out;
   const selClip = sel?.kind === 'clip' ? doc?.clips.find((c) => c.id === sel.id) : undefined;
   const selSound = sel?.kind === 'sound' ? doc?.sounds.find((s) => s.id === sel.id) : undefined;
+  const selPending = sel?.kind === 'pending' ? doc?.pending?.find((p) => p.id === sel.id) : undefined;
+  const selGap = sel?.kind === 'gap' ? sel : undefined;
+  const selId = sel && 'id' in sel ? sel.id : null;
+  const jobs = useApp((s) => s.jobs);
+
+  /** The empty stretch of the video track around time t (to fill), or null when t is on a clip. */
+  const gapAt = (time: number): { start: number; end: number } | null => {
+    if (!doc) return null;
+    const list = ordered(doc.clips);
+    if (list.some((c) => time >= c.start && time < endOf(c)) || (doc.pending ?? []).some((p) => time >= p.start && time < p.start + p.length)) return null;
+    const before = Math.max(0, ...list.filter((c) => endOf(c) <= time).map(endOf), ...(doc.pending ?? []).filter((p) => p.start + p.length <= time).map((p) => p.start + p.length));
+    const after = Math.min(...list.filter((c) => c.start > time).map((c) => c.start), ...(doc.pending ?? []).filter((p) => p.start > time).map((p) => p.start));
+    return { start: before, end: Number.isFinite(after) ? after : before + 5 };
+  };
+
+  /** Save the film as it is, then ask the server to make a clip for it (fill, extend, retake). */
+  const generate = async (request: GenerateRequest, opts: GenOptions) => {
+    if (!doc) return;
+    try {
+      await api.put(`/api/timelines/${id}`, { name, doc });
+      const r = await api.post<{ doc: TimelineDoc }>(`/api/timelines/${id}/generate`, { request, ...opts });
+      setDoc(r.doc);
+      const p = r.doc.pending?.[r.doc.pending.length - 1];
+      if (p) setSel({ kind: 'pending', id: p.id });
+      toast('Rendering with LTX 2.5; the clip drops into place when it is done. You can keep editing.', 'info', 7000);
+    } catch (e) {
+      toast((e as Error).message, 'error', 10000);
+    }
+  };
+  const removePending = (pid: string) => {
+    if (!doc) return;
+    const p = doc.pending?.find((x) => x.id === pid);
+    if (p && ['queued', 'running'].includes(jobs[p.jobId]?.status ?? '')) void api.cancel(p.jobId).catch(() => undefined);
+    // a retake you stop puts its clip back whole
+    const was = p?.was;
+    const clips = was ? [...doc.clips.filter((c) => !(c.itemId === was.itemId && c.start >= was.start - 1e-3 && endOf(c) <= endOf(was) + 1e-3)), was] : doc.clips;
+    setDoc({ ...doc, clips, pending: (doc.pending ?? []).filter((x) => x.id !== pid) });
+    setSel(null);
+  };
 
   // ---- editing actions --------------------------------------------------------------------------------------
   const addClip = (item: Item, at?: number) => {
@@ -224,7 +275,8 @@ function TimelineEditor({ id }: { id: string }) {
     }
   };
   const removeSel = (ripple = false) => {
-    if (!doc || !sel) return;
+    if (!doc || !sel || sel.kind === 'gap') return;
+    if (sel.kind === 'pending') return removePending(sel.id);
     if (sel.kind === 'clip') setDoc(ripple ? rippleDelete(doc, sel.id) : { ...doc, clips: doc.clips.filter((c) => c.id !== sel.id) });
     else setDoc({ ...doc, sounds: doc.sounds.filter((s) => s.id !== sel.id) });
     setSel(null);
@@ -465,7 +517,35 @@ function TimelineEditor({ id }: { id: string }) {
                 </span>
               ))}
             </div>
-            <div className="tl-lane" aria-label="Video track" role="list">
+            <div
+              className="tl-lane"
+              aria-label="Video track"
+              role="list"
+              onPointerDown={(e) => {
+                if (e.target !== e.currentTarget) return;
+                const g = gapAt(timeAt(e.clientX));
+                setSel(g ? { kind: 'gap', ...g } : null);
+              }}
+            >
+              {selGap && <div className="tl-gap" style={{ left: selGap.start * zoom, width: (selGap.end - selGap.start) * zoom }} aria-label="Selected gap" />}
+              {(doc.pending ?? []).map((p) => {
+                const job = jobs[p.jobId];
+                const failed = job && ['failed', 'cancelled', 'lost', 'error'].includes(job.status);
+                return (
+                  <div
+                    key={p.id}
+                    role="listitem"
+                    className={`tl-pending${failed ? ' failed' : ''}${sel?.kind === 'pending' && sel.id === p.id ? ' selected' : ''}`}
+                    aria-label={`${p.label}${failed ? ' (failed)' : ''}`}
+                    style={{ left: p.start * zoom, width: Math.max(4, p.length * zoom) }}
+                    onPointerDown={(e) => (e.stopPropagation(), setSel({ kind: 'pending', id: p.id }))}
+                  >
+                    <span className="tl-clip-name">
+                      {failed ? 'Failed: select to remove' : `${p.label}… ${job?.status === 'running' ? Math.round((job.progress ?? 0) * 100) + '%' : 'waiting'}`}
+                    </span>
+                  </div>
+                );
+              })}
               <span className="tl-lane-label">
                 <Film size={12} /> Video
               </span>
@@ -476,7 +556,7 @@ function TimelineEditor({ id }: { id: string }) {
                   <div
                     key={c.id}
                     role="listitem"
-                    className={`tl-clip${sel?.id === c.id ? ' selected' : ''}${c.muted ? ' muted' : ''}`}
+                    className={`tl-clip${selId === c.id ? ' selected' : ''}${c.muted ? ' muted' : ''}`}
                     aria-label={`Clip ${it?.prompt?.slice(0, 40) || ''}`}
                     data-id={c.id}
                     style={{ left: c.start * zoom, width: Math.max(4, lengthOf(c) * zoom), backgroundImage: `url(${thumbUrl(c.itemId)})` }}
@@ -503,7 +583,7 @@ function TimelineEditor({ id }: { id: string }) {
                 <div
                   key={s.id}
                   role="listitem"
-                  className={`tl-sound${sel?.id === s.id ? ' selected' : ''}`}
+                  className={`tl-sound${selId === s.id ? ' selected' : ''}`}
                   aria-label={`Sound ${s.name}`}
                   style={{ left: s.start * zoom, width: Math.max(4, lengthOf(s) * zoom) }}
                   onPointerDown={(e) => {
@@ -568,6 +648,37 @@ function TimelineEditor({ id }: { id: string }) {
                   Remove and close the gap
                 </button>
               </div>
+              <ClipAi key={selClip.id} clip={selClip} t={t} doc={doc} onGenerate={generate} />
+            </>
+          ) : selGap ? (
+            <>
+              <p className="section-label">
+                Gap <span className="mono">{(selGap.end - selGap.start).toFixed(1)} s</span>
+              </p>
+              <p className="note" style={{ margin: 0 }}>
+                {timecode(selGap.start)} → {timecode(selGap.end)}
+              </p>
+              <GenerateForm
+                key={`${selGap.start}-${selGap.end}`}
+                title="Fill with AI"
+                hint="LTX makes a clip that starts on the last frame before the gap and ends on the first frame after it, exactly as long as the gap."
+                seconds={Math.min(GEN_MAX, selGap.end - selGap.start)}
+                soundAvailable={doc.sounds.some((x) => x.start <= selGap.start + 0.05 && endOf(x) >= Math.min(selGap.end, selGap.start + GEN_MAX) - 0.05)}
+                disabled={fillProblem(doc, selGap)}
+                onGenerate={(o) => generate({ kind: 'fill', start: selGap.start, end: Math.min(selGap.end, selGap.start + GEN_MAX) }, o)}
+              />
+            </>
+          ) : selPending ? (
+            <>
+              <p className="section-label">{selPending.label}</p>
+              <p className="note" style={{ margin: 0 }}>
+                {timecode(selPending.start)} → {timecode(selPending.start + selPending.length)}
+              </p>
+              {jobs[selPending.jobId] && ['running', 'queued'].includes(jobs[selPending.jobId].status) && <ProgressBar value={jobs[selPending.jobId].progress ?? 0} />}
+              <p className="note">{jobs[selPending.jobId]?.error ?? jobs[selPending.jobId]?.stage ?? 'Waiting for ComfyUI'}</p>
+              <button className="btn sm danger" onClick={() => removePending(selPending.id)}>
+                <X size={14} /> {['running', 'queued'].includes(jobs[selPending.jobId]?.status ?? '') ? 'Stop and remove' : 'Remove'}
+              </button>
             </>
           ) : selSound ? (
             <>
@@ -773,5 +884,156 @@ function ClipBin({ onAdd, onSound }: { onAdd: (it: Item) => void; onSound: (f: F
         )}
       </div>
     </aside>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// AI tools (DECISIONS 104)
+
+export interface GenOptions {
+  prompt: string;
+  quality: 'draft' | 'final' | 'hd';
+  keyMoments: { itemId: string; at: number }[];
+  soundSync: boolean;
+}
+
+/** Why a gap cannot be filled, or null. */
+function fillProblem(doc: TimelineDoc, gap: { start: number; end: number }): string | null {
+  if (gap.end - gap.start < GEN_MIN) return `A gap must be at least ${GEN_MIN} s to fill.`;
+  if (!doc.clips.some((c) => Math.abs(endOf(c) - gap.start) < 0.05)) return 'Fill needs a clip just before the gap. An opening shot is made on Video.';
+  return null;
+}
+
+/** Prompt, quality, key moments and "animate to my sound": the shared form of Fill, Extend and Retake. */
+function GenerateForm({ title, hint, seconds, soundAvailable, disabled, onGenerate }: { title: string; hint: string; seconds: number; soundAvailable: boolean; disabled?: string | null; onGenerate: (o: GenOptions) => Promise<void> | void }) {
+  const [prompt, setPrompt] = useState('');
+  const [quality, setQuality] = useState<GenOptions['quality']>('draft');
+  const [keys, setKeys] = useState<{ item: Item; at: number }[]>([]);
+  const [picking, setPicking] = useState(false);
+  const [sound, setSound] = useState(false);
+  const [busy, setBusy] = useState(false);
+  return (
+    <section className="tl-ai" aria-label={title}>
+      <p className="section-label">
+        <span>
+          <Sparkles size={13} style={{ verticalAlign: '-2px' }} /> {title}
+        </span>
+      </p>
+      <p className="note" style={{ margin: 0 }}>
+        {hint}
+      </p>
+      <textarea className="input" rows={3} aria-label={`${title}: what happens`} placeholder="What happens (motion, action, camera)…" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+      <Segmented
+        label="Quality"
+        options={[
+          { value: 'draft', label: 'Draft' },
+          { value: 'final', label: 'Final' },
+          { value: 'hd', label: '1080p' },
+        ]}
+        value={quality}
+        onChange={setQuality}
+      />
+      <div>
+        <p className="section-label" style={{ marginBottom: 4 }}>
+          Key moments
+        </p>
+        {keys.map((k, i) => (
+          <div key={i} className="tl-key">
+            <img src={thumbUrl(k.item.id)} alt="" />
+            <input type="range" min={0} max={seconds} step={0.1} value={k.at} aria-label={`Key moment ${i + 1} time`} onChange={(e) => setKeys((ks) => ks.map((x, j) => (j === i ? { ...x, at: Number(e.target.value) } : x)))} />
+            <span className="mono" style={{ fontSize: 11 }}>
+              {k.at.toFixed(1)}s
+            </span>
+            <button className="btn ghost sm icon" onClick={() => setKeys((ks) => ks.filter((_, j) => j !== i))} aria-label={`Remove key moment ${i + 1}`}>
+              <X size={13} />
+            </button>
+          </div>
+        ))}
+        <button className="btn sm" onClick={() => setPicking(true)} disabled={keys.length >= 4} title="A picture the clip passes through at a chosen moment: best for a pose, action, expression or light change seen from the same viewpoint">
+          <ImagePlus size={14} /> Add a picture
+        </button>
+      </div>
+      {soundAvailable && (
+        <label className="check" title="Your sound under this stretch drives the picture: lip-sync for a voice, movement on the beat for music. The clip uses your sound.">
+          <input type="checkbox" checked={sound} onChange={(e) => setSound(e.target.checked)} /> Animate to my sound here
+        </label>
+      )}
+      <button
+        className="btn primary"
+        disabled={!!disabled || busy}
+        title={disabled ?? undefined}
+        onClick={() => {
+          setBusy(true);
+          void Promise.resolve(onGenerate({ prompt, quality, keyMoments: keys.map((k) => ({ itemId: k.item.id, at: k.at })), soundSync: sound })).finally(() => setBusy(false));
+        }}
+      >
+        {busy ? <Loader2 size={15} className="spin" /> : <Sparkles size={15} />} {title} ({seconds.toFixed(1)} s)
+      </button>
+      {disabled && (
+        <p className="note" style={{ margin: 0 }}>
+          {disabled}
+        </p>
+      )}
+      {picking && (
+        <LibraryPicker
+          title="Key moment picture"
+          onClose={() => setPicking(false)}
+          onPick={(it) => {
+            setPicking(false);
+            if (it.kind !== 'image') return toast('Key moments are pictures.', 'info');
+            setKeys((ks) => [...ks, { item: it, at: Math.round(seconds * 5) / 10 }]);
+          }}
+        />
+      )}
+    </section>
+  );
+}
+
+/** Extend a clip, or retake a moment inside it from the playhead. */
+function ClipAi({ clip, t, doc, onGenerate }: { clip: TimelineClip; t: number; doc: TimelineDoc; onGenerate: (r: GenerateRequest, o: GenOptions) => Promise<void> | void }) {
+  const [tool, setTool] = useState<'extend' | 'retake'>('extend');
+  const [secs, setSecs] = useState(3);
+  const [len, setLen] = useState(2);
+  const inside = t > clip.start + 0.2 && t < endOf(clip) - 0.2;
+  const retakeEnd = Math.min(endOf(clip), t + len);
+  const coversSound = (a: number, b: number) => doc.sounds.some((x) => x.start <= a + 0.05 && endOf(x) >= b - 0.05);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+      <Segmented
+        label="AI tool"
+        options={[
+          { value: 'extend', label: 'Extend' },
+          { value: 'retake', label: 'Retake a moment' },
+        ]}
+        value={tool}
+        onChange={setTool}
+      />
+      {tool === 'extend' ? (
+        <>
+          <Segmented label="Extend by" options={[2, 3, 5, 8].map((n) => ({ value: n, label: `${n} s` }))} value={secs} onChange={setSecs} />
+          <GenerateForm
+            key={`e${secs}`}
+            title="Extend"
+            hint="Carries on from this clip's last frame; what comes after it moves later to make room. Big camera moves (an orbit, a turntable) work best this way."
+            seconds={secs}
+            soundAvailable={coversSound(endOf(clip), endOf(clip) + secs)}
+            onGenerate={(o) => onGenerate({ kind: 'extend', clipId: clip.id, seconds: secs }, o)}
+          />
+        </>
+      ) : (
+        <>
+          <Segmented label="Retake length" options={[1, 2, 3].map((n) => ({ value: n, label: `${n} s` }))} value={len} onChange={setLen} />
+          <GenerateForm
+            key={`r${len}`}
+            title="Retake"
+            hint="Redoes the moment from the playhead: the frames either side of it guide the new take, so it joins up."
+            seconds={Math.max(0, retakeEnd - t)}
+            soundAvailable={inside && coversSound(t, retakeEnd)}
+            disabled={!inside ? 'Put the playhead inside this clip where the moment starts.' : retakeEnd - t < GEN_MIN ? 'Too close to the end of the clip.' : null}
+            onGenerate={(o) => onGenerate({ kind: 'retake', clipId: clip.id, from: t, to: retakeEnd }, o)}
+          />
+        </>
+      )}
+    </div>
   );
 }

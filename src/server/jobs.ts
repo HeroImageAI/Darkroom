@@ -5,6 +5,8 @@ import sharp from 'sharp';
 import { checkMatte } from '../shared/matte.js';
 import { mp4Info } from './mp4info.js';
 import { restoreJoinPrompt, type RestoreWindow } from '../shared/restore.js';
+import { addKeyMoments, addSoundToPicture, type KeyMoment, type SoundSync } from '../shared/ltxguides.js';
+import { endOf, type TimelineClip } from '../shared/timeline.js';
 import WebSocket from 'ws';
 import { ComfyClient, filesFromHistory, historyError, parseWsMessage, textFromHistory, type OutputFile } from '../shared/comfy.js';
 import { cleanVlmOutput } from '../shared/vlm.js';
@@ -284,6 +286,30 @@ export class JobManager {
       const ok = (await this.loraLibrary.finetunes(this.loraModels().klein)).some((f) => f.name === weights);
       if (!ok) throw new WorkflowError(`${weights} is not a Klein 9B model on this PC.`);
       node.inputs.unet_name = weights;
+    }
+    // Timeline AI tools (DECISIONS 104): key moments (more guide pictures), your sound to animate to, lip-sync boost
+    if (spec.family === 'ltx') {
+      const json = <T>(k: string): T | null => {
+        const v = req.params[k];
+        if (typeof v !== 'string' || !v) return null;
+        try {
+          return JSON.parse(v) as T;
+        } catch {
+          throw new WorkflowError(`${k} could not be read.`);
+        }
+      };
+      const keys = json<KeyMoment[]>('key_moments');
+      if (keys?.length) prompt = addKeyMoments(prompt, keys);
+      const sound = json<SoundSync>('sound_sync');
+      if (sound) {
+        prompt = addSoundToPicture(prompt, sound);
+        // Lightricks' audio-video guidance: one extra pass per step, so the mouth follows the words
+        for (const [id, node] of Object.entries(prompt)) {
+          if (node.class_type !== 'LTXVDualCFGGuider') continue;
+          prompt[`${id}_sync`] = { class_type: 'LTXVModalityGuidance', inputs: { model: node.inputs.model, modality_scale: 3, start_percent: 0, end_percent: 1 }, _meta: { title: 'Lip-sync guidance' } };
+          node.inputs.model = [`${id}_sync`, 0];
+        }
+      }
     }
     // Auto length (DECISIONS 100): LTX's duration head reads the prompt and picks the clip's length (2 s up to the
     // number of seconds given, on LTX's 8n+1 frame grid); the clip's real length is read from the file afterwards
@@ -668,6 +694,20 @@ export class JobManager {
         this.store.softDelete(parts);
         this.broadcast({ type: 'library' });
       }
+      return;
+    }
+    // Timeline AI tools (DECISIONS 104): the new clip takes its placeholder's place on the film
+    if (chain?.kind === 'timeline' && newIds[0]) {
+      const c = chain as { timelineId?: string; pendingId?: string; start?: number; seconds?: number; muted?: boolean };
+      const t = c.timelineId ? this.store.timeline(c.timelineId) : null;
+      const it = this.store.getItem(newIds[0]);
+      // a placeholder you removed while it rendered: the clip stays in the Library only
+      if (!t || !it || !(t.doc.pending ?? []).some((p) => p.id === c.pendingId)) return;
+      const clip: TimelineClip = { id: `g${(c.pendingId ?? '').slice(0, 10)}`, itemId: it.id, start: c.start ?? 0, in: 0, out: Math.round(Math.min(it.duration ?? c.seconds ?? 1, c.seconds ?? Infinity) * 1000) / 1000, ...(c.muted ? { muted: true } : {}) };
+      const doc = { ...t.doc, clips: [...t.doc.clips, clip], pending: (t.doc.pending ?? []).filter((p) => p.id !== c.pendingId) };
+      if (!doc.pending.length) delete (doc as { pending?: unknown }).pending;
+      this.store.saveTimeline(t.id, t.name, doc);
+      this.broadcast({ type: 'timeline', id: t.id, doc, added: clip.id, end: endOf(clip) });
       return;
     }
     // the restored clip is joined: its parts go to Recently deleted and their takes are put away

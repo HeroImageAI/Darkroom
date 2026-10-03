@@ -68,7 +68,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(box).not.toHaveValue('poster for a jazz night called "Blue Hour"', { timeout: 240_000 });
     const enhanced = await box.inputValue();
     expect(enhanced.length).toBeGreaterThan(80);
-    expect(enhanced).toMatch(/blue hour/i); // the enhancer may set a poster title in capitals
+    expect(enhanced).toMatch(/blue[\s\S]{0,60}hour/i); // the enhancer may set the title in capitals, or split over two lines
     await shot(page, 'generate-enhanced');
     await page.getByRole('button', { name: /^Undo/ }).click();
     await expect(box).toHaveValue('poster for a jazz night called "Blue Hour"');
@@ -595,6 +595,49 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(Math.abs(item.duration - total)).toBeLessThan(0.1);
     await expect(page.getByText(/exported .* It is in your Library\./).last()).toBeVisible();
     await shot(page, 'timeline');
+  });
+
+  test('Timeline AI: fill a gap (a real render drops into place), and a retake can be stopped and removed (DECISIONS 104)', async () => {
+    // a film of two Library videos with a 1.5 s gap between them
+    const vids = ((await (await page.request.get('/api/items?filter=videos&limit=40')).json()).items as any[]).filter((v) => v.mode !== 'timeline' && (v.duration ?? 0) >= 2.5);
+    const film = crypto.randomUUID();
+    const doc = { v: 1, size: 'auto', fps: 24, sounds: [], clips: [ { id: 'a', itemId: vids[0].id, start: 0, in: 0, out: 2 }, { id: 'b', itemId: vids[1].id, start: 3.5, in: 0, out: 2 } ] };
+    await page.request.put(`/api/timelines/${film}`, { data: { name: 'AI test film', doc } });
+    const saved = async () => (await (await page.request.get(`/api/timelines/${film}`)).json()).doc;
+    await page.goto(`/#/timeline/${film}`);
+    const track = page.getByRole('list', { name: 'Video track' });
+    await expect(track.getByRole('listitem')).toHaveCount(2);
+    // click the empty stretch: the gap is selected and the Fill form offered
+    const lane = (await track.boundingBox())!;
+    const zoom = 60;
+    await page.mouse.click(lane.x + 2.75 * zoom, lane.y + lane.height / 2);
+    await expect(page.getByLabel('Selected gap')).toBeVisible();
+    const fill = page.getByRole('region', { name: 'Fill with AI' });
+    await fill.getByLabel('Fill with AI: what happens').fill('The motion carries on smoothly.');
+    await fill.getByRole('button', { name: /^Fill with AI \(1\.5 s\)$/ }).click();
+    await expect(track.locator('.tl-pending')).toHaveCount(1);
+    // the clip lands in place of its placeholder, overlapping its neighbours by the handles
+    await expect(track.locator('.tl-pending')).toHaveCount(0, { timeout: 300_000 });
+    await expect(track.getByRole('listitem')).toHaveCount(3);
+    const filled = (await saved()).clips.find((c: any) => !['a', 'b'].includes(c.id));
+    expect(filled.start).toBeCloseTo(2 - 4 / 24, 2);
+    expect(filled.out - filled.in).toBeCloseTo(1.5 + 8 / 24, 1);
+    // retake a moment of the first clip, then stop it: the placeholder goes, the clip is cut where it was
+    await page.getByRole('button', { name: 'To the start' }).click();
+    for (let i = 0; i < 12; i++) await page.keyboard.press('ArrowRight');
+    await track.getByRole('listitem').first().click({ position: { x: 10, y: 20 } });
+    const inspector = page.getByRole('complementary', { name: 'Inspector' });
+    await inspector.getByRole('group', { name: 'AI tool' }).getByRole('button', { name: 'Retake a moment' }).click();
+    await inspector.getByRole('group', { name: 'Retake length' }).getByRole('button', { name: '1 s' }).click();
+    await inspector.getByRole('button', { name: /^Retake \(1\.0 s\)$/ }).click();
+    await expect(track.locator('.tl-pending')).toHaveCount(1);
+    await track.locator('.tl-pending').click();
+    await inspector.getByRole('button', { name: /Stop and remove|Remove/ }).click();
+    await expect(track.locator('.tl-pending')).toHaveCount(0);
+    await expect.poll(async () => (await saved()).pending?.length ?? 0).toBe(0);
+    // the first clip is whole again
+    await expect.poll(async () => (await saved()).clips.filter((c: any) => c.itemId === vids[0].id).map((c: any) => [c.start, c.in, c.out])).toEqual([[0, 0, 2]]);
+    await shot(page, 'timeline-ai');
   });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
