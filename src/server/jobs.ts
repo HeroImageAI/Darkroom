@@ -317,6 +317,11 @@ export class JobManager {
     if (req.params.silent === true || req.params.silent === 1 || req.params.silent === 'true') {
       for (const node of Object.values(prompt)) if (node.class_type === 'CreateVideo') delete node.inputs.audio;
     }
+    // H.264 at CRF 18 (DECISIONS 102): ComfyUI 0.38 encodes at the x264 default of 23; 18 keeps the fine detail
+    // (ComfyUI's own default from the next release), which matters most where a clip is encoded again (Restore, Extend)
+    for (const node of Object.values(prompt))
+      if (node.class_type === 'SaveVideo' && node.inputs['format.codec'] === 'h264' && !node.inputs['format.codec.encoding'])
+        Object.assign(node.inputs, { 'format.codec.encoding': 're-encode', 'format.codec.encoding.crf': 18 });
     // your own LoRAs (DECISIONS 86): only ones made for this job's model, put on the graph's model
     const loras = parseLoras(req.params.loras);
     if (loras.length) {

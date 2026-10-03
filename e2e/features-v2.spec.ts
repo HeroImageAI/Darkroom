@@ -1141,13 +1141,16 @@ test.describe.serial('Darkroom v2 features', () => {
     const deletedBefore = await count('deleted'); // a test interrupted elsewhere may have left something there
     const tiles = page.getByRole('list', { name: 'Library items' }).getByRole('listitem');
     // one item: click, press Delete, Undo
+    const first = await tiles.nth(0).getAttribute('data-id');
     await tiles.nth(0).click();
     await page.keyboard.press('Delete');
     await expect(page.getByText('1 item moved to Recently deleted.').last()).toBeVisible();
-    expect(await count()).toBe(before - 1);
+    await expect.poll(count).toBe(before - 1);
     await page.getByRole('button', { name: 'Undo' }).last().click();
     await expect(page.getByText('Restored.').last()).toBeVisible();
-    expect(await count()).toBe(before);
+    await expect.poll(count).toBe(before);
+    // the grid has reloaded with it back in place before the next clicks
+    await expect(tiles.nth(0)).toHaveAttribute('data-id', first!);
     // a range with Shift-click, deleted from the selection bar
     await tiles.nth(1).click();
     await tiles.nth(3).click({ modifiers: ['Shift'] });
@@ -1171,6 +1174,7 @@ test.describe.serial('Darkroom v2 features', () => {
   test('Library: Select — tick boxes, a plain click and a dragged box pick several; favourite and delete them together', async () => {
     await page.goto('/#/library');
     const count = async (f = 'all') => (await (await page.request.get('/api/items?limit=1&filter=' + f)).json()).total as number;
+    await page.waitForLoadState('networkidle');
     const before = await count();
     const grid = page.getByRole('list', { name: 'Library items' });
     const tiles = grid.getByRole('listitem');
@@ -1207,7 +1211,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect.poll(async () => (await Promise.all(ids.map(async (id) => (await (await page.request.get(`/api/items/${id}`)).json()).item.favourite))).every((f) => f === !favBefore.every(Boolean))).toBe(true);
     await bar.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText('3 items moved to Recently deleted.').last()).toBeVisible();
-    expect(await count()).toBe(before - 3);
+    await expect.poll(count).toBe(before - 3);
     await page.getByRole('button', { name: 'Undo' }).last().click();
     await expect.poll(count).toBe(before);
     // put the favourites back as they were; Esc leaves Select mode
