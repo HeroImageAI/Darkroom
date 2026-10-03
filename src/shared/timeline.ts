@@ -260,7 +260,7 @@ export function planGeneration(doc: TimelineDoc, req: GenerateRequest, newId: ()
     if (list.some((c) => c.start < req.end - 1e-3 && endOf(c) > req.start + 1e-3)) throw new Error('That stretch is not empty.');
     const before = [...list].reverse().find((c) => endOf(c) <= req.start + 1e-3 && endOf(c) >= req.start - 0.05);
     const after = list.find((c) => c.start >= req.end - 0.05 && c.start <= req.end + 1e-3);
-    if (!before && !after) throw new Error('A gap to fill needs a clip on at least one side.');
+    if (!before) throw new Error('A gap to fill needs a clip just before it (an opening shot is made on Video).');
     return {
       start: req.start,
       seconds,

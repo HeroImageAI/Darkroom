@@ -53,6 +53,13 @@ export function useApp<T>(sel: (s: AppState) => T): T {
   );
 }
 
+const timelineListeners = new Set<(msg: { id: string; doc: unknown }) => void>();
+/** Timeline changes made by the server (an AI clip landing on the film, DECISIONS 104). */
+export function onTimeline(fn: (msg: { id: string; doc: unknown }) => void): () => void {
+  timelineListeners.add(fn);
+  return () => timelineListeners.delete(fn);
+}
+
 /** Subscribe to job updates (e.g. to react when a specific job finishes). */
 export function onJob(fn: (job: Job) => void): () => void {
   jobListeners.add(fn);
@@ -112,6 +119,9 @@ export function connectEvents(): void {
           break;
         case 'toast':
           toast(msg.text, msg.kind ?? 'info');
+          break;
+        case 'timeline':
+          timelineListeners.forEach((l) => l(msg));
           break;
         case 'export':
           setState((s) => ({ exports: { ...s.exports, [msg.timelineId]: { progress: msg.progress, itemId: msg.itemId } } }));
