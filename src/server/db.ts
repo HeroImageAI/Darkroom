@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import type { TimelineDoc } from '../shared/timeline.js';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import type { ComposeDoc, Composition } from '../shared/compose.js';
@@ -183,6 +184,10 @@ export class Store {
     this.db.exec(
       'CREATE TABLE IF NOT EXISTS compositions (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, doc TEXT NOT NULL, thumb TEXT, deleted_at INTEGER)',
     );
+    // Timeline (DECISIONS 103): saved films-in-progress, stored like compositions
+    this.db.exec(
+      'CREATE TABLE IF NOT EXISTS timelines (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, doc TEXT NOT NULL, deleted_at INTEGER)',
+    );
   }
 
   /** Saved compositions, newest first, without their layouts. */
@@ -213,6 +218,35 @@ export class Store {
 
   restoreComposition(id: string): boolean {
     return this.db.prepare('UPDATE compositions SET deleted_at = NULL WHERE id = ?').run(id).changes > 0;
+  }
+
+  /** Saved timelines, newest first, without their documents. */
+  timelines(): { id: string; name: string; created_at: number; updated_at: number }[] {
+    return (this.db.prepare('SELECT id, name, created_at, updated_at FROM timelines WHERE deleted_at IS NULL ORDER BY updated_at DESC').all() as any[]).map((r) => ({ ...r }));
+  }
+
+  timeline(id: string): { id: string; name: string; created_at: number; updated_at: number; doc: TimelineDoc } | null {
+    const r = this.db.prepare('SELECT * FROM timelines WHERE id = ? AND deleted_at IS NULL').get(id) as any;
+    return r ? { id: r.id, name: r.name, created_at: r.created_at, updated_at: r.updated_at, doc: JSON.parse(r.doc) } : null;
+  }
+
+  saveTimeline(id: string, name: string, doc: TimelineDoc, now = Date.now()) {
+    this.db
+      .prepare(
+        `INSERT INTO timelines (id, name, created_at, updated_at, doc) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET name = excluded.name, updated_at = excluded.updated_at, doc = excluded.doc, deleted_at = NULL`,
+      )
+      .run(id, name, now, now, JSON.stringify(doc));
+    return this.timeline(id)!;
+  }
+
+  /** Hide a timeline (restorable); its clips stay in the Library. */
+  deleteTimeline(id: string, now = Date.now()): boolean {
+    return this.db.prepare('UPDATE timelines SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL').run(now, id).changes > 0;
+  }
+
+  restoreTimeline(id: string): boolean {
+    return this.db.prepare('UPDATE timelines SET deleted_at = NULL WHERE id = ?').run(id).changes > 0;
   }
 
   groupItems(groupId: string): Item[] {

@@ -646,3 +646,17 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     encodes clips again in several places (Restore parts and join, Extend, Refine, Cut out), where the loss compounds,
     so the server now sets re-encode at CRF 18 on every H.264 SaveVideo (checked in a take's x264 header: crf=18.0).
     Also in the next release, not yet in stable: higher-quality EXR, MiniMax-H3 VAE support, an `--offline` flag.
+103. **Timeline: put your own films together (JP: "a real winner to compile your own videos"), after LTX Director.**
+    WhatDreamsCost's LTX Director (GPL, a timeline inside one ComfyUI node, built for LTX 2.3, needing two more node
+    packs) is not installed; its ideas are taken into Darkroom's own screen instead. Stage 1 is the editor: one video
+    track (clips placed in seconds; an overlap is a crossfade from the earlier clip into the later one; a gap plays
+    black) and one sound track; move with snapping (edges, playhead, 0), trim either edge (the left edge keeps the rest
+    in place), split at the playhead (S), Fade ½ s / 1 s (pulls the clip and everything after it under the previous
+    one), close gaps (keeps crossfades), ripple delete, mute a clip's sound, sound volume, undo / redo, autosave
+    (`timelines` table, like compositions). Preview: the top clip and, inside a crossfade, the one under it, with the
+    sound track playing along. Export runs `scripts/timeline_export.py` with Comfy Desktop's own Python (PyAV, numpy,
+    Pillow are there; no ffmpeg on this PC, nothing installed): frame by frame from the clips' files (a long film never
+    sits in memory), crop-to-fill, crossfades blended, the clips' sound and your sound mixed at 48 kHz with matching
+    fades (normalised only if it would clip), H.264 CRF 18 + AAC, poster and last frame; the film lands in the Library
+    (mode `timeline`). 15 s of 720p exported in 20 s. ComfyUI is not used for this: its batches hold whole clips in
+    memory. The top bar's compact layout now starts below 1520 px (seven tabs), so nothing runs off at 1280–1440.

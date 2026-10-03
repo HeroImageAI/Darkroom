@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Film, ImagePlus, Layers, Library as LibraryIcon, Loader2, Shapes, Wand2 } from 'lucide-react';
+import { ArrowRight, Clapperboard, Film, ImagePlus, Layers, Library as LibraryIcon, Loader2, Shapes, Wand2 } from 'lucide-react';
 import { api, thumbUrl, type Item } from '../api';
 import { importFailedMessage, importPictures, importVideos, isVideoFile } from '../lib/importer';
 import { go, lastRoute, type Screen } from '../router';
@@ -10,10 +10,11 @@ const CARDS: { screen: Screen; title: string; text: string; icon: typeof Wand2 }
   { screen: 'edit', title: 'Edit', text: 'Change, fix, extend or upscale a picture — one of yours or one you made.', icon: Layers },
   { screen: 'compose', title: 'Compose', text: 'Arrange pictures, cut-outs and rough paint, then render them into one picture.', icon: Shapes },
   { screen: 'video', title: 'Video', text: 'Bring a picture to life as a clip with LTX 2.5, with sound.', icon: Film },
+  { screen: 'timeline', title: 'Timeline', text: 'Put your clips, your own videos and your own sound together into one film.', icon: Clapperboard },
   { screen: 'library', title: 'Library', text: 'Everything you have made or brought in, with its settings.', icon: LibraryIcon },
 ];
 
-const SCREEN_LABEL: Record<string, string> = { generate: 'Generate', edit: 'Edit', compose: 'Compose', video: 'Video', library: 'Library' };
+const SCREEN_LABEL: Record<string, string> = { generate: 'Generate', edit: 'Edit', compose: 'Compose', video: 'Video', timeline: 'Timeline', library: 'Library' };
 
 /** Start screen: pick what to do, bring in your own pictures, or carry on where you left off. */
 export function Home() {

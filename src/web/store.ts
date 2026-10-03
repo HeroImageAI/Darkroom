@@ -19,6 +19,8 @@ export interface AppState {
   toasts: Toast[];
   /** The board new results go to (a preference, kept across launches); null = no board. */
   board: string | null;
+  /** Timeline exports in progress (DECISIONS 103): 0–1, -1 failed; itemId once the film is in the Library. */
+  exports: Record<string, { progress: number; itemId?: string }>;
 }
 
 const savedBoard = (() => {
@@ -28,7 +30,7 @@ const savedBoard = (() => {
     return null;
   }
 })();
-let state: AppState = { status: null, socket: 'connecting', boot: null, jobs: {}, previews: {}, libraryRev: 0, toasts: [], board: savedBoard };
+let state: AppState = { status: null, socket: 'connecting', boot: null, jobs: {}, previews: {}, libraryRev: 0, toasts: [], board: savedBoard, exports: {} };
 const listeners = new Set<() => void>();
 const jobListeners = new Set<(job: Job) => void>();
 
@@ -110,6 +112,9 @@ export function connectEvents(): void {
           break;
         case 'toast':
           toast(msg.text, msg.kind ?? 'info');
+          break;
+        case 'export':
+          setState((s) => ({ exports: { ...s.exports, [msg.timelineId]: { progress: msg.progress, itemId: msg.itemId } } }));
           break;
         case 'queue':
           setState((s) => (s.status ? { status: { ...s.status, queue: msg.remaining } } : {}));

@@ -28,6 +28,8 @@ import { readDarkroomMeta } from '../shared/pngmeta.js';
 import { outputDirFromArgv, outputPath, recycle } from './trash.js';
 import { labelledSheet } from './framepair.js';
 import { sanitiseDoc } from '../shared/compose.js';
+import { duration as timelineDuration, exportSize, ordered, sanitiseTimeline } from '../shared/timeline.js';
+import { desktopPython, inputDirFromArgv, inside, runExport } from './timeline.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -533,6 +535,106 @@ app.put('/api/compositions/:id', async (req, reply) => {
 app.post('/api/compositions/:id/delete', async (req, reply) => (store.deleteComposition((req.params as { id: string }).id) ? { ok: true } : reply.code(404).send({ error: 'Composition not found' })));
 
 app.post('/api/compositions/:id/restore', async (req, reply) => (store.restoreComposition((req.params as { id: string }).id) ? { ok: true } : reply.code(404).send({ error: 'Composition not found' })));
+
+// ---- Timeline (DECISIONS 103): films put together from Library clips and your own sound.
+app.get('/api/timelines', async () => store.timelines());
+
+app.get('/api/timelines/:id', async (req, reply) => store.timeline((req.params as { id: string }).id) ?? reply.code(404).send({ error: 'Timeline not found' }));
+
+app.put('/api/timelines/:id', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  if (!/^[A-Za-z0-9-]{6,64}$/.test(id)) return reply.code(400).send({ error: 'Bad timeline id' });
+  const b = req.body as { name?: unknown; doc?: unknown };
+  const doc = sanitiseTimeline(b?.doc);
+  if (!doc) return reply.code(400).send({ error: 'That timeline could not be read.' });
+  const name = typeof b.name === 'string' && b.name.trim() ? b.name.trim().slice(0, 80) : 'Untitled film';
+  return store.saveTimeline(id, name, doc);
+});
+
+app.post('/api/timelines/:id/delete', async (req, reply) => (store.deleteTimeline((req.params as { id: string }).id) ? { ok: true } : reply.code(404).send({ error: 'Timeline not found' })));
+
+app.post('/api/timelines/:id/restore', async (req, reply) => (store.restoreTimeline((req.params as { id: string }).id) ? { ok: true } : reply.code(404).send({ error: 'Timeline not found' })));
+
+/** One export at a time: it reads every clip from disk and keeps a CPU busy. */
+let exporting: string | null = null;
+
+app.post('/api/timelines/:id/export', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  const t = store.timeline(id);
+  if (!t) return reply.code(404).send({ error: 'Timeline not found' });
+  if (!t.doc.clips.length) return reply.code(400).send({ error: 'Put at least one clip on the timeline first.' });
+  if (exporting) return reply.code(409).send({ error: 'Another film is being exported; try again when it is done.' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running, so Darkroom can't find the clips' files. Start it and try again." });
+  const python = desktopPython(cfg);
+  if (!python) return reply.code(500).send({ error: "Darkroom can't find Comfy Desktop's Python, which puts the film together." });
+  const argv = ((await jobs.comfy.systemStats()) as SystemStats).system?.argv;
+  const outDir = outputDirFromArgv(argv);
+  const inDir = inputDirFromArgv(argv);
+  if (!outDir || !inDir) return reply.code(409).send({ error: "ComfyUI doesn't report its folders, so the film can't be put together." });
+  const items = new Map(t.doc.clips.map((c) => [c.itemId, store.getItem(c.itemId)]));
+  const fileOf = (f: FileRef | null | undefined) => (!f ? null : (f.type ?? 'output') === 'input' ? inside(inDir, path.join(f.subfolder ?? '', f.filename)) : outputPath(outDir, f));
+  const clips = [];
+  for (const c of ordered(t.doc.clips)) {
+    const it = items.get(c.itemId);
+    const p = fileOf(it?.file);
+    if (!it || !p || !fs.existsSync(p)) return reply.code(400).send({ error: `A clip on the timeline is no longer in the Library (${it?.prompt?.slice(0, 40) || 'deleted'}). Remove it and export again.` });
+    clips.push({ id: c.id, path: p, start: c.start, in: c.in, out: c.out, muted: !!c.muted });
+  }
+  const sounds = [];
+  for (const s of t.doc.sounds) {
+    const p = inside(inDir, s.file);
+    if (!p || !fs.existsSync(p)) return reply.code(400).send({ error: `The sound "${s.name}" is missing. Remove it and export again.` });
+    sounds.push({ id: s.id, path: p, start: s.start, in: s.in, out: s.out, volume: s.volume });
+  }
+  const size = exportSize(t.doc, (itemId) => {
+    const it = items.get(itemId);
+    return it?.width && it.height ? { width: it.width, height: it.height } : null;
+  });
+  const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14) + '_' + crypto.randomBytes(3).toString('hex');
+  const sub = path.join('darkroom', 'video');
+  fs.mkdirSync(path.join(outDir, sub), { recursive: true });
+  const names = { out: `timeline_${stamp}.mp4`, poster: `timeline_${stamp}_poster.png`, last: `timeline_${stamp}_last.png` };
+  exporting = id;
+  broadcast({ type: 'export', timelineId: id, progress: 0 });
+  try {
+    await runExport(
+      python,
+      {
+        out: path.join(outDir, sub, names.out),
+        poster: path.join(outDir, sub, names.poster),
+        last: path.join(outDir, sub, names.last),
+        ...size,
+        fps: t.doc.fps,
+        crf: 18,
+        duration: timelineDuration(t.doc),
+        clips,
+        sounds,
+      },
+      (progress) => broadcast({ type: 'export', timelineId: id, progress }),
+    );
+    const ref = (filename: string): FileRef => ({ filename, subfolder: 'darkroom/video', type: 'output' });
+    const item = await jobs.addVideo({
+      file: ref(names.out),
+      poster: ref(names.poster),
+      last: ref(names.last),
+      name: t.name,
+      mode: 'timeline',
+      workflow: 'timeline_export',
+      model: 'Timeline',
+      ui: { timelineId: id },
+      params: { timeline: id, clips: clips.length, sounds: sounds.length },
+      boardId: (req.body as { boardId?: unknown } | null)?.boardId,
+      ...size,
+    });
+    broadcast({ type: 'export', timelineId: id, progress: 1, itemId: item.id });
+    return slim(item);
+  } catch (e) {
+    broadcast({ type: 'export', timelineId: id, progress: -1 });
+    return reply.code(500).send({ error: 'The film could not be put together: ' + (e as Error).message });
+  } finally {
+    exporting = null;
+  }
+});
 
 // ---- Boards (collections). Deleting a board never deletes its pictures; they just have no board any more.
 const boardName = (v: unknown) => (typeof v === 'string' ? v.trim().slice(0, 60) : '');
