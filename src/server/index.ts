@@ -490,8 +490,9 @@ app.get('/api/items/:id', async (req, reply) => {
 app.patch('/api/items/:id', async (req, reply) => {
   const { id } = req.params as { id: string };
   if (!store.getItem(id)) return reply.code(404).send({ error: 'Not found' });
-  const body = req.body as { favourite?: boolean; tags?: string[]; caption?: string };
-  store.updateItem(id, { favourite: body.favourite, tags: body.tags, caption: body.caption });
+  const body = req.body as { favourite?: boolean; tags?: string[]; caption?: string; title?: unknown; notes?: unknown };
+  const text = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : undefined);
+  store.updateItem(id, { favourite: body.favourite, tags: body.tags, caption: body.caption, title: text(body.title, 120), notes: text(body.notes, 4000) });
   const item = store.getItem(id)!;
   broadcast({ type: 'item', item: slim(item) });
   return slim(item);
@@ -555,6 +556,47 @@ app.put('/api/timelines/:id', async (req, reply) => {
 app.post('/api/timelines/:id/delete', async (req, reply) => (store.deleteTimeline((req.params as { id: string }).id) ? { ok: true } : reply.code(404).send({ error: 'Timeline not found' })));
 
 app.post('/api/timelines/:id/restore', async (req, reply) => (store.restoreTimeline((req.params as { id: string }).id) ? { ok: true } : reply.code(404).send({ error: 'Timeline not found' })));
+
+/**
+ * Compare two pictures (P3, test-suite run): one side-by-side sheet, each labelled with its title (or model and seed),
+ * saved into the Library on the working board.
+ */
+app.post('/api/items/compare', async (req, reply) => {
+  const b = (req.body ?? {}) as { a?: string; b?: string; boardId?: unknown };
+  const A = b.a ? store.getItem(b.a) : null;
+  const B = b.b ? store.getItem(b.b) : null;
+  if (!A || !B || A.kind !== 'image' || B.kind !== 'image') return reply.code(400).send({ error: 'Pick two pictures to compare.' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
+  const outDir = outputDirFromArgv(((await jobs.comfy.systemStats()) as SystemStats).system?.argv);
+  if (!outDir) return reply.code(409).send({ error: "ComfyUI doesn't report its output folder." });
+  const label = (it: typeof A) => it.title || `${it.model}${it.seed != null ? ` · s${it.seed}` : ''}`;
+  try {
+    const H = 1024;
+    const pics = await Promise.all([A, B].map(async (it) => sharp(Buffer.from(await jobs.comfy!.view(it.file))).resize({ height: H }).png().toBuffer({ resolveWithObject: true })));
+    const gap = 16;
+    const bar = 64;
+    const W = pics[0].info.width + gap + pics[1].info.width;
+    const esc = (t: string) => t.replace(/[<>&"]/g, (ch) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[ch]!);
+    const text = (t: string, x: number) => `<text x="${x}" y="42" font-family="Segoe UI, Arial" font-size="28" fill="#f2f0ea">${esc(t.slice(0, 70))}</text>`;
+    const svg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${bar}"><rect width="100%" height="100%" fill="#1a1917"/>${text(label(A), 16)}${text(label(B), pics[0].info.width + gap + 16)}</svg>`);
+    const sheet = await sharp({ create: { width: W, height: H + bar, channels: 3, background: '#1a1917' } })
+      .composite([
+        { input: svg, left: 0, top: 0 },
+        { input: pics[0].data, left: 0, top: bar },
+        { input: pics[1].data, left: pics[0].info.width + gap, top: bar },
+      ])
+      .png()
+      .toBuffer();
+    const name = `compare_${Date.now().toString(36)}_${crypto.randomBytes(2).toString('hex')}.png`;
+    fs.mkdirSync(path.join(outDir, 'darkroom', 'compare'), { recursive: true });
+    fs.writeFileSync(path.join(outDir, 'darkroom', 'compare', name), sheet);
+    const title = `Compare · ${label(A)} vs ${label(B)}`.slice(0, 120);
+    const item = await jobs.addPicture({ file: { filename: name, subfolder: 'darkroom/compare', type: 'output' }, name: title, title, mode: 'compare', model: 'Compare', params: { a: A.id, b: B.id }, boardId: b.boardId });
+    return slim(item);
+  } catch (e) {
+    return reply.code(500).send({ error: 'Could not make the compare: ' + (e as Error).message });
+  }
+});
 
 /** One export at a time: it reads every clip from disk and keeps a CPU busy. */
 let exporting: string | null = null;

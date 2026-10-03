@@ -46,6 +46,10 @@ export interface Item {
   deleted_at?: number | null;
   /** Board (collection) the item belongs to; null = no board. */
   board_id?: string | null;
+  /** Your own name for it (P2, 2026-10-03); the prompt stands in when empty. */
+  title?: string | null;
+  /** Your notes on it. */
+  notes?: string | null;
   /** Library version stacks: how many versions of this picture match the view (listItems with `stack`). */
   stack_count?: number;
 }
@@ -179,6 +183,8 @@ export class Store {
     // Boards (collections): additive, items keep working without one
     this.db.exec('CREATE TABLE IF NOT EXISTS boards (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL)');
     if (!cols.includes('board_id')) this.db.exec('ALTER TABLE items ADD COLUMN board_id TEXT');
+    if (!cols.includes('title')) this.db.exec('ALTER TABLE items ADD COLUMN title TEXT');
+    if (!cols.includes('notes')) this.db.exec('ALTER TABLE items ADD COLUMN notes TEXT');
     this.db.exec('CREATE INDEX IF NOT EXISTS items_board ON items(board_id)');
     // Compose: saved compositions (the layout is JSON; deleting only hides it, like the Library)
     this.db.exec(
@@ -269,7 +275,9 @@ export class Store {
     return decode<Item>(this.db.prepare('SELECT * FROM items WHERE id = ?').get(id) as any, JSON_ITEM);
   }
 
-  updateItem(id: string, patch: Partial<Pick<Item, 'favourite' | 'tags' | 'input_name'>> & { caption?: string }): void {
+  updateItem(id: string, patch: Partial<Pick<Item, 'favourite' | 'tags' | 'input_name' | 'title' | 'notes'>> & { caption?: string }): void {
+    if (patch.title !== undefined) this.db.prepare('UPDATE items SET title = ? WHERE id = ?').run(patch.title || null, id);
+    if (patch.notes !== undefined) this.db.prepare('UPDATE items SET notes = ? WHERE id = ?').run(patch.notes || null, id);
     if (patch.caption !== undefined) {
       const it = this.getItem(id);
       if (it) this.db.prepare('UPDATE items SET ui = ? WHERE id = ?').run(JSON.stringify({ ...(it.ui ?? {}), caption: patch.caption }), id);
@@ -315,11 +323,11 @@ export class Store {
     if (q.q && q.q.trim()) {
       const term = q.q.trim();
       if (/^\d+$/.test(term)) {
-        where.push('(seed = ? OR prompt LIKE ? OR tags LIKE ?)');
-        args.push(Number(term), `%${term}%`, `%${term}%`);
+        where.push('(seed = ? OR prompt LIKE ? OR tags LIKE ? OR title LIKE ? OR notes LIKE ?)');
+        args.push(Number(term), `%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`);
       } else {
-        where.push('(prompt LIKE ? OR tags LIKE ? OR model LIKE ?)');
-        args.push(`%${term}%`, `%${term}%`, `%${term}%`);
+        where.push('(prompt LIKE ? OR tags LIKE ? OR model LIKE ? OR title LIKE ? OR notes LIKE ?)');
+        args.push(`%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`);
       }
     }
     const w = where.length ? 'WHERE ' + where.join(' AND ') : '';
