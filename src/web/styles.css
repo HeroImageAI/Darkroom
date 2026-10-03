@@ -228,6 +228,13 @@ img[src*="/api/items/"] {
 .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; }
 .selection-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 20px; border-bottom: 1px solid var(--line); background: var(--raised); font-size: 13px; }
 .tile-check { position: absolute; left: 8px; top: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; box-shadow: 0 0 0 2px var(--bg); }
+.tile-wrap > .tile { width: 100%; display: block; }
+.tile-tick { position: absolute; left: 8px; top: 8px; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); background: rgba(18,18,16,.45); color: var(--on-accent); display: grid; place-items: center; cursor: pointer; opacity: 0; transition: opacity .12s; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.tile-wrap:hover .tile-tick, .tile-wrap.selecting .tile-tick, .tile-wrap.picked .tile-tick, .tile-tick:focus-visible { opacity: 1; }
+.tile-wrap.picked .tile-tick { background: var(--accent); border-color: var(--accent); }
+.tile-wrap.picked .tile img, .tile-wrap.picked .tile video { transform: scale(.94); border-radius: 6px; }
+.tile img, .tile video { transition: transform .12s; }
+.select-band { border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); border-radius: 3px; pointer-events: none; z-index: 20; }
 /* sticky panel footers: a soft edge so content scrolling underneath reads as "more above" */
 .panel-foot { box-shadow: 0 -10px 18px -10px rgba(0,0,0,.6); position: relative; z-index: 1; }
 .panel .empty h2 { font-size: 24px; }

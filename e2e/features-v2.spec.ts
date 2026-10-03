@@ -1168,6 +1168,56 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
   });
 
+  test('Library: Select — tick boxes, a plain click and a dragged box pick several; favourite and delete them together', async () => {
+    await page.goto('/#/library');
+    const count = async (f = 'all') => (await (await page.request.get('/api/items?limit=1&filter=' + f)).json()).total as number;
+    const before = await count();
+    const grid = page.getByRole('list', { name: 'Library items' });
+    const tiles = grid.getByRole('listitem');
+    const bar = page.getByRole('toolbar', { name: 'Selection' });
+    // a tick box on a tile picks it without opening it
+    await tiles.nth(0).hover();
+    await tiles.nth(0).getByRole('checkbox').click();
+    await expect(bar).toContainText('1 selected');
+    await expect(page.getByRole('complementary', { name: 'Details' })).toHaveCount(0);
+    // while selecting, a plain click ticks
+    await tiles.nth(1).click();
+    await expect(bar).toContainText('2 selected');
+    await tiles.nth(1).click();
+    await expect(bar).toContainText('1 selected');
+    // a box dragged over tiles adds them
+    const a = (await tiles.nth(2).boundingBox())!;
+    const b = (await tiles.nth(3).boundingBox())!;
+    await page.mouse.move(a.x + 30, a.y + 30);
+    await page.mouse.down();
+    await page.mouse.move(b.x + 40, b.y + 40, { steps: 6 });
+    await expect(page.locator('.select-band')).toBeVisible();
+    await page.mouse.up();
+    await expect(bar).toContainText('3 selected');
+    await expect(tiles.nth(2).getByRole('checkbox')).toHaveAttribute('aria-checked', 'true');
+    // the next click still works (the drag does not swallow it)
+    await tiles.nth(3).click();
+    await expect(bar).toContainText('2 selected');
+    await tiles.nth(3).click();
+    // favourite all three, then delete them together, then Undo
+    const ids = await grid.locator('.tile-wrap.picked').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.id));
+    expect(ids).toHaveLength(3);
+    const favBefore = await Promise.all(ids.map(async (id) => (await (await page.request.get(`/api/items/${id}`)).json()).item.favourite));
+    await bar.getByRole('button', { name: /Favourite|Unfavourite/ }).click();
+    await expect.poll(async () => (await Promise.all(ids.map(async (id) => (await (await page.request.get(`/api/items/${id}`)).json()).item.favourite))).every((f) => f === !favBefore.every(Boolean))).toBe(true);
+    await bar.getByRole('button', { name: 'Delete' }).click();
+    await expect(page.getByText('3 items moved to Recently deleted.').last()).toBeVisible();
+    expect(await count()).toBe(before - 3);
+    await page.getByRole('button', { name: 'Undo' }).last().click();
+    await expect.poll(count).toBe(before);
+    // put the favourites back as they were; Esc leaves Select mode
+    for (const [i, id] of ids.entries()) await page.request.patch(`/api/items/${id}`, { data: { favourite: favBefore[i] } });
+    await page.getByRole('button', { name: 'Select', exact: true }).click();
+    await expect(bar).toContainText('Click pictures and videos to tick them');
+    await page.keyboard.press('Escape');
+    await expect(bar).toHaveCount(0);
+  });
+
   test('Library: Delete forever sends the files to the Recycle Bin (a fresh crop made for this test)', async () => {
     const src = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
     const inp = await (await page.request.post(`/api/items/${src.id}/as-input`, { data: { which: 'main' } })).json();
