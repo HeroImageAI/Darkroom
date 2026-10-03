@@ -1,0 +1,20 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- heading "Timeline" [level=1]
+- paragraph: "Put your takes, your own videos and your own sound together into one film: trim, split, crossfade, add music or a voice, and export an MP4."
+- button "New film"
+- heading "Your films 0" [level=2]
+- paragraph: Nothing saved yet. Films save themselves as you work.
+- status

@@ -1,0 +1,38 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- heading "Compose" [level=1]
+- paragraph: Arrange pictures, cut-outs and rough paint on a canvas, then let Darkroom turn the collage into one coherent picture.
+- region "Blank canvas":
+  - heading "Blank canvas" [level=2]
+  - group "Canvas shape":
+    - button "3:2" [pressed]
+    - button "1:1"
+    - button "2:3"
+    - button "16:9"
+    - button "9:16"
+    - button "4:3"
+  - button "New composition"
+- region "Start from a picture":
+  - heading "Start from a picture" [level=2]
+  - paragraph: It becomes the background; the canvas takes its shape.
+  - button "From Library"
+  - button "Upload"
+- heading "Your compositions 1" [level=2]
+- list:
+  - listitem:
+    - button "Open Composition 1"
+    - text: Composition 1 2026/10/01, 22:02:01
+    - button "Delete Composition 1"
+- status

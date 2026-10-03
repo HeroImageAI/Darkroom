@@ -1,0 +1,78 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- complementary "Video settings":
+  - heading "1 Frames New" [level=2]:
+    - text: 1 Frames
+    - button "New" [disabled]
+  - paragraph: Start frame
+  - text: Add image
+  - button "Add image"
+  - paragraph: End frame (optional)
+  - text: Add image
+  - button "Add image"
+  - button "Start from library"
+  - button "Swap start and end frames" [disabled]
+  - button "End from library"
+  - paragraph: Drag from the Library, drop a file, paste — or use “Animate” on any picture.
+  - heading "2 What should move?" [level=2]
+  - textbox "Motion prompt":
+    - /placeholder: e.g. She turns her head towards the window and smiles; curtains sway in the breeze.
+  - button "Suggest motion" [disabled]
+  - paragraph: "One flowing present-tense paragraph, 4-8 sentences: what moves, how the camera moves, and any sound. Don't describe the still picture. 0 words"
+  - group "Camera":
+    - button "Static"
+    - button "Slow push-in"
+    - button "Pull back"
+    - button "Orbit"
+    - button "Pan left"
+    - button "Handheld"
+  - paragraph: Sound
+  - group "Sound":
+    - button "From the scene" [pressed]
+    - button "Describe"
+    - button "Silent"
+  - paragraph: Effect
+  - group "Effect":
+    - button "None" [pressed]
+    - button "Slow motion"
+    - button "Cinemagraph"
+  - paragraph:
+    - text: LoRAs none for LTX 2.5
+    - button "Refresh LoRAs"
+  - heading "3 LTX 2.5 · length and quality" [level=2]
+  - paragraph: Length
+  - group "Length":
+    - button "Auto"
+    - button "3 s"
+    - button "5 s" [pressed]
+    - button "8 s"
+  - paragraph: Quality
+  - group "Quality":
+    - button "Draft (480p)" [pressed]
+    - button "Final (720p)"
+    - button "1080p"
+  - text: 864×480 24 fps 5.0 s 121 frames ≈ 57s
+  - checkbox "Notify when done" [checked]
+  - text: Notify when done
+  - button "Animate Ctrl+Enter" [disabled]
+- region "Player":
+  - heading "No take selected" [level=2]
+  - paragraph: Pick a start frame, describe the motion, then press Animate. Start with Draft to check the motion quickly, then render it at 720p or 1080p.
+- complementary "Takes":
+  - paragraph: Takes 1
+  - button "Show this take": LTX 2.5 · Draft 640×640 · 8.0 s · 24 fps rendered in 1m 32s
+  - button "Delete this take"
+  - button "See all videos in the Library"
+- status
