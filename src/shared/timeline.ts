@@ -247,25 +247,33 @@ export interface GenerationPlan {
   doc: TimelineDoc;
 }
 
-/** The longest an LTX clip can be (10 s) and the shortest worth making. */
-export const GEN_MAX = 10;
+/** The longest stretch to make (LTX's 10 s less the handles) and the shortest worth making. */
+export const GEN_MAX = 9.5;
+/** Frames of overlap an AI clip gets with each neighbour (crossfaded). */
+export const HANDLE_FRAMES = 4;
 export const GEN_MIN = 1;
 
 export function planGeneration(doc: TimelineDoc, req: GenerateRequest, newId: () => string): GenerationPlan {
   const frame = 1 / doc.fps;
+  // handles: the new clip is made a few frames longer at each end, guided by frames that far inside its neighbours,
+  // and overlaps them by that much, so the film crossfades over near-identical frames instead of popping at the join
+  const H = HANDLE_FRAMES / doc.fps;
+  const handle = (room: number) => (room >= H + MIN_LENGTH ? H : 0);
   const list = ordered(doc.clips);
   if (req.kind === 'fill') {
-    const seconds = r3(req.end - req.start);
-    if (seconds < GEN_MIN || seconds > GEN_MAX) throw new Error(`A gap to fill must be ${GEN_MIN} to ${GEN_MAX} seconds long (this one is ${seconds.toFixed(1)} s).`);
+    const gap = r3(req.end - req.start);
+    if (gap < GEN_MIN || gap > GEN_MAX) throw new Error(`A gap to fill must be ${GEN_MIN} to ${GEN_MAX} seconds long (this one is ${gap.toFixed(1)} s).`);
     if (list.some((c) => c.start < req.end - 1e-3 && endOf(c) > req.start + 1e-3)) throw new Error('That stretch is not empty.');
     const before = [...list].reverse().find((c) => endOf(c) <= req.start + 1e-3 && endOf(c) >= req.start - 0.05);
     const after = list.find((c) => c.start >= req.end - 0.05 && c.start <= req.end + 1e-3);
     if (!before) throw new Error('A gap to fill needs a clip just before it (an opening shot is made on Video).');
+    const hb = handle(lengthOf(before));
+    const ha = after ? handle(lengthOf(after)) : 0;
     return {
-      start: req.start,
-      seconds,
-      first: before ? { clipId: before.id, itemId: before.itemId, t: Math.max(before.in, before.out - frame) } : null,
-      last: after ? { clipId: after.id, itemId: after.itemId, t: after.in } : null,
+      start: r3(req.start - hb),
+      seconds: r3(gap + hb + ha),
+      first: { clipId: before.id, itemId: before.itemId, t: r3(Math.max(before.in, before.out - frame - hb)) },
+      last: after ? { clipId: after.id, itemId: after.itemId, t: r3(after.in + ha) } : null,
       doc,
     };
   }
@@ -275,9 +283,10 @@ export function planGeneration(doc: TimelineDoc, req: GenerateRequest, newId: ()
     const seconds = r3(req.seconds);
     if (seconds < GEN_MIN || seconds > GEN_MAX) throw new Error(`Extend by ${GEN_MIN} to ${GEN_MAX} seconds.`);
     const at = endOf(c);
+    const hb = handle(lengthOf(c));
     // make room: everything that starts at or after the clip's end moves later
     const moved = { ...doc, clips: doc.clips.map((x) => (x.id !== c.id && x.start >= at - 1e-3 ? { ...x, start: r3(x.start + seconds) } : x)) };
-    return { start: r3(at), seconds, first: { clipId: c.id, itemId: c.itemId, t: Math.max(c.in, c.out - frame) }, last: null, doc: moved };
+    return { start: r3(at - hb), seconds: r3(seconds + hb), first: { clipId: c.id, itemId: c.itemId, t: r3(Math.max(c.in, c.out - frame - hb)) }, last: null, doc: moved };
   }
   // retake: cut the moment out of the clip; the new clip goes in the hole, guided by the frames either side of it
   const from = Math.max(req.from, c.start);
@@ -287,12 +296,14 @@ export function planGeneration(doc: TimelineDoc, req: GenerateRequest, newId: ()
   const src = (t: number) => c.in + (t - c.start);
   const left = from - c.start >= MIN_LENGTH ? { ...c, out: r3(src(from)) } : null;
   const right = endOf(c) - to >= MIN_LENGTH ? { ...c, id: newId(), start: r3(to), in: r3(src(to)) } : null;
+  const hb = left ? handle(lengthOf(left)) : 0;
+  const ha = right ? handle(lengthOf(right)) : 0;
   const clips = [...doc.clips.filter((x) => x.id !== c.id), ...(left ? [left] : []), ...(right ? [right] : [])];
   return {
-    start: r3(from),
-    seconds,
-    first: { clipId: c.id, itemId: c.itemId, t: Math.max(c.in, src(from) - frame) },
-    last: { clipId: c.id, itemId: c.itemId, t: Math.min(c.out - frame, src(to)) },
+    start: r3(from - hb),
+    seconds: r3(seconds + hb + ha),
+    first: { clipId: c.id, itemId: c.itemId, t: r3(Math.max(c.in, src(from) - frame - hb)) },
+    last: { clipId: c.id, itemId: c.itemId, t: r3(Math.min(c.out - frame, src(to) + ha)) },
     doc: { ...doc, clips },
   };
 }
