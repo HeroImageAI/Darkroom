@@ -744,22 +744,59 @@ export class JobManager {
    * from the file's MP4 header when it has one, else from the browser.
    */
   async importVideo(a: { video: string; poster: string; last: string; name: string; boardId?: unknown; width?: number; height?: number; duration?: number }): Promise<Item> {
-    if (!this.comfy) throw new Error("ComfyUI isn't running.");
     const input = (n: string): FileRef => {
       const i = n.lastIndexOf('/');
       return { filename: n.slice(i + 1), subfolder: i >= 0 ? n.slice(0, i) : '', type: 'input' };
     };
-    const file = input(a.video);
-    const real = await this.comfy.view(file).then((b) => mp4Info(Buffer.from(b))).catch(() => null);
+    return this.addVideo({
+      file: input(a.video),
+      poster: input(a.poster),
+      last: input(a.last),
+      name: a.name,
+      mode: 'import',
+      workflow: 'import_video',
+      model: 'Imported',
+      ui: { model: 'imported' },
+      params: { video: a.video },
+      inputName: a.video,
+      boardId: a.boardId,
+      width: a.width,
+      height: a.height,
+      duration: a.duration,
+    });
+  }
+
+  /**
+   * A finished video file into the Library: imports and Timeline films. Size, frame rate, frames, length and whether
+   * it has sound come from the file's MP4 header when it has one, else from what the caller knows.
+   */
+  async addVideo(a: {
+    file: FileRef;
+    poster: FileRef;
+    last: FileRef;
+    name: string;
+    mode: string;
+    workflow: string;
+    model: string;
+    ui: Record<string, unknown>;
+    params: Record<string, unknown>;
+    inputName?: string | null;
+    boardId?: unknown;
+    width?: number;
+    height?: number;
+    duration?: number;
+  }): Promise<Item> {
+    if (!this.comfy) throw new Error("ComfyUI isn't running.");
+    const real = await this.comfy.view(a.file).then((b) => mp4Info(Buffer.from(b))).catch(() => null);
     const fps = real?.fps ?? null;
     const frames = real?.frames ?? null;
     const item: Item = {
       id: crypto.randomUUID(),
       created_at: Date.now(),
       kind: 'video',
-      mode: 'import',
-      workflow: 'import_video',
-      model: 'Imported',
+      mode: a.mode,
+      workflow: a.workflow,
+      model: a.model,
       family: 'util',
       prompt: a.name.slice(0, 200),
       negative: '',
@@ -769,12 +806,12 @@ export class JobManager {
       duration: frames && fps ? (frames - 1) / fps : (a.duration ?? null),
       fps,
       frames,
-      params: { video: a.video },
-      ui: { model: 'imported', sound: real && !real.hasAudio ? 'off' : 'scene' },
+      params: a.params,
+      ui: { ...a.ui, sound: real && !real.hasAudio ? 'off' : 'scene' },
       api_prompt: null,
-      file,
-      poster: input(a.poster),
-      last_frame: input(a.last),
+      file: a.file,
+      poster: a.poster,
+      last_frame: a.last,
       render_ms: null,
       parent_id: null,
       root_id: null,
@@ -782,7 +819,7 @@ export class JobManager {
       favourite: false,
       tags: [],
       job_id: null,
-      input_name: a.video,
+      input_name: a.inputName ?? null,
       board_id: this.liveBoard(a.boardId),
     };
     await this.makeThumb(item.id, item.poster!).catch(() => null);
