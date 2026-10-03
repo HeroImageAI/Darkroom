@@ -535,6 +535,67 @@ test.describe.serial('Darkroom v2 features', () => {
     const job = await (await req.response())!.json();
     await page.request.post(`/api/jobs/${job.id}/cancel`);
   });
+
+  test('Timeline: put clips together, split, crossfade, mute, move, add your sound, export one MP4 (DECISIONS 103)', async () => {
+    await page.goto('/#/timeline');
+    await page.getByRole('button', { name: 'New film' }).click();
+    await expect(page).toHaveURL(/#\/timeline\/[0-9a-f-]{36}$/);
+    const film = page.url().split('/').pop()!;
+    const saved = async () => (await (await page.request.get(`/api/timelines/${film}`)).json()).doc;
+    // two Library videos, each added to the end
+    const bin = page.getByRole('list', { name: 'Videos to add' });
+    await bin.getByRole('listitem').first().waitFor();
+    const add = bin.getByRole('button', { name: /^Add .* to the end$/ });
+    await add.nth(0).click();
+    await add.nth(1).click();
+    const track = page.getByRole('list', { name: 'Video track' });
+    await expect(track.getByRole('listitem')).toHaveCount(2);
+    await expect.poll(async () => (await saved()).clips.length).toBe(2);
+    const [a, b] = (await saved()).clips;
+    expect(b.start).toBeCloseTo(a.out - a.in, 2); // the second starts where the first ends
+    // split the first clip at 1 s with S
+    await page.getByRole('button', { name: 'To the start' }).click();
+    for (let i = 0; i < 24; i++) await page.keyboard.press('ArrowRight');
+    await track.getByRole('listitem').first().click();
+    await page.keyboard.press('s');
+    await expect(track.getByRole('listitem')).toHaveCount(3);
+    // crossfade the last clip in, mute the first
+    await track.getByRole('listitem').nth(2).click({ position: { x: 40, y: 20 } });
+    const inspector = page.getByRole('complementary', { name: 'Inspector' });
+    await inspector.getByRole('group', { name: 'Transition' }).getByRole('button', { name: 'Fade ½ s' }).click();
+    await expect(track.locator('.tl-fade')).toHaveCount(1);
+    await track.getByRole('listitem').first().click({ position: { x: 20, y: 20 } });
+    await inspector.getByLabel("The clip's own sound").uncheck();
+    await expect.poll(async () => (await saved()).clips.filter((c: any) => c.muted).length).toBe(1);
+    // undo brings the sound back; redo mutes again
+    await page.keyboard.press('Control+z');
+    await expect.poll(async () => (await saved()).clips.filter((c: any) => c.muted).length).toBe(0);
+    await page.keyboard.press('Control+Shift+z');
+    await expect.poll(async () => (await saved()).clips.filter((c: any) => c.muted).length).toBe(1);
+    // drag the first piece right: it moves and snaps back to 0 when dropped near it
+    const first = track.getByRole('listitem').first();
+    const box = (await first.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 2, { steps: 5 });
+    await page.mouse.up();
+    await expect.poll(async () => Math.min(...(await saved()).clips.map((c: any) => c.start))).toBeGreaterThan(0.5);
+    await page.keyboard.press('Control+z');
+    await expect.poll(async () => Math.min(...(await saved()).clips.map((c: any) => c.start))).toBe(0);
+    // your own sound on the sound track
+    await page.getByLabel('Upload sound').setInputFiles('tests/fixtures/ltx-864x480-121f.mp4');
+    await expect(page.getByRole('list', { name: 'Sound track' }).getByRole('listitem')).toHaveCount(1, { timeout: 30_000 });
+    // export: one MP4 in the Library, as long as the film
+    const doc = await saved();
+    const total = Math.max(...doc.clips.map((c: any) => c.start + c.out - c.in), ...doc.sounds.map((s: any) => s.start + s.out - s.in));
+    const sent = page.waitForResponse((r) => r.url().endsWith(`/api/timelines/${film}/export`), { timeout: 180_000 });
+    await page.getByRole('button', { name: 'Export MP4' }).click();
+    const item = await (await sent).json();
+    expect(item).toMatchObject({ mode: 'timeline', kind: 'video' });
+    expect(Math.abs(item.duration - total)).toBeLessThan(0.1);
+    await expect(page.getByText(/exported .* It is in your Library\./).last()).toBeVisible();
+    await shot(page, 'timeline');
+  });
   // UX review (2026-09-30)
   test('UX: the prompt tools fit the Generate panel', async () => {
     await page.goto('/#/generate');

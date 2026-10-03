@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-export type Screen = 'home' | 'generate' | 'edit' | 'compose' | 'video' | 'library';
+export type Screen = 'home' | 'generate' | 'edit' | 'compose' | 'video' | 'timeline' | 'library';
 export interface Route {
   screen: Screen;
   id?: string;
@@ -11,7 +11,7 @@ function parse(): Route {
   const h = location.hash.replace(/^#\/?/, '');
   const [pathPart, qs] = h.split('?');
   const [screen, id] = pathPart.split('/');
-  const s: Screen = (['home', 'generate', 'edit', 'compose', 'video', 'library'] as const).includes(screen as Screen) ? (screen as Screen) : 'home';
+  const s: Screen = (['home', 'generate', 'edit', 'compose', 'video', 'timeline', 'library'] as const).includes(screen as Screen) ? (screen as Screen) : 'home';
   return { screen: s, id: id || undefined, query: new URLSearchParams(qs ?? '') };
 }
 
@@ -41,7 +41,7 @@ export function lastRoute(): { screen: Screen; path: string } | null {
     const last = localStorage.getItem(LAST);
     if (!last) return null;
     const screen = last.split(/[/?]/)[0] as Screen;
-    return ['generate', 'edit', 'compose', 'video', 'library'].includes(screen) ? { screen, path: last } : null;
+    return ['generate', 'edit', 'compose', 'video', 'timeline', 'library'].includes(screen) ? { screen, path: last } : null;
   } catch {
     return null;
   }

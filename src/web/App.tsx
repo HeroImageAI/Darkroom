@@ -8,6 +8,7 @@ import { Edit } from './screens/Edit';
 import { Generate } from './screens/Generate';
 import { Home } from './screens/Home';
 import { Library } from './screens/Library';
+import { Timeline } from './screens/Timeline';
 import { Video } from './screens/Video';
 import { setState, toast, useApp } from './store';
 
@@ -43,6 +44,8 @@ export function App() {
         <Compose id={route.id} />
       ) : route.screen === 'video' ? (
         <Video query={route.query} />
+      ) : route.screen === 'timeline' ? (
+        <Timeline id={route.id} />
       ) : (
         <Library />
       )}
