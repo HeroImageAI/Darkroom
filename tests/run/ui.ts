@@ -222,6 +222,41 @@ aspect ${a.aspect ?? '16:9'}, default quality`, board: a.board });
   return { id, seconds };
 }
 
+/** Timeline: a new film of the given clips (found in the bin by title, added to the end in order), exported to MP4. */
+async function timeline() {
+  const title = a.title as string;
+  const existing = await findTitled(title);
+  if (existing) return { skipped: true, id: existing };
+  if (a.board) {
+    await library(a.board);
+    await setBoard(a.board);
+  }
+  await page.goto(URL + '/#/timeline');
+  await page.getByRole('button', { name: 'New film' }).click();
+  await page.waitForURL(/#\/timeline\/[0-9a-f-]{36}$/);
+  await page.getByLabel('Film name').fill(title);
+  const bin = page.getByRole('list', { name: 'Videos to add' });
+  for (const clip of a.clips as string[]) {
+    await page.getByLabel('Search videos').fill(clip);
+    await page.waitForTimeout(1200);
+    await bin.getByRole('button', { name: /^Add .* to the end$/ }).first().click();
+  }
+  await page.getByLabel('Search videos').fill('');
+  await page.waitForTimeout(1500); // autosave
+  const before = await shot(a.testId, `${title} · timeline`);
+  const exported = page.waitForResponse((r) => /\/api\/timelines\/[^/]+\/export$/.test(r.url()), { timeout: 600_000 });
+  await page.getByRole('button', { name: 'Export MP4' }).click();
+  const item = await (await exported).json(); // the film the UI's export made
+  await page.waitForTimeout(1500);
+  const after = await shot(a.testId, `${title} · exported`);
+  await annotate(item.id, { title, notes: `test ${a.testId}
+clips in order: ${(a.clips as string[]).join(' | ')}
+assembled on the Timeline, exported MP4
+run: ${new Date().toISOString()}`, board: a.board });
+  log({ test_id: a.testId, model: 'LTX + Timeline', library_item_name: title, library_item_id: item.id, duration: item.duration, resolution: `${item.width}x${item.height}`, status: 'ADAPTED', notes: 'three clips cut together on the Timeline', screenshot_paths: [before, after] });
+  return { id: item.id };
+}
+
 /** Edit · Crop: drag a box on the picture (fractions of it), Apply crop → a new version stacked on the source. */
 async function crop() {
   const title = a.title as string;
@@ -306,7 +341,8 @@ async function video() {
     const picker = page.getByRole('dialog');
     await picker.getByPlaceholder(/Search/).fill(a.endTitle);
     await page.waitForTimeout(1200);
-    await picker.getByRole('listitem').first().click();
+    // the exact item (a compare sheet's name can contain the same title, so never "the first hit")
+    await picker.locator(`[role=listitem]:has(img[src*="${a.end}"])`).first().click();
   }
   await page.getByRole('group', { name: 'Length' }).getByRole('button', { name: `${a.seconds ?? 5} s` }).click();
   await page.getByRole('group', { name: 'Quality' }).getByRole('button', { name: /^Final/ }).click();
@@ -353,6 +389,7 @@ try {
   else if (action === 'compare') result = await compare();
   else if (action === 'crop') result = await crop();
   else if (action === 'generate') result = await generate();
+  else if (action === 'timeline') result = await timeline();
   else if (action === 'video') result = await video();
   else if (action === 'annotate') {
     await annotate(a.id, a);
