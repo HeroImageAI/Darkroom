@@ -1,5 +1,8 @@
 # Darkroom — UI map and test-suite plan (Phase 0)
 
+**Koos's decisions (2026-10-03):** P1–P3 approved and built (v3.19) · seed **42** only · videos at **Final 720p**.
+Still open: inputs (§6), GAM-IMG-04 capture, AUT-IMG-04 source.
+
 Prepared 2026-10-03 for the run of `darkroom-test-suite.md` (brief: `darkroom-test-runner-brief.md`).
 Darkroom version v3.18, ComfyUI 0.38.2, Comfy Desktop 1.1.6. Screenshots and accessibility trees of every screen:
 `tests/results/screenshots/phase0/` (captured by `tests/ui-map-capture.ts`, read-only).
