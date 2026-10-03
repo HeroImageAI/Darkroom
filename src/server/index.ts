@@ -723,7 +723,8 @@ app.post('/api/timelines/:id/generate', async (req, reply) => {
       meta: {
         mode: 'timeline',
         model: `LTX 2.5 · ${label.toLowerCase()}`,
-        prompt,
+        // named after what you asked for (the "one continuous shot" lead-in is Darkroom's, not yours)
+        prompt: String(b.prompt ?? '').trim().slice(0, 300) || label,
         ui: { model: 'ltx', quality, timelineId: id },
         estimateSec: vp.estimateSec ?? undefined,
         durationSec: plan.seconds,
@@ -731,7 +732,7 @@ app.post('/api/timelines/:id/generate', async (req, reply) => {
       },
       force: true,
     });
-    const doc = { ...plan.doc, pending: [...(plan.doc.pending ?? []), { id: pendingId, jobId: job.id, kind: b.request.kind, start: plan.start, length: plan.seconds, label }] };
+    const doc = { ...plan.doc, pending: [...(plan.doc.pending ?? []), { id: pendingId, jobId: job.id, kind: b.request.kind, start: plan.start, length: plan.seconds, label, ...(plan.was ? { was: plan.was } : {}) }] };
     const saved = store.saveTimeline(id, t.name, doc);
     broadcast({ type: 'timeline', id, doc: saved.doc });
     return { doc: saved.doc, job: publicJob(job) };

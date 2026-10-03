@@ -36,6 +36,8 @@ export interface TimelinePending {
   start: number;
   length: number;
   label: string;
+  /** a retake's clip as it was before the moment was cut out (put back if the retake is removed) */
+  was?: TimelineClip;
 }
 
 export type TimelineSize = 'auto' | '1280x720' | '1920x1080' | '720x1280' | '1080x1920' | '1024x1024';
@@ -214,7 +216,9 @@ export function sanitiseTimeline(raw: unknown): TimelineDoc | null {
   const pending: TimelinePending[] = [];
   for (const q of (Array.isArray(d.pending) ? d.pending : []).slice(0, 50) as Record<string, unknown>[]) {
     if (!idOk(q?.id) || typeof q.jobId !== 'string' || !/^[0-9a-f-]{36}$/.test(q.jobId) || !KINDS.includes(q.kind as GenerateKind)) return null;
-    pending.push({ id: q.id as string, jobId: q.jobId, kind: q.kind as GenerateKind, start: num(q.start, 0, 36000, 0), length: num(q.length, 0.1, 60, 1), label: typeof q.label === 'string' ? q.label.slice(0, 80) : '' });
+    const w = q.was as Record<string, unknown> | undefined;
+    const was = w && idOk(w.id) && typeof w.itemId === 'string' && /^[0-9a-f-]{36}$/.test(w.itemId) ? { id: w.id as string, itemId: w.itemId, start: num(w.start, 0, 36000, 0), in: num(w.in, 0, 36000, 0), out: num(w.out, 0, 36000, 1), ...(w.muted ? { muted: true } : {}) } : undefined;
+    pending.push({ id: q.id as string, jobId: q.jobId, kind: q.kind as GenerateKind, start: num(q.start, 0, 36000, 0), length: num(q.length, 0.1, 60, 1), label: typeof q.label === 'string' ? q.label.slice(0, 80) : '', ...(was ? { was } : {}) });
   }
   return { v: 1, clips, sounds, size: SIZES.includes(d.size as TimelineSize) ? (d.size as TimelineSize) : 'auto', fps: num(d.fps, 8, 60, 24), ...(pending.length ? { pending } : {}) };
 }
@@ -245,6 +249,8 @@ export interface GenerationPlan {
   last: FrameRef | null;
   /** the film with room made for the new clip (later clips moved for an extend, the moment cut out for a retake) */
   doc: TimelineDoc;
+  /** a retake's clip before the cut */
+  was?: TimelineClip;
 }
 
 /** The longest stretch to make (LTX's 10 s less the handles) and the shortest worth making. */
@@ -305,6 +311,7 @@ export function planGeneration(doc: TimelineDoc, req: GenerateRequest, newId: ()
     first: { clipId: c.id, itemId: c.itemId, t: r3(Math.max(c.in, src(from) - frame - hb)) },
     last: { clipId: c.id, itemId: c.itemId, t: r3(Math.min(c.out - frame, src(to) + ha)) },
     doc: { ...doc, clips },
+    was: c,
   };
 }
 

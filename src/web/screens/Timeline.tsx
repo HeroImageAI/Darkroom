@@ -244,7 +244,10 @@ function TimelineEditor({ id }: { id: string }) {
     if (!doc) return;
     const p = doc.pending?.find((x) => x.id === pid);
     if (p && ['queued', 'running'].includes(jobs[p.jobId]?.status ?? '')) void api.cancel(p.jobId).catch(() => undefined);
-    setDoc({ ...doc, pending: (doc.pending ?? []).filter((x) => x.id !== pid) });
+    // a retake you stop puts its clip back whole
+    const was = p?.was;
+    const clips = was ? [...doc.clips.filter((c) => !(c.itemId === was.itemId && c.start >= was.start - 1e-3 && endOf(c) <= endOf(was) + 1e-3)), was] : doc.clips;
+    setDoc({ ...doc, clips, pending: (doc.pending ?? []).filter((x) => x.id !== pid) });
     setSel(null);
   };
 
