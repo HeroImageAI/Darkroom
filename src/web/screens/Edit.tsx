@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Brush,
   Columns2,
@@ -132,6 +132,13 @@ function Editor({ item }: { item: Item }) {
   const online = useApp((s) => s.status?.comfy === 'online');
   const rev = useApp((s) => s.libraryRev);
   const [lineage, setLineage] = useState<Item[]>([]);
+  /** One frame per Layers group in the version strip: the picture on screen when it is one of them, else the first. */
+  const groupFrame = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const v of lineage) if (v.group_id && !m.has(v.group_id)) m.set(v.group_id, v.id);
+    if (item.group_id) m.set(item.group_id, item.id);
+    return m;
+  }, [lineage, item.id, item.group_id]);
   const [tool, setTool] = useState<Tool>('brush');
   const [mode, setMode] = useState<Mode>(() => (sessionStorage.getItem('dr.edit.mode') as Mode) || 'instruct');
   const boot = useApp((s) => s.boot);
@@ -1030,7 +1037,8 @@ function Editor({ item }: { item: Item }) {
             Versions
           </span>
           <div className="filmstrip" role="group" aria-label="Versions">
-            {lineage.map((v) => (
+            {/* the pictures of one Layers run share a version: one frame for the group (walk-through 2026-10-04) */}
+            {lineage.filter((v) => !v.group_id || groupFrame.get(v.group_id) === v.id).map((v) => (
               <button
                 key={v.id}
                 className="btn sm film-frame"
@@ -1260,6 +1268,9 @@ function Editor({ item }: { item: Item }) {
               <p className="note" style={{ marginTop: 6 }}>
                 Frame tool (O): drag any edge of the picture outwards. Press Fit to see the whole frame. Extending again later works: any black left at the edges is filled too.
               </p>
+              <p className="note" style={{ marginTop: 4 }}>
+                Outpaint adds new space around the picture and leaves the picture itself as it is. To change its background, use Instruct (e.g. “Replace the background with a city street at night”).
+              </p>
             </div>
           )}
 
@@ -1319,7 +1330,7 @@ function Editor({ item }: { item: Item }) {
               <p className="note" style={{ marginTop: 6 }}>
                 {enhanceKind === 'subtle'
                   ? 'Re-renders the picture at low strength. Best on pictures that are already sharp; it does not fix blur.'
-                  : 'Redraws the picture from itself as an edit: fixes motion blur, lens blur, noise and low resolution while keeping the composition, faces and colours.'}
+                  : 'Redraws the picture from itself as an edit: fixes motion blur, lens blur, noise and low resolution while keeping the composition, faces and colours. It treats haze, fog and soft focus as damage too: for a clean picture with that mood, use Upscale instead.'}
               </p>
               {isBig(W, H) && (
                 <p className="note" style={{ marginTop: 6 }}>
