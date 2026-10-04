@@ -24,6 +24,7 @@ import {
   Undo2,
   Wand2,
   X,
+  ChevronRight,
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
@@ -144,6 +145,7 @@ function Editor({ item }: { item: Item }) {
   // random seed and shows it, so a result you like can be repeated
   // kept for the session, so a locked seed stays locked when Edit moves on to the new version (test-suite finding 1)
   const [editSeed, setEditSeed] = useSessionState<{ seed: number; locked: boolean }>('edit.seed', { seed: randomSeed(), locked: false });
+  const [advOpen, setAdvOpen] = useSessionState('edit.advanced', false);
   const seedRef = useRef(editSeed);
   seedRef.current = editSeed;
   const nextSeed = () => {
@@ -1087,28 +1089,11 @@ function Editor({ item }: { item: Item }) {
                 {Object.entries(boot.manifest.models).map(([key, mm]) => (
                   <button key={key} type="button" className="card" aria-pressed={editModel === key} onClick={() => setEditModel(key)} title={mm.licence}>
                     <strong>{mm.label}</strong>
-                    <small>{key === 'klein' ? 'Fast · ~15 s' : 'Precise · ~25 s'}</small>
+                    {/* what each is best at, from the 2026-10-03 test suite (audit #2) */}
+                    <small>{key === 'klein' ? 'Styles, materials · ~15 s' : 'Exact shapes · ~25 s'}</small>
                   </button>
                 ))}
               </div>
-              {editModel === 'klein' && <KleinWeights value={kleinWeights} onChange={setKleinWeights} />}
-              {(editModel === 'klein' || editModel === 'qwen') && (
-                <div style={{ marginTop: 12 }}>
-                  <LoraPicker family={editModel} value={editLoras[editModel] ?? []} onChange={(v) => setEditLoras((prev) => ({ ...prev, [editModel]: v }))} />
-                </div>
-              )}
-              <label className="field" style={{ marginTop: 12 }}>
-                <span>Seed</span>
-                <div className="field-row">
-                  <input className="input mono" inputMode="numeric" value={editSeed.seed} onChange={(e) => setEditSeed({ seed: Number(e.target.value.replace(/\D/g, '')) || 0, locked: true })} aria-label="Seed" />
-                  <button type="button" className={`btn icon ${editSeed.locked ? 'on' : ''}`} aria-pressed={editSeed.locked} title={editSeed.locked ? 'Seed locked — every run reuses it' : 'Seed unlocked — a new seed every run'} onClick={() => setEditSeed((x) => ({ ...x, locked: !x.locked }))}>
-                    {editSeed.locked ? <Lock size={16} /> : <Unlock size={16} />}
-                  </button>
-                  <button type="button" className="btn icon" title="New random seed" onClick={() => setEditSeed((x) => ({ ...x, seed: randomSeed() }))}>
-                    <Shuffle size={16} />
-                  </button>
-                </div>
-              </label>
             </div>
           )}
 
@@ -1160,7 +1145,13 @@ function Editor({ item }: { item: Item }) {
             </>
           )}
 
-          {(mode === 'instruct' || mode === 'inpaint') && (
+          {/* Instruct changes the whole picture until you paint: the mask settings appear with the first stroke (audit #2) */}
+          {mode === 'instruct' && maskEmpty && (
+            <p className="note mask-hint">
+              To change only part of the picture, paint over it (B) or use Smart select (S).
+            </p>
+          )}
+          {(mode === 'inpaint' || (mode === 'instruct' && !maskEmpty)) && (
             <div>
               <p className="section-label">
                 Mask <span className="mono">{maskEmpty ? 'empty' : 'painted'}</span>
@@ -1277,6 +1268,36 @@ function Editor({ item }: { item: Item }) {
               <p className="section-label">Reference (optional)</p>
               <RefSlot name={ref?.name ?? null} onFile={(f) => addRef(f)} onItem={(itemId) => addRef(undefined, itemId)} onClear={() => setRef(null)} />
             </div>
+          )}
+
+          {/* set once, not every time: Seed, LoRAs and the Klein version (audit #2) */}
+          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance') && boot && (
+            <details className="adv edit-adv" open={advOpen} onToggle={(e) => setAdvOpen((e.currentTarget as HTMLDetailsElement).open)}>
+              <summary>
+                <ChevronRight size={14} /> Advanced
+                <span className="muted adv-summary">
+                  {[editSeed.locked ? `seed ${editSeed.seed} locked` : '', (editLoras[editModel] ?? []).length ? `${(editLoras[editModel] ?? []).length} LoRA` : ''].filter(Boolean).join(' · ')}
+                </span>
+              </summary>
+              {editModel === 'klein' && <KleinWeights value={kleinWeights} onChange={setKleinWeights} />}
+              {(editModel === 'klein' || editModel === 'qwen') && (
+                <div style={{ marginTop: 4 }}>
+                  <LoraPicker family={editModel} value={editLoras[editModel] ?? []} onChange={(v) => setEditLoras((prev) => ({ ...prev, [editModel]: v }))} />
+                </div>
+              )}
+              <label className="field" style={{ marginTop: 12 }}>
+                <span>Seed</span>
+                <div className="field-row">
+                  <input className="input mono" inputMode="numeric" value={editSeed.seed} onChange={(e) => setEditSeed({ seed: Number(e.target.value.replace(/\D/g, '')) || 0, locked: true })} aria-label="Seed" />
+                  <button type="button" className={`btn icon ${editSeed.locked ? 'on' : ''}`} aria-pressed={editSeed.locked} title={editSeed.locked ? 'Seed locked — every run reuses it' : 'Seed unlocked — a new seed every run'} onClick={() => setEditSeed((x) => ({ ...x, locked: !x.locked }))}>
+                    {editSeed.locked ? <Lock size={16} /> : <Unlock size={16} />}
+                  </button>
+                  <button type="button" className="btn icon" title="New random seed" onClick={() => setEditSeed((x) => ({ ...x, seed: randomSeed() }))}>
+                    <Shuffle size={16} />
+                  </button>
+                </div>
+              </label>
+            </details>
           )}
 
           {mode === 'enhance' && (

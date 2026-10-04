@@ -528,3 +528,35 @@ img.develop { animation: develop 1.1s cubic-bezier(.2,.7,.2,1); }
 @media (prefers-reduced-motion: reduce) {
   img.develop, .safelight.on { animation: none; }
 }
+
+/* ---- v3.22 quick wins (audit 2026-10) ---- */
+/* Library: boards as a column, the grid gets the width */
+.library-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 232px 1fr; }
+.library-body:has(> .library-main:only-child) { grid-template-columns: 1fr; }
+.library-main { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.board-col { border-right: 1px solid var(--line); overflow-y: auto; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; background: var(--panel); }
+.board-link { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 36px; padding: 4px 8px; border: 0; border-radius: var(--r); background: transparent; color: var(--muted); text-align: left; font-size: 13px; }
+.board-link:hover { color: var(--text); background: var(--raised); }
+.board-link[aria-pressed='true'] { color: var(--text); background: var(--raised); box-shadow: inset 2px 0 0 var(--accent); }
+.board-link img, .board-link .board-nocover { width: 28px; height: 28px; border-radius: 2px; object-fit: cover; flex: none; margin: 0; background: var(--raised); }
+.board-link .board-name { flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+.board-col .btn.ghost { justify-content: flex-start; margin-top: 6px; }
+.board-col .board-actions { display: flex; flex-direction: column; align-items: stretch; gap: 0; margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--line); }
+.board-col .board-actions .btn { justify-content: flex-start; }
+/* titles on tiles: two lines instead of one cut-off line */
+.tile-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+/* Edit: Advanced and the mask hint */
+details.edit-adv summary { gap: 8px; }
+details.edit-adv .adv-summary { font-size: 12px; margin-left: auto; }
+details.edit-adv[open] summary svg { transform: rotate(90deg); }
+details.edit-adv > :not(summary) { margin-top: 10px; }
+.mask-hint { margin: -6px 0 0; }
+/* Video: a take's name, and why Animate waits */
+.take-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.animate-hint { text-align: center; margin: -2px 0 0; }
+/* Home: the six rooms in one row (Library no longer alone on a second row), three by two on narrower screens */
+.home-cards { grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.home-card { padding: 18px 16px; min-height: 0; }
+.home-card-title { font-size: 24px; }
+.home-card-text { font-size: 13px; }
+@media (max-width: 1180px) { .home-cards { grid-template-columns: repeat(3, 1fr); } }

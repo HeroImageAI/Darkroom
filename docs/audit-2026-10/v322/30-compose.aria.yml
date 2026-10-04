@@ -1,0 +1,406 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- heading "Compose" [level=1]
+- paragraph: Arrange pictures, cut-outs and rough paint on a canvas, then let Darkroom turn the collage into one coherent picture.
+- region "Blank canvas":
+  - heading "Blank canvas" [level=2]
+  - group "Canvas shape":
+    - button "3:2" [pressed]
+    - button "1:1"
+    - button "2:3"
+    - button "16:9"
+    - button "9:16"
+    - button "4:3"
+  - button "New composition"
+- region "Start from a picture":
+  - heading "Start from a picture" [level=2]
+  - paragraph: It becomes the background; the canvas takes its shape.
+  - button "From Library"
+  - button "Upload"
+- heading "Your compositions 93" [level=2]
+- list:
+  - listitem:
+    - button "Open Composition 90"
+    - text: Composition 90 2026/10/04, 10:43:54
+    - button "Delete Composition 90"
+  - listitem:
+    - button "Open Composition 89"
+    - text: Composition 89 2026/10/04, 10:43:38
+    - button "Delete Composition 89"
+  - listitem:
+    - button "Open Composition 88"
+    - text: Composition 88 2026/10/04, 10:43:35
+    - button "Delete Composition 88"
+  - listitem:
+    - button "Open Composition 87"
+    - text: Composition 87 2026/10/04, 09:09:53
+    - button "Delete Composition 87"
+  - listitem:
+    - button "Open Composition 86"
+    - text: Composition 86 2026/10/04, 09:09:36
+    - button "Delete Composition 86"
+  - listitem:
+    - button "Open Composition 85"
+    - text: Composition 85 2026/10/04, 09:09:33
+    - button "Delete Composition 85"
+  - listitem:
+    - button "Open Composition 84"
+    - text: Composition 84 2026/10/03, 20:04:28
+    - button "Delete Composition 84"
+  - listitem:
+    - button "Open Composition 83"
+    - text: Composition 83 2026/10/03, 20:04:12
+    - button "Delete Composition 83"
+  - listitem:
+    - button "Open Composition 82"
+    - text: Composition 82 2026/10/03, 20:04:09
+    - button "Delete Composition 82"
+  - listitem:
+    - button "Open Composition 81"
+    - text: Composition 81 2026/10/03, 17:28:15
+    - button "Delete Composition 81"
+  - listitem:
+    - button "Open Composition 80"
+    - text: Composition 80 2026/10/03, 17:27:58
+    - button "Delete Composition 80"
+  - listitem:
+    - button "Open Composition 79"
+    - text: Composition 79 2026/10/03, 17:27:55
+    - button "Delete Composition 79"
+  - listitem:
+    - button "Open Composition 78"
+    - text: Composition 78 2026/10/03, 16:47:42
+    - button "Delete Composition 78"
+  - listitem:
+    - button "Open Composition 77"
+    - text: Composition 77 2026/10/03, 16:47:26
+    - button "Delete Composition 77"
+  - listitem:
+    - button "Open Composition 76"
+    - text: Composition 76 2026/10/03, 16:47:23
+    - button "Delete Composition 76"
+  - listitem:
+    - button "Open Composition 75"
+    - text: Composition 75 2026/10/03, 15:40:45
+    - button "Delete Composition 75"
+  - listitem:
+    - button "Open Composition 74"
+    - text: Composition 74 2026/10/03, 15:40:29
+    - button "Delete Composition 74"
+  - listitem:
+    - button "Open Composition 73"
+    - text: Composition 73 2026/10/03, 15:40:26
+    - button "Delete Composition 73"
+  - listitem:
+    - button "Open Composition 72"
+    - text: Composition 72 2026/10/03, 11:22:25
+    - button "Delete Composition 72"
+  - listitem:
+    - button "Open Composition 71"
+    - text: Composition 71 2026/10/03, 11:22:08
+    - button "Delete Composition 71"
+  - listitem:
+    - button "Open Composition 70"
+    - text: Composition 70 2026/10/03, 11:22:06
+    - button "Delete Composition 70"
+  - listitem:
+    - button "Open Composition 69"
+    - text: Composition 69 2026/10/03, 11:05:27
+    - button "Delete Composition 69"
+  - listitem:
+    - button "Open Composition 68"
+    - text: Composition 68 2026/10/03, 11:05:11
+    - button "Delete Composition 68"
+  - listitem:
+    - button "Open Composition 67"
+    - text: Composition 67 2026/10/03, 11:05:08
+    - button "Delete Composition 67"
+  - listitem:
+    - button "Open Composition 66"
+    - text: Composition 66 2026/10/03, 09:57:13
+    - button "Delete Composition 66"
+  - listitem:
+    - button "Open Composition 65"
+    - text: Composition 65 2026/10/03, 09:56:57
+    - button "Delete Composition 65"
+  - listitem:
+    - button "Open Composition 64"
+    - text: Composition 64 2026/10/03, 09:56:54
+    - button "Delete Composition 64"
+  - listitem:
+    - button "Open Composition 63"
+    - text: Composition 63 2026/10/02, 23:53:19
+    - button "Delete Composition 63"
+  - listitem:
+    - button "Open Composition 62"
+    - text: Composition 62 2026/10/02, 23:53:02
+    - button "Delete Composition 62"
+  - listitem:
+    - button "Open Composition 61"
+    - text: Composition 61 2026/10/02, 23:53:00
+    - button "Delete Composition 61"
+  - listitem:
+    - button "Open Composition 60"
+    - text: Composition 60 2026/10/02, 21:24:03
+    - button "Delete Composition 60"
+  - listitem:
+    - button "Open Composition 59"
+    - text: Composition 59 2026/10/02, 21:23:47
+    - button "Delete Composition 59"
+  - listitem:
+    - button "Open Composition 58"
+    - text: Composition 58 2026/10/02, 21:23:44
+    - button "Delete Composition 58"
+  - listitem:
+    - button "Open Composition 57"
+    - text: Composition 57 2026/10/02, 19:14:42
+    - button "Delete Composition 57"
+  - listitem:
+    - button "Open Composition 56"
+    - text: Composition 56 2026/10/02, 19:14:26
+    - button "Delete Composition 56"
+  - listitem:
+    - button "Open Composition 55"
+    - text: Composition 55 2026/10/02, 19:14:23
+    - button "Delete Composition 55"
+  - listitem:
+    - button "Open Composition 54"
+    - text: Composition 54 2026/10/02, 18:41:28
+    - button "Delete Composition 54"
+  - listitem:
+    - button "Open Composition 53"
+    - text: Composition 53 2026/10/02, 18:41:11
+    - button "Delete Composition 53"
+  - listitem:
+    - button "Open Composition 52"
+    - text: Composition 52 2026/10/02, 18:41:09
+    - button "Delete Composition 52"
+  - listitem:
+    - button "Open Composition 51"
+    - text: Composition 51 2026/10/02, 18:19:44
+    - button "Delete Composition 51"
+  - listitem:
+    - button "Open Composition 50"
+    - text: Composition 50 2026/10/02, 18:19:28
+    - button "Delete Composition 50"
+  - listitem:
+    - button "Open Composition 49"
+    - text: Composition 49 2026/10/02, 18:19:25
+    - button "Delete Composition 49"
+  - listitem:
+    - button "Open Composition 48"
+    - text: Composition 48 2026/10/02, 16:57:45
+    - button "Delete Composition 48"
+  - listitem:
+    - button "Open Composition 47"
+    - text: Composition 47 2026/10/02, 16:57:28
+    - button "Delete Composition 47"
+  - listitem:
+    - button "Open Composition 46"
+    - text: Composition 46 2026/10/02, 16:57:25
+    - button "Delete Composition 46"
+  - listitem:
+    - button "Open Composition 45"
+    - text: Composition 45 2026/10/02, 16:44:38
+    - button "Delete Composition 45"
+  - listitem:
+    - button "Open Composition 44"
+    - text: Composition 44 2026/10/02, 16:44:22
+    - button "Delete Composition 44"
+  - listitem:
+    - button "Open Composition 43"
+    - text: Composition 43 2026/10/02, 16:44:19
+    - button "Delete Composition 43"
+  - listitem:
+    - button "Open Composition 42"
+    - text: Composition 42 2026/10/02, 16:42:21
+    - button "Delete Composition 42"
+  - listitem:
+    - button "Open Composition 41"
+    - text: Composition 41 2026/10/02, 16:42:18
+    - button "Delete Composition 41"
+  - listitem:
+    - button "Open Composition 40"
+    - text: Composition 40 2026/10/02, 11:44:53
+    - button "Delete Composition 40"
+  - listitem:
+    - button "Open Composition 39"
+    - text: Composition 39 2026/10/02, 11:44:36
+    - button "Delete Composition 39"
+  - listitem:
+    - button "Open Composition 38"
+    - text: Composition 38 2026/10/02, 11:44:34
+    - button "Delete Composition 38"
+  - listitem:
+    - button "Open Composition 37"
+    - text: Composition 37 2026/10/02, 10:58:12
+    - button "Delete Composition 37"
+  - listitem:
+    - button "Open Composition 36"
+    - text: Composition 36 2026/10/02, 10:57:56
+    - button "Delete Composition 36"
+  - listitem:
+    - button "Open Composition 35"
+    - text: Composition 35 2026/10/02, 10:57:53
+    - button "Delete Composition 35"
+  - listitem:
+    - button "Open Composition 34"
+    - text: Composition 34 2026/10/02, 06:21:54
+    - button "Delete Composition 34"
+  - listitem:
+    - button "Open Composition 33"
+    - text: Composition 33 2026/10/02, 06:21:38
+    - button "Delete Composition 33"
+  - listitem:
+    - button "Open Composition 32"
+    - text: Composition 32 2026/10/02, 06:21:35
+    - button "Delete Composition 32"
+  - listitem:
+    - button "Open Composition 31"
+    - text: Composition 31 2026/10/02, 05:55:17
+    - button "Delete Composition 31"
+  - listitem:
+    - button "Open Composition 30"
+    - text: Composition 30 2026/10/02, 05:55:01
+    - button "Delete Composition 30"
+  - listitem:
+    - button "Open Composition 29"
+    - text: Composition 29 2026/10/02, 05:54:58
+    - button "Delete Composition 29"
+  - listitem:
+    - button "Open Composition 28"
+    - text: Composition 28 2026/10/02, 05:42:21
+    - button "Delete Composition 28"
+  - listitem:
+    - button "Open Composition 27"
+    - text: Composition 27 2026/10/02, 05:22:21
+    - button "Delete Composition 27"
+  - listitem:
+    - button "Open Composition 26"
+    - text: Composition 26 2026/10/02, 05:22:05
+    - button "Delete Composition 26"
+  - listitem:
+    - button "Open Composition 25"
+    - text: Composition 25 2026/10/02, 05:22:02
+    - button "Delete Composition 25"
+  - listitem:
+    - button "Open Composition 24"
+    - text: Composition 24 2026/10/01, 23:17:40
+    - button "Delete Composition 24"
+  - listitem:
+    - button "Open Composition 23"
+    - text: Composition 23 2026/10/01, 23:17:24
+    - button "Delete Composition 23"
+  - listitem:
+    - button "Open Composition 22"
+    - text: Composition 22 2026/10/01, 23:17:21
+    - button "Delete Composition 22"
+  - listitem:
+    - button "Open Composition 21"
+    - text: Composition 21 2026/10/01, 21:13:52
+    - button "Delete Composition 21"
+  - listitem:
+    - button "Open Composition 20"
+    - text: Composition 20 2026/10/01, 21:13:36
+    - button "Delete Composition 20"
+  - listitem:
+    - button "Open Composition 19"
+    - text: Composition 19 2026/10/01, 21:13:33
+    - button "Delete Composition 19"
+  - listitem:
+    - button "Open Composition 18"
+    - text: Composition 18 2026/10/01, 21:01:03
+    - button "Delete Composition 18"
+  - listitem:
+    - button "Open Composition 17"
+    - text: Composition 17 2026/10/01, 21:00:47
+    - button "Delete Composition 17"
+  - listitem:
+    - button "Open Composition 16"
+    - text: Composition 16 2026/10/01, 21:00:44
+    - button "Delete Composition 16"
+  - listitem:
+    - button "Open Composition 15"
+    - text: Composition 15 2026/10/01, 20:58:09
+    - button "Delete Composition 15"
+  - listitem:
+    - button "Open Composition 14"
+    - text: Composition 14 2026/10/01, 20:57:44
+    - button "Delete Composition 14"
+  - listitem:
+    - button "Open Composition 13"
+    - text: Composition 13 2026/10/01, 20:28:50
+    - button "Delete Composition 13"
+  - listitem:
+    - button "Open Composition 12"
+    - text: Composition 12 2026/10/01, 20:28:48
+    - button "Delete Composition 12"
+  - listitem:
+    - button "Open Composition 11"
+    - text: Composition 11 2026/10/01, 20:16:59
+    - button "Delete Composition 11"
+  - listitem:
+    - button "Open Composition 10"
+    - text: Composition 10 2026/10/01, 20:16:56
+    - button "Delete Composition 10"
+  - listitem:
+    - button "Open Composition 9"
+    - text: Composition 9 2026/10/01, 20:15:15
+    - button "Delete Composition 9"
+  - listitem:
+    - button "Open Composition 8"
+    - text: Composition 8 2026/10/01, 20:15:13
+    - button "Delete Composition 8"
+  - listitem:
+    - button "Open Composition 7"
+    - text: Composition 7 2026/10/01, 19:35:01
+    - button "Delete Composition 7"
+  - listitem:
+    - button "Open Composition 6"
+    - text: Composition 6 2026/10/01, 19:34:59
+    - button "Delete Composition 6"
+  - listitem:
+    - button "Open Composition 5"
+    - text: Composition 5 2026/10/01, 19:33:13
+    - button "Delete Composition 5"
+  - listitem:
+    - button "Open Composition 4"
+    - text: Composition 4 2026/10/01, 19:33:10
+    - button "Delete Composition 4"
+  - listitem:
+    - button "Open Composition 3"
+    - text: Composition 3 2026/10/01, 19:20:51
+    - button "Delete Composition 3"
+  - listitem:
+    - button "Open Composition 2"
+    - text: Composition 2 2026/10/01, 19:20:48
+    - button "Delete Composition 2"
+  - listitem:
+    - button "Open Untitled composition"
+    - text: Untitled composition 2026/10/01, 19:19:03
+    - button "Delete Untitled composition"
+  - listitem:
+    - button "Open Composition 1"
+    - text: Composition 1 2026/10/01, 19:18:29
+    - button "Delete Composition 1"
+  - listitem:
+    - button "Open Untitled composition"
+    - text: Untitled composition 2026/10/01, 19:16:39
+    - button "Delete Untitled composition"
+  - listitem:
+    - button "Open Untitled composition"
+    - text: Untitled composition 2026/10/01, 19:16:16
+    - button "Delete Untitled composition"
+- status

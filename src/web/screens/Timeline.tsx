@@ -873,7 +873,7 @@ function ClipBin({ onAdd, onSound }: { onAdd: (it: Item) => void; onSound: (f: F
             {videos.map((v) => (
               <div key={v.id} role="listitem" className="tl-bin-item" draggable onDragStart={(e) => e.dataTransfer.setData(DRAG_ITEM, v.id)} title="Drag onto the video track">
                 <img src={thumbUrl(v.id)} alt="" loading="lazy" draggable={false} />
-                <span className="tl-bin-name">{v.prompt?.slice(0, 50) || v.mode}</span>
+                <span className="tl-bin-name" title={v.title || v.prompt || undefined}>{v.title || v.prompt?.slice(0, 50) || v.mode}</span>
                 <span className="mono tl-bin-len">{v.duration ? `${v.duration.toFixed(1)}s` : ''}</span>
                 <button className="btn ghost sm icon" onClick={() => onAdd(v)} aria-label={`Add ${v.prompt?.slice(0, 40) || 'video'} to the end`} title="Add to the end of the film">
                   <Plus size={15} />

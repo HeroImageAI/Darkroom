@@ -719,3 +719,15 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     strip of negatives** (sprocket holes, black frames, amber edge numbers, a version's title in its tooltip); a finished
     print **develops into view** (from pale and low-contrast to the picture, 1.1 s; off with reduced motion); square
     corners like prints; the logo is an **enlarger lens iris**. Home asks "What are we developing today?".
+109. **v3.22 quick wins** (audit 2026-10 §7.1, Koos: "start on v3.22"). **Edit:** Seed, LoRAs and the Klein version
+    move under *Advanced* (closed by default, remembered for the session; its summary says "seed 42 locked" or "1 LoRA"
+    when set, so nothing hides silently); in Instruct the mask settings appear with the first stroke — before that one
+    line says how to change only part of the picture — so "Only change the masked area" is never shown ticked over an
+    empty mask. **Model cards say what each is best at** from the test suite: Klein "Styles, materials", Qwen "Exact
+    shapes" (Edit) / "Exact shapes, text, layouts" (Generate). **Titles where pictures are picked:** Video takes lead
+    with the item's title or the start of the motion prompt; the Timeline bin shows titles; History tooltips show
+    title or prompt. **Library:** boards are a column on the left (cover, two-line name, count, board actions under
+    them); filters, search, count, Select and Upload share one row; compare sheets and pictures wider or taller than
+    1.6:1 are shown whole on their tiles; tile titles take two lines. **Video:** "Add a start frame first (step 1)" under
+    the Animate button while it waits. **Home:** the six cards in one row. Accessible names are unchanged (the e2e
+    suite and the test runner open Advanced where they type a seed).

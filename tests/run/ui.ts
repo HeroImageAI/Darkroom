@@ -113,7 +113,12 @@ async function openEdit(id: string, mode: string, model?: string, seed?: number)
   await page.goto(URL + `/#/edit/${id}`);
   await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: mode, exact: true }).click();
   if (model) await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: model === 'klein' ? /^Klein 9B/ : /^Qwen-Image 2\.1/ }).click();
-  if (seed !== undefined) await page.getByLabel('Seed').fill(String(seed));
+  if (seed !== undefined) {
+    // v3.22: Seed sits under Advanced in Edit
+    const adv = page.locator('details.edit-adv');
+    if ((await adv.count()) && (await adv.getAttribute('open')) === null) await adv.locator('summary').click();
+    await page.getByLabel('Seed').fill(String(seed));
+  }
 }
 
 const modelName = (m: string) => (m === 'klein' ? 'Klein' : m === 'qwen' ? 'Qwen' : m);

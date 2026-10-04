@@ -1,0 +1,147 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- complementary "Generate settings":
+  - text: Prompt
+  - button "New" [disabled]
+  - button "From picture"
+  - button "Choose File"
+  - button "Restore"
+  - button "Choose File"
+  - button "Enhance"
+  - textbox "Prompt":
+    - /placeholder: Describe the image… e.g. a ceramic teapot on a linen tablecloth, morning light
+  - paragraph: "Tip: {red|green|blue} in the prompt makes one picture per option."
+  - paragraph: Model
+  - group "Model":
+    - button "Klein 9B Fast · styles, materials" [pressed]:
+      - strong: Klein 9B
+      - text: Fast · styles, materials
+    - button "Qwen-Image 2.1 Exact shapes, text, layouts":
+      - strong: Qwen-Image 2.1
+      - text: Exact shapes, text, layouts
+  - text: Klein version
+  - combobox "Klein version":
+    - option "Official Klein 9B" [selected]
+    - option "nsfwKlein (9.1 GB)"
+  - paragraph: Quality ~1 MP, ~8 s
+  - group "Quality":
+    - button "Standard" [pressed]
+    - button "High"
+  - paragraph: Aspect 1024 × 1024
+  - group "Aspect ratio":
+    - button "1:1" [pressed]
+    - button "4:5"
+    - button "3:2"
+    - button "16:9"
+    - button "9:16"
+  - paragraph: Style
+  - group "Style preset":
+    - button "None" [pressed]
+    - button "Photographic"
+    - button "Concept art"
+    - button "Product shot"
+    - button "Ink sketch"
+    - button "Screen print"
+  - paragraph: References 0/3
+  - text: Drop, paste or browse
+  - button "Drop, paste or browse"
+  - button "Screen"
+  - text: Optional.
+  - paragraph:
+    - text: LoRAs
+    - button "Refresh LoRAs"
+  - combobox "Add a LoRA":
+    - option "Add a Klein 9B LoRA…" [selected]
+    - option "bfs_head_v1_flux-klein_9b_step3500_rank128 (632 MB)"
+    - option "flux2_klein_9b_refcontrol_lineart (158 MB)"
+    - option "Flux2-Klein-9B-consistency-V2 (316 MB)"
+    - option "Flux2-Klein-Image-RestoreV1 (237 MB)"
+    - option "refcontrol_v2_poses (158 MB)"
+  - paragraph: Only LoRAs made for Klein 9B are listed; 16 others are for other models.
+  - paragraph: Batch
+  - group "Batch size":
+    - button "×1" [pressed]
+    - button "×2"
+    - button "×3"
+    - button "×4"
+  - group: Advanced
+  - button "Generate Ctrl+Enter"
+- region "Result":
+  - heading "Nothing developed yet" [level=2]
+  - paragraph: Write a prompt on the left and press Generate (Ctrl+Enter). Drop or paste up to three pictures to use as references.
+- complementary "History":
+  - heading "History" [level=3]
+  - 'button "Show: a red tulip in a glass vase on a wooden table, soft window light."'
+  - button "Delete this picture"
+  - 'button "Show: portrait of an old fisherman with a weathered face, overcast light."'
+  - button "Delete this picture"
+  - 'button "Show: a blue vintage car parked by the sea, photograph."'
+  - button "Delete this picture"
+  - 'button "Show: a red vintage car parked by the sea, photograph."'
+  - button "Delete this picture"
+  - 'button "Show: a bakery storefront with a hand-painted sign reading \"SUNRISE BAKERY\", cobbled street."'
+  - button "Delete this picture"
+  - 'button "Show: Poster with the bold headline \"DARKROOM\" and the line \"open every night\" beneath, a crescent moon over rooftops. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."'
+  - button "Delete this picture"
+  - 'button "Show: A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."'
+  - button "Delete this picture"
+  - 'button "Show: A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."'
+  - button "Delete this picture"
+  - 'button "Show: A black and white darkroom print of a lighthouse on a cliff, hanging on a line to dry, red safelight glow."'
+  - button "Delete this picture"
+  - 'button "Show: a red tulip in a glass vase on a wooden table, soft window light."'
+  - button "Delete this picture"
+  - 'button "Show: portrait of an old fisherman with a weathered face, overcast light."'
+  - button "Delete this picture"
+  - 'button "Show: a blue vintage car parked by the sea, photograph."'
+  - button "Delete this picture"
+  - 'button "Show: a red vintage car parked by the sea, photograph."'
+  - button "Delete this picture"
+  - 'button "Show: a bakery storefront with a hand-painted sign reading \"SUNRISE BAKERY\", cobbled street."'
+  - button "Delete this picture"
+  - 'button "Show: Poster with the bold headline \"DARKROOM\" and the line \"open every night\" beneath, a crescent moon over rooftops. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."'
+  - button "Delete this picture"
+  - 'button "Show: A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."'
+  - button "Delete this picture"
+  - 'button "Show: A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."'
+  - button "Delete this picture"
+  - 'button "Show: a red tulip in a glass vase on a wooden table, soft window light."'
+  - button "Delete this picture"
+  - 'button "Show: portrait of an old fisherman with a weathered face, overcast light."'
+  - button "Delete this picture"
+  - 'button "Show: a blue vintage car parked by the sea, photograph."'
+  - button "Delete this picture"
+  - 'button "Show: a red vintage car parked by the sea, photograph."'
+  - button "Delete this picture"
+  - 'button "Show: a bakery storefront with a hand-painted sign reading \"SUNRISE BAKERY\", cobbled street."'
+  - button "Delete this picture"
+  - 'button "Show: Poster with the bold headline \"DARKROOM\" and the line \"open every night\" beneath, a crescent moon over rooftops. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."'
+  - button "Delete this picture"
+  - 'button "Show: A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."'
+  - button "Delete this picture"
+  - 'button "Show: A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."'
+  - button "Delete this picture"
+  - 'button "Show: a red tulip in a glass vase on a wooden table, soft window light."'
+  - button "Delete this picture"
+  - 'button "Show: portrait of an old fisherman with a weathered face, overcast light."'
+  - button "Delete this picture"
+  - 'button "Show: a blue vintage car parked by the sea, photograph."'
+  - button "Delete this picture"
+  - 'button "Show: a red vintage car parked by the sea, photograph."'
+  - button "Delete this picture"
+  - 'button "Show: a bakery storefront with a hand-painted sign reading \"SUNRISE BAKERY\", cobbled street."'
+  - button "Delete this picture"
+  - button "See all in Library"
+- status

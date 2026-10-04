@@ -707,6 +707,7 @@ export function Video({ query }: { query: URLSearchParams }) {
           <button className="btn big primary" disabled={!online || !s.start} onClick={() => animate()} title={s.start ? 'Ctrl+Enter' : 'Add a start frame first'}>
             <Clapperboard size={18} /> {activeVideo.length ? 'Add to queue' : 'Animate'} <span className="kbd">Ctrl+Enter</span>
           </button>
+          {!s.start && <p className="note animate-hint">Add a start frame first (step 1).</p>}
         </div>
       </aside>
 
@@ -919,8 +920,34 @@ function FrameSlot({
   );
 }
 
+/** A take's name: its Library title, else the start of its motion prompt (audit #9). Fetched once per take. */
+const takeNames = new Map<string, string>();
+function useTakeName(job: Job): string {
+  const meta = job.meta as Record<string, any>;
+  const fallback = String(meta.prompt ?? '').trim();
+  const id = job.result_ids[0];
+  const [name, setName] = useState(() => (id && takeNames.get(id)) || fallback);
+  useEffect(() => {
+    if (!id || takeNames.has(id)) return;
+    let live = true;
+    api
+      .item(id)
+      .then((r) => {
+        const t = r.item.title || fallback;
+        takeNames.set(id, t);
+        if (live) setName(t);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  return name;
+}
+
 function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; selected: boolean; onSelect: () => void; onDelete: () => void; onDismiss: () => void }) {
   const [now, setNow] = useState(Date.now());
+  const name = useTakeName(job);
   const running = job.status === 'queued' || job.status === 'running';
   useEffect(() => {
     if (!running) return;
@@ -951,7 +978,12 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
         {job.result_ids[0] ? <img src={thumbUrl(job.result_ids[0])} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Camera size={16} color="var(--muted)" />}
       </div>
       <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <span style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {name && (
+          <span className="take-name" title={name}>
+            {name}
+          </span>
+        )}
+        <span style={{ fontSize: name ? 11 : 13, color: name ? 'var(--muted)' : undefined, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {({ extend: 'Extended', smooth: 'Smoothed', refine: 'Refined', matte: 'Matte', cutout: 'Cut out', restore: 'Restored', restore_part: 'Restoring' } as Record<string, string>)[meta.mode] ?? meta.model ?? job.workflow}
           {meta.ui?.quality ? ` · ${({ final: 'Final', hd: '1080p', draft: 'Draft' } as Record<string, string>)[meta.ui.quality] ?? 'Draft'}` : ''}{meta.ui?.sound === 'off' ? ' · Silent' : ''}
         </span>
