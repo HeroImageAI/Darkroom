@@ -1,0 +1,76 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "TS 2026-10-03 · 00 Inputs"
+    - option "TS 2026-10-03 · 01 Apparel"
+    - option "TS 2026-10-03 · 02 Footwear"
+    - option "TS 2026-10-03 · 03 Gaming"
+    - option "TS 2026-10-03 · 04 Movie"
+    - option "TS 2026-10-03 · 05 Automotive"
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- navigation "Tools":
+  - button "Move (V)"
+  - button "Mask brush (B)" [pressed]
+  - button "Eraser (E)"
+  - button "Lasso (L)"
+  - button "Smart select (S)"
+  - button "Outpaint frame (O)"
+  - button "Crop (C)"
+  - button "Undo (Ctrl+Z)"
+  - button "Redo (Ctrl+Y)"
+- region "Canvas":
+  - img "Picture being edited"
+  - button "Upload"
+  - button "Upload your own picture"
+  - button "Fit"
+  - button "100%"
+  - text: 71% Versions
+  - group "Versions":
+    - button "v1" [pressed]
+    - button "v2"
+    - button "v3"
+    - button "v4"
+    - button "v5"
+    - button "v6"
+    - button "v7"
+  - button "Compare" [disabled]
+- complementary "Edit settings":
+  - text: v1 1024×1024 made with Qwen-Image 2.1
+  - paragraph: Mode
+  - group "Edit mode":
+    - button "Instruct"
+    - button "Inpaint"
+    - button "Outpaint"
+    - button "Enhance"
+    - button "Layers"
+    - button "Remove BG"
+    - button "Upscale" [pressed]
+  - paragraph: Upscale 2048 × 2048
+  - group "Upscale factor":
+    - button "2×" [pressed]
+    - button "4×"
+    - button "6×"
+    - button "8×"
+  - checkbox "Scale by longer side first"
+  - text: Scale by longer side first Tile size (graphics memory)
+  - combobox "Tile size (graphics memory)":
+    - option "256 - least memory"
+    - option "512 - default" [selected]
+    - option "1024 - fastest, most memory"
+  - paragraph: Adds real detail with SeedVR2, a dedicated upscaler. Transparent pictures keep their transparency.
+  - paragraph: Every apply saves a new version; nothing is overwritten.
+  - button "Upscale 2× Ctrl+Enter"
+  - link "Download":
+    - /url: /api/items/deaf8684-ee7a-423d-acf8-db47d087612d/file?which=main&download=1
+  - button "Animate"
+- status

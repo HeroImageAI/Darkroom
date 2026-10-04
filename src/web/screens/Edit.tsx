@@ -936,6 +936,8 @@ function Editor({ item }: { item: Item }) {
             ) : (
               <img
                 ref={imgRef}
+                key={item.id}
+                className="develop"
                 src={fileUrl(item.id)}
                 alt="Picture being edited"
                 draggable={false}
@@ -1021,19 +1023,19 @@ function Editor({ item }: { item: Item }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', borderTop: '1px solid var(--line)', background: 'var(--panel)' }}>
+        <div className="filmstrip-bar">
           <span className="section-label" style={{ margin: 0 }}>
             Versions
           </span>
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flex: 1 }} role="group" aria-label="Versions">
+          <div className="filmstrip" role="group" aria-label="Versions">
             {lineage.map((v) => (
               <button
                 key={v.id}
-                className="btn sm"
+                className="btn sm film-frame"
                 aria-pressed={v.id === item.id}
-                style={{ padding: 3, gap: 6, borderColor: v.id === item.id ? 'var(--accent)' : undefined }}
+                style={{ padding: 3, gap: 6 }}
                 onClick={() => go('edit', v.id)}
-                title={`${v.mode} · ${v.model}`}
+                title={`${v.title ? `${v.title} · ` : ''}${v.mode} · ${v.model}`}
               >
                 <img src={thumbUrl(v.id)} alt="" style={{ width: 30, height: 30, objectFit: 'cover', borderRadius: 4 }} />
                 <span className="mono" style={{ paddingRight: 6 }}>

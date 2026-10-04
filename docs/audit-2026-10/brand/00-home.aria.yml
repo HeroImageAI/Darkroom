@@ -1,0 +1,42 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- heading "What are we developing today?" [level=1]
+- navigation "Start":
+  - button "Generate Create a new picture from a prompt with Klein 9B or Qwen-Image 2.1."
+  - button "Edit Change, fix, extend or upscale a picture — one of yours or one you made."
+  - button "Compose Arrange pictures, cut-outs and rough paint, then render them into one picture."
+  - button "Video Bring a picture to life as a clip with LTX 2.5, with sound."
+  - button "Timeline Put your clips, your own videos and your own sound together into one film."
+  - button "Library Everything you have made or brought in, with its settings."
+- region "Edit your own picture":
+  - strong: Edit your own picture
+  - text: Drop photos here, paste (Ctrl+V) or browse — several at once. They stay on this PC and are added to your Library.
+  - button "Upload pictures"
+  - button "Upload pictures"
+- region "Recent":
+  - paragraph:
+    - text: Recent
+    - button "Open the Library"
+  - list:
+    - 'listitem "Edit: Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."'
+    - 'listitem "Edit: shoe"'
+    - 'listitem "Edit: Compare · Klein 9B · nsfwKlein · s18113280237704 vs Klein 9B · s18113280237704"'
+    - 'listitem "Edit: Make it a rainy day."'
+    - 'listitem "Edit: 03_text_scene"'
+    - 'listitem "Edit: a red tulip in a glass vase on a wooden table, soft window light."'
+    - 'listitem "Edit: a red classic car parked on the stone quay of a fishing harbour, overcast day"'
+    - 'listitem "Edit: a red classic car parked on the stone quay of a fishing harbour, overcast day"'
+    - 'listitem "Edit: 09_car"'
+- status

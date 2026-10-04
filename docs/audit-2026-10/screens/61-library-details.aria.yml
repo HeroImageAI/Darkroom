@@ -1,0 +1,321 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "TS 2026-10-03 · 00 Inputs"
+    - option "TS 2026-10-03 · 01 Apparel"
+    - option "TS 2026-10-03 · 02 Footwear"
+    - option "TS 2026-10-03 · 03 Gaming"
+    - option "TS 2026-10-03 · 04 Movie"
+    - option "TS 2026-10-03 · 05 Automotive"
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- region "Library":
+  - group "Filter":
+    - button "All" [pressed]
+    - button "Favourites"
+    - button "Klein"
+    - button "Qwen"
+    - button "Edits"
+    - button "Composed"
+    - button "Videos"
+    - button "Recently deleted"
+  - button "Stacks" [pressed]
+  - text: Search
+  - textbox "Search":
+    - /placeholder: Search prompt, seed or tag  ( / )
+  - button "Upload pictures to the Library"
+  - group "Boards":
+    - button "All boards" [pressed]
+    - button "No board 7"
+    - button "TS 2026-10-03 · 00 Inputs 0"
+    - button "TS 2026-10-03 · 01 Apparel 52"
+    - button "TS 2026-10-03 · 02 Footwear 45"
+    - button "TS 2026-10-03 · 03 Gaming 46"
+    - button "TS 2026-10-03 · 04 Movie 59"
+    - button "TS 2026-10-03 · 05 Automotive 48"
+    - button "New board"
+    - text: 75 items
+    - button "Select"
+    - button "Upload"
+  - list "Library items":
+    - listitem:
+      - button "image Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions." [pressed]: v26 26
+      - checkbox "Select Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."
+    - listitem:
+      - button "image Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.": v7 7
+      - checkbox "Select Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."
+    - listitem:
+      - button "image AUT-IMG-06 · Qwen · s7": v31 31 AUT-IMG-06 · Qwen · s7
+      - 'checkbox "Select Automotive design presentation board of this exact car in four views at consistent scale: front, rear, side profile and top-down plan. Same paint, wheels and details in every view. Clean white background, studio lighting."'
+    - listitem:
+      - button "image MOV-IMG-06 · Qwen · s7 · post-flood dystopia": v10 10 MOV-IMG-06 · Qwen · s7 · post-flood dystopia
+      - checkbox "Select Reimagine this location as a post-flood dystopia film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain."
+    - listitem:
+      - button "video AUT-VID-03 · LTX · Final 720p": 5.0s 9 AUT-VID-03 · LTX · Final 720p
+      - checkbox "Select Dark studio, extreme close-up on the headlight. The daytime-running-light signature switches on segment by segment, then the main beam illuminates. The camera drifts slowly across the lamp, revealing the surface detail."
+    - listitem:
+      - button "video MOV-VID-04 · LTX · Final 720p": 5.0s 23 MOV-VID-04 · LTX · Final 720p
+      - checkbox "Select A slow crane up and back from the farmhouse, revealing the vast empty landscape and distant mountains. Clouds drift slowly across the sky; long dawn shadows. Epic and lonely."
+    - listitem:
+      - button "video GAM-VID-04 · LTX · Final 720p": 5.0s 10 GAM-VID-04 · LTX · Final 720p
+      - checkbox "Select The camera orbits a full 360 degrees around the desert scavenger standing still in a neutral pose on a plain grey background. Even studio lighting. The camera orbits slowly around the subject, keeping it centred in the frame."
+    - listitem:
+      - button "video GAM-VID-03 · LTX · Final 720p": 5.0s 8 GAM-VID-03 · LTX · Final 720p
+      - checkbox "Select A slow crane up from below the ridgeline reveals the mountain citadel rising above drifting clouds. Banners stir on the towers, and birds circle the spires. Golden-hour light, epic and calm."
+    - listitem:
+      - button "video GAM-VID-02 · LTX · Final 720p": 5.0s 8 GAM-VID-02 · LTX · Final 720p
+      - checkbox "Select The camera glides slowly forward through the canyon outpost, passing under a rope bridge as the wind turbines spin. Dust haze hangs in the late-afternoon light, and small figures move along the walkways. Smooth, steady drone-like movement. The camera slowly pushes in toward the subject until it fills most of the frame."
+    - listitem:
+      - button "image AUT-IMG-08 · Compare Klein vs Qwen": AUT-IMG-08 · Compare Klein vs Qwen
+      - checkbox "Select Compare · AUT-IMG-08 · Klein · s42 vs AUT-IMG-08 · Qwen · s42"
+    - listitem:
+      - button "image AUT-IMG-06 · Compare Klein vs Qwen": AUT-IMG-06 · Compare Klein vs Qwen
+      - checkbox "Select Compare · AUT-IMG-06 · Klein · s42 vs AUT-IMG-06 · Qwen · s42"
+    - listitem:
+      - button "image AUT-IMG-05 · Compare Klein vs Qwen": AUT-IMG-05 · Compare Klein vs Qwen
+      - checkbox "Select Compare · AUT-IMG-05 · Klein · s42 vs AUT-IMG-05 · Qwen · s42"
+    - listitem:
+      - button "image AUT-IMG-03 · Compare Klein vs Qwen": AUT-IMG-03 · Compare Klein vs Qwen
+      - checkbox "Select Compare · AUT-IMG-03 · Klein · s42 vs AUT-IMG-03 · Qwen · s42"
+    - listitem:
+      - button "image AUT-IMG-02 · Compare Klein vs Qwen": AUT-IMG-02 · Compare Klein vs Qwen
+      - checkbox "Select Compare · AUT-IMG-02 · Klein · s42 vs AUT-IMG-02 · Qwen · s42"
+    - listitem:
+      - button "image MOV-IMG-07 · Compare Klein vs Qwen": MOV-IMG-07 · Compare Klein vs Qwen
+      - checkbox "Select Compare · MOV-IMG-07 · Klein · s42 · charcoal storyboard panel vs MOV-IMG-07 · Qwen · s42 · charcoal storyboard panel"
+    - listitem:
+      - button "image MOV-IMG-03 · Compare Klein vs Qwen": MOV-IMG-03 · Compare Klein vs Qwen
+      - checkbox "Select Compare · MOV-IMG-03 · Klein · s42 vs MOV-IMG-03 · Qwen · s42"
+    - listitem:
+      - button "image MOV-IMG-02 · Compare Klein vs Qwen": MOV-IMG-02 · Compare Klein vs Qwen
+      - checkbox "Select Compare · MOV-IMG-02 · Klein · s42 · deep orange sunset vs MOV-IMG-02 · Qwen · s42 · deep orange sunset"
+    - listitem:
+      - button "image GAM-IMG-08 · Compare Klein vs Qwen": GAM-IMG-08 · Compare Klein vs Qwen
+      - checkbox "Select Compare · GAM-IMG-08 · Klein · s42 · Instruct vs GAM-IMG-08 · Qwen · s42 · Instruct"
+    - listitem:
+      - button "image GAM-IMG-07 · Compare Klein vs Qwen": GAM-IMG-07 · Compare Klein vs Qwen
+      - checkbox "Select Compare · GAM-IMG-07 · Klein · s42 vs GAM-IMG-07 · Qwen · s42"
+    - listitem:
+      - button "image GAM-IMG-02 · Compare Klein vs Qwen": GAM-IMG-02 · Compare Klein vs Qwen
+      - checkbox "Select Compare · GAM-IMG-02 · Klein · s42 vs GAM-IMG-02 · Qwen · s42"
+    - listitem:
+      - button "image FTW-IMG-06 · Compare Klein vs Qwen": FTW-IMG-06 · Compare Klein vs Qwen
+      - checkbox "Select Compare · FTW-IMG-06 · Klein · s42 · grey clay render vs FTW-IMG-06 · Qwen · s42 · grey clay render"
+    - listitem:
+      - button "image FTW-IMG-05 · Compare Klein vs Qwen": FTW-IMG-05 · Compare Klein vs Qwen
+      - checkbox "Select Compare · FTW-IMG-05 · Klein · s42 vs FTW-IMG-05 · Qwen · s42"
+    - listitem:
+      - button "image FTW-IMG-04 · Compare Klein vs Qwen": FTW-IMG-04 · Compare Klein vs Qwen
+      - checkbox "Select Compare · FTW-IMG-04 · Klein · s42 vs FTW-IMG-04 · Qwen · s42"
+    - listitem:
+      - button "image FTW-IMG-02 · Compare Klein vs Qwen": FTW-IMG-02 · Compare Klein vs Qwen
+      - checkbox "Select Compare · FTW-IMG-02 · Klein · s42 vs FTW-IMG-02 · Qwen · s42"
+    - listitem:
+      - button "image AUT-IMG-07 · Compare Klein vs Qwen": AUT-IMG-07 · Compare Klein vs Qwen
+      - checkbox "Select Compare · AUT-IMG-07 · Klein · s42 · step 3 vs AUT-IMG-07 · Qwen · s42 · step 3"
+    - listitem:
+      - button "image AUT-IMG-04 · Compare Klein vs Qwen": AUT-IMG-04 · Compare Klein vs Qwen
+      - checkbox "Select Compare · AUT-IMG-04 · Klein · s42 · a thin horizontal vs AUT-IMG-04 · Qwen · s42 · a thin horizontal"
+    - listitem:
+      - button "image AUT-IMG-01 · Compare Klein vs Qwen": AUT-IMG-01 · Compare Klein vs Qwen
+      - checkbox "Select Compare · AUT-IMG-01 · Klein · s42 vs AUT-IMG-01 · Qwen · s42"
+    - listitem:
+      - button "image MOV-IMG-06 · Compare Klein vs Qwen": MOV-IMG-06 · Compare Klein vs Qwen
+      - checkbox "Select Compare · MOV-IMG-06 · Klein · s42 · gothic horror vs MOV-IMG-06 · Qwen · s42 · gothic horror"
+    - listitem:
+      - button "image MOV-IMG-01 · Compare Klein vs Qwen": MOV-IMG-01 · Compare Klein vs Qwen
+      - checkbox "Select Compare · MOV-IMG-01 · Klein · s42 vs MOV-IMG-01 · Qwen · s42"
+    - listitem:
+      - button "image GAM-IMG-04 · Compare Klein vs Qwen": GAM-IMG-04 · Compare Klein vs Qwen
+      - checkbox "Select Compare · GAM-IMG-04 · Klein · s42 · high-fantasy mountain citadel vs GAM-IMG-04 · Qwen · s42 · high-fantasy mountain ci"
+    - listitem:
+      - button "image GAM-IMG-03 · Compare Klein vs Qwen": GAM-IMG-03 · Compare Klein vs Qwen
+      - checkbox "Select Compare · GAM-IMG-03 · Klein · s42 vs GAM-IMG-03 · Qwen · s42"
+    - listitem:
+      - button "image GAM-IMG-01 · Compare Klein vs Qwen": GAM-IMG-01 · Compare Klein vs Qwen
+      - checkbox "Select Compare · GAM-IMG-01 · Klein · s42 vs GAM-IMG-01 · Qwen · s42"
+    - listitem:
+      - button "image FTW-IMG-08 · Compare Klein vs Qwen": FTW-IMG-08 · Compare Klein vs Qwen
+      - checkbox "Select Compare · FTW-IMG-08 · Klein · s42 · Enhance Restore vs FTW-IMG-08 · Qwen · s42 · Enhance Restore"
+    - listitem:
+      - button "image FTW-IMG-07 · Compare Klein vs Qwen": FTW-IMG-07 · Compare Klein vs Qwen
+      - checkbox "Select Compare · FTW-IMG-07 · Klein · s42 vs FTW-IMG-07 · Qwen · s42"
+    - listitem:
+      - button "image FTW-IMG-03 · Compare Klein vs Qwen": FTW-IMG-03 · Compare Klein vs Qwen
+      - checkbox "Select Compare · FTW-IMG-03 · Klein · s42 vs FTW-IMG-03 · Qwen · s42"
+    - listitem:
+      - button "image FTW-IMG-01 · Compare Klein vs Qwen": FTW-IMG-01 · Compare Klein vs Qwen
+      - checkbox "Select Compare · FTW-IMG-01 · Klein · s42 vs FTW-IMG-01 · Qwen · s42"
+    - listitem:
+      - button "image FTW-IMG-08 · Qwen · s42 · Instruct": v5 5 FTW-IMG-08 · Qwen · s42 · Instruct
+      - 'checkbox "Select Enhance into a clean high-resolution product photo. Keep the shoe exactly as it is: same shape, stitching, materials and colours. Remove noise; sharpen textures; white background with a soft shadow."'
+    - listitem:
+      - button "image FTW-IMG-07 · Qwen · s42": v3 3 FTW-IMG-07 · Qwen · s42
+      - checkbox "Select Design a new lifestyle sneaker inspired by the forms, textures and colours of this reference image — don't copy it literally; translate its character into the sole shape, panel lines and materials. Lateral view, photorealistic product render, white background."
+    - listitem:
+      - button "image FTW-IMG-03 · Qwen · s42": v3 3 FTW-IMG-03 · Qwen · s42
+      - 'checkbox "Select Replace the outsole pattern with an aggressive trail tread: multi-directional 5 mm lugs, a deeper heel brake zone, and a flex groove across the forefoot. Black rubber, matching the existing lighting and perspective."'
+    - listitem:
+      - button "video MOV-VID-02 · LTX · Final 720p": 5.0s 4 MOV-VID-02 · LTX · Final 720p
+      - 'checkbox "Select Static wide shot. Time passes: the figure walks out of frame, the sky darkens from blue hour to a star-filled night, the truck''s headlights switch on and the windmill begins turning. The camera holds a locked-off static shot for the whole clip."'
+    - listitem:
+      - button "video MOV-VID-03 · Timeline · continuity sequence": 15.0s MOV-VID-03 · Timeline · continuity sequence
+      - checkbox "Select MOV-VID-03 · Timeline · continuity sequence"
+    - listitem:
+      - button "video MOV-VID-03 · LTX · Final 720p · clip 3": 5.0s 7 MOV-VID-03 · LTX · Final 720p · clip 3
+      - 'checkbox "Select An interior reverse shot: the figure steps into the doorway, backlit, and pauses."'
+    - listitem:
+      - button "video MOV-VID-05 · LTX · Final 720p": 5.0s 2 MOV-VID-05 · LTX · Final 720p
+      - checkbox "Select The armoured creature prowls slowly across the cracked salt flats, its scales shifting and overlapping as its body flexes, head low and sweeping side to side. The camera tracks with it at a low angle. Overcast, flat light, wind lifting fine salt dust."
+    - listitem:
+      - button "image MOV-IMG-08 · Compare Klein vs Qwen": MOV-IMG-08 · Compare Klein vs Qwen
+      - checkbox "Select Compare · MOV-IMG-08 · Klein · s42 vs MOV-IMG-08 · Qwen · s42"
+    - listitem:
+      - button "image MOV-IMG-05 · Compare Klein vs Qwen": MOV-IMG-05 · Compare Klein vs Qwen
+      - checkbox "Select Compare · MOV-IMG-05 · Klein · s42 vs MOV-IMG-05 · Qwen · s42"
+    - listitem:
+      - button "image MOV-IMG-04 · Compare Klein vs Qwen": MOV-IMG-04 · Compare Klein vs Qwen
+      - checkbox "Select Compare · MOV-IMG-04 · Klein · s42 · B end vs MOV-IMG-04 · Qwen · s42 · B end"
+    - listitem:
+      - button "image GAM-IMG-06 · Compare Klein vs Qwen": GAM-IMG-06 · Compare Klein vs Qwen
+      - checkbox "Select Compare · GAM-IMG-06 · Klein · s42 · 1 desert market street vs GAM-IMG-06 · Qwen · s42 · 1 desert market street"
+    - listitem:
+      - button "image GAM-IMG-05 · Compare Klein vs Qwen": GAM-IMG-05 · Compare Klein vs Qwen
+      - checkbox "Select Compare · GAM-IMG-05 · Klein · s42 vs GAM-IMG-05 · Qwen · s42"
+    - listitem:
+      - button "image MOV-IMG-04 · Qwen · s42 · B end": v2 2 MOV-IMG-04 · Qwen · s42 · B end
+      - 'checkbox "Select The same scene, the same camera, the same truck and windmill: now night has fallen, the truck''s headlights are on, the figure has gone, and the windmill turns against a sky full of stars."'
+    - listitem:
+      - button "image GAM-IMG-06 · Qwen · s42 · 5 interior workshop full": GAM-IMG-06 · Qwen · s42 · 5 interior workshop full
+      - checkbox "Select An interior workshop full of half-repaired machines. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."
+    - listitem:
+      - button "image GAM-IMG-06 · Qwen · s42 · 4 sandstorm approaching a": GAM-IMG-06 · Qwen · s42 · 4 sandstorm approaching a
+      - checkbox "Select A sandstorm approaching a canyon village. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."
+    - listitem:
+      - button "image GAM-IMG-06 · Qwen · s42 · 3 rusted armoured truck": GAM-IMG-06 · Qwen · s42 · 3 rusted armoured truck
+      - checkbox "Select A rusted armoured truck converted into a mobile home. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."
+    - listitem:
+      - button "image GAM-IMG-06 · Qwen · s42 · 2 faction leader seated": GAM-IMG-06 · Qwen · s42 · 2 faction leader seated
+      - checkbox "Select A faction leader seated on a throne of salvaged car seats. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."
+    - listitem:
+      - button "image GAM-IMG-06 · Qwen · s42 · 1 desert market street": GAM-IMG-06 · Qwen · s42 · 1 desert market street
+      - checkbox "Select A desert market street at dusk. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."
+    - listitem:
+      - button "image GAM-IMG-05 · Qwen · s42": GAM-IMG-05 · Qwen · s42
+      - 'checkbox "Select A game prop design sheet of eight scavenged weapons and tools for the desert scavenger faction: a crossbow from car parts, a pipe-wrench club, a solar-cell lantern, a water-filter canteen, a grappling hook, a signal flare gun, a machete with a leaf-spring blade, a hand-cranked radio. Each item isolated, consistent scale indicator, flat grey background, consistent painterly style."'
+    - listitem:
+      - button "image MOV-IMG-08 · Klein · s42": MOV-IMG-08 · Klein · s42
+      - 'checkbox "Select A four-panel film storyboard in a 2×2 grid, showing a continuous sequence: 1) wide shot of a figure approaching the farmhouse at dawn, 2) close-up of a hand pushing the door open, 3) interior reverse shot of the figure in the doorway, 4) extreme close-up of the figure''s eyes reacting. Consistent character, costume and lighting across panels. Charcoal and grey-wash storyboard style, panel numbers in the corners."'
+    - listitem:
+      - button "image MOV-IMG-05 · Klein · s42": MOV-IMG-05 · Klein · s42
+      - 'checkbox "Select Film creature concept: a large desert predator, a hybrid of a pangolin and a hyena, with overlapping armoured scales, a long low body and glowing amber eyes. Three-quarter view, standing on cracked salt flats, overcast light. Highly detailed, grounded, believable anatomy, cinematic concept art."'
+    - listitem:
+      - button "image GAM-IMG-06 · Klein · s42 · 5 interior workshop full": GAM-IMG-06 · Klein · s42 · 5 interior workshop full
+      - checkbox "Select An interior workshop full of half-repaired machines. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."
+    - listitem:
+      - button "image GAM-IMG-06 · Klein · s42 · 4 sandstorm approaching a": GAM-IMG-06 · Klein · s42 · 4 sandstorm approaching a
+      - checkbox "Select A sandstorm approaching a canyon village. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."
+    - listitem:
+      - button "image GAM-IMG-06 · Klein · s42 · 3 rusted armoured truck": GAM-IMG-06 · Klein · s42 · 3 rusted armoured truck
+      - checkbox "Select A rusted armoured truck converted into a mobile home. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."
+  - button "Load more"
+- complementary "Details":
+  - img "Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."
+  - button "Send to Edit"
+  - button "Animate"
+  - link "Download":
+    - /url: /api/items/ae730adb-a61e-435c-9dd3-5a721a026570/file?which=main&download=1
+  - button "Favourite"
+  - button "Delete"
+  - text: Title
+  - textbox "Title":
+    - /placeholder: Present this shoe as a grey clay render with no materials or
+  - text: Notes
+  - textbox "Notes":
+    - /placeholder: Your notes
+  - paragraph: Versions 26
+  - list "Versions":
+    - listitem "Version 1": v1
+    - listitem "Version 2": v2
+    - listitem "Version 3": v3
+    - listitem "Version 4": v4
+    - listitem "Version 5": v5
+    - listitem "Version 6": v6
+    - listitem "Version 7": v7
+    - listitem "Version 8": v8
+    - listitem "Version 9": v9
+    - listitem "Version 10": v10
+    - listitem "Version 11": v11
+    - listitem "Version 12": v12
+    - listitem "Version 13": v13
+    - listitem "Version 14": v14
+    - listitem "Version 15": v15
+    - listitem "Version 16": v16
+    - listitem "Version 17": v17
+    - listitem "Version 18": v18
+    - listitem "Version 19": v19
+    - listitem "Version 20": v20
+    - listitem "Version 21": v21
+    - listitem "Version 22": v22
+    - listitem "Version 23": v23
+    - listitem "Version 24": v24
+    - listitem "Version 25": v25
+    - listitem "Version 26": v26
+  - button "Delete all 26 versions"
+  - text: Board
+  - combobox "Board":
+    - option "No board"
+    - option "TS 2026-10-03 · 00 Inputs"
+    - option "TS 2026-10-03 · 01 Apparel"
+    - option "TS 2026-10-03 · 02 Footwear" [selected]
+    - option "TS 2026-10-03 · 03 Gaming"
+    - option "TS 2026-10-03 · 04 Movie"
+    - option "TS 2026-10-03 · 05 Automotive"
+  - paragraph: More
+  - button "Reuse settings"
+  - button "Enhance"
+  - button "Upscale 2×"
+  - link "Settings (JSON)":
+    - /url: /api/items/ae730adb-a61e-435c-9dd3-5a721a026570/settings
+  - button "Open graph in ComfyUI"
+  - paragraph: Describe with Qwen3-VL
+  - 'button "Caption: short"'
+  - button "Detailed"
+  - button "Klein-style"
+  - button "Prompt → Klein"
+  - button "Prompt → Qwen"
+  - paragraph: Prompt
+  - paragraph: Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.
+  - term: Type
+  - definition: Instruction edit
+  - term: Model
+  - definition: Qwen-Image 2.1 edit
+  - term: Workflow
+  - definition: qwen_edit.json
+  - term: Seed
+  - definition: "7763729121464"
+  - term: Size
+  - definition: 1080 × 764
+  - term: Render time
+  - definition: 24s
+  - term: Version
+  - definition: v26 (edited from an earlier version)
+  - term: Created
+  - definition: 2026/10/04, 10:09:41
+  - term: File
+  - definition: darkroom/edit_00583_.png
+  - term: image_1
+  - definition: darkroom/lib_d993cbc4-43be-48a1-9399-19a0c2426607_main.png
+  - term: seed
+  - definition: "7763729121464"
+  - button "Copy settings as JSON"
+- status

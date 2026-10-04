@@ -711,3 +711,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     of a white shoe differs from it as little as the copy does). Re-run on seed 7, Qwen moved from 1 to 4–5 on those
     tests; AUT-IMG-07's chained steps and MOV-IMG-06 stay weak on both seeds (a real limit, and still flagged when it
     copies). e2e covers the warning with the shoe at seed 42.
+108. **The darkroom look** (Koos: "adjust the branding to represent the idea of a photographic film darkroom";
+    proposal on branch `darkroom-brand`, `docs/audit-2026-10/`). The room is in the look, not in the words: tabs and
+    buttons keep their plain names. Warm blacks and fibre-paper whites; the **amber safelight** (the OC filter used for
+    black-and-white paper) stays the accent; a **red safelight** appears only while something is developing — a lamp
+    beside the queue count and a red glow from below on the stage; a faint film grain over everything; **versions as a
+    strip of negatives** (sprocket holes, black frames, amber edge numbers, a version's title in its tooltip); a finished
+    print **develops into view** (from pale and low-contrast to the picture, 1.1 s; off with reduced motion); square
+    corners like prints; the logo is an **enlarger lens iris**. Home asks "What are we developing today?".

@@ -1,0 +1,71 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- heading "Timeline" [level=1]
+- paragraph: "Put your takes, your own videos and your own sound together into one film: trim, split, crossfade, add music or a voice, and export an MP4."
+- button "New film"
+- heading "Your films 17" [level=2]
+- list:
+  - listitem:
+    - button "Open AI test film": AI test film 2026/10/04, 09:04:55
+    - button "Delete AI test film"
+  - listitem:
+    - button "Open Film 8": Film 8 2026/10/04, 09:03:52
+    - button "Delete Film 8"
+  - listitem:
+    - button "Open AI test film": AI test film 2026/10/03, 19:59:33
+    - button "Delete AI test film"
+  - listitem:
+    - button "Open Film 7": Film 7 2026/10/03, 19:58:32
+    - button "Delete Film 7"
+  - listitem:
+    - button "Open AI test film": AI test film 2026/10/03, 17:23:27
+    - button "Delete AI test film"
+  - listitem:
+    - button "Open Film 6": Film 6 2026/10/03, 17:22:27
+    - button "Delete Film 6"
+  - listitem:
+    - button "Open AI test film": AI test film 2026/10/03, 16:42:44
+    - button "Delete AI test film"
+  - listitem:
+    - button "Open Film 5": Film 5 2026/10/03, 16:41:37
+    - button "Delete Film 5"
+  - listitem:
+    - button "Open AI test film": AI test film 2026/10/03, 16:15:32
+    - button "Delete AI test film"
+  - listitem:
+    - button "Open AI test film": AI test film 2026/10/03, 16:14:14
+    - button "Delete AI test film"
+  - listitem:
+    - button "Open Film 4": Film 4 2026/10/03, 16:13:16
+    - button "Delete Film 4"
+  - listitem:
+    - button "Open Handles test": Handles test 2026/10/03, 16:12:10
+    - button "Delete Handles test"
+  - listitem:
+    - button "Open Industry test film": Industry test film 2026/10/03, 16:07:47
+    - button "Delete Industry test film"
+  - listitem:
+    - button "Open Test film": Test film 2026/10/03, 15:42:12
+    - button "Delete Test film"
+  - listitem:
+    - button "Open Film 3": Film 3 2026/10/03, 15:35:54
+    - button "Delete Film 3"
+  - listitem:
+    - button "Open Film 2": Film 2 2026/10/03, 15:25:01
+    - button "Delete Film 2"
+  - listitem:
+    - button "Open Film 1": Film 1 2026/10/03, 15:24:06
+    - button "Delete Film 1"
+- status

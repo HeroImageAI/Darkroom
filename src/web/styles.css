@@ -455,3 +455,76 @@ button.logo svg { transition: transform .2s; }
 .compare-stage { position: relative; flex: 1; min-height: 0; }
 .compare-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 .compare-split { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--accent); pointer-events: none; }
+
+/* ==================================================================================================================
+   Darkroom brand (DECISIONS 108): a photographic darkroom. Warm blacks, fibre-paper whites, the amber safelight as
+   the accent, a red safelight that glows only while something is developing, film grain, film-strip versions, and
+   prints that develop into view. Labels stay plain; the room is in the look, not in the words.
+   ================================================================================================================== */
+:root {
+  --bg: #0f0d0c;          /* the room */
+  --panel: #171412;       /* the bench */
+  --raised: #211d1a;
+  --line: #2d2824;
+  --input: #3b342f;
+  --text: #efe9df;        /* fibre paper */
+  --muted: #a59c90;
+  --accent: #f0a83c;      /* amber safelight (OC filter) */
+  --on-accent: #1c1206;
+  --safelight: #d9442f;   /* red safelight: on while developing */
+  --r: 6px;
+  --r-lg: 8px;
+}
+/* film grain over the whole room, too faint to notice until it is gone */
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 100; opacity: .05; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.logo svg { color: var(--accent); }
+button.logo:hover svg { transform: rotate(-30deg); }
+
+/* the safelight lamp in the top bar */
+.safelight { width: 9px; height: 9px; border-radius: 50%; background: #3a2420; box-shadow: inset 0 0 0 1px #4a2a24; }
+.safelight.on { background: var(--safelight); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--safelight) 70%, transparent), 0 0 18px 4px color-mix(in srgb, var(--safelight) 30%, transparent); animation: safelight 2.4s ease-in-out infinite alternate; }
+@keyframes safelight { from { opacity: .75 } to { opacity: 1 } }
+
+/* developing: the stage is lit by the red safelight and the status reads like the tray */
+.stage-main:has(.progress-overlay)::after, .frame:has(> .progress-overlay)::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--safelight) 26%, transparent), transparent 62%);
+}
+.progress-overlay { background: rgba(15,13,12,.88); }
+.progress-overlay .bar > div, .bar > div { background: linear-gradient(90deg, var(--safelight), var(--accent)); }
+
+/* a finished print develops into view, as it does in the tray */
+img.develop { animation: develop 1.1s cubic-bezier(.2,.7,.2,1); }
+@keyframes develop {
+  from { opacity: 0; filter: brightness(2.4) contrast(.3) sepia(.5); }
+  30% { opacity: 1; }
+  to { opacity: 1; filter: none; }
+}
+
+/* versions as a strip of negatives: sprocket holes, black frames, amber edge numbers */
+.filmstrip-bar { position: relative; display: flex; align-items: center; gap: 12px; padding: 16px 16px; border-top: 1px solid var(--line); background: #0b0908; }
+.filmstrip-bar::before, .filmstrip-bar::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 5px; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 9px, rgba(239,233,223,.13) 9px 17px);
+}
+.filmstrip-bar::before { top: 4px; } .filmstrip-bar::after { bottom: 4px; }
+.filmstrip { display: flex; gap: 4px; overflow-x: auto; flex: 1; }
+.btn.film-frame { background: #050404; border-color: #1c1815; border-radius: 2px; }
+.btn.film-frame img { border-radius: 1px !important; }
+.btn.film-frame .mono { color: color-mix(in srgb, var(--accent) 80%, var(--muted)); font-size: 11px; letter-spacing: .08em; }
+.btn.film-frame[aria-pressed='true'] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.btn.film-frame[aria-pressed='true'] .mono { color: var(--accent); }
+.version-strip { background: #0b0908; padding: 9px 6px; border-radius: 2px; position: relative;
+  background-image: repeating-linear-gradient(90deg, transparent 0 9px, rgba(239,233,223,.12) 9px 17px), repeating-linear-gradient(90deg, transparent 0 9px, rgba(239,233,223,.12) 9px 17px);
+  background-size: 100% 4px, 100% 4px; background-position: 0 2px, 0 calc(100% - 2px); background-repeat: no-repeat; }
+.version-chip { border-radius: 2px; }
+
+/* prints and negatives have square corners */
+.tile, .tile img, .tile video, .home-thumb, .rail button, .strip button, .frame { border-radius: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  img.develop, .safelight.on { animation: none; }
+}
