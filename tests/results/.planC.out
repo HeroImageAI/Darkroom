@@ -1,0 +1,22 @@
+FTW-VID-02 · helper · on-foot render                                 31s {"id":"697e1924-ce6e-47c0-8917-8c7c20712f74","seconds":18}
+GAM-VID-04 · helper · crop front view                                14s {"id":"6d585c7b-46e2-4e0c-a988-f96f24ebecec"}
+AUT-VID-01 · helper · three-quarter render                           31s {"id":"22b97f1a-ac95-4b9c-9fb0-f24a35200755","seconds":18}
+AUT-VID-02 · helper · crop midnight blue                             14s {"id":"417e42d3-4b0b-45ce-8cb9-9868e415d234"}
+AUT-VID-03 · helper · crop headlight                                 14s {"id":"c72648ea-be26-499b-9f46-def04a1ca0d8"}
+FTW-VID-01 · LTX · Final 720p                                       137s {"id":"451c56d4-ee75-4c7d-98e2-f3cb0b8f6891","seconds":125}
+FTW-VID-02 · LTX · Final 720p                                       140s {"id":"fc83bfc8-07dc-4f59-9089-e21aa9593f81","seconds":128}
+FTW-VID-03 · LTX · Final 720p                                       137s {"id":"42a9ef83-04b2-420a-8623-22a7a119be3c","seconds":125}
+FTW-VID-04 · LTX · Final 720p                                       138s {"id":"9469c235-3075-4e32-abd1-3716533fbdde","seconds":122}
+GAM-VID-01 · LTX · Final 720p                                       128s {"id":"edf46cbc-e874-4793-b611-1e2110748473","seconds":116}
+GAM-VID-02 · LTX · Final 720p                                       137s {"id":"407bb99b-2867-4d71-835a-ecfcfbe4e46a","seconds":125}
+GAM-VID-03 · LTX · Final 720p                                       137s {"id":"bdb74d66-50ee-40bf-b24a-dcd5aaccf8bb","seconds":125}
+GAM-VID-04 · LTX · Final 720p                                       128s {"id":"bd1edab4-c0d4-4742-b033-df6064bc4888","seconds":116}
+MOV-VID-01 · LTX · Final 720p                                       128s {"id":"b803580f-5c5e-4b36-9e6b-881612aa0d80","seconds":116}
+MOV-VID-04 · LTX · Final 720p                                       138s {"id":"4d5087ce-53c2-4f1d-bc10-f11ace05ed12","seconds":126}
+AUT-VID-01 · LTX · Final 720p                                       128s {"id":"0e7ee17d-ab76-4d33-8fe3-9a104a033bd3","seconds":116}
+AUT-VID-02 · LTX · Final 720p                                       134s {"id":"fb418788-0069-4274-a946-123de8698f3a","seconds":122}
+AUT-VID-03 · LTX · Final 720p                                       137s {"id":"19a892ad-d2b8-4a75-8948-a2b6eba6fbaa","seconds":125}
+AUT-VID-04 · LTX · Final 720p                                       140s {"id":"ba7867ab-b841-4071-a799-ab01620f8074","seconds":128}
+AUT-VID-05 · LTX · Final 720p                                       141s {"id":"0a96c44f-320d-47f5-9e21-885b01c2b8cc","seconds":125}
+(node:31540) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)

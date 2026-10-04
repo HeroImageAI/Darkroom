@@ -1,0 +1,225 @@
+[
+ {
+  "action": "instruct",
+  "testId": "FTW-VID-02",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "title": "FTW-VID-02 · helper · on-foot render",
+  "prompt": "The same shoe worn on a runner's foot mid-stride on a wet asphalt road, low side angle at ground level, early-morning golden light. Keep the shoe's exact shape, materials and colours.",
+  "note": "helper: the suite needs an on-foot start frame"
+ },
+ {
+  "action": "crop",
+  "testId": "GAM-VID-04",
+  "sourceTitle": "GAM-IMG-02 · Qwen · s42",
+  "title": "GAM-VID-04 · helper · crop front view",
+  "rect": [
+   0,
+   0.12,
+   0.29,
+   0.8
+  ]
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-VID-01",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "title": "AUT-VID-01 · helper · three-quarter render",
+  "prompt": "The same car in silver paint, three-quarter front view on a studio turntable, long softbox reflections, seamless light-grey studio. Keep its exact proportions, wheels and details.",
+  "note": "helper: the suite needs a three-quarter start frame"
+ },
+ {
+  "action": "crop",
+  "testId": "AUT-VID-02",
+  "sourceTitle": "AUT-IMG-08 · Klein · s42",
+  "title": "AUT-VID-02 · helper · crop midnight blue",
+  "rect": [
+   0.34,
+   0.02,
+   0.66,
+   0.48
+  ]
+ },
+ {
+  "action": "crop",
+  "testId": "AUT-VID-03",
+  "sourceTitle": "AUT-IMG-04 · Klein · s42 · a thin horizontal",
+  "title": "AUT-VID-03 · helper · crop headlight",
+  "rect": [
+   0.05,
+   0.36,
+   0.5,
+   0.62
+  ]
+ },
+ {
+  "action": "video",
+  "testId": "FTW-VID-01",
+  "board": "TS 2026-10-03 · 02 Footwear",
+  "startTitle": "FTW-IMG-02 · Klein · s42",
+  "sourceTitle": "FTW-IMG-02 · Klein · s42",
+  "prompt": "The shoe sits on a slowly rotating white plinth and turns a full 360 degrees. Static camera at sole height, slightly below eye line. Soft studio lighting with a gentle rim light tracing the silhouette.",
+  "seconds": 5,
+  "title": "FTW-VID-01 · LTX · Final 720p"
+ },
+ {
+  "action": "video",
+  "testId": "FTW-VID-02",
+  "board": "TS 2026-10-03 · 02 Footwear",
+  "startTitle": "FTW-VID-02 · helper · on-foot render",
+  "sourceTitle": "FTW-VID-02 · helper · on-foot render",
+  "prompt": "A close-up, low-angle shot of a runner's foot in the shoe striking a wet asphalt road. The midsole compresses visibly on landing, the forefoot flexes at toe-off, and a fine spray of water lifts from the surface. Slow motion, the camera tracking alongside at ground level, early-morning golden light.",
+  "seconds": 5,
+  "title": "FTW-VID-02 · LTX · Final 720p",
+  "adapted": true
+ },
+ {
+  "action": "video",
+  "testId": "FTW-VID-03",
+  "board": "TS 2026-10-03 · 02 Footwear",
+  "startTitle": "FTW-IMG-01 · Qwen · s42",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "prompt": "A dark studio. A thin strip of light slowly sweeps along the shoe from toe to heel, revealing the silhouette and material textures as it passes, while the camera drifts slowly forward. Moody, high-contrast product reveal.",
+  "seconds": 5,
+  "title": "FTW-VID-03 · LTX · Final 720p"
+ },
+ {
+  "action": "video",
+  "testId": "FTW-VID-04",
+  "board": "TS 2026-10-03 · 02 Footwear",
+  "startTitle": "FTW-IMG-06 · Klein · s42 · grey clay render",
+  "sourceTitle": "FTW-IMG-06 · Klein · s42 · grey clay render",
+  "prompt": "The grey clay model of the shoe slowly transforms into the finished product as materials and colour spread across the surface from heel to toe. Static camera, studio lighting.",
+  "seconds": 5,
+  "title": "FTW-VID-04 · LTX · Final 720p",
+  "endTitle": "FTW-IMG-02 · Klein · s42",
+  "camera": "Static"
+ },
+ {
+  "action": "video",
+  "testId": "GAM-VID-01",
+  "board": "TS 2026-10-03 · 03 Gaming",
+  "startTitle": "GAM-IMG-01 · Klein · s42",
+  "sourceTitle": "GAM-IMG-01 · Klein · s42",
+  "prompt": "The desert scavenger stands in place breathing slowly, shifting weight from one leg to the other. Cloth wraps flutter lightly in a warm wind, and fine dust drifts past. He glances to the side and back. Static camera, full body, warm side lighting.",
+  "seconds": 5,
+  "title": "GAM-VID-01 · LTX · Final 720p",
+  "camera": "Static"
+ },
+ {
+  "action": "video",
+  "testId": "GAM-VID-02",
+  "board": "TS 2026-10-03 · 03 Gaming",
+  "startTitle": "GAM-IMG-03 · Qwen · s42",
+  "sourceTitle": "GAM-IMG-03 · Qwen · s42",
+  "prompt": "The camera glides slowly forward through the canyon outpost, passing under a rope bridge as the wind turbines spin. Dust haze hangs in the late-afternoon light, and small figures move along the walkways. Smooth, steady drone-like movement.",
+  "seconds": 5,
+  "title": "GAM-VID-02 · LTX · Final 720p",
+  "camera": "Slow push-in"
+ },
+ {
+  "action": "video",
+  "testId": "GAM-VID-03",
+  "board": "TS 2026-10-03 · 03 Gaming",
+  "startTitle": "GAM-IMG-04 · Qwen · s42 · high-fantasy mountain citadel",
+  "sourceTitle": "GAM-IMG-04 · Qwen · s42 · high-fantasy mountain citadel",
+  "prompt": "A slow crane up from below the ridgeline reveals the mountain citadel rising above drifting clouds. Banners stir on the towers, and birds circle the spires. Golden-hour light, epic and calm.",
+  "seconds": 5,
+  "title": "GAM-VID-03 · LTX · Final 720p"
+ },
+ {
+  "action": "video",
+  "testId": "GAM-VID-04",
+  "board": "TS 2026-10-03 · 03 Gaming",
+  "startTitle": "GAM-VID-04 · helper · crop front view",
+  "sourceTitle": "GAM-VID-04 · helper · crop front view",
+  "prompt": "The camera orbits a full 360 degrees around the desert scavenger standing still in a neutral pose on a plain grey background. Even studio lighting.",
+  "seconds": 5,
+  "title": "GAM-VID-04 · LTX · Final 720p",
+  "camera": "Orbit",
+  "adapted": true
+ },
+ {
+  "action": "video",
+  "testId": "MOV-VID-01",
+  "board": "TS 2026-10-03 · 04 Movie",
+  "startTitle": "MOV-IMG-01 · Klein · s42",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "prompt": "A slow dolly push-in toward the silhouetted figure in the doorway as dust motes drift through the beams of dawn light. The figure stays still, then turns their head slightly. Cinematic, anamorphic, film grain.",
+  "seconds": 5,
+  "title": "MOV-VID-01 · LTX · Final 720p",
+  "camera": "Slow push-in"
+ },
+ {
+  "action": "video",
+  "testId": "MOV-VID-04",
+  "board": "TS 2026-10-03 · 04 Movie",
+  "startTitle": "MOV-IMG-03 · Klein · s42",
+  "sourceTitle": "MOV-IMG-03 · Klein · s42",
+  "prompt": "A slow crane up and back from the farmhouse, revealing the vast empty landscape and distant mountains. Clouds drift slowly across the sky; long dawn shadows. Epic and lonely.",
+  "seconds": 5,
+  "title": "MOV-VID-04 · LTX · Final 720p",
+  "fit": true,
+  "adapted": true
+ },
+ {
+  "action": "video",
+  "testId": "AUT-VID-01",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "startTitle": "AUT-VID-01 · helper · three-quarter render",
+  "sourceTitle": "AUT-VID-01 · helper · three-quarter render",
+  "prompt": "The silver car sits on a slowly rotating studio turntable, turning a full 360 degrees. Static camera at headlight height. Long softbox reflections slide smoothly across the body panels as it turns.",
+  "seconds": 5,
+  "title": "AUT-VID-01 · LTX · Final 720p",
+  "camera": "Static",
+  "adapted": true
+ },
+ {
+  "action": "video",
+  "testId": "AUT-VID-02",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "startTitle": "AUT-VID-02 · helper · crop midnight blue",
+  "sourceTitle": "AUT-VID-02 · helper · crop midnight blue",
+  "prompt": "The car drives along a coastal road at sunset; the camera tracks alongside from a parallel vehicle, then slowly overtakes toward the front three-quarter view. The wheels turn at the correct speed, reflections of the sky run along the doors, and there's slight motion blur on the road.",
+  "seconds": 5,
+  "title": "AUT-VID-02 · LTX · Final 720p",
+  "adapted": true
+ },
+ {
+  "action": "video",
+  "testId": "AUT-VID-03",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "startTitle": "AUT-VID-03 · helper · crop headlight",
+  "sourceTitle": "AUT-VID-03 · helper · crop headlight",
+  "prompt": "Dark studio, extreme close-up on the headlight. The daytime-running-light signature switches on segment by segment, then the main beam illuminates. The camera drifts slowly across the lamp, revealing the surface detail.",
+  "seconds": 5,
+  "title": "AUT-VID-03 · LTX · Final 720p",
+  "adapted": true
+ },
+ {
+  "action": "video",
+  "testId": "AUT-VID-04",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "startTitle": "AUT-IMG-02 · Klein · s42",
+  "sourceTitle": "AUT-IMG-02 · Klein · s42",
+  "prompt": "Static camera on the clay model in three-quarter front view. A single long horizontal light bar moves slowly from the roof down to the sills, its highlight sweeping across every surface. Calm, clinical design-review lighting.",
+  "seconds": 5,
+  "title": "AUT-VID-04 · LTX · Final 720p",
+  "camera": "Static"
+ },
+ {
+  "action": "video",
+  "testId": "AUT-VID-05",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "startTitle": "AUT-IMG-01 · input · side sketch",
+  "sourceTitle": "AUT-IMG-01 · input · side sketch",
+  "prompt": "The design sketch on paper transforms into the finished photoreal car: line work fills with paint, reflections and glass from front to back. Static camera.",
+  "seconds": 5,
+  "title": "AUT-VID-05 · LTX · Final 720p",
+  "endTitle": "AUT-IMG-01 · Qwen · s42",
+  "camera": "Static"
+ }
+]

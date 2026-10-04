@@ -1,0 +1,50 @@
+FTW-IMG-02 · Klein · s42                                             31s {"id":"4a578827-27a8-44bc-874c-9274a2afa4e6","seconds":18}
+FTW-IMG-02 · Qwen · s42                                              41s {"id":"9bb25242-d468-461e-9c31-a557c2a46b79","seconds":29}
+FTW-IMG-04 · Klein · s42                                             31s {"id":"e7236360-75a4-4bf4-94a2-bbdfd0599e6a","seconds":18}
+FTW-IMG-04 · Qwen · s42                                              41s {"id":"a7e807da-b8be-4f03-9659-8ac73a044c1d","seconds":29}
+FTW-IMG-05 · Klein · s42                                             31s {"id":"e40b8d5e-990d-46d4-8a3e-c68da47aa8ca","seconds":18}
+FTW-IMG-05 · Qwen · s42                                              41s {"id":"f60eefbf-b6a6-4b1d-b50f-7fd52bf36898","seconds":29}
+FTW-IMG-06 · Klein · s42 · grey clay render                          31s {"id":"d40ca01e-3d6d-4b0c-a993-737d96c578c0","seconds":18}
+FTW-IMG-06 · Qwen · s42 · grey clay render                           41s {"id":"2b8d68a9-3013-4887-9d20-1ed245166d69","seconds":29}
+FTW-IMG-06 · Klein · s42 · designer marker sketch                    31s {"id":"2301dd9d-c136-46db-aa56-f2416f396e59","seconds":18}
+FTW-IMG-06 · Qwen · s42 · designer marker sketch                     41s {"id":"9a4baf1f-c8f5-42de-b299-1d44447e0544","seconds":29}
+FTW-IMG-06 · Klein · s42 · exploded view showing                     31s {"id":"3f10f20c-615e-4447-8189-ed9934aee1d1","seconds":18}
+FTW-IMG-06 · Qwen · s42 · exploded view showing                      41s {"id":"b87511ea-ee5c-4e46-ac2c-8dc54b47b41e","seconds":29}
+GAM-IMG-02 · Klein · s42                                             30s {"id":"036a115d-7d1c-4065-86cc-7bf4241e29ce","seconds":18}
+GAM-IMG-02 · Qwen · s42                                              43s {"id":"9b1629d0-cf76-45d5-8c6f-92b92f365280","seconds":30}
+GAM-IMG-07 · Klein · s42                                             39s {"id":"0a55b59c-6e10-4222-8a68-81dd6b66db60","seconds":22}
+GAM-IMG-07 · Qwen · s42                                              61s {"id":"0ccc904d-54e8-4ee4-a997-ccc5497e2c42","seconds":43}
+GAM-IMG-08 · Klein · s42 · Enhance Restore                           35s {"id":"b8a71935-5562-423a-b7b8-c8a8905604ab","seconds":23}
+GAM-IMG-08 · Qwen · s42 · Enhance Restore                            53s {"id":"7101b659-4be0-4e39-86eb-f9808540cf0f","seconds":29}
+GAM-IMG-08 · Klein · s42 · Instruct                                  31s {"id":"2cf94963-5f73-469f-8288-986b16cd0eb8","seconds":18}
+GAM-IMG-08 · Qwen · s42 · Instruct                                   41s {"id":"ca91c260-ee34-42d6-9c4a-efbe10270db0","seconds":29}
+MOV-IMG-02 · Klein · s42 · blue pre-dawn twilight                    31s {"id":"5a0e6552-a987-482e-8a08-ab218c05056b","seconds":18}
+MOV-IMG-02 · Qwen · s42 · blue pre-dawn twilight                     43s {"id":"a011481c-755b-445a-9202-007659d1db7b","seconds":30}
+MOV-IMG-02 · Klein · s42 · harsh noon sun                            31s {"id":"9358b80d-9c01-4fb0-907e-31ac9661ab37","seconds":18}
+MOV-IMG-02 · Qwen · s42 · harsh noon sun                             43s {"id":"73d74b8f-dd9a-48d1-9a08-d782cdcde63a","seconds":30}
+MOV-IMG-02 · Klein · s42 · deep orange sunset                        31s {"id":"bf1349c2-79e4-4e37-a023-7139e4cf0f2c","seconds":18}
+MOV-IMG-02 · Qwen · s42 · deep orange sunset                         43s {"id":"a00bd348-cc69-4612-ab37-1b96a1e04ef6","seconds":30}
+MOV-IMG-02 · Klein · s42 · moonlight with a                          31s {"id":"26016e1c-16f3-44e9-a1eb-cbdf87357939","seconds":18}
+MOV-IMG-02 · Qwen · s42 · moonlight with a                           43s {"id":"3e0567db-a35e-48f7-90e5-791e5a34b50e","seconds":30}
+MOV-IMG-02 · Klein · s42 · a violent thunderstorm                    31s {"id":"ee5f7a2c-8d12-45b6-a707-019076da6e71","seconds":18}
+MOV-IMG-02 · Qwen · s42 · a violent thunderstorm                     43s {"id":"3709c821-ce13-4dde-b09d-a3aa4385512f","seconds":30}
+MOV-IMG-03 · Klein · s42                                            129s {"failed":"no result after 120 s"}
+MOV-IMG-03 · Qwen · s42                                             250s {"failed":"no result after 240 s"}
+MOV-IMG-07 · Klein · s42 · loose digital speed-paint                 31s {"id":"0486e2ca-0658-488a-b669-e1d26bab1446","seconds":18}
+MOV-IMG-07 · Qwen · s42 · loose digital speed-paint                  43s {"id":"8b4df913-0a1e-4d3d-a12d-40ffdde86a1d","seconds":30}
+MOV-IMG-07 · Klein · s42 · photoreal VFX previs                      31s {"id":"c68b513c-697e-4a37-8644-4a7322c55d1c","seconds":18}
+MOV-IMG-07 · Qwen · s42 · photoreal VFX previs                       43s {"id":"10141450-2a13-4965-9f8d-9afc6560803c","seconds":30}
+MOV-IMG-07 · Klein · s42 · charcoal storyboard panel                 31s {"id":"36f16d4e-9b51-4d2e-8aab-35ea148963f5","seconds":18}
+MOV-IMG-07 · Qwen · s42 · charcoal storyboard panel                  43s {"id":"48256981-c582-4cf4-8142-9738ddf29651","seconds":30}
+AUT-IMG-02 · Klein · s42                                              7s {"skipped":true,"id":"115ecfd1-7227-499c-8131-6226c9add90f"}
+AUT-IMG-02 · Qwen · s42                                               7s {"skipped":true,"id":"3640705e-b865-41cf-8f58-663ce0e18888"}
+AUT-IMG-03 · Klein · s42                                              7s {"skipped":true,"id":"c07e30e5-0454-4f36-9f2c-24a1c19821bf"}
+AUT-IMG-03 · Qwen · s42                                               7s {"skipped":true,"id":"f9e1007b-a58c-4d48-9521-c3751986f37c"}
+AUT-IMG-05 · Klein · s42                                              7s {"skipped":true,"id":"34bc1329-9ec7-413b-b937-708bd721b917"}
+AUT-IMG-05 · Qwen · s42                                               7s {"skipped":true,"id":"2ac36d8d-a134-41cd-acce-8179ca669f90"}
+AUT-IMG-06 · Klein · s42                                              7s {"skipped":true,"id":"13710216-5a56-40a3-ad30-33232392a27e"}
+AUT-IMG-06 · Qwen · s42                                               7s {"skipped":true,"id":"a85ff574-59f5-428e-ad59-89e83c0d7aaf"}
+AUT-IMG-08 · Klein · s42                                              7s {"skipped":true,"id":"befeb2be-9434-4c04-abd3-22772234a7ea"}
+AUT-IMG-08 · Qwen · s42                                               7s {"skipped":true,"id":"21f8df0e-55b4-43ab-97cf-ef3578af6019"}
+(node:16912) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)

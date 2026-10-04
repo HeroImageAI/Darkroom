@@ -1,0 +1,529 @@
+[
+ {
+  "action": "upload",
+  "testId": "FTW-IMG-01",
+  "file": "test-inputs/FTW-IMG-01/side sketch.jpg",
+  "title": "FTW-IMG-01 · input · side sketch",
+  "board": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "upload",
+  "testId": "FTW-IMG-03",
+  "file": "test-inputs/FTW-IMG-03/ea4f70c2331a153c0e54f6866a403bb7.jpg",
+  "title": "FTW-IMG-03 · input · sole sketch",
+  "board": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "upload",
+  "testId": "FTW-IMG-07",
+  "file": "test-inputs/FTW-IMG-07/ad9d5e3a675218c5e8fadd494f0d9600.jpg",
+  "title": "FTW-IMG-07 · input · reference photo",
+  "board": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "upload",
+  "testId": "FTW-IMG-08",
+  "file": "test-inputs/FTW-IMG-08/9d1c134aa1d889520a52a533c12a3330.jpg",
+  "title": "FTW-IMG-08 · input · prototype photo",
+  "board": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-01",
+  "sourceTitle": "FTW-IMG-01 · input · side sketch",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Turn this side-profile sketch into a photorealistic product render of the shoe, lateral view, on a seamless white background with a soft contact shadow. Preserve the exact silhouette: sole stack height, toe spring, heel counter shape, collar line and all overlay lines. Engineered mesh upper in white, grey suede overlays, a sculpted foam midsole in off-white, a black rubber outsole. Studio lighting, sharp focus.",
+  "title": "FTW-IMG-01 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-01",
+  "sourceTitle": "FTW-IMG-01 · input · side sketch",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Turn this side-profile sketch into a photorealistic product render of the shoe, lateral view, on a seamless white background with a soft contact shadow. Preserve the exact silhouette: sole stack height, toe spring, heel counter shape, collar line and all overlay lines. Engineered mesh upper in white, grey suede overlays, a sculpted foam midsole in off-white, a black rubber outsole. Studio lighting, sharp focus.",
+  "title": "FTW-IMG-01 · Qwen · s42"
+ },
+ {
+  "action": "inpaint",
+  "testId": "FTW-IMG-03",
+  "sourceTitle": "FTW-IMG-03 · input · sole sketch",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Replace the outsole pattern with an aggressive trail tread: multi-directional 5 mm lugs, a deeper heel brake zone, and a flex groove across the forefoot. Black rubber, matching the existing lighting and perspective.",
+  "title": "FTW-IMG-03 · Klein · s42",
+  "note": "input is a sole sketch, not a render; mask by Smart select \"outsole\"",
+  "selectText": "outsole"
+ },
+ {
+  "action": "inpaint",
+  "testId": "FTW-IMG-03",
+  "sourceTitle": "FTW-IMG-03 · input · sole sketch",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Replace the outsole pattern with an aggressive trail tread: multi-directional 5 mm lugs, a deeper heel brake zone, and a flex groove across the forefoot. Black rubber, matching the existing lighting and perspective.",
+  "title": "FTW-IMG-03 · Qwen · s42",
+  "note": "input is a sole sketch, not a render; mask by Smart select \"outsole\"",
+  "selectText": "outsole"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-07",
+  "sourceTitle": "FTW-IMG-07 · input · reference photo",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Design a new lifestyle sneaker inspired by the forms, textures and colours of this reference image — don't copy it literally; translate its character into the sole shape, panel lines and materials. Lateral view, photorealistic product render, white background.",
+  "title": "FTW-IMG-07 · Klein · s42",
+  "note": "input is a shoe photo, not a natural/architectural reference; run as an Instruct on it"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-07",
+  "sourceTitle": "FTW-IMG-07 · input · reference photo",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Design a new lifestyle sneaker inspired by the forms, textures and colours of this reference image — don't copy it literally; translate its character into the sole shape, panel lines and materials. Lateral view, photorealistic product render, white background.",
+  "title": "FTW-IMG-07 · Qwen · s42",
+  "note": "input is a shoe photo, not a natural/architectural reference; run as an Instruct on it"
+ },
+ {
+  "action": "enhance",
+  "testId": "FTW-IMG-08",
+  "sourceTitle": "FTW-IMG-08 · input · prototype photo",
+  "model": "klein",
+  "seed": 42,
+  "title": "FTW-IMG-08 · Klein · s42 · Enhance Restore",
+  "note": "ADAPTED: Enhance has no prompt box; input is a clean render, not a low-res photo",
+  "strength": "Restore",
+  "adapted": true,
+  "titleExtra": "Enhance Restore"
+ },
+ {
+  "action": "enhance",
+  "testId": "FTW-IMG-08",
+  "sourceTitle": "FTW-IMG-08 · input · prototype photo",
+  "model": "qwen",
+  "seed": 42,
+  "title": "FTW-IMG-08 · Qwen · s42 · Enhance Restore",
+  "note": "ADAPTED: Enhance has no prompt box; input is a clean render, not a low-res photo",
+  "strength": "Restore",
+  "adapted": true,
+  "titleExtra": "Enhance Restore"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-08",
+  "sourceTitle": "FTW-IMG-08 · input · prototype photo",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Enhance into a clean high-resolution product photo. Keep the shoe exactly as it is: same shape, stitching, materials and colours. Remove noise; sharpen textures; white background with a soft shadow.",
+  "title": "FTW-IMG-08 · Klein · s42 · Instruct",
+  "note": "ADAPTED: the suite prompt as an Instruct",
+  "adapted": true,
+  "titleExtra": "Instruct"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-08",
+  "sourceTitle": "FTW-IMG-08 · input · prototype photo",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Enhance into a clean high-resolution product photo. Keep the shoe exactly as it is: same shape, stitching, materials and colours. Remove noise; sharpen textures; white background with a soft shadow.",
+  "title": "FTW-IMG-08 · Qwen · s42 · Instruct",
+  "note": "ADAPTED: the suite prompt as an Instruct",
+  "adapted": true,
+  "titleExtra": "Instruct"
+ },
+ {
+  "action": "upload",
+  "testId": "GAM-IMG-01",
+  "file": "test-inputs/GAM-IMG-01/449ad82474b7eedb26160eeac327665f.jpg",
+  "title": "GAM-IMG-01 · input · character sketch",
+  "board": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "upload",
+  "testId": "GAM-IMG-03",
+  "file": "test-inputs/GAM-IMG-03/c349e255219c66e984705c96fe6eeee1.jpg",
+  "title": "GAM-IMG-03 · input · environment",
+  "board": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "upload",
+  "testId": "GAM-IMG-04",
+  "file": "test-inputs/GAM-IMG-04/becdf6e96cc19418c579e15217e88497.jpg",
+  "title": "GAM-IMG-04 · input · landscape",
+  "board": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-01",
+  "sourceTitle": "GAM-IMG-01 · input · character sketch",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Render this character sketch as finished game concept art: a desert scavenger in layered sun-bleached cloth, scavenged armour plates, goggles, and a backpack of salvaged tools. Full body, neutral standing pose matching the sketch, plain mid-grey background. Stylised realism, painterly detail, clear readable silhouette.",
+  "title": "GAM-IMG-01 · Klein · s42",
+  "note": "input sketch is a mech/cyborg, not a desert scavenger"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-01",
+  "sourceTitle": "GAM-IMG-01 · input · character sketch",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Render this character sketch as finished game concept art: a desert scavenger in layered sun-bleached cloth, scavenged armour plates, goggles, and a backpack of salvaged tools. Full body, neutral standing pose matching the sketch, plain mid-grey background. Stylised realism, painterly detail, clear readable silhouette.",
+  "title": "GAM-IMG-01 · Qwen · s42",
+  "note": "input sketch is a mech/cyborg, not a desert scavenger"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-03",
+  "sourceTitle": "GAM-IMG-03 · input · environment",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Develop this thumbnail into a finished game environment concept: an abandoned desert outpost built into a canyon wall, rope bridges, wind turbines made from scrap, late-afternoon sun with long shadows and a dusty haze. Keep the composition, horizon line and major value shapes from the thumbnail. Wide cinematic aspect ratio.",
+  "title": "GAM-IMG-03 · Klein · s42",
+  "note": "input is already a painted environment, not a rough thumbnail"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-03",
+  "sourceTitle": "GAM-IMG-03 · input · environment",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Develop this thumbnail into a finished game environment concept: an abandoned desert outpost built into a canyon wall, rope bridges, wind turbines made from scrap, late-afternoon sun with long shadows and a dusty haze. Keep the composition, horizon line and major value shapes from the thumbnail. Wide cinematic aspect ratio.",
+  "title": "GAM-IMG-03 · Qwen · s42",
+  "note": "input is already a painted environment, not a rough thumbnail"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-04",
+  "sourceTitle": "GAM-IMG-04 · input · landscape",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Transform this landscape capture into game environment concept art as a post-apocalyptic overgrown ruin. Keep the terrain shape, horizon line and camera angle from the capture, and replace the content and mood completely. Painterly concept art, strong atmospheric perspective.",
+  "variable": "post-apocalyptic overgrown ruin",
+  "title": "GAM-IMG-04 · Klein · s42 · post-apocalyptic overgrown ruin",
+  "note": "input is a painted sci-fi landscape (no Google Earth capture)"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-04",
+  "sourceTitle": "GAM-IMG-04 · input · landscape",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Transform this landscape capture into game environment concept art as a post-apocalyptic overgrown ruin. Keep the terrain shape, horizon line and camera angle from the capture, and replace the content and mood completely. Painterly concept art, strong atmospheric perspective.",
+  "variable": "post-apocalyptic overgrown ruin",
+  "title": "GAM-IMG-04 · Qwen · s42 · post-apocalyptic overgrown ruin",
+  "note": "input is a painted sci-fi landscape (no Google Earth capture)"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-04",
+  "sourceTitle": "GAM-IMG-04 · input · landscape",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Transform this landscape capture into game environment concept art as a high-fantasy mountain citadel. Keep the terrain shape, horizon line and camera angle from the capture, and replace the content and mood completely. Painterly concept art, strong atmospheric perspective.",
+  "variable": "high-fantasy mountain citadel",
+  "title": "GAM-IMG-04 · Klein · s42 · high-fantasy mountain citadel",
+  "note": "input is a painted sci-fi landscape (no Google Earth capture)"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-04",
+  "sourceTitle": "GAM-IMG-04 · input · landscape",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Transform this landscape capture into game environment concept art as a high-fantasy mountain citadel. Keep the terrain shape, horizon line and camera angle from the capture, and replace the content and mood completely. Painterly concept art, strong atmospheric perspective.",
+  "variable": "high-fantasy mountain citadel",
+  "title": "GAM-IMG-04 · Qwen · s42 · high-fantasy mountain citadel",
+  "note": "input is a painted sci-fi landscape (no Google Earth capture)"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-04",
+  "sourceTitle": "GAM-IMG-04 · input · landscape",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Transform this landscape capture into game environment concept art as a cyberpunk megacity at night. Keep the terrain shape, horizon line and camera angle from the capture, and replace the content and mood completely. Painterly concept art, strong atmospheric perspective.",
+  "variable": "cyberpunk megacity at night",
+  "title": "GAM-IMG-04 · Klein · s42 · cyberpunk megacity at",
+  "note": "input is a painted sci-fi landscape (no Google Earth capture)"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-04",
+  "sourceTitle": "GAM-IMG-04 · input · landscape",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Transform this landscape capture into game environment concept art as a cyberpunk megacity at night. Keep the terrain shape, horizon line and camera angle from the capture, and replace the content and mood completely. Painterly concept art, strong atmospheric perspective.",
+  "variable": "cyberpunk megacity at night",
+  "title": "GAM-IMG-04 · Qwen · s42 · cyberpunk megacity at",
+  "note": "input is a painted sci-fi landscape (no Google Earth capture)"
+ },
+ {
+  "action": "upload",
+  "testId": "MOV-IMG-01",
+  "file": "test-inputs/MOV-IMG-01/460ac3a51d329122bda7f5ba9a9fe563.jpg",
+  "title": "MOV-IMG-01 · input · composition sketch",
+  "board": "TS 2026-10-03 · 04 Movie"
+ },
+ {
+  "action": "upload",
+  "testId": "MOV-IMG-06",
+  "file": "test-inputs/MOV-IMG-06/2096e3fb0500248f6f230d560f429b91.jpg",
+  "title": "MOV-IMG-06 · input · location photo",
+  "board": "TS 2026-10-03 · 04 Movie"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-01",
+  "sourceTitle": "MOV-IMG-01 · input · composition sketch",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Develop this rough composition into a cinematic film keyframe: a lone figure stands silhouetted in the doorway of a derelict farmhouse as harsh dawn light floods the dusty interior. Keep the composition and camera framing from the sketch exactly. Anamorphic widescreen, volumetric light beams, film grain, muted colour grade.",
+  "title": "MOV-IMG-01 · Klein · s42",
+  "note": "input is a three-panel storyboard page, not one composition"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-01",
+  "sourceTitle": "MOV-IMG-01 · input · composition sketch",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Develop this rough composition into a cinematic film keyframe: a lone figure stands silhouetted in the doorway of a derelict farmhouse as harsh dawn light floods the dusty interior. Keep the composition and camera framing from the sketch exactly. Anamorphic widescreen, volumetric light beams, film grain, muted colour grade.",
+  "title": "MOV-IMG-01 · Qwen · s42",
+  "note": "input is a three-panel storyboard page, not one composition"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Reimagine this location as a 1970s sci-fi film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "1970s sci-fi",
+  "title": "MOV-IMG-06 · Klein · s42 · 1970s sci-fi"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Reimagine this location as a 1970s sci-fi film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "1970s sci-fi",
+  "title": "MOV-IMG-06 · Qwen · s42 · 1970s sci-fi"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Reimagine this location as a gothic horror film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "gothic horror",
+  "title": "MOV-IMG-06 · Klein · s42 · gothic horror"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Reimagine this location as a gothic horror film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "gothic horror",
+  "title": "MOV-IMG-06 · Qwen · s42 · gothic horror"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Reimagine this location as a post-flood dystopia film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "post-flood dystopia",
+  "title": "MOV-IMG-06 · Klein · s42 · post-flood dystopia"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Reimagine this location as a post-flood dystopia film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "post-flood dystopia",
+  "title": "MOV-IMG-06 · Qwen · s42 · post-flood dystopia"
+ },
+ {
+  "action": "upload",
+  "testId": "AUT-IMG-01",
+  "file": "test-inputs/AUT-IMG-01/969d431e8706de1666ab0b70f973b680.jpg",
+  "title": "AUT-IMG-01 · input · side sketch",
+  "board": "TS 2026-10-03 · 05 Automotive"
+ },
+ {
+  "action": "upload",
+  "testId": "AUT-IMG-04",
+  "file": "test-inputs/AUT-IMG-04/a5c259aec43c64d5cfb0ef3f553739eb.jpg",
+  "title": "AUT-IMG-04 · input · front three-quarter render",
+  "board": "TS 2026-10-03 · 05 Automotive"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-01",
+  "sourceTitle": "AUT-IMG-01 · input · side sketch",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Turn this side-view car sketch into a photorealistic studio render, exact side profile, on a seamless white-to-grey studio background with a soft floor reflection. Preserve the proportions exactly: wheelbase, front and rear overhangs, greenhouse shape, beltline, wheel arch positions and all feature lines from the sketch. Gloss metallic silver paint, dark tinted glass, multi-spoke alloy wheels.",
+  "title": "AUT-IMG-01 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-01",
+  "sourceTitle": "AUT-IMG-01 · input · side sketch",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Turn this side-view car sketch into a photorealistic studio render, exact side profile, on a seamless white-to-grey studio background with a soft floor reflection. Preserve the proportions exactly: wheelbase, front and rear overhangs, greenhouse shape, beltline, wheel arch positions and all feature lines from the sketch. Gloss metallic silver paint, dark tinted glass, multi-spoke alloy wheels.",
+  "title": "AUT-IMG-01 · Qwen · s42"
+ },
+ {
+  "action": "inpaint",
+  "testId": "AUT-IMG-04",
+  "sourceTitle": "AUT-IMG-04 · input · front three-quarter render",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Replace the headlight with a thin horizontal LED blade with a vertical daytime-running-light signature. Match the body surfaces, paint, perspective and studio lighting exactly.",
+  "variable": "a thin horizontal LED blade with a vertical daytime-running-light signature",
+  "title": "AUT-IMG-04 · Klein · s42 · a thin horizontal",
+  "note": "mask by Smart select \"headlight\"",
+  "selectText": "headlight"
+ },
+ {
+  "action": "inpaint",
+  "testId": "AUT-IMG-04",
+  "sourceTitle": "AUT-IMG-04 · input · front three-quarter render",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Replace the headlight with a thin horizontal LED blade with a vertical daytime-running-light signature. Match the body surfaces, paint, perspective and studio lighting exactly.",
+  "variable": "a thin horizontal LED blade with a vertical daytime-running-light signature",
+  "title": "AUT-IMG-04 · Qwen · s42 · a thin horizontal",
+  "note": "mask by Smart select \"headlight\"",
+  "selectText": "headlight"
+ },
+ {
+  "action": "inpaint",
+  "testId": "AUT-IMG-04",
+  "sourceTitle": "AUT-IMG-04 · input · front three-quarter render",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Replace the headlight with four stacked rectangular projector modules. Match the body surfaces, paint, perspective and studio lighting exactly.",
+  "variable": "four stacked rectangular projector modules",
+  "title": "AUT-IMG-04 · Klein · s42 · four stacked rectangular",
+  "note": "mask by Smart select \"headlight\"",
+  "selectText": "headlight"
+ },
+ {
+  "action": "inpaint",
+  "testId": "AUT-IMG-04",
+  "sourceTitle": "AUT-IMG-04 · input · front three-quarter render",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Replace the headlight with four stacked rectangular projector modules. Match the body surfaces, paint, perspective and studio lighting exactly.",
+  "variable": "four stacked rectangular projector modules",
+  "title": "AUT-IMG-04 · Qwen · s42 · four stacked rectangular",
+  "note": "mask by Smart select \"headlight\"",
+  "selectText": "headlight"
+ },
+ {
+  "action": "inpaint",
+  "testId": "AUT-IMG-04",
+  "sourceTitle": "AUT-IMG-04 · input · front three-quarter render",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Replace the headlight with a hidden light behind a smoked full-width light bar. Match the body surfaces, paint, perspective and studio lighting exactly.",
+  "variable": "a hidden light behind a smoked full-width light bar",
+  "title": "AUT-IMG-04 · Klein · s42 · a hidden light",
+  "note": "mask by Smart select \"headlight\"",
+  "selectText": "headlight"
+ },
+ {
+  "action": "inpaint",
+  "testId": "AUT-IMG-04",
+  "sourceTitle": "AUT-IMG-04 · input · front three-quarter render",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Replace the headlight with a hidden light behind a smoked full-width light bar. Match the body surfaces, paint, perspective and studio lighting exactly.",
+  "variable": "a hidden light behind a smoked full-width light bar",
+  "title": "AUT-IMG-04 · Qwen · s42 · a hidden light",
+  "note": "mask by Smart select \"headlight\"",
+  "selectText": "headlight"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Develop this sketch into a refined designer's marker rendering on grey paper: confident lines, grey marker tones, white highlights, a touch of colour in the lights.",
+  "sourceTitle": "AUT-IMG-01 · input · side sketch",
+  "title": "AUT-IMG-07 · Klein · s42 · step 1",
+  "variable": "step 1",
+  "note": "on the sketch"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Develop this marker rendering into a polished digital rendering with accurate reflections, still showing a slight illustrative quality.",
+  "sourceTitle": "AUT-IMG-07 · Klein · s42 · step 1",
+  "title": "AUT-IMG-07 · Klein · s42 · step 2",
+  "variable": "step 2",
+  "note": "on step 1"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Develop this into a production-ready photoreal studio image of the car in metallic deep green paint.",
+  "sourceTitle": "AUT-IMG-07 · Klein · s42 · step 2",
+  "title": "AUT-IMG-07 · Klein · s42 · step 3",
+  "variable": "step 3",
+  "note": "on step 2"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Develop this sketch into a refined designer's marker rendering on grey paper: confident lines, grey marker tones, white highlights, a touch of colour in the lights.",
+  "sourceTitle": "AUT-IMG-01 · input · side sketch",
+  "title": "AUT-IMG-07 · Qwen · s42 · step 1",
+  "variable": "step 1",
+  "note": "on the sketch"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Develop this marker rendering into a polished digital rendering with accurate reflections, still showing a slight illustrative quality.",
+  "sourceTitle": "AUT-IMG-07 · Qwen · s42 · step 1",
+  "title": "AUT-IMG-07 · Qwen · s42 · step 2",
+  "variable": "step 2",
+  "note": "on step 1"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Develop this into a production-ready photoreal studio image of the car in metallic deep green paint.",
+  "sourceTitle": "AUT-IMG-07 · Qwen · s42 · step 2",
+  "title": "AUT-IMG-07 · Qwen · s42 · step 3",
+  "variable": "step 3",
+  "note": "on step 2"
+ }
+]

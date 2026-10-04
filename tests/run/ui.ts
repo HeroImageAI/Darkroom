@@ -48,6 +48,7 @@ async function library(board?: string) {
   const stacks = page.getByRole('button', { name: 'Stacks' });
   if ((await stacks.getAttribute('aria-pressed')) === 'true') await stacks.click();
   if (board) await page.getByRole('group', { name: 'Boards' }).getByRole('button', { name: new RegExp(`^${board.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}( \\d+)?$`) }).click();
+  else await page.getByRole('group', { name: 'Boards' }).getByRole('button', { name: 'All boards' }).click(); // search everything
   const search = page.getByPlaceholder(/Search prompt/);
   if (await search.inputValue()) await search.fill('');
   await page.getByRole('list', { name: 'Library items' }).or(page.getByText(/Nothing matches|library is empty/)).first().waitFor();
@@ -151,6 +152,15 @@ async function runEdit(kind: 'instruct' | 'inpaint' | 'enhance' | 'outpaint') {
   } else if (kind === 'enhance') {
     await page.getByRole('group', { name: 'Enhance strength' }).getByRole('button', { name: a.strength ?? 'Restore', exact: true }).click();
   } else if (kind === 'outpaint') {
+    // padding as a share of the picture's width (read from the version line, e.g. "v3 1024×768 made with…")
+    if (a.padFrac) {
+      // the "New size" line shows the picture's own size while every pad is 0
+      const body = await page.locator('body').innerText();
+      const m = /new size\s*(\d+)\s*×\s*(\d+)/i.exec(body) ?? /(\d+)×(\d+) made with/.exec(body);
+      const w = m ? Number(m[1]) : 0;
+      if (!w) throw new Error('outpaint: picture width not found');
+      a.pad = Object.fromEntries(Object.entries(a.padFrac as Record<string, number>).map(([k, f]) => [k, Math.round(w * f)]));
+    }
     for (const side of ['left', 'top', 'right', 'bottom'] as const) if (a.pad?.[side] !== undefined) await page.getByRole('spinbutton', { name: side }).fill(String(a.pad[side]));
     if (a.prompt) await page.getByLabel('Describe the surroundings (optional)').fill(a.prompt);
   }
@@ -309,6 +319,7 @@ async function compare() {
   const existing = await findTitled(title);
   if (existing) return { skipped: true, id: existing };
   await library(a.board);
+  if (a.board) await setBoard(a.board); // a saved compare goes to the working board
   await page.getByRole('button', { name: 'Select', exact: true }).click();
   for (const id of [a.a, a.b]) await page.locator(`.tile-wrap[data-id="${id}"]`).getByRole('checkbox').click();
   await page.getByRole('toolbar', { name: 'Selection' }).getByRole('button', { name: 'Compare' }).click();
@@ -347,6 +358,7 @@ async function video() {
   await page.getByRole('group', { name: 'Length' }).getByRole('button', { name: `${a.seconds ?? 5} s` }).click();
   await page.getByRole('group', { name: 'Quality' }).getByRole('button', { name: /^Final/ }).click();
   if (a.camera) await page.getByRole('group', { name: 'Camera' }).getByRole('button', { name: a.camera }).click();
+  if (a.fit) await page.getByRole('button', { name: 'Fit with bars' }).click().catch(() => undefined);
   await page.getByLabel('Motion prompt').fill(a.prompt);
   const before = await shot(a.testId, `${title} · settings`);
   const t0 = Date.now();
@@ -380,6 +392,15 @@ async function video() {
 
 let result: unknown;
 try {
+  // sources may be named by their Library title instead of an id (sourceTitle / startTitle / endTitle)
+  for (const k of ['source', 'start', 'end'] as const) {
+    const t = a[`${k}Title`];
+    if (!a[k] && t && (k !== 'source' || action !== 'video')) {
+      const id = await findTitled(t);
+      if (!id) throw new Error(`no Library item titled "${t}"`);
+      a[k] = id;
+    }
+  }
   if (action === 'board') {
     await library();
     await setBoard(a.board);
@@ -387,6 +408,27 @@ try {
   } else if (action === 'upload') result = await upload();
   else if (action === 'instruct' || action === 'inpaint' || action === 'enhance' || action === 'outpaint') result = await runEdit(action);
   else if (action === 'compare') result = await compare();
+  else if (action === 'list') {
+    // every tile matching a search, across all boards: id and title as the Library shows them
+    await library();
+    await page.getByPlaceholder(/Search prompt/).fill(a.q);
+    await page.waitForTimeout(1500);
+    const tiles = page.locator('.tile-wrap');
+    const out: { id: string | null; title: string | null }[] = [];
+    for (let i = 0; i < (await tiles.count()); i++) out.push({ id: await tiles.nth(i).getAttribute('data-id'), title: (await tiles.nth(i).locator('.tile-title').textContent().catch(() => null))?.trim() ?? null });
+    result = { items: out };
+  }
+  else if (action === 'move') {
+    // Library: tick the items in one board and Move to board (the selection bar)
+    await library(a.fromBoard);
+    if (a.q) { await page.getByPlaceholder(/Search prompt/).fill(a.q); await page.waitForTimeout(1500); }
+    await page.getByRole('button', { name: 'Select', exact: true }).click();
+    for (const id of a.ids as string[]) await page.locator(`.tile-wrap[data-id="${id}"]`).getByRole('checkbox').click();
+    await page.getByRole('toolbar', { name: 'Selection' }).getByLabel('Move to board').selectOption({ label: a.toBoard });
+    await page.waitForTimeout(1200);
+    if (a.q) await page.getByPlaceholder(/Search prompt/).fill('');
+    result = { moved: (a.ids as string[]).length };
+  }
   else if (action === 'crop') result = await crop();
   else if (action === 'generate') result = await generate();
   else if (action === 'timeline') result = await timeline();
@@ -395,7 +437,7 @@ try {
     await annotate(a.id, a);
     if (a.log) log(a.log);
     result = { ok: true };
-  } else if (action === 'find') result = { id: await findTitled(a.title) };
+  } else if (action === 'find') result = { id: await findTitled(a.title, a.board) };
   else if (action === 'frames') {
     // a video's frames as the Library's own player shows them, at a few moments
     await annotate(a.id, { board: a.board });

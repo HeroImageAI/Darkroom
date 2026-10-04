@@ -1,0 +1,167 @@
+[
+ {
+  "action": "move",
+  "title": "move MOV-IMG-06",
+  "ids": [
+   "8aa8c211-c021-4580-bf51-e33c223260df"
+  ],
+  "q": "Compare · MOV-IMG-06 · Klein · s42 · got",
+  "toBoard": "TS 2026-10-03 · 04 Movie"
+ },
+ {
+  "action": "annotate",
+  "title": "MOV-IMG-06 · Compare Klein vs Qwen",
+  "id": "8aa8c211-c021-4580-bf51-e33c223260df",
+  "board": "TS 2026-10-03 · 04 Movie"
+ },
+ {
+  "action": "move",
+  "title": "move MOV-IMG-01",
+  "ids": [
+   "6ec4e0c5-6872-4585-b007-63e2f0ca1837"
+  ],
+  "q": "Compare · MOV-IMG-01 · Klein · s42 vs MO",
+  "toBoard": "TS 2026-10-03 · 04 Movie"
+ },
+ {
+  "action": "annotate",
+  "title": "MOV-IMG-01 · Compare Klein vs Qwen",
+  "id": "6ec4e0c5-6872-4585-b007-63e2f0ca1837",
+  "board": "TS 2026-10-03 · 04 Movie"
+ },
+ {
+  "action": "move",
+  "title": "move GAM-IMG-04",
+  "ids": [
+   "95dd28c4-bcfe-47e4-9feb-f4b974e2b7ec"
+  ],
+  "q": "Compare · GAM-IMG-04 · Klein · s42 · hig",
+  "toBoard": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "annotate",
+  "title": "GAM-IMG-04 · Compare Klein vs Qwen",
+  "id": "95dd28c4-bcfe-47e4-9feb-f4b974e2b7ec",
+  "board": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "move",
+  "title": "move GAM-IMG-03",
+  "ids": [
+   "e30422e2-d5eb-4eb9-b5e7-844c5b382a5c"
+  ],
+  "q": "Compare · GAM-IMG-03 · Klein · s42 vs GA",
+  "toBoard": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "annotate",
+  "title": "GAM-IMG-03 · Compare Klein vs Qwen",
+  "id": "e30422e2-d5eb-4eb9-b5e7-844c5b382a5c",
+  "board": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "move",
+  "title": "move GAM-IMG-01",
+  "ids": [
+   "3b17f946-457a-4d88-8225-49a9b59e4962"
+  ],
+  "q": "Compare · GAM-IMG-01 · Klein · s42 vs GA",
+  "toBoard": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "annotate",
+  "title": "GAM-IMG-01 · Compare Klein vs Qwen",
+  "id": "3b17f946-457a-4d88-8225-49a9b59e4962",
+  "board": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "move",
+  "title": "move FTW-IMG-08",
+  "ids": [
+   "27545913-c3cd-4587-9dfd-ba277c1173f6"
+  ],
+  "q": "Compare · FTW-IMG-08 · Klein · s42 · Enh",
+  "toBoard": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "annotate",
+  "title": "FTW-IMG-08 · Compare Klein vs Qwen",
+  "id": "27545913-c3cd-4587-9dfd-ba277c1173f6",
+  "board": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "move",
+  "title": "move FTW-IMG-07",
+  "ids": [
+   "8e6810f5-7dd2-4d9c-a8f9-b916d617c206"
+  ],
+  "q": "Compare · FTW-IMG-07 · Klein · s42 vs FT",
+  "toBoard": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "annotate",
+  "title": "FTW-IMG-07 · Compare Klein vs Qwen",
+  "id": "8e6810f5-7dd2-4d9c-a8f9-b916d617c206",
+  "board": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "move",
+  "title": "move FTW-IMG-03",
+  "ids": [
+   "0c95cb71-4589-4b03-b527-eda0a991e589"
+  ],
+  "q": "Compare · FTW-IMG-03 · Klein · s42 vs FT",
+  "toBoard": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "annotate",
+  "title": "FTW-IMG-03 · Compare Klein vs Qwen",
+  "id": "0c95cb71-4589-4b03-b527-eda0a991e589",
+  "board": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "move",
+  "title": "move FTW-IMG-01",
+  "ids": [
+   "97b520bf-56b4-42fd-877a-7155d5be3e32"
+  ],
+  "q": "Compare · FTW-IMG-01 · Klein · s42 vs FT",
+  "toBoard": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "annotate",
+  "title": "FTW-IMG-01 · Compare Klein vs Qwen",
+  "id": "97b520bf-56b4-42fd-877a-7155d5be3e32",
+  "board": "TS 2026-10-03 · 02 Footwear"
+ },
+ {
+  "action": "move",
+  "title": "move GAM-IMG-06",
+  "ids": [
+   "30fdb15f-38bb-4c1f-9691-b2a6a2b7ff2c"
+  ],
+  "q": "Compare · GAM-IMG-06 · Klein · s42 · 1 d",
+  "toBoard": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "annotate",
+  "title": "GAM-IMG-06 · Compare Klein vs Qwen",
+  "id": "30fdb15f-38bb-4c1f-9691-b2a6a2b7ff2c",
+  "board": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "move",
+  "title": "move GAM-IMG-05",
+  "ids": [
+   "5f67511b-721e-4b88-9885-ebed57f1cd4f"
+  ],
+  "q": "Compare · GAM-IMG-05 · Klein · s42 vs GA",
+  "toBoard": "TS 2026-10-03 · 03 Gaming"
+ },
+ {
+  "action": "annotate",
+  "title": "GAM-IMG-05 · Compare Klein vs Qwen",
+  "id": "5f67511b-721e-4b88-9885-ebed57f1cd4f",
+  "board": "TS 2026-10-03 · 03 Gaming"
+ }
+]

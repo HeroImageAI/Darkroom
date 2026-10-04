@@ -1,0 +1,384 @@
+{
+ "entries": [
+  {
+   "test": "FTW-IMG-01",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Klein",
+   "titles": [
+    "FTW-IMG-01 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "clean render, right materials; fewer of the sketch's overlay and sole lines kept",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-01",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "titles": [
+    "FTW-IMG-01 · Qwen · s42"
+   ],
+   "score": 5,
+   "why": "keeps the sketch: the wave-sculpted midsole, the overlay lines, stack and toe spring; right materials",
+   "best": "FTW-IMG-01 · Qwen · s42",
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-03",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Klein",
+   "titles": [
+    "FTW-IMG-03 · Klein · s42"
+   ],
+   "score": 3,
+   "why": "SAM masked the outsole from the word; the new tread is blotchy and partly lost",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-03",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "titles": [
+    "FTW-IMG-03 · Qwen · s42"
+   ],
+   "score": 4,
+   "why": "a real lugged trail tread following the sole's curve; small white specks at the mask edge",
+   "best": "FTW-IMG-03 · Qwen · s42",
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-07",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Klein",
+   "titles": [
+    "FTW-IMG-07 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "a new shoe with a clear link to the reference (sole wave, panelling), believable",
+   "best": "FTW-IMG-07 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-07",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "titles": [
+    "FTW-IMG-07 · Qwen · s42"
+   ],
+   "score": 2,
+   "why": "nearly copies the reference shoe (against \"do not copy it literally\")",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-08",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Klein",
+   "titles": [
+    "FTW-IMG-08 · Klein · s42 · Enhance Restore",
+    "FTW-IMG-08 · Klein · s42 · Instruct"
+   ],
+   "score": 4,
+   "why": "faithful, the orc3 logo intact, nothing invented; input already clean",
+   "best": "FTW-IMG-08 · Klein · s42 · Enhance Restore",
+   "status": "ADAPTED"
+  },
+  {
+   "test": "FTW-IMG-08",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "titles": [
+    "FTW-IMG-08 · Qwen · s42 · Enhance Restore",
+    "FTW-IMG-08 · Qwen · s42 · Instruct"
+   ],
+   "score": 4,
+   "why": "faithful, logo intact, nothing invented; input already clean",
+   "best": null,
+   "status": "ADAPTED"
+  },
+  {
+   "test": "GAM-IMG-01",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Klein",
+   "titles": [
+    "GAM-IMG-01 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "the mech sketch becomes a scavenger keeping its pose and big shield arm; readable silhouette",
+   "best": "GAM-IMG-01 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-01",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Qwen",
+   "titles": [
+    "GAM-IMG-01 · Qwen · s42"
+   ],
+   "score": 3,
+   "why": "a convincing scavenger but the sketch's shield arm is lost",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-03",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Klein",
+   "titles": [
+    "GAM-IMG-03 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "keeps the composition closely (arches, gears) but adds little of the outpost",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-03",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Qwen",
+   "titles": [
+    "GAM-IMG-03 · Qwen · s42"
+   ],
+   "score": 4,
+   "why": "builds the canyon outpost with rope bridges and turbines; composition only partly kept",
+   "best": "GAM-IMG-03 · Qwen · s42",
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-04",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Klein",
+   "titles": [
+    "GAM-IMG-04 · Klein · s42 · post-apocalyptic overgrown ruin",
+    "GAM-IMG-04 · Klein · s42 · high-fantasy mountain citadel",
+    "GAM-IMG-04 · Klein · s42 · cyberpunk megacity at"
+   ],
+   "score": 5,
+   "why": "terrain, horizon and camera kept; all three transformations convincing",
+   "best": "GAM-IMG-04 · Klein · s42 · cyberpunk megacity at",
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-04",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Qwen",
+   "titles": [
+    "GAM-IMG-04 · Qwen · s42 · post-apocalyptic overgrown ruin",
+    "GAM-IMG-04 · Qwen · s42 · high-fantasy mountain citadel",
+    "GAM-IMG-04 · Qwen · s42 · cyberpunk megacity at"
+   ],
+   "score": 4,
+   "why": "terrain kept; the citadel and ruin convincing, the cyberpunk murky",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-01",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Klein",
+   "titles": [
+    "MOV-IMG-01 · Klein · s42"
+   ],
+   "score": 3,
+   "why": "one strong keyframe of the figure in the flooded doorway, but odd dark shapes around the figure; portrait, not widescreen (Edit keeps the sketch's shape)",
+   "best": "MOV-IMG-01 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-01",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Qwen",
+   "titles": [
+    "MOV-IMG-01 · Qwen · s42"
+   ],
+   "score": 3,
+   "why": "rendered the storyboard page literally: three stacked keyframes",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-06",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Klein",
+   "titles": [
+    "MOV-IMG-06 · Klein · s42 · 1970s sci-fi",
+    "MOV-IMG-06 · Klein · s42 · gothic horror",
+    "MOV-IMG-06 · Klein · s42 · post-flood dystopia"
+   ],
+   "score": 4,
+   "why": "every genre unmistakable with the layout kept (neon retro, gothic spires, floodwater)",
+   "best": "MOV-IMG-06 · Klein · s42 · gothic horror",
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-06",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Qwen",
+   "titles": [
+    "MOV-IMG-06 · Qwen · s42 · 1970s sci-fi",
+    "MOV-IMG-06 · Qwen · s42 · gothic horror",
+    "MOV-IMG-06 · Qwen · s42 · post-flood dystopia"
+   ],
+   "score": 2,
+   "why": "barely changes the photo; the genres are not recognisable",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-01",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Klein",
+   "titles": [
+    "AUT-IMG-01 · Klein · s42"
+   ],
+   "score": 3,
+   "why": "lowered into a sports coupe: proportions drift from the sketch",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-01",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "titles": [
+    "AUT-IMG-01 · Qwen · s42"
+   ],
+   "score": 4,
+   "why": "keeps the sketch's raised crossover body, greenhouse and feature lines",
+   "best": "AUT-IMG-01 · Qwen · s42",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-04",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Klein",
+   "titles": [
+    "AUT-IMG-04 · Klein · s42 · a thin horizontal",
+    "AUT-IMG-04 · Klein · s42 · four stacked rectangular",
+    "AUT-IMG-04 · Klein · s42 · a hidden light"
+   ],
+   "score": 3,
+   "why": "SAM found both headlights; the new designs are very subtle and barely differ",
+   "best": "AUT-IMG-04 · Klein · s42 · a thin horizontal",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-04",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "titles": [
+    "AUT-IMG-04 · Qwen · s42 · a thin horizontal",
+    "AUT-IMG-04 · Qwen · s42 · four stacked rectangular",
+    "AUT-IMG-04 · Qwen · s42 · a hidden light"
+   ],
+   "score": 3,
+   "why": "same: subtle changes, little difference between the three designs",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-07",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Klein",
+   "titles": [
+    "AUT-IMG-07 · Klein · s42 · step 1",
+    "AUT-IMG-07 · Klein · s42 · step 2",
+    "AUT-IMG-07 · Klein · s42 · step 3"
+   ],
+   "score": 5,
+   "why": "the same car with stable proportions through marker, digital and green photoreal",
+   "best": "AUT-IMG-07 · Klein · s42 · step 3",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-07",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "titles": [
+    "AUT-IMG-07 · Qwen · s42 · step 1",
+    "AUT-IMG-07 · Qwen · s42 · step 2",
+    "AUT-IMG-07 · Qwen · s42 · step 3"
+   ],
+   "score": 2,
+   "why": "step 1 good; steps 2 and 3 break into noisy, crunchy textures",
+   "best": null,
+   "status": "OK"
+  }
+ ],
+ "compares": [
+  {
+   "test": "FTW-IMG-01",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "a": "FTW-IMG-01 · Klein · s42",
+   "b": "FTW-IMG-01 · Qwen · s42"
+  },
+  {
+   "test": "FTW-IMG-03",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "a": "FTW-IMG-03 · Klein · s42",
+   "b": "FTW-IMG-03 · Qwen · s42"
+  },
+  {
+   "test": "FTW-IMG-07",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "a": "FTW-IMG-07 · Klein · s42",
+   "b": "FTW-IMG-07 · Qwen · s42"
+  },
+  {
+   "test": "FTW-IMG-08",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "a": "FTW-IMG-08 · Klein · s42 · Enhance Restore",
+   "b": "FTW-IMG-08 · Qwen · s42 · Enhance Restore"
+  },
+  {
+   "test": "GAM-IMG-01",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "a": "GAM-IMG-01 · Klein · s42",
+   "b": "GAM-IMG-01 · Qwen · s42"
+  },
+  {
+   "test": "GAM-IMG-03",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "a": "GAM-IMG-03 · Klein · s42",
+   "b": "GAM-IMG-03 · Qwen · s42"
+  },
+  {
+   "test": "GAM-IMG-04",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "a": "GAM-IMG-04 · Klein · s42 · high-fantasy mountain citadel",
+   "b": "GAM-IMG-04 · Qwen · s42 · high-fantasy mountain citadel"
+  },
+  {
+   "test": "MOV-IMG-01",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "a": "MOV-IMG-01 · Klein · s42",
+   "b": "MOV-IMG-01 · Qwen · s42"
+  },
+  {
+   "test": "MOV-IMG-06",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "a": "MOV-IMG-06 · Klein · s42 · gothic horror",
+   "b": "MOV-IMG-06 · Qwen · s42 · gothic horror"
+  },
+  {
+   "test": "AUT-IMG-01",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "a": "AUT-IMG-01 · Klein · s42",
+   "b": "AUT-IMG-01 · Qwen · s42"
+  },
+  {
+   "test": "AUT-IMG-04",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "a": "AUT-IMG-04 · Klein · s42 · a thin horizontal",
+   "b": "AUT-IMG-04 · Qwen · s42 · a thin horizontal"
+  },
+  {
+   "test": "AUT-IMG-07",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "a": "AUT-IMG-07 · Klein · s42 · step 3",
+   "b": "AUT-IMG-07 · Qwen · s42 · step 3"
+  }
+ ]
+}

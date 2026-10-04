@@ -1,0 +1,30 @@
+[
+ {
+  "action": "outpaint",
+  "testId": "MOV-IMG-03",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Extend the scene outward to reveal the farmhouse exterior and a vast empty Karoo-like landscape stretching to a distant mountain range under a wide sky. Match the lighting, perspective, grain and colour grade of the original image seamlessly.",
+  "title": "MOV-IMG-03 · Klein · s42",
+  "note": "canvas 2× wide: half the width added on each side",
+  "padFrac": {
+   "left": 0.5,
+   "right": 0.5
+  }
+ },
+ {
+  "action": "outpaint",
+  "testId": "MOV-IMG-03",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Extend the scene outward to reveal the farmhouse exterior and a vast empty Karoo-like landscape stretching to a distant mountain range under a wide sky. Match the lighting, perspective, grain and colour grade of the original image seamlessly.",
+  "title": "MOV-IMG-03 · Qwen · s42",
+  "note": "canvas 2× wide: half the width added on each side",
+  "padFrac": {
+   "left": 0.5,
+   "right": 0.5
+  }
+ }
+]

@@ -1,0 +1,53 @@
+FTW-IMG-01 · input · side sketch                                     13s {"id":"d835ed92-8b06-4abd-9b74-0e4d144c3c0b"}
+FTW-IMG-03 · input · sole sketch                                     11s {"id":"515a6dfd-3ceb-41b5-9f56-fc8b6dbb964b"}
+FTW-IMG-07 · input · reference photo                                 11s {"id":"8e6cd980-13d5-41c9-a3e0-9b9286bb031b"}
+FTW-IMG-08 · input · prototype photo                                 11s {"id":"8a50d9f1-d36b-4dd8-8052-dd8f3ff9a1c1"}
+FTW-IMG-01 · Klein · s42                                             33s {"id":"d993cbc4-43be-48a1-9399-19a0c2426607","seconds":21}
+FTW-IMG-01 · Qwen · s42                                              46s {"id":"32cafd66-47cb-4877-a4ff-7cbdc7e1bbe3","seconds":33}
+FTW-IMG-03 · Klein · s42                                             49s {"id":"27c63929-670a-4603-aea0-66bfd536b9dd","seconds":31}
+FTW-IMG-03 · Qwen · s42                                              98s {"id":"f11116fb-6d9d-4e7e-8340-b242ba7d3f5a","seconds":81}
+FTW-IMG-07 · Klein · s42                                             30s {"id":"6c108709-7452-4ca3-b85c-842525120a0f","seconds":18}
+FTW-IMG-07 · Qwen · s42                                              41s {"id":"7d0d12d9-9930-4210-966f-0cf73b61e28b","seconds":29}
+FTW-IMG-08 · Klein · s42 · Enhance Restore                           35s {"id":"d195c5c5-d350-45c7-b4c0-16b88b70fe10","seconds":23}
+FTW-IMG-08 · Qwen · s42 · Enhance Restore                            41s {"id":"5e45f642-9a04-4219-9487-0502eb3ecfb7","seconds":29}
+FTW-IMG-08 · Klein · s42 · Instruct                                  30s {"id":"c8edc4b7-9a98-4c36-9df6-95ac08901400","seconds":18}
+FTW-IMG-08 · Qwen · s42 · Instruct                                   41s {"id":"2169050c-301e-4eac-a9d3-730a8e276fab","seconds":29}
+GAM-IMG-01 · input · character sketch                                11s {"id":"0e1c4245-93be-4cc8-95d1-79909147dafe"}
+GAM-IMG-03 · input · environment                                     11s {"id":"e1f016ef-cbf7-4a9c-9821-0cee94ec6273"}
+GAM-IMG-04 · input · landscape                                       11s {"id":"c5834f02-dd41-4933-bdb5-c9eba4f144d6"}
+GAM-IMG-01 · Klein · s42                                             30s {"id":"0eac7e65-f6d0-4885-835f-cd3a8f196138","seconds":18}
+GAM-IMG-01 · Qwen · s42                                              41s {"id":"1bfc51c1-718c-4ded-a236-eae9c4039c12","seconds":29}
+GAM-IMG-03 · Klein · s42                                             30s {"id":"c3a51fff-f140-46b6-9ffa-bfec0337ae1f","seconds":18}
+GAM-IMG-03 · Qwen · s42                                              41s {"id":"0885ff65-db01-4a41-b4b4-107414438882","seconds":29}
+GAM-IMG-04 · Klein · s42 · post-apocalyptic overgrown ruin           30s {"id":"6f67586d-e1fe-462c-bd1d-2e076dc26691","seconds":18}
+GAM-IMG-04 · Qwen · s42 · post-apocalyptic overgrown ruin            42s {"id":"8aedaae0-b3b8-4ad8-89a6-5f030de098b6","seconds":30}
+GAM-IMG-04 · Klein · s42 · high-fantasy mountain citadel             30s {"id":"fc84edf9-6362-48c0-8868-4e1216c32d87","seconds":18}
+GAM-IMG-04 · Qwen · s42 · high-fantasy mountain citadel              41s {"id":"54842ddd-8531-4d14-8528-c37fcec8941a","seconds":29}
+GAM-IMG-04 · Klein · s42 · cyberpunk megacity at                     30s {"id":"1dfac84e-3329-48c6-9923-572edf390c7d","seconds":18}
+GAM-IMG-04 · Qwen · s42 · cyberpunk megacity at                      41s {"id":"fdfa727b-636f-4afd-814c-9af065e2c3b7","seconds":29}
+MOV-IMG-01 · input · composition sketch                              11s {"id":"8679a7ea-2512-4843-b490-e3721c4f3bd6"}
+MOV-IMG-06 · input · location photo                                  11s {"id":"f624055c-9595-4d9b-8d52-2c810e8c8a6d"}
+MOV-IMG-01 · Klein · s42                                             30s {"id":"17bf940d-931f-4ced-9e46-4587f09e8beb","seconds":18}
+MOV-IMG-01 · Qwen · s42                                              42s {"id":"0c0a2c3c-930f-4a13-a94a-b4e76cf3deed","seconds":30}
+MOV-IMG-06 · Klein · s42 · 1970s sci-fi                              30s {"id":"d9b0c9b0-a5c6-40d7-899d-f23868198365","seconds":18}
+MOV-IMG-06 · Qwen · s42 · 1970s sci-fi                               41s {"id":"fc986393-e037-4775-b5a9-4a06534d83cc","seconds":29}
+MOV-IMG-06 · Klein · s42 · gothic horror                             30s {"id":"ffb9b332-49cb-4cca-95ed-c889d27c6c59","seconds":18}
+MOV-IMG-06 · Qwen · s42 · gothic horror                              41s {"id":"71faa20d-c829-40ae-8b09-20b83a9c1771","seconds":29}
+MOV-IMG-06 · Klein · s42 · post-flood dystopia                       30s {"id":"ead3de9f-5885-4a4d-b9af-70d029e4a32b","seconds":18}
+MOV-IMG-06 · Qwen · s42 · post-flood dystopia                        41s {"id":"0ae12195-bd3e-4085-8950-f0081c0e95bf","seconds":29}
+AUT-IMG-01 · input · side sketch                                     11s {"id":"134827eb-2b26-4f5b-8966-b43c1a5a781c"}
+AUT-IMG-04 · input · front three-quarter render                      11s {"id":"a412b675-0d34-44e2-a047-3c9e7048176e"}
+AUT-IMG-01 · Klein · s42                                             30s {"id":"79ba2080-828d-449d-99a6-d8a79bdc2451","seconds":18}
+AUT-IMG-01 · Qwen · s42                                              41s {"id":"282bfeeb-9f7e-421d-9b8f-82afab7dd58e","seconds":29}
+AUT-IMG-04 · Klein · s42 · a thin horizontal                         32s {"id":"4ecd2b10-2e8f-4604-b0d5-85298324fc01","seconds":15}
+AUT-IMG-04 · Qwen · s42 · a thin horizontal                          41s {"id":"a031787a-115e-4da3-aba9-d8bc7acacc78","seconds":24}
+AUT-IMG-04 · Klein · s42 · four stacked rectangular                  31s {"id":"bc1b1e1f-f7fa-4376-932e-1bbc43ed7b4d","seconds":15}
+AUT-IMG-04 · Qwen · s42 · four stacked rectangular                   36s {"id":"c6d95621-bafe-43f4-8a48-8d702d0c434c","seconds":19}
+AUT-IMG-04 · Klein · s42 · a hidden light                            38s {"id":"fc4dff70-25b4-444a-8807-1b7b189c8692","seconds":21}
+AUT-IMG-04 · Qwen · s42 · a hidden light                             36s {"id":"338b9891-feb9-402d-8fe5-01880e29d18c","seconds":19}
+AUT-IMG-07 · Klein · s42 · step 1                                    30s {"id":"5b1cdebf-d866-4750-aeb0-d49186d28de6","seconds":18}
+AUT-IMG-07 · Klein · s42 · step 2                                    27s {"id":"1591c15b-6f2a-44dd-a34b-993bc2c762e8","seconds":15}
+AUT-IMG-07 · Klein · s42 · step 3                                    27s {"id":"e780a1f1-8f5c-4a5d-9da1-e0a4511dff9e","seconds":15}
+AUT-IMG-07 · Qwen · s42 · step 1                                     41s {"id":"3fc5821b-9b25-4e17-b252-617805ee684f","seconds":29}
+AUT-IMG-07 · Qwen · s42 · step 2                                     36s {"id":"3215e200-4001-45e5-9c15-ae762c23c8ec","seconds":24}
+AUT-IMG-07 · Qwen · s42 · step 3                                     38s {"id":"645aa665-ea56-44d2-afa7-f230a6264d12","seconds":26}

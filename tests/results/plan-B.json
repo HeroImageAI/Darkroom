@@ -1,0 +1,484 @@
+[
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-02",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Same shoe, same view and silhouette. Rework the materials by zone: upper in a coarse recycled knit with visible yarn texture; toe and heel overlays in smooth full-grain leather; the eyestay in matte TPU film; midsole in a translucent blue-tinted foam; outsole in gum rubber. Clean, crisp boundaries between every material zone.",
+  "title": "FTW-IMG-02 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-02",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Same shoe, same view and silhouette. Rework the materials by zone: upper in a coarse recycled knit with visible yarn texture; toe and heel overlays in smooth full-grain leather; the eyestay in matte TPU film; midsole in a translucent blue-tinted foam; outsole in gum rubber. Clean, crisp boundaries between every material zone.",
+  "title": "FTW-IMG-02 · Qwen · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-04",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Colourway sheet of the same running shoe shown six times in lateral view, in a 3×2 grid, identical shape and lighting. Colourways: triple white; black and volt green; sand and terracotta; navy with a red heel; grey gradient fading to white; all black with a reflective silver accent. White background, small label under each shoe.",
+  "title": "FTW-IMG-04 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-04",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Colourway sheet of the same running shoe shown six times in lateral view, in a 3×2 grid, identical shape and lighting. Colourways: triple white; black and volt green; sand and terracotta; navy with a red heel; grey gradient fading to white; all black with a reflective silver accent. White background, small label under each shoe.",
+  "title": "FTW-IMG-04 · Qwen · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-05",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Footwear presentation board of this exact shoe in four views at identical scale: lateral, medial, top-down and rear heel. Same materials and colours in every view. White background, even studio lighting.",
+  "title": "FTW-IMG-05 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-05",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Footwear presentation board of this exact shoe in four views at identical scale: lateral, medial, top-down and rear heel. Same materials and colours in every view. White background, even studio lighting.",
+  "title": "FTW-IMG-05 · Qwen · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.",
+  "variable": "grey clay render with no materials or colour",
+  "title": "FTW-IMG-06 · Klein · s42 · grey clay render"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.",
+  "variable": "grey clay render with no materials or colour",
+  "title": "FTW-IMG-06 · Qwen · s42 · grey clay render"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Present this shoe as a designer marker sketch with grey tones and a single colour accent. Keep its exact shape and proportions.",
+  "variable": "designer marker sketch with grey tones and a single colour accent",
+  "title": "FTW-IMG-06 · Klein · s42 · designer marker sketch"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Present this shoe as a designer marker sketch with grey tones and a single colour accent. Keep its exact shape and proportions.",
+  "variable": "designer marker sketch with grey tones and a single colour accent",
+  "title": "FTW-IMG-06 · Qwen · s42 · designer marker sketch"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Present this shoe as a exploded view showing each component floating apart. Keep its exact shape and proportions.",
+  "variable": "exploded view showing each component floating apart",
+  "title": "FTW-IMG-06 · Klein · s42 · exploded view showing"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Present this shoe as a exploded view showing each component floating apart. Keep its exact shape and proportions.",
+  "variable": "exploded view showing each component floating apart",
+  "title": "FTW-IMG-06 · Qwen · s42 · exploded view showing"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-02",
+  "sourceTitle": "GAM-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Character turnaround sheet of this exact character: front, three-quarter, side and back views in a row at identical scale, neutral A-pose, flat mid-grey background, even lighting. Every costume detail and colour is consistent across all views.",
+  "title": "GAM-IMG-02 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-02",
+  "sourceTitle": "GAM-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Character turnaround sheet of this exact character: front, three-quarter, side and back views in a row at identical scale, neutral A-pose, flat mid-grey background, even lighting. Every costume detail and colour is consistent across all views.",
+  "title": "GAM-IMG-02 · Qwen · s42"
+ },
+ {
+  "action": "inpaint",
+  "testId": "GAM-IMG-07",
+  "sourceTitle": "GAM-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Replace the torso armour with a padded leather harness carrying three glass vials of glowing blue liquid. Match the existing painting style, lighting and colour palette.",
+  "title": "GAM-IMG-07 · Klein · s42",
+  "note": "mask by Smart select \"chest armor\"",
+  "selectText": "chest armor"
+ },
+ {
+  "action": "inpaint",
+  "testId": "GAM-IMG-07",
+  "sourceTitle": "GAM-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Replace the torso armour with a padded leather harness carrying three glass vials of glowing blue liquid. Match the existing painting style, lighting and colour palette.",
+  "title": "GAM-IMG-07 · Qwen · s42",
+  "note": "mask by Smart select \"chest armor\"",
+  "selectText": "chest armor"
+ },
+ {
+  "action": "enhance",
+  "testId": "GAM-IMG-08",
+  "sourceTitle": "GAM-IMG-03 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "title": "GAM-IMG-08 · Klein · s42 · Enhance Restore",
+  "note": "ADAPTED: Enhance has no prompt box",
+  "strength": "Restore",
+  "adapted": true,
+  "titleExtra": "Enhance Restore"
+ },
+ {
+  "action": "enhance",
+  "testId": "GAM-IMG-08",
+  "sourceTitle": "GAM-IMG-03 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "title": "GAM-IMG-08 · Qwen · s42 · Enhance Restore",
+  "note": "ADAPTED: Enhance has no prompt box",
+  "strength": "Restore",
+  "adapted": true,
+  "titleExtra": "Enhance Restore"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-08",
+  "sourceTitle": "GAM-IMG-03 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Refine this concept art to presentation quality: sharper details, cleaner edges, richer texture. Don't change the composition, design or colours.",
+  "title": "GAM-IMG-08 · Klein · s42 · Instruct",
+  "adapted": true,
+  "titleExtra": "Instruct"
+ },
+ {
+  "action": "instruct",
+  "testId": "GAM-IMG-08",
+  "sourceTitle": "GAM-IMG-03 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Refine this concept art to presentation quality: sharper details, cleaner edges, richer texture. Don't change the composition, design or colours.",
+  "title": "GAM-IMG-08 · Qwen · s42 · Instruct",
+  "adapted": true,
+  "titleExtra": "Instruct"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to blue pre-dawn twilight. Cinematic, physically motivated light.",
+  "variable": "blue pre-dawn twilight",
+  "title": "MOV-IMG-02 · Klein · s42 · blue pre-dawn twilight"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to blue pre-dawn twilight. Cinematic, physically motivated light.",
+  "variable": "blue pre-dawn twilight",
+  "title": "MOV-IMG-02 · Qwen · s42 · blue pre-dawn twilight"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to harsh noon sun. Cinematic, physically motivated light.",
+  "variable": "harsh noon sun",
+  "title": "MOV-IMG-02 · Klein · s42 · harsh noon sun"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to harsh noon sun. Cinematic, physically motivated light.",
+  "variable": "harsh noon sun",
+  "title": "MOV-IMG-02 · Qwen · s42 · harsh noon sun"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to deep orange sunset. Cinematic, physically motivated light.",
+  "variable": "deep orange sunset",
+  "title": "MOV-IMG-02 · Klein · s42 · deep orange sunset"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to deep orange sunset. Cinematic, physically motivated light.",
+  "variable": "deep orange sunset",
+  "title": "MOV-IMG-02 · Qwen · s42 · deep orange sunset"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to moonlight with a single lantern. Cinematic, physically motivated light.",
+  "variable": "moonlight with a single lantern",
+  "title": "MOV-IMG-02 · Klein · s42 · moonlight with a"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to moonlight with a single lantern. Cinematic, physically motivated light.",
+  "variable": "moonlight with a single lantern",
+  "title": "MOV-IMG-02 · Qwen · s42 · moonlight with a"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to a violent thunderstorm with lightning. Cinematic, physically motivated light.",
+  "variable": "a violent thunderstorm with lightning",
+  "title": "MOV-IMG-02 · Klein · s42 · a violent thunderstorm"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-02",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Same scene, composition, figure and camera. Change only the lighting and atmosphere to a violent thunderstorm with lightning. Cinematic, physically motivated light.",
+  "variable": "a violent thunderstorm with lightning",
+  "title": "MOV-IMG-02 · Qwen · s42 · a violent thunderstorm"
+ },
+ {
+  "action": "outpaint",
+  "testId": "MOV-IMG-03",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Extend the scene outward to reveal the farmhouse exterior and a vast empty Karoo-like landscape stretching to a distant mountain range under a wide sky. Match the lighting, perspective, grain and colour grade of the original image seamlessly.",
+  "title": "MOV-IMG-03 · Klein · s42",
+  "note": "canvas 2× wide: half the width added on each side",
+  "padFrac": {
+   "left": 0.5,
+   "right": 0.5
+  }
+ },
+ {
+  "action": "outpaint",
+  "testId": "MOV-IMG-03",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Extend the scene outward to reveal the farmhouse exterior and a vast empty Karoo-like landscape stretching to a distant mountain range under a wide sky. Match the lighting, perspective, grain and colour grade of the original image seamlessly.",
+  "title": "MOV-IMG-03 · Qwen · s42",
+  "note": "canvas 2× wide: half the width added on each side",
+  "padFrac": {
+   "left": 0.5,
+   "right": 0.5
+  }
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-07",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Re-render this keyframe as a loose digital speed-paint. Keep the composition and lighting design.",
+  "variable": "loose digital speed-paint",
+  "title": "MOV-IMG-07 · Klein · s42 · loose digital speed-paint"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-07",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Re-render this keyframe as a loose digital speed-paint. Keep the composition and lighting design.",
+  "variable": "loose digital speed-paint",
+  "title": "MOV-IMG-07 · Qwen · s42 · loose digital speed-paint"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-07",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Re-render this keyframe as a photoreal VFX previs frame. Keep the composition and lighting design.",
+  "variable": "photoreal VFX previs frame",
+  "title": "MOV-IMG-07 · Klein · s42 · photoreal VFX previs"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-07",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Re-render this keyframe as a photoreal VFX previs frame. Keep the composition and lighting design.",
+  "variable": "photoreal VFX previs frame",
+  "title": "MOV-IMG-07 · Qwen · s42 · photoreal VFX previs"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-07",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Re-render this keyframe as a charcoal storyboard panel. Keep the composition and lighting design.",
+  "variable": "charcoal storyboard panel",
+  "title": "MOV-IMG-07 · Klein · s42 · charcoal storyboard panel"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-07",
+  "sourceTitle": "MOV-IMG-01 · Klein · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Re-render this keyframe as a charcoal storyboard panel. Keep the composition and lighting design.",
+  "variable": "charcoal storyboard panel",
+  "title": "MOV-IMG-07 · Qwen · s42 · charcoal storyboard panel"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-02",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "The same car rendered as a full-size design-studio clay model: matte warm-grey clay, no paint, no glass tint, no badges, the wheels as clay too. Three-quarter front view, studio lighting with long softbox highlights so the surface transitions and feature lines are clearly visible.",
+  "title": "AUT-IMG-02 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-02",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "The same car rendered as a full-size design-studio clay model: matte warm-grey clay, no paint, no glass tint, no badges, the wheels as clay too. Three-quarter front view, studio lighting with long softbox highlights so the surface transitions and feature lines are clearly visible.",
+  "title": "AUT-IMG-02 · Qwen · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-03",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "The same car, three-quarter front view, finished in mirror chrome, in a studio with evenly spaced vertical strip lights reflected in the surfaces. The reflection lines run cleanly and continuously across the panels.",
+  "title": "AUT-IMG-03 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-03",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "The same car, three-quarter front view, finished in mirror chrome, in a studio with evenly spaced vertical strip lights reflected in the surfaces. The reflection lines run cleanly and continuously across the panels.",
+  "title": "AUT-IMG-03 · Qwen · s42"
+ },
+ {
+  "action": "inpaint",
+  "testId": "AUT-IMG-05",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Replace both wheels with 21-inch aero-cover wheels in gloss black with a thin machined silver edge, low-profile tyres. Same perspective as the existing wheels, sitting correctly in the arches.",
+  "title": "AUT-IMG-05 · Klein · s42",
+  "note": "mask by Smart select \"wheel\" (both wheels)",
+  "selectText": "wheel"
+ },
+ {
+  "action": "inpaint",
+  "testId": "AUT-IMG-05",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Replace both wheels with 21-inch aero-cover wheels in gloss black with a thin machined silver edge, low-profile tyres. Same perspective as the existing wheels, sitting correctly in the arches.",
+  "title": "AUT-IMG-05 · Qwen · s42",
+  "note": "mask by Smart select \"wheel\" (both wheels)",
+  "selectText": "wheel"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-06",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Automotive design presentation board of this exact car in four views at consistent scale: front, rear, side profile and top-down plan. Same paint, wheels and details in every view. Clean white background, studio lighting.",
+  "title": "AUT-IMG-06 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-06",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Automotive design presentation board of this exact car in four views at consistent scale: front, rear, side profile and top-down plan. Same paint, wheels and details in every view. Clean white background, studio lighting.",
+  "title": "AUT-IMG-06 · Qwen · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-08",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "klein",
+  "seed": 42,
+  "prompt": "Paint and finish study: the same car shown six times in side profile in a 3×2 grid. Finishes: gloss solid red; metallic midnight blue; matte satin grey; pearl white; two-tone black roof over copper; liquid-metal silver. Identical lighting and angle; small label under each.",
+  "title": "AUT-IMG-08 · Klein · s42"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-08",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 42,
+  "prompt": "Paint and finish study: the same car shown six times in side profile in a 3×2 grid. Finishes: gloss solid red; metallic midnight blue; matte satin grey; pearl white; two-tone black roof over copper; liquid-metal silver. Identical lighting and angle; small label under each.",
+  "title": "AUT-IMG-08 · Qwen · s42"
+ }
+]

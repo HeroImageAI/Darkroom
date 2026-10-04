@@ -1,0 +1,272 @@
+[
+ {
+  "action": "annotate",
+  "id": "451c56d4-ee75-4c7d-98e2-f3cb0b8f6891",
+  "board": "TS 2026-10-03 · 02 Footwear",
+  "appendNotes": "score: 4/5 — the shoe turns on the spot from lateral through front to medial without morphing; no visible plinth and closer to 270° than 360°",
+  "log": {
+   "test_id": "FTW-VID-01",
+   "model": "LTX",
+   "library_item_id": "451c56d4-ee75-4c7d-98e2-f3cb0b8f6891",
+   "library_item_name": "FTW-VID-01 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 4,
+   "notes": "the shoe turns on the spot from lateral through front to medial without morphing; no visible plinth and closer to 270° than 360°"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "fc83bfc8-07dc-4f59-9089-e21aa9593f81",
+  "board": "TS 2026-10-03 · 02 Footwear",
+  "appendNotes": "score: 4/5 — wet road, golden light and a convincing water spray on each strike; the shoe stays the same shoe; the stride is slow and the midsole compression barely visible",
+  "log": {
+   "test_id": "FTW-VID-02",
+   "model": "LTX",
+   "library_item_id": "fc83bfc8-07dc-4f59-9089-e21aa9593f81",
+   "library_item_name": "FTW-VID-02 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "ADAPTED",
+   "score": 4,
+   "notes": "wet road, golden light and a convincing water spray on each strike; the shoe stays the same shoe; the stride is slow and the midsole compression barely visible"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "42a9ef83-04b2-420a-8623-22a7a119be3c",
+  "board": "TS 2026-10-03 · 02 Footwear",
+  "appendNotes": "score: 2/5 — no dark studio or light sweep: the shoe itself darkens to black over the clip, so the design changes",
+  "log": {
+   "test_id": "FTW-VID-03",
+   "model": "LTX",
+   "library_item_id": "42a9ef83-04b2-420a-8623-22a7a119be3c",
+   "library_item_name": "FTW-VID-03 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 2,
+   "notes": "no dark studio or light sweep: the shoe itself darkens to black over the clip, so the design changes"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "9469c235-3075-4e32-abd1-3716533fbdde",
+  "board": "TS 2026-10-03 · 02 Footwear",
+  "appendNotes": "score: 4/5 — clay to finished shoe smoothly with the shape locked; colour arrives everywhere at once rather than heel to toe",
+  "log": {
+   "test_id": "FTW-VID-04",
+   "model": "LTX",
+   "library_item_id": "9469c235-3075-4e32-abd1-3716533fbdde",
+   "library_item_name": "FTW-VID-04 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 4,
+   "notes": "clay to finished shoe smoothly with the shape locked; colour arrives everywhere at once rather than heel to toe"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "edf46cbc-e874-4793-b611-1e2110748473",
+  "board": "TS 2026-10-03 · 03 Gaming",
+  "appendNotes": "score: 2/5 — dust and breathing, but the camera pushes in (asked static) and the big shield arm melts away by 2 s",
+  "log": {
+   "test_id": "GAM-VID-01",
+   "model": "LTX",
+   "library_item_id": "edf46cbc-e874-4793-b611-1e2110748473",
+   "library_item_name": "GAM-VID-01 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 2,
+   "notes": "dust and breathing, but the camera pushes in (asked static) and the big shield arm melts away by 2 s"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "407bb99b-2867-4d71-835a-ecfcfbe4e46a",
+  "board": "TS 2026-10-03 · 03 Gaming",
+  "appendNotes": "score: 4/5 — a steady forward glide into the canyon with turbines and bridges holding their shape; few moving figures",
+  "log": {
+   "test_id": "GAM-VID-02",
+   "model": "LTX",
+   "library_item_id": "407bb99b-2867-4d71-835a-ecfcfbe4e46a",
+   "library_item_name": "GAM-VID-02 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 4,
+   "notes": "a steady forward glide into the canyon with turbines and bridges holding their shape; few moving figures"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "bdb74d66-50ee-40bf-b24a-dcd5aaccf8bb",
+  "board": "TS 2026-10-03 · 03 Gaming",
+  "appendNotes": "score: 3/5 — banners and birds appear and the citadel is stable, but it is a slow push and drift, not a crane up; walkers vanish",
+  "log": {
+   "test_id": "GAM-VID-03",
+   "model": "LTX",
+   "library_item_id": "bdb74d66-50ee-40bf-b24a-dcd5aaccf8bb",
+   "library_item_name": "GAM-VID-03 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 3,
+   "notes": "banners and birds appear and the citadel is stable, but it is a slow push and drift, not a crane up; walkers vanish"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "bd1edab4-c0d4-4742-b033-df6064bc4888",
+  "board": "TS 2026-10-03 · 03 Gaming",
+  "appendNotes": "score: 2/5 — no orbit: the camera pulls back to full body; the character stays consistent (the crop is a narrow portrait)",
+  "log": {
+   "test_id": "GAM-VID-04",
+   "model": "LTX",
+   "library_item_id": "bd1edab4-c0d4-4742-b033-df6064bc4888",
+   "library_item_name": "GAM-VID-04 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "ADAPTED",
+   "score": 2,
+   "notes": "no orbit: the camera pulls back to full body; the character stays consistent (the crop is a narrow portrait)"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "b803580f-5c5e-4b36-9e6b-881612aa0d80",
+  "board": "TS 2026-10-03 · 04 Movie",
+  "appendNotes": "score: 3/5 — the dolly push-in is right, but the figure turns fully to camera and his face and shirt are invented; the source smudges stay",
+  "log": {
+   "test_id": "MOV-VID-01",
+   "model": "LTX",
+   "library_item_id": "b803580f-5c5e-4b36-9e6b-881612aa0d80",
+   "library_item_name": "MOV-VID-01 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 3,
+   "notes": "the dolly push-in is right, but the figure turns fully to camera and his face and shirt are invented; the source smudges stay"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "4d5087ce-53c2-4f1d-bc10-f11ace05ed12",
+  "board": "TS 2026-10-03 · 04 Movie",
+  "appendNotes": "score: 4/5 — a real crane up and back over the farmhouse roof to the plain, mountains and sunlit clouds; the roof geometry shifts a little",
+  "log": {
+   "test_id": "MOV-VID-04",
+   "model": "LTX",
+   "library_item_id": "4d5087ce-53c2-4f1d-bc10-f11ace05ed12",
+   "library_item_name": "MOV-VID-04 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "ADAPTED",
+   "score": 4,
+   "notes": "a real crane up and back over the farmhouse roof to the plain, mountains and sunlit clouds; the roof geometry shifts a little"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "0e7ee17d-ab76-4d33-8fe3-9a104a033bd3",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "appendNotes": "score: 3/5 — the car turns about 30° on the turntable with reflections sliding nicely; far from 360°",
+  "log": {
+   "test_id": "AUT-VID-01",
+   "model": "LTX",
+   "library_item_id": "0e7ee17d-ab76-4d33-8fe3-9a104a033bd3",
+   "library_item_name": "AUT-VID-01 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "ADAPTED",
+   "score": 3,
+   "notes": "the car turns about 30° on the turntable with reflections sliding nicely; far from 360°"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "fb418788-0069-4274-a946-123de8698f3a",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "appendNotes": "score: 2/5 — no road or tracking: the car turns from side to front on the white sheet and the nose is reinvented; the garbled label stays (small 383×214 crop)",
+  "log": {
+   "test_id": "AUT-VID-02",
+   "model": "LTX",
+   "library_item_id": "fb418788-0069-4274-a946-123de8698f3a",
+   "library_item_name": "AUT-VID-02 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "ADAPTED",
+   "score": 2,
+   "notes": "no road or tracking: the car turns from side to front on the white sheet and the nose is reinvented; the garbled label stays (small 383×214 crop)"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "19a892ad-d2b8-4a75-8948-a2b6eba6fbaa",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "appendNotes": "score: 4/5 — the light blade ignites with a glint and the camera drifts along the lamp; no segment-by-segment sequence (small 450×260 crop)",
+  "log": {
+   "test_id": "AUT-VID-03",
+   "model": "LTX",
+   "library_item_id": "19a892ad-d2b8-4a75-8948-a2b6eba6fbaa",
+   "library_item_name": "AUT-VID-03 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "ADAPTED",
+   "score": 4,
+   "notes": "the light blade ignites with a glint and the camera drifts along the lamp; no segment-by-segment sequence (small 450×260 crop)"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "ba7867ab-b841-4071-a799-ab01620f8074",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "appendNotes": "score: 3/5 — static camera and the bar travels roof to sill, but as a glowing band in front of the car, not a highlight on the clay",
+  "log": {
+   "test_id": "AUT-VID-04",
+   "model": "LTX",
+   "library_item_id": "ba7867ab-b841-4071-a799-ab01620f8074",
+   "library_item_name": "AUT-VID-04 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 3,
+   "notes": "static camera and the bar travels roof to sill, but as a glowing band in front of the car, not a highlight on the clay"
+  }
+ },
+ {
+  "action": "annotate",
+  "id": "0a96c44f-320d-47f5-9e21-885b01c2b8cc",
+  "board": "TS 2026-10-03 · 05 Automotive",
+  "appendNotes": "score: 4/5 — sketch fills to the photoreal car smoothly and the proportions hold; it fills everywhere at once rather than front to back",
+  "log": {
+   "test_id": "AUT-VID-05",
+   "model": "LTX",
+   "library_item_id": "0a96c44f-320d-47f5-9e21-885b01c2b8cc",
+   "library_item_name": "AUT-VID-05 · LTX · Final 720p",
+   "duration": 5,
+   "fps": 24,
+   "resolution": "Final 720p",
+   "status": "OK",
+   "score": 4,
+   "notes": "sketch fills to the photoreal car smoothly and the proportions hold; it fills everywhere at once rather than front to back"
+  }
+ }
+]

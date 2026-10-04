@@ -1,0 +1,16 @@
+{
+ "FTW-IMG-01": "FTW-IMG-01 · Qwen · s42",
+ "GAM-IMG-01": "GAM-IMG-01 · Klein · s42",
+ "GAM-IMG-03": "GAM-IMG-03 · Qwen · s42",
+ "GAM-IMG-04:citadel": "GAM-IMG-04 · Qwen · s42 · high-fantasy mountain citadel",
+ "MOV-IMG-01": "MOV-IMG-01 · Klein · s42",
+ "AUT-IMG-01": "AUT-IMG-01 · Qwen · s42",
+ "AUT-IMG-04": "AUT-IMG-04 · Klein · s42 · a thin horizontal",
+ "FTW-IMG-02": "FTW-IMG-02 · Klein · s42",
+ "FTW-IMG-06:clay": "FTW-IMG-06 · Klein · s42 · grey clay render",
+ "GAM-IMG-02": "GAM-IMG-02 · Qwen · s42",
+ "MOV-IMG-03": "MOV-IMG-03 · Klein · s42",
+ "AUT-IMG-02": "AUT-IMG-02 · Klein · s42",
+ "AUT-IMG-08": "AUT-IMG-08 · Klein · s42",
+ "C:helpers": "[{\"action\": \"instruct\", \"testId\": \"FTW-VID-02\", \"sourceTitle\": \"FTW-IMG-01 · Qwen · s42\", \"model\": \"klein\", \"seed\": 42, \"title\": \"FTW-VID-02 · helper · on-foot render\", \"prompt\": \"The same shoe worn on a runner's foot mid-stride on a wet asphalt road, low side angle at ground level, early-morning golden light. Keep the shoe's exact shape, materials and colours.\", \"note\": \"helper: the suite needs an on-foot start frame\"}, {\"action\": \"crop\", \"testId\": \"GAM-VID-04\", \"sourceTitle\": \"GAM-IMG-02 · Qwen · s42\", \"title\": \"GAM-VID-04 · helper · crop front view\", \"rect\": [0.0, 0.12, 0.29, 0.8]}, {\"action\": \"instruct\", \"testId\": \"AUT-VID-01\", \"sourceTitle\": \"AUT-IMG-01 · Qwen · s42\", \"model\": \"klein\", \"seed\": 42, \"title\": \"AUT-VID-01 · helper · three-quarter render\", \"prompt\": \"The same car in silver paint, three-quarter front view on a studio turntable, long softbox reflections, seamless light-grey studio. Keep its exact proportions, wheels and details.\", \"note\": \"helper: the suite needs a three-quarter start frame\"}, {\"action\": \"crop\", \"testId\": \"AUT-VID-02\", \"sourceTitle\": \"AUT-IMG-08 · Klein · s42\", \"title\": \"AUT-VID-02 · helper · crop midnight blue\", \"rect\": [0.34, 0.02, 0.66, 0.48]}, {\"action\": \"crop\", \"testId\": \"AUT-VID-03\", \"sourceTitle\": \"AUT-IMG-04 · Klein · s42 · a thin horizontal\", \"title\": \"AUT-VID-03 · helper · crop headlight\", \"rect\": [0.05, 0.36, 0.5, 0.62]}]"
+}

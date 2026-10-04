@@ -1,0 +1,474 @@
+{
+ "entries": [
+  {
+   "test": "FTW-IMG-02",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Klein",
+   "titles": [
+    "FTW-IMG-02 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "every zone clearly a different material (knit, leather, blue foam, gum rubber), crisp boundaries, silhouette kept; recoloured the upper orange unasked",
+   "best": "FTW-IMG-02 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-02",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "titles": [
+    "FTW-IMG-02 · Qwen · s42"
+   ],
+   "score": 3,
+   "why": "silhouette exact but the material change is timid (no gum outsole, leather overlays read as suede); grainy background",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-04",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Klein",
+   "titles": [
+    "FTW-IMG-04 · Klein · s42"
+   ],
+   "score": 2,
+   "why": "nine shoes in a 3×3 grid (asked six in 3×2); several colourways wrong; garbled labels",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-04",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "titles": [
+    "FTW-IMG-04 · Qwen · s42"
+   ],
+   "score": 3,
+   "why": "eight shoes in 4×2 (asked six); most colourways recognisable and the shape identical; placeholder labels",
+   "best": "FTW-IMG-04 · Qwen · s42",
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-05",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Klein",
+   "titles": [
+    "FTW-IMG-05 · Klein · s42"
+   ],
+   "score": 3,
+   "why": "lateral, top-down and rear are right and consistent; a front view instead of the medial",
+   "best": "FTW-IMG-05 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-05",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "titles": [
+    "FTW-IMG-05 · Qwen · s42"
+   ],
+   "score": 3,
+   "why": "lateral twice (no true medial), top-down and rear; consistent materials",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-06",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Klein",
+   "titles": [
+    "FTW-IMG-06 · Klein · s42 · grey clay render",
+    "FTW-IMG-06 · Klein · s42 · designer marker sketch",
+    "FTW-IMG-06 · Klein · s42 · exploded view showing"
+   ],
+   "score": 5,
+   "why": "all three presentations convincing with the exact shape: clean clay, a real marker sketch with one orange accent, a believable exploded view",
+   "best": "FTW-IMG-06 · Klein · s42 · grey clay render",
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-06",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "titles": [
+    "FTW-IMG-06 · Qwen · s42 · grey clay render",
+    "FTW-IMG-06 · Qwen · s42 · designer marker sketch",
+    "FTW-IMG-06 · Qwen · s42 · exploded view showing"
+   ],
+   "score": 1,
+   "why": "returned the input picture unchanged for all three",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-02",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Klein",
+   "titles": [
+    "GAM-IMG-02 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "consistent character in six views in two rows (asked four in a row)",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-02",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Qwen",
+   "titles": [
+    "GAM-IMG-02 · Qwen · s42"
+   ],
+   "score": 5,
+   "why": "exactly front, three-quarter, side and back in a row, same scale, details consistent",
+   "best": "GAM-IMG-02 · Qwen · s42",
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-07",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Klein",
+   "titles": [
+    "GAM-IMG-07 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "SAM masked the chest armour; a leather harness with glowing blue vials, blended in style (five vials, not three)",
+   "best": "GAM-IMG-07 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-07",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Qwen",
+   "titles": [
+    "GAM-IMG-07 · Qwen · s42"
+   ],
+   "score": 3,
+   "why": "a boxy harness with four vials pasted on the chest; reads less painted",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "GAM-IMG-08",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Klein",
+   "titles": [
+    "GAM-IMG-08 · Klein · s42 · Enhance Restore",
+    "GAM-IMG-08 · Klein · s42 · Instruct"
+   ],
+   "score": 4,
+   "why": "faithful refinement; Restore warms the haze, Instruct keeps the colours exactly",
+   "best": "GAM-IMG-08 · Klein · s42 · Instruct",
+   "status": "ADAPTED"
+  },
+  {
+   "test": "GAM-IMG-08",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "model": "Qwen",
+   "titles": [
+    "GAM-IMG-08 · Qwen · s42 · Enhance Restore",
+    "GAM-IMG-08 · Qwen · s42 · Instruct"
+   ],
+   "score": 2,
+   "why": "over-sharpened HDR crunch with shifted colours (blue sky, cyan debris), against \"do not change the colours\"",
+   "best": null,
+   "status": "ADAPTED"
+  },
+  {
+   "test": "MOV-IMG-02",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Klein",
+   "titles": [
+    "MOV-IMG-02 · Klein · s42 · blue pre-dawn twilight",
+    "MOV-IMG-02 · Klein · s42 · harsh noon sun",
+    "MOV-IMG-02 · Klein · s42 · deep orange sunset",
+    "MOV-IMG-02 · Klein · s42 · moonlight with a",
+    "MOV-IMG-02 · Klein · s42 · a violent thunderstorm"
+   ],
+   "score": 4,
+   "why": "every mood clearly lit and the composition held; carries over the source's dark smudge shapes",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-02",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Qwen",
+   "titles": [
+    "MOV-IMG-02 · Qwen · s42 · blue pre-dawn twilight",
+    "MOV-IMG-02 · Qwen · s42 · harsh noon sun",
+    "MOV-IMG-02 · Qwen · s42 · deep orange sunset",
+    "MOV-IMG-02 · Qwen · s42 · moonlight with a",
+    "MOV-IMG-02 · Qwen · s42 · a violent thunderstorm"
+   ],
+   "score": 5,
+   "why": "every mood convincing and motivated (lightning, lantern, moon); composition held and the smudges cleaned up",
+   "best": "MOV-IMG-02 · Qwen · s42 · deep orange sunset",
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-03",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Klein",
+   "titles": [
+    "MOV-IMG-03 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "seamless 2× extension: farmhouse exterior on the left, Karoo plain and mountains on the right, light and grade matched",
+   "best": "MOV-IMG-03 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-03",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Qwen",
+   "titles": [
+    "MOV-IMG-03 · Qwen · s42"
+   ],
+   "score": 3,
+   "why": "extends the interior with window openings onto the plain; no farmhouse exterior",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-07",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Klein",
+   "titles": [
+    "MOV-IMG-07 · Klein · s42 · loose digital speed-paint",
+    "MOV-IMG-07 · Klein · s42 · photoreal VFX previs",
+    "MOV-IMG-07 · Klein · s42 · charcoal storyboard panel"
+   ],
+   "score": 3,
+   "why": "charcoal and previs fine; the speed-paint barely looser than the source; smudges kept",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-07",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Qwen",
+   "titles": [
+    "MOV-IMG-07 · Qwen · s42 · loose digital speed-paint",
+    "MOV-IMG-07 · Qwen · s42 · photoreal VFX previs",
+    "MOV-IMG-07 · Qwen · s42 · charcoal storyboard panel"
+   ],
+   "score": 4,
+   "why": "three distinct media with the lighting design kept; best charcoal panel",
+   "best": "MOV-IMG-07 · Qwen · s42 · charcoal storyboard panel",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-02",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Klein",
+   "titles": [
+    "AUT-IMG-02 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "a convincing studio clay model, wheels in clay, feature lines readable; side view, not three-quarter",
+   "best": "AUT-IMG-02 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-02",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "titles": [
+    "AUT-IMG-02 · Qwen · s42"
+   ],
+   "score": 1,
+   "why": "not clay: the silver source with a crunchy texture",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-03",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Klein",
+   "titles": [
+    "AUT-IMG-03 · Klein · s42"
+   ],
+   "score": 3,
+   "why": "mirror chrome with the strip-light studio, but the reflections are wavy, not clean continuous lines",
+   "best": "AUT-IMG-03 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-03",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "titles": [
+    "AUT-IMG-03 · Qwen · s42"
+   ],
+   "score": 1,
+   "why": "nearly unchanged from the source, crunchier",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-05",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Klein",
+   "titles": [
+    "AUT-IMG-05 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "SAM found both wheels; gloss-black aero wheels with a thin silver edge, low-profile tyres, seated in the arches",
+   "best": "AUT-IMG-05 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-05",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "titles": [
+    "AUT-IMG-05 · Qwen · s42"
+   ],
+   "score": 3,
+   "why": "clean black multi-spoke wheels, but not aero covers and no silver edge",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-06",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Klein",
+   "titles": [
+    "AUT-IMG-06 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "front, rear, two side profiles and top-down plan, consistent car (one view extra)",
+   "best": "AUT-IMG-06 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-06",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "titles": [
+    "AUT-IMG-06 · Qwen · s42"
+   ],
+   "score": 1,
+   "why": "returned the source unchanged",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-08",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Klein",
+   "titles": [
+    "AUT-IMG-08 · Klein · s42"
+   ],
+   "score": 4,
+   "why": "six finishes in 3×2, identical angle; finishes right (two-tone copper, liquid silver); labels garbled",
+   "best": "AUT-IMG-08 · Klein · s42",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-08",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "titles": [
+    "AUT-IMG-08 · Qwen · s42"
+   ],
+   "score": 2,
+   "why": "eight cars; only the red, blue, grey and copper match; nonsense labels",
+   "best": null,
+   "status": "OK"
+  }
+ ],
+ "compares": [
+  {
+   "test": "FTW-IMG-02",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "a": "FTW-IMG-02 · Klein · s42",
+   "b": "FTW-IMG-02 · Qwen · s42"
+  },
+  {
+   "test": "FTW-IMG-04",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "a": "FTW-IMG-04 · Klein · s42",
+   "b": "FTW-IMG-04 · Qwen · s42"
+  },
+  {
+   "test": "FTW-IMG-05",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "a": "FTW-IMG-05 · Klein · s42",
+   "b": "FTW-IMG-05 · Qwen · s42"
+  },
+  {
+   "test": "FTW-IMG-06",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "a": "FTW-IMG-06 · Klein · s42 · grey clay render",
+   "b": "FTW-IMG-06 · Qwen · s42 · grey clay render"
+  },
+  {
+   "test": "GAM-IMG-02",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "a": "GAM-IMG-02 · Klein · s42",
+   "b": "GAM-IMG-02 · Qwen · s42"
+  },
+  {
+   "test": "GAM-IMG-07",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "a": "GAM-IMG-07 · Klein · s42",
+   "b": "GAM-IMG-07 · Qwen · s42"
+  },
+  {
+   "test": "GAM-IMG-08",
+   "board": "TS 2026-10-03 · 03 Gaming",
+   "a": "GAM-IMG-08 · Klein · s42 · Instruct",
+   "b": "GAM-IMG-08 · Qwen · s42 · Instruct"
+  },
+  {
+   "test": "MOV-IMG-02",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "a": "MOV-IMG-02 · Klein · s42 · deep orange sunset",
+   "b": "MOV-IMG-02 · Qwen · s42 · deep orange sunset"
+  },
+  {
+   "test": "MOV-IMG-03",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "a": "MOV-IMG-03 · Klein · s42",
+   "b": "MOV-IMG-03 · Qwen · s42"
+  },
+  {
+   "test": "MOV-IMG-07",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "a": "MOV-IMG-07 · Klein · s42 · charcoal storyboard panel",
+   "b": "MOV-IMG-07 · Qwen · s42 · charcoal storyboard panel"
+  },
+  {
+   "test": "AUT-IMG-02",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "a": "AUT-IMG-02 · Klein · s42",
+   "b": "AUT-IMG-02 · Qwen · s42"
+  },
+  {
+   "test": "AUT-IMG-03",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "a": "AUT-IMG-03 · Klein · s42",
+   "b": "AUT-IMG-03 · Qwen · s42"
+  },
+  {
+   "test": "AUT-IMG-05",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "a": "AUT-IMG-05 · Klein · s42",
+   "b": "AUT-IMG-05 · Qwen · s42"
+  },
+  {
+   "test": "AUT-IMG-06",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "a": "AUT-IMG-06 · Klein · s42",
+   "b": "AUT-IMG-06 · Qwen · s42"
+  },
+  {
+   "test": "AUT-IMG-08",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "a": "AUT-IMG-08 · Klein · s42",
+   "b": "AUT-IMG-08 · Qwen · s42"
+  }
+ ]
+}
