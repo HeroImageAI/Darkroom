@@ -780,3 +780,10 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     the picture: "Trail shoe · cut-out", "Trail shoe · turned 90° right". Without the LoRA the mode says so and does not
     run. e2e: a shoe with its background → cut-out → turned 90° right (title, prompt, LoRA checked) → turnaround sheet of
     four (2.4 min). Known: a turnaround view can keep a pale background (it is not cut out again before the sheet).
+115. **Clean turnaround views; turntable from a turnaround** (Koos: "do both follow-ups"). A turnaround view that comes
+    back without transparency is marked `needsCut` and cut out again (chain `turn_cut`); the sheet is made when every
+    view has its final picture (the clean cut-out, else the turned view) — no more pale box behind a view. **Animate as
+    a turntable** (Library details of a turnaround sheet): the four views, flattened on white (LTX reads no alpha), as
+    LTX key moments at ¼, ½ and ¾ of 5 s with the picture as start and end frame (strength 0.7, Final 720p, "one
+    continuous shot"), titled "{name} · turntable". On the e2e shoe it makes a full 360° — side, toe, other side, heel,
+    back to the side — where a plain "turntable" prompt managed about a quarter turn (walk-through, test suite).

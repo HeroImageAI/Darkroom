@@ -1518,6 +1518,21 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(sheet).toBeTruthy();
     expect(sheet.params.views).toHaveLength(4);
     expect(sheet.width / sheet.height).toBeGreaterThan(3); // four views in a row
+    // every view on the sheet is a clean cut-out (a view that came back on white was cut out again first)
+    for (const v of sheet.params.views.slice(1)) {
+      const it = (await (await page.request.get(`/api/items/${v}`)).json()).item;
+      expect(['edit:turn', 'edit:remove_bg']).toContain(it.mode);
+    }
     await shot(page, 'edit-turnaround');
+    // the four views drive a turntable video (DECISIONS 115)
+    await page.goto('/#/library');
+    await page.getByPlaceholder(/Search/).first().fill('e2e shoe · turnaround');
+    await page.locator(`.tile-wrap[data-id="${sheet.id}"] .tile`).click();
+    const sentTT = page.waitForResponse((r) => r.url().endsWith(`/api/items/${sheet.id}/turntable`));
+    await page.getByRole('complementary', { name: 'Details' }).getByRole('button', { name: 'Animate as a turntable' }).click();
+    const job = await (await sentTT).json();
+    expect(JSON.parse(job.params.key_moments)).toHaveLength(3);
+    await expect.poll(async () => (await (await page.request.get(`/api/items?q=${encodeURIComponent('e2e shoe · turntable')}&limit=5`)).json()).items.find((i: any) => i.kind === 'video')?.duration ?? 0, { timeout: 600_000 }).toBeGreaterThan(4.5);
+    await page.getByPlaceholder(/Search/).first().fill('');
   });
 });

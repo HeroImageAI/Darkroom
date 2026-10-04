@@ -860,6 +860,23 @@ function Detail({
                   <Film size={14} /> Animate
                 </button>
               )}
+              {/* a turnaround's four views drive a turntable video (DECISIONS 115) */}
+              {item.mode === 'sheet' && ((item.params as any)?.views ?? []).length === 4 && (
+                <button
+                  className="btn sm"
+                  title="A 5-second LTX turntable that passes through the four views in order, back to the start"
+                  onClick={async () => {
+                    try {
+                      await api.post(`/api/items/${item.id}/turntable`);
+                      toast('Turntable on its way (about 2 minutes, Final 720p). It lands in the Library and among your takes on Video.', 'info', 9000, { label: 'Open Video', run: () => go('video') });
+                    } catch (e) {
+                      toast((e as Error).message, 'error');
+                    }
+                  }}
+                >
+                  <Film size={14} /> Animate as a turntable
+                </button>
+              )}
               <a className="btn sm" href={downloadUrl(item.id)} download>
                 <Download size={14} /> Download
               </a>
