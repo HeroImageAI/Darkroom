@@ -1535,4 +1535,26 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect.poll(async () => (await (await page.request.get(`/api/items?q=${encodeURIComponent('e2e shoe · turntable')}&limit=5`)).json()).items.find((i: any) => i.kind === 'video')?.duration ?? 0, { timeout: 600_000 }).toBeGreaterThan(4.5);
     await page.getByPlaceholder(/Search/).first().fill('');
   });
+
+  test('Edit: Try both models runs Klein and Qwen on one instruction and keeps the one you pick (DECISIONS 116)', async () => {
+    const pic = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByLabel('Instruction').fill('Make it a snowy winter scene. Keep everything else unchanged.');
+    const posts: any[] = [];
+    page.on('request', (r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && posts.push(r.postDataJSON()));
+    await page.getByRole('button', { name: 'Try both models' }).click();
+    await expect(page.getByRole('status', { name: 'Both models' })).toBeVisible();
+    await expect.poll(() => posts.length).toBe(2);
+    expect(posts.map((p) => p.workflow).sort()).toEqual(['klein_edit', 'qwen_edit']);
+    expect(posts[0].params.seed).toBe(posts[1].params.seed);
+    const pick = page.getByRole('dialog', { name: 'Both models' });
+    await expect(pick).toBeVisible({ timeout: 300_000 });
+    await expect(pick.getByRole('img')).toHaveCount(2);
+    await shot(page, 'edit-try-both');
+    await pick.getByRole('button', { name: 'Keep Qwen-Image 2.1' }).click();
+    await expect(page.getByText(/1 version moved to Recently deleted/).last()).toBeVisible();
+    const shown = (await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json()).item;
+    expect(shown.model).toMatch(/Qwen/);
+  });
 });

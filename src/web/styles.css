@@ -565,3 +565,9 @@ details.edit-adv > :not(summary) { margin-top: 10px; }
 .hint-row .btn { min-height: 28px; padding: 0 8px; color: var(--text); border-color: var(--input); }
 /* Turn it (DECISIONS 114) */
 .turn-panel .segmented button:disabled { opacity: .35; }
+/* Try both models (DECISIONS 116) */
+.both-strip { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 3; display: flex; gap: 14px; padding: 6px 14px; border-radius: 999px; background: rgba(15,13,12,.88); border: 1px solid var(--line); font-size: 13px; }
+.both-strip span { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.both-strip span.done { color: var(--text); }
+.both-strip span.done svg { color: var(--ok); }
+.compare-side figcaption .btn { min-width: 200px; }
