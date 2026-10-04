@@ -571,3 +571,5 @@ details.edit-adv > :not(summary) { margin-top: 10px; }
 .both-strip span.done { color: var(--text); }
 .both-strip span.done svg { color: var(--ok); }
 .compare-side figcaption .btn { min-width: 200px; }
+/* Sheet maker (DECISIONS 118) */
+.sheet-maker textarea { min-height: 96px; }

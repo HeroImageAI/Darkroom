@@ -27,6 +27,7 @@ import {
   ChevronRight,
   RotateCw,
   Check,
+  LayoutGrid,
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo } from '../lib/remove';
@@ -171,6 +172,24 @@ function Editor({ item }: { item: Item }) {
   }, [mode, orbitReady]);
   // Shape in Instruct (DECISIONS 117): keep the picture's shape, or redraw it in another
   const [shape, setShape] = useSessionState<'keep' | Shape>('edit.shape', 'keep');
+  // Sheet maker (DECISIONS 118): a [SLOT] in the instruction + one value per line = one picture each, one labelled grid
+  const [sheetLines, setSheetLines] = useSessionState('edit.sheet', '');
+  const slotOf = () => /\[([A-Z][A-Z ]{1,30})\]/.exec(prompt);
+  const sheetValues = sheetLines.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 9);
+  const makeSheet = async () => {
+    const slotMatch = slotOf();
+    if (!slotMatch || sheetValues.length < 2) return;
+    try {
+      const T = boot!.prompts;
+      const em = editModel as ImageModelKey;
+      const prompts = sheetValues.map((v) => composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt.split(slotMatch[0]).join(v) }));
+      const extra: Record<string, string> = { ...weightsNow(), ...(lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(shape !== 'keep' ? { shape } : {}) };
+      const r = await api.post<{ jobs: Job[] }>(`/api/items/${item.id}/sheet`, { workflow: wfFor('instruct'), model: em, prompts, labels: sheetValues, seed: nextSeed(), name: `${slotMatch[1].toLowerCase()} sheet`, extra });
+      toast(`Making ${r.jobs.length} pictures for the sheet (about ${Math.round((r.jobs.length * (em === 'klein' ? 15 : 25)) / 60) || 1} min). Each one lands as a version; the labelled sheet goes to the Library when the last is in.`, 'info', 9000);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
   // Try both models (DECISIONS 116): one instruction to Klein and Qwen on the same seed, then pick
   const [both, setBoth] = useState<{ jobs: Record<'klein' | 'qwen', string>; done: Partial<Record<'klein' | 'qwen', string>>; failed: string[] } | null>(null);
   const [bothPick, setBothPick] = useState<{ klein: Item; qwen: Item } | null>(null);
@@ -1298,6 +1317,20 @@ function Editor({ item }: { item: Item }) {
             </>
           )}
 
+          {mode === 'instruct' && slotOf() && (
+            <div className="sheet-maker">
+              <p className="section-label">
+                Sheet <span className="mono">{sheetValues.length ? `${sheetValues.length} pictures` : ''}</span>
+              </p>
+              <label className="field">
+                <span>One {slotOf()![1].toLowerCase()} per line — each becomes its own picture, then one labelled sheet</span>
+                <textarea className="input" rows={4} value={sheetLines} onChange={(e) => setSheetLines(e.target.value)} placeholder={'e.g.\nblack with a volt-green sole\nnavy with a red heel\nsand and terracotta'} aria-label="Sheet values" />
+              </label>
+              <button type="button" className="btn sm" style={{ marginTop: 6 }} disabled={sheetValues.length < 2 || running || !online} onClick={() => void makeSheet()}>
+                <LayoutGrid size={14} /> Make a sheet of {sheetValues.length || '…'}
+              </button>
+            </div>
+          )}
           {mode === 'instruct' && (
             <div>
               <p className="section-label">Shape</p>

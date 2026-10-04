@@ -1577,4 +1577,23 @@ test.describe.serial('Darkroom v2 features', () => {
     }
     await page.getByRole('group', { name: 'Result shape' }).getByRole('button', { name: 'Keep' }).click();
   });
+
+  test('Edit: Sheet maker — a [SLOT] and one value per line make one picture each and one labelled sheet (DECISIONS 118)', async () => {
+    const pic = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByLabel('Instruction').fill('Recolour the main subject in [COLOURS]. Keep everything else identical.');
+    await page.getByLabel('Sheet values').fill('deep red\ncobalt blue\nforest green');
+    const sent = page.waitForResponse((r) => r.url().endsWith(`/api/items/${pic.id}/sheet`));
+    await page.getByRole('button', { name: 'Make a sheet of 3' }).click();
+    const body = (await sent).request().postDataJSON();
+    expect(body.labels).toEqual(['deep red', 'cobalt blue', 'forest green']);
+    expect(body.prompts[1]).toMatch(/cobalt blue/);
+    await expect(page.getByText(/Sheet ready:/).last()).toBeVisible({ timeout: 300_000 });
+    const sheet = ((await (await page.request.get('/api/items?limit=10')).json()).items as any[]).find((i) => i.mode === 'sheet' && /colours sheet$/.test(i.title));
+    expect(sheet.params.labels).toEqual(['deep red', 'cobalt blue', 'forest green']);
+    expect(sheet.width).toBeGreaterThan(sheet.height); // three in a row
+    await shot(page, 'edit-sheet');
+  });
 });

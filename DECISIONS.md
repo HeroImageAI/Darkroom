@@ -799,3 +799,10 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     the new shape (multiples of 16); the picture stays the model's reference, so it is redrawn to fill the frame
     (`src/shared/shape.ts`, both graphs unit-tested). Not with "Only change the masked area" or the red circle. e2e: a
     portrait picture to 16:9 on Klein and on Qwen (1376×768 each).
+118. **Sheet maker** (audit #5: both models miscount grids and garble labels — FTW-IMG-04, AUT-IMG-08, APP-IMG-04).
+    When the instruction holds a `[SLOT]` (the industry presets Colourway, Paint finish, Fabric swap… or your own text),
+    Instruct shows **Sheet**: one value per line (2–9). **Make a sheet of N** sends one Instruct per value on one seed
+    (the slot filled in, each model's own wording, the chosen shape, LoRAs and Klein version); each lands as its own
+    version titled "{name} · {value}", and when the last is in the server lays them out — 2 or 3 to a row on white —
+    with the values typed underneath and "{name} · {slot} sheet" on top: a Library item (mode `sheet`) on the
+    picture's board, the pictures and labels in its params. e2e: three recolours, one labelled sheet.

@@ -624,6 +624,10 @@ export class JobManager {
       if (cut) await this.turn(cut, c.move as OrbitMove, { turnaround: c.turnaround, view: c.view, sourceId: c.sourceId, followOf: job.id }).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Turn it: ' + friendlyError((e as Error).message) }));
       return;
     }
+    if (chain?.kind === 'sheet') {
+      const c = chain as Record<string, any>;
+      return void this.trySheet(String(c.sheet), Number(c.total), String(c.sourceId), String(c.name)).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Sheet: ' + (e as Error).message }));
+    }
     if (chain?.kind === 'turn_cut') {
       const c = chain as Record<string, any>;
       return void this.tryTurnaround(String(c.turnaround), String(c.sourceId)).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Turnaround sheet: ' + (e as Error).message }));
@@ -967,6 +971,76 @@ export class JobManager {
         chain: { kind: 'turn', move, turnaround: o.turnaround, view: o.view, sourceId: o.sourceId ?? src.id },
       },
     });
+  }
+
+  /**
+   * Sheet maker (DECISIONS 118): one instruction run per value ("black and volt", "navy and red"…), each its own picture,
+   * then one grid with the values typed underneath — the models miscount grids and garble labels when asked for a sheet.
+   */
+  async sheet(src: Item, o: { workflow: string; model: 'klein' | 'qwen'; prompts: string[]; labels: string[]; seed: number; name: string; extra?: Record<string, string> }): Promise<Job[]> {
+    const g = crypto.randomUUID();
+    const base = (src.title || 'Picture').replace(/ · cut-out$/, '');
+    const inp = await this.asInput(src);
+    const out: Job[] = [];
+    for (const [i, prompt] of o.prompts.entries())
+      out.push(
+        await this.submit({
+          workflow: o.workflow,
+          params: { image_1: inp, prompt, seed: o.seed, ...(o.extra ?? {}) },
+          meta: {
+            mode: 'edit:instruct',
+            model: o.model === 'klein' ? 'Klein 9B edit' : 'Qwen-Image 2.1 edit',
+            prompt: o.labels[i],
+            parentId: src.id,
+            ui: { ...(src.ui ?? {}), sheet: g, sheetIndex: i, sheetLabel: o.labels[i] },
+            title: `${base} · ${o.labels[i]}`.slice(0, 120),
+            chain: { kind: 'sheet', sheet: g, total: o.prompts.length, sourceId: src.id, name: o.name },
+          },
+        }),
+      );
+    return out;
+  }
+
+  private async trySheet(g: string, total: number, sourceId: string, name: string): Promise<void> {
+    const all = this.store.itemsBySheet(g);
+    if (all.some((v) => v.mode === 'sheet')) return;
+    const pics = all.filter((v) => v.mode === 'edit:instruct').sort((a, b) => Number((a.ui as any)?.sheetIndex) - Number((b.ui as any)?.sheetIndex));
+    if (pics.length < total || !this.comfy) return;
+    const src = this.store.getItem(sourceId);
+    const cols = total <= 3 ? total : total === 4 ? 2 : 3;
+    const rows = Math.ceil(total / cols);
+    const H = 640;
+    const imgs = await Promise.all(pics.map(async (it) => sharp(Buffer.from(await this.comfy!.view(it.file))).flatten({ background: '#ffffff' }).resize({ height: H }).png().toBuffer({ resolveWithObject: true })));
+    const cw = Math.max(...imgs.map((x) => x.info.width));
+    const gap = 24;
+    const label = 52;
+    const top = 72;
+    const W = cols * cw + (cols + 1) * gap;
+    const Ht = top + rows * (H + label + gap) + gap;
+    const esc = (t: string) => t.replace(/[<>&"]/g, (ch) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[ch]!);
+    const base = (src?.title || 'Picture').replace(/ · cut-out$/, '');
+    const texts = [`<text x="${gap}" y="46" font-family="Segoe UI, Arial" font-size="30" font-weight="600" fill="#1c1917">${esc(`${base} · ${name}`)}</text>`];
+    const parts: OverlayOptions[] = [];
+    for (const [i, im] of imgs.entries()) {
+      const c = i % cols;
+      const r = Math.floor(i / cols);
+      const x = gap + c * (cw + gap) + Math.round((cw - im.info.width) / 2);
+      const y = top + r * (H + label + gap);
+      parts.push({ input: im.data, left: x, top: y });
+      texts.push(`<text x="${gap + c * (cw + gap) + cw / 2}" y="${y + H + 34}" text-anchor="middle" font-family="Segoe UI, Arial" font-size="24" fill="#3a332e">${esc(String((pics[i].ui as any)?.sheetLabel ?? ''))}</text>`);
+    }
+    const svg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${Ht}">${texts.join('')}</svg>`);
+    const sheetPng = await sharp({ create: { width: W, height: Ht, channels: 3, background: '#ffffff' } }).composite([...parts, { input: svg, left: 0, top: 0 }]).png().toBuffer();
+    const outDir = outputDirFromArgv(((await this.comfy.systemStats()) as { system?: { argv?: string[] } }).system?.argv);
+    if (!outDir) throw new Error("ComfyUI doesn't report its output folder.");
+    const file = `sheet_${Date.now().toString(36)}_${crypto.randomBytes(2).toString('hex')}.png`;
+    fs.mkdirSync(path.join(outDir, 'darkroom', 'sheet'), { recursive: true });
+    fs.writeFileSync(path.join(outDir, 'darkroom', 'sheet', file), sheetPng);
+    const title = `${base} · ${name}`;
+    const item = await this.addPicture({ file: { filename: file, subfolder: 'darkroom/sheet', type: 'output' }, name: title, title, mode: 'sheet', model: 'Sheet', params: { sheet: g, views: pics.map((p) => p.id), labels: pics.map((p) => (p.ui as any)?.sheetLabel) }, boardId: src?.board_id ?? pics[0].board_id });
+    this.store.setItemUi(item.id, { sheet: g });
+    this.broadcast({ type: 'library', ids: [item.id] });
+    this.broadcast({ type: 'toast', kind: 'ok', text: `Sheet ready: "${title}" is in your Library, with each picture on its own.` });
   }
 
   /** Turnaround: three turns of one picture; when all three are in, one sheet of the four sides. */
