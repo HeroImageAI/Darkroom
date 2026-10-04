@@ -115,6 +115,8 @@ export interface SubmitBody {
     chain?: Record<string, unknown>;
     layers?: boolean;
     groupId?: string;
+    /** The new item's Library title (DECISIONS 111). */
+    title?: string;
     /** Board for the new result(s); filled in from the working board by api.submit. */
     boardId?: string | null;
   };

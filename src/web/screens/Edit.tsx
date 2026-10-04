@@ -160,6 +160,10 @@ function Editor({ item }: { item: Item }) {
   // kept for the session, so a locked seed stays locked when Edit moves on to the new version (test-suite finding 1)
   const [editSeed, setEditSeed] = useSessionState<{ seed: number; locked: boolean }>('edit.seed', { seed: randomSeed(), locked: false });
   const [advOpen, setAdvOpen] = useSessionState('edit.advanced', false);
+  // Qwen helpers (DECISIONS 119): Fast = Turbo8 at 8 steps; keep the frame = the Consistency LoRA on a whole-picture edit
+  const [qwenFast, setQwenFast] = usePersistent('edit.qwenFast', false);
+  const [keepFrame, setKeepFrame] = usePersistent('edit.keepFrame', true);
+  const qwenExtras = (m: string): Record<string, number> => (m === 'qwen' ? { ...(qwenFast ? { fast: 1 } : {}), ...(keepFrame ? {} : { keep_frame: 0 }) } : {});
   // Turn it (DECISIONS 114)
   const [turnMove, setTurnMove] = useSessionState<OrbitMove>('edit.turn', { angle: 45, side: 'right', height: 'eye' });
   const [orbitReady, setOrbitReady] = useState<boolean | null>(null);
@@ -183,7 +187,7 @@ function Editor({ item }: { item: Item }) {
       const T = boot!.prompts;
       const em = editModel as ImageModelKey;
       const prompts = sheetValues.map((v) => composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt.split(slotMatch[0]).join(v) }));
-      const extra: Record<string, string> = { ...weightsNow(), ...(lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(shape !== 'keep' ? { shape } : {}) };
+      const extra: Record<string, string | number> = { ...weightsNow(), ...(lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(shape !== 'keep' ? { shape } : {}), ...qwenExtras(em) };
       const r = await api.post<{ jobs: Job[] }>(`/api/items/${item.id}/sheet`, { workflow: wfFor('instruct'), model: em, prompts, labels: sheetValues, seed: nextSeed(), name: `${slotMatch[1].toLowerCase()} sheet`, extra });
       toast(`Making ${r.jobs.length} pictures for the sheet (about ${Math.round((r.jobs.length * (em === 'klein' ? 15 : 25)) / 60) || 1} min). Each one lands as a version; the labelled sheet goes to the Library when the last is in.`, 'info', 9000);
     } catch (e) {
@@ -240,6 +244,7 @@ function Editor({ item }: { item: Item }) {
           ...(mask ? { mask } : { ...(shape !== 'keep' ? { shape } : {}) }),
           ...(m === 'klein' && kleinWeights ? { klein_weights: kleinWeights } : {}),
           ...((editLoras[m] ?? []).length ? { loras: JSON.stringify(editLoras[m]) } : {}),
+          ...qwenExtras(m),
         };
         const j = await api.submit({ workflow, params, meta: { mode: 'edit:instruct', model: m === 'klein' ? 'Klein 9B edit' : 'Qwen-Image 2.1 edit', prompt: prompt.trim(), parentId: item.id, ui: item.ui } });
         jobs[m] = j.id;
@@ -610,7 +615,7 @@ function Editor({ item }: { item: Item }) {
       const inp = await api.asInput(item.id);
       const j = await api.submit({
         workflow,
-        params: { image_1: inp.name, seed: nextSeed(), ...params, ...(LORA_MODES.has(modeKey) && lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(LORA_MODES.has(modeKey) ? weightsNow() : {}) },
+        params: { image_1: inp.name, seed: nextSeed(), ...params, ...(LORA_MODES.has(modeKey) && lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(LORA_MODES.has(modeKey) ? weightsNow() : {}), ...(LORA_MODES.has(modeKey) ? qwenExtras(editModel) : {}) },
         meta: { mode: modeKey, model, prompt: promptText || item.prompt, parentId: item.id, ui: item.ui },
       });
       setJobId(j.id);
@@ -1254,7 +1259,7 @@ function Editor({ item }: { item: Item }) {
                   <button key={key} type="button" className="card" aria-pressed={editModel === key} onClick={() => setEditModel(key)} title={mm.licence}>
                     <strong>{mm.label}</strong>
                     {/* what each is best at, from the 2026-10-03 test suite (audit #2) */}
-                    <small>{key === 'klein' ? 'Styles, materials · ~15 s' : 'Exact shapes · ~25 s'}</small>
+                    <small>{key === 'klein' ? 'Styles, materials · ~15 s' : (qwenFast ? 'Exact shapes · Fast ~10 s' : 'Exact shapes · ~25 s')}</small>
                   </button>
                 ))}
               </div>
@@ -1483,9 +1488,21 @@ function Editor({ item }: { item: Item }) {
               <summary>
                 <ChevronRight size={14} /> Advanced
                 <span className="muted adv-summary">
-                  {[editSeed.locked ? `seed ${editSeed.seed} locked` : '', (editLoras[editModel] ?? []).length ? `${(editLoras[editModel] ?? []).length} LoRA` : ''].filter(Boolean).join(' · ')}
+                  {[editModel === 'qwen' && qwenFast ? 'Fast' : '', editSeed.locked ? `seed ${editSeed.seed} locked` : '', (editLoras[editModel] ?? []).length ? `${(editLoras[editModel] ?? []).length} LoRA` : ''].filter(Boolean).join(' · ')}
                 </span>
               </summary>
+              {editModel === 'qwen' && (
+                <div>
+                  <label className="check" title="Turbo8 LoRA: 8 steps instead of 25, about 2.5× faster. As good on product edits; a little looser on painterly restyles.">
+                    <input type="checkbox" checked={qwenFast} onChange={(e) => setQwenFast(e.target.checked)} />
+                    Fast — 8 steps (~10 s)
+                  </label>
+                  <label className="check" title="Consistency LoRA: a whole-picture instruction stays on the picture's frame instead of drifting (a restyle moved 11 px without it, 0 with it). Not used by Turn it or a new Shape.">
+                    <input type="checkbox" checked={keepFrame} onChange={(e) => setKeepFrame(e.target.checked)} />
+                    Keep edits on the frame
+                  </label>
+                </div>
+              )}
               {editModel === 'klein' && <KleinWeights value={kleinWeights} onChange={setKleinWeights} />}
               {(editModel === 'klein' || editModel === 'qwen') && (
                 <div style={{ marginTop: 4 }}>

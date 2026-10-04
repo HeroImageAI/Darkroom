@@ -573,3 +573,5 @@ details.edit-adv > :not(summary) { margin-top: 10px; }
 .compare-side figcaption .btn { min-width: 200px; }
 /* Sheet maker (DECISIONS 118) */
 .sheet-maker textarea { min-height: 96px; }
+/* Text → video: the opening shot (DECISIONS 120) */
+.opening-shot { margin-top: 10px; padding: 10px; border: 1px dashed var(--input); border-radius: var(--r); }

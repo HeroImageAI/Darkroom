@@ -10,7 +10,7 @@ import { onJob, toast, useApp } from '../store';
 import { orientationOf, planVideo, type VideoQuality } from '../../shared/manifest';
 import { LoraPicker, useLoraCatalogue, type Catalogue } from '../components/LoraPicker';
 import type { LoraUse } from '../../shared/loras';
-import { composeMotionPrompt, wordCount, type VideoModelKey } from '../../shared/prompts';
+import { composeImagePrompt, composeMotionPrompt, wordCount, type VideoModelKey } from '../../shared/prompts';
 import { restoreCanvas, restoredFrames, restoreWindows } from '../../shared/restore';
 
 interface Frame {
@@ -235,6 +235,41 @@ export function Video({ query }: { query: URLSearchParams }) {
   const itemFrame = async (id: string, which: 'start' | 'end') => {
     const r = await api.asInput(id);
     update({ [which]: { name: r.name, width: r.width ?? 1024, height: r.height ?? 1024, itemId: id } } as Partial<VideoSettings>);
+  };
+
+  // Text → video (DECISIONS 120): LTX needs a first frame, so Klein paints the opening shot from a description first
+  const [opening, setOpening] = useSessionState('video.opening', '');
+  const [openingShape, setOpeningShape] = useSessionState<'16:9' | '9:16' | '1:1'>('video.openingShape', '16:9');
+  const [openingJob, setOpeningJob] = useState<string | null>(null);
+  useEffect(
+    () =>
+      onJob((j) => {
+        if (j.id !== openingJob) return;
+        if (j.status === 'done' && j.result_ids[0]) {
+          setOpeningJob(null);
+          void itemFrame(j.result_ids[0], 'start').then(() => toast('First frame ready. Describe what moves, then Animate.', 'ok'));
+        } else if (j.status === 'error' || j.status === 'lost' || j.status === 'cancelled') {
+          setOpeningJob(null);
+          toast(j.error ?? 'The first frame could not be made.', 'error');
+        }
+      }),
+    [openingJob],
+  );
+  const makeOpening = async () => {
+    const kl = boot?.manifest.models.klein;
+    if (!kl || !opening.trim()) return;
+    const q = (kl as any).quality?.standard;
+    const [w, h] = (q?.aspects ?? (kl as any).aspects)[openingShape];
+    try {
+      const j = await api.submit({
+        workflow: kl.t2i,
+        params: { prompt: composeImagePrompt(boot!.prompts, { model: 'klein', mode: 'generate', text: opening.trim(), style: null }), seed: randomSeed(), steps: q?.steps ?? kl.defaults.steps, cfg: kl.ranges.cfg[0], width: w, height: h, batch: 1 },
+        meta: { mode: 'generate', model: 'Klein 9B', prompt: opening.trim(), title: `Opening shot · ${opening.trim().slice(0, 60)}` },
+      });
+      setOpeningJob(j.id);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
   };
 
   useEffect(() => {
@@ -503,6 +538,26 @@ export function Video({ query }: { query: URLSearchParams }) {
                 onClear={() => update({ end: null })}
               />
             </div>
+            {!s.start && (
+              <div className="opening-shot">
+                <label className="field">
+                  <span>No picture yet? Describe the opening shot</span>
+                  <textarea className="input" rows={2} value={opening} onChange={(e) => setOpening(e.target.value)} placeholder="e.g. A lone lighthouse on a cliff at dusk, storm clouds over the sea" aria-label="Opening shot" />
+                </label>
+                <div className="field-row" style={{ marginTop: 6 }}>
+                  <div className="segmented" role="group" aria-label="Opening shot shape" style={{ flex: 1 }}>
+                    {(['16:9', '9:16', '1:1'] as const).map((x) => (
+                      <button key={x} type="button" aria-pressed={openingShape === x} onClick={() => setOpeningShape(x)}>
+                        {x}
+                      </button>
+                    ))}
+                  </div>
+                  <button type="button" className="btn sm" disabled={!opening.trim() || !!openingJob || !online} onClick={() => void makeOpening()} title="Klein 9B paints the first frame from your description (~10 s); then describe what moves and Animate">
+                    {openingJob ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Make the first frame
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="field-row" style={{ marginTop: 6 }}>
               <button type="button" className="btn sm" onClick={() => setPicker('start')}>
                 <ImagePlus size={14} /> Start from library
@@ -592,7 +647,7 @@ export function Video({ query }: { query: URLSearchParams }) {
             </p>
             <div className="pills" role="group" aria-label="Camera" style={{ marginTop: 8 }}>
               {cams.map((c) => (
-                <button key={c.id} type="button" className="pill" aria-pressed={s.camera.includes(c.id)} title={c[vKey]} onClick={() => toggleCam(c.id)}>
+                <button key={c.id} type="button" className="pill" aria-pressed={s.camera.includes(c.id)} title={(c as { tip?: string }).tip ?? c[vKey]} onClick={() => toggleCam(c.id)}>
                   {c.label}
                 </button>
               ))}
