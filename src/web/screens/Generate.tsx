@@ -34,6 +34,7 @@ const MAX_PICTURES = 16;
 import { Pills, ProgressBar, Segmented, randomSeed, useHotkey } from '../components/common';
 import { CropDialog, grabScreenFrame } from '../lib/capture';
 import { useItemLoad, useSessionState, useWorkspace } from '../lib/hooks';
+import { asksForLettering, describesVehicle } from '../../shared/hints';
 import { go } from '../router';
 import { onJob, toast, useApp } from '../store';
 import { ASPECTS, type Aspect } from '../../shared/manifest';
@@ -86,7 +87,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
   const previews = useApp((s) => s.previews);
   const online = useApp((s) => s.status?.comfy === 'online');
   // prompt, references and seed are work in progress (this launch only); model, aspect, style… are preferences
-  const [s, setS] = useWorkspace<GenSettings>('generate', DEFAULTS, ['prompt', 'refs', 'seed', 'seedLocked']);
+  const [s, setS] = useWorkspace<GenSettings>('generate', DEFAULTS, ['prompt', 'refs', 'seed', 'seedLocked', 'transparent']);
   // History = your latest Generate pictures in the Library (deleting anywhere removes them here too)
   const rev = useApp((s) => s.libraryRev);
   const [history, setHistory] = useState<Item[]>([]);
@@ -625,6 +626,23 @@ export function Generate({ query }: { query: URLSearchParams }) {
               value={s.style}
               onChange={(style) => update({ style })}
             />
+            {/* nudges from what worked (DECISIONS 112): a vehicle wants the Car studio frame; lettering wants Qwen */}
+            {describesVehicle(s.prompt) && s.style !== 'car' && styles.some((x) => x.id === 'car') && (
+              <p className="note hint-row">
+                A vehicle: the Car studio style keeps wheels and proportions right.
+                <button type="button" className="btn ghost sm" onClick={() => update({ style: 'car' })}>
+                  Use Car studio
+                </button>
+              </p>
+            )}
+            {asksForLettering(s.prompt) && s.model === 'klein' && m?.models.qwen && (
+              <p className="note hint-row">
+                Words on the picture come out cleaner on Qwen-Image 2.1.
+                <button type="button" className="btn ghost sm" onClick={() => selectModel('qwen')}>
+                  Switch to Qwen
+                </button>
+              </p>
+            )}
           </div>
 
           <RefSlots
