@@ -901,7 +901,8 @@ test.describe.serial('Darkroom v2 features', () => {
     const sent: any[] = [];
     page.on('request', (r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && sent.push(r.postDataJSON()));
     await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
-    await expect(page.locator('button[title*="vintage car parked by the sea"]')).toHaveCount(2, { timeout: 240_000 });
+    // the Variations strip only: History tooltips carry the prompt too (v3.22)
+    await expect(page.locator('.strip[aria-label="Variations"] button[title*="vintage car parked by the sea"]')).toHaveCount(2, { timeout: 240_000 });
     expect(sent).toHaveLength(2);
     expect(sent[0].params.seed).toBe(sent[1].params.seed);
     expect(sent[0].meta.prompt).toMatch(/a red vintage car/);
