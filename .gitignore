@@ -22,3 +22,7 @@ tests/golden/outpaint/
 # test-suite run: browser profile and the user-supplied inputs
 tests/results/.edge-profile/
 test-inputs/
+tests/results/.dev.log
+tests/results/.spec.json
+tests/results/.plan*.out
+tests/results/.plan*.err
