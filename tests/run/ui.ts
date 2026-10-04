@@ -132,7 +132,18 @@ async function runEdit(kind: 'instruct' | 'inpaint' | 'enhance' | 'outpaint') {
   await openEdit(a.source, { instruct: 'Instruct', inpaint: 'Inpaint', enhance: 'Enhance', outpaint: 'Outpaint' }[kind], a.model, a.seed);
   let maskShot: string | null = null;
   if (kind === 'instruct') {
-    await page.getByLabel('Instruction').fill(a.prompt);
+    if (a.preset) {
+      // pick the preset from the menu (as a user would), then type over its [SLOTS]
+      const sel = page.getByLabel('Presets', { exact: true });
+      const value = await sel.locator('option', { hasText: a.preset }).first().getAttribute('value');
+      await sel.selectOption(value!);
+      await page.waitForTimeout(400);
+      let text = await page.getByLabel('Instruction').inputValue();
+      for (const [k, v] of Object.entries((a.slots ?? {}) as Record<string, string>)) text = text.split(`[${k}]`).join(v);
+      if (/\[[A-Z ]+\]/.test(text)) throw new Error(`preset ${a.preset}: unfilled slot in "${text}"`);
+      a.prompt = text;
+      await page.getByLabel('Instruction').fill(text);
+    } else await page.getByLabel('Instruction').fill(a.prompt);
     if (a.refFile) {
       const slot = page.locator('xpath=//p[normalize-space()="Reference (optional)"]/following-sibling::*[1]');
       await slot.locator('input[type=file]').setInputFiles(a.refFile);
@@ -202,7 +213,7 @@ async function generate() {
   await page.goto(URL + '/#/generate');
   await page.getByRole('group', { name: 'Model' }).getByRole('button', { name: a.model === 'klein' ? /^Klein 9B/ : /^Qwen-Image 2\.1/ }).click();
   await page.getByRole('group', { name: 'Aspect ratio' }).getByRole('button', { name: a.aspect ?? '16:9', exact: true }).click();
-  await page.getByRole('group', { name: 'Style preset' }).getByRole('button', { name: 'None', exact: true }).click();
+  await page.getByRole('group', { name: 'Style preset' }).getByRole('button', { name: a.style ?? 'None', exact: true }).click();
   const seed = page.getByLabel('Seed');
   if (!(await seed.isVisible())) await page.getByText('Advanced').click();
   await seed.fill(String(a.seed));
@@ -273,6 +284,35 @@ run: ${new Date().toISOString()}`, board: a.board });
 }
 
 /** Edit · Crop: drag a box on the picture (fractions of it), Apply crop → a new version stacked on the source. */
+/** A one-button Edit mode (Remove BG, Upscale, Layers): open, choose the mode, press its button, wait for the result. */
+async function editMode() {
+  const title = a.title as string;
+  const existing = await findTitled(title);
+  if (existing) return { skipped: true, id: existing };
+  await page.goto(URL + `/#/edit/${a.source}`);
+  await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: a.mode, exact: true }).click();
+  if (a.factor) await page.getByRole('button', { name: `${a.factor}×`, exact: true }).first().click().catch(() => undefined);
+  const before = await shot(a.testId, `${title} · settings`);
+  const t0 = Date.now();
+  await page.getByRole('button', { name: new RegExp(`^${a.button}`) }).click();
+  let id: string;
+  try {
+    id = await waitEditResult(a.source, a.timeout ?? 600_000);
+  } catch (e) {
+    const fail = await shot(a.testId, `${title} · FAILED`);
+    log({ test_id: a.testId, model: a.model ?? null, library_item_name: title, source_library_item: a.source, status: 'FAILED', notes: (e as Error).message, screenshot_paths: [before, fail] });
+    return { failed: (e as Error).message };
+  }
+  const seconds = Math.round((Date.now() - t0) / 1000);
+  await page.waitForTimeout(1500);
+  const after = await shot(a.testId, `${title} · result`);
+  await annotate(id, { title, notes: `test ${a.testId}
+mode ${a.mode}
+run: ${new Date().toISOString()}` });
+  log({ test_id: a.testId, model: a.model ?? null, library_item_name: title, library_item_id: id, source_library_item: a.source, status: 'OK', notes: `${seconds} s`, screenshot_paths: [before, after] });
+  return { id, seconds };
+}
+
 async function crop() {
   const title = a.title as string;
   const existing = await findTitled(title);
@@ -434,6 +474,7 @@ try {
     if (a.q) await page.getByPlaceholder(/Search prompt/).fill('');
     result = { moved: (a.ids as string[]).length };
   }
+  else if (action === 'mode') result = await editMode();
   else if (action === 'crop') result = await crop();
   else if (action === 'generate') result = await generate();
   else if (action === 'timeline') result = await timeline();

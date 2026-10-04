@@ -21,7 +21,7 @@ import { ROOT } from '../src/server/config.js';
 export interface EditPreset {
   id: string;
   label: string;
-  category: 'Angles' | 'Relight' | 'Styles' | 'Other';
+  category: 'Angles' | 'Relight' | 'Styles' | 'Other' | 'Apparel' | 'Footwear' | 'Gaming' | 'Movie' | 'Automotive';
   klein: string;
   qwen: string;
   /** Number of pictures the preset needs (2 = the second picture goes in the reference slot). */
@@ -31,6 +31,102 @@ export interface EditPreset {
 }
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+// ---- Industries: JP's five design fields (test suite 2026-10-03). Scores in brackets: Klein / Qwen.
+const ind = (category: EditPreset['category'], label: string, best: 'klein' | 'qwen', klein: string, qwen: string, images?: 2): EditPreset => ({
+  id: `${slug(category)}-${slug(label)}`, label, category, klein, qwen, best, ...(images ? { images } : {}),
+});
+const INDUSTRY: EditPreset[] = [
+  // Apparel
+  ind('Apparel', 'Sketch to render', 'klein', // APP-IMG-01 (4/4)
+    'Turn this flat technical sketch into a photorealistic product render of the [GARMENT], front view, on a plain light-grey background with soft studio light. Keep the exact silhouette, seams, panels, pockets, zips and trims from the sketch. Material: [MATERIAL].',
+    'Turn the flat sketch in <image1> into a photorealistic product render of the [GARMENT], front view, on a plain light-grey background with soft studio light. Keep the silhouette, seams, panels, pockets, zips and trims of <image1> unchanged. Material: [MATERIAL].'),
+  ind('Apparel', 'Fabric swap', 'klein', // APP-IMG-02 (4/3)
+    'Change the fabric of the garment to [FABRIC], with its real weight, drape, sheen and surface texture. Keep the cut, the seams, the colour, the pose, the lighting and the background identical.',
+    'Change the fabric of the garment in <image1> to [FABRIC], with its real weight, drape, sheen and texture. Keep the cut, seams, colour, pose, lighting and background unchanged.'),
+  ind('Apparel', 'Print placement', 'klein', // APP-IMG-03 (4/2)
+    'Using image 1 as the garment and image 2 as the print: apply the print from image 2 as an all-over pattern on the [PANEL], following the folds, seams and perspective of the fabric. Keep the garment shape, the other panels, the lighting and the background of image 1 identical.',
+    'Apply the print from <image2> as an all-over pattern on the [PANEL] of the garment in <image1>, following its folds, seams and perspective. Keep the garment shape, the other panels, the lighting and the background of <image1> unchanged.', 2),
+  ind('Apparel', 'Colourway', 'klein', // APP-IMG-04; one colourway per run (grids miscount)
+    'Recolour the garment as the colourway [COLOURS]. Keep the cut, the fabric texture, the stitching, the pose, the lighting and the background identical.',
+    'Recolour the garment in <image1> as the colourway [COLOURS]. Keep the cut, fabric texture, stitching, pose, lighting and background unchanged.'),
+  ind('Apparel', 'Multi-view sheet', 'qwen', // APP-IMG-06 (3/4)
+    'Show this exact garment as a presentation sheet: front, back and side views in a row at the same scale, on a plain light-grey background with even light. Keep every detail, colour and material identical in each view.',
+    'Show the garment in <image1> as a presentation sheet: front, back and side views in a row at the same scale, plain light-grey background, even light. Keep every detail, colour and material of <image1> unchanged in each view.'),
+  ind('Apparel', 'On a model', 'klein', // APP-VID helpers: a start frame for video
+    'Show this exact garment worn by a [MODEL] standing in a bright studio, full body, natural pose. Keep the garment\'s cut, colour, fabric and every detail identical.',
+    'Show the garment in <image1> worn by a [MODEL] standing in a bright studio, full body, natural pose. Keep the cut, colour, fabric and every detail of the garment unchanged.'),
+  // Footwear
+  ind('Footwear', 'Sketch to render', 'qwen', // FTW-IMG-01 (4/5)
+    'Turn this side-profile sketch into a photorealistic product render of the shoe, lateral view, on a seamless white background with a soft contact shadow. Keep the exact silhouette: sole stack height, toe spring, heel counter, collar line and all overlay lines. Materials: [MATERIALS].',
+    'Turn the side-profile sketch in <image1> into a photorealistic product render of the shoe, lateral view, seamless white background, soft contact shadow. Keep the silhouette, sole stack height, toe spring, heel counter, collar line and every overlay line of <image1> unchanged. Materials: [MATERIALS].'),
+  ind('Footwear', 'Material zones', 'klein', // FTW-IMG-02 (4/4)
+    'Rework the materials of this shoe by zone: upper in [UPPER], overlays in [OVERLAYS], midsole in [MIDSOLE], outsole in [OUTSOLE], with clean, crisp boundaries between them. Keep the same shoe, view and silhouette identical.',
+    'Rework the materials of the shoe in <image1> by zone: upper in [UPPER], overlays in [OVERLAYS], midsole in [MIDSOLE], outsole in [OUTSOLE], with crisp boundaries. Keep the shoe, the view and the silhouette of <image1> unchanged.'),
+  ind('Footwear', 'Clay render', 'klein', // FTW-IMG-06 (5/4)
+    'Present this shoe as a matte grey clay render with no materials, colour or texture, on a plain studio background. Keep its exact shape, proportions and every line identical.',
+    'Present the shoe in <image1> as a matte grey clay render with no materials, colour or texture, plain studio background. Keep its exact shape, proportions and lines unchanged.'),
+  ind('Footwear', 'Marker sketch', 'klein', // FTW-IMG-06 (5/4)
+    'Present this shoe as a designer marker sketch on white paper, grey marker tones with a single [ACCENT] accent. Keep its exact shape and proportions identical.',
+    'Present the shoe in <image1> as a designer marker sketch on white paper, grey marker tones with a single [ACCENT] accent. Keep its exact shape and proportions unchanged.'),
+  ind('Footwear', 'Exploded view', 'klein', // FTW-IMG-06 (5/4)
+    'Present this shoe as an exploded view: upper, midsole, outsole, insole and laces floating apart in line, on a white background. Keep the shape, colour and material of every part identical.',
+    'Present the shoe in <image1> as an exploded view: upper, midsole, outsole, insole and laces floating apart in line, white background. Keep the shape, colour and material of every part unchanged.'),
+  ind('Footwear', 'Colourway', 'qwen', // FTW-IMG-04; one colourway per run (grids miscount)
+    'Recolour this shoe as the colourway [COLOURS]. Keep the shape, materials, textures, lighting and background identical.',
+    'Recolour the shoe in <image1> as the colourway [COLOURS]. Keep the shape, materials, textures, lighting and background unchanged.'),
+  ind('Footwear', 'On foot', 'klein', // FTW-VID-02 helper
+    'Show this exact shoe worn on a runner\'s foot mid-stride on [SURFACE], low side angle at ground level, natural light. Keep the shoe\'s shape, materials and colours identical.',
+    'Show the shoe in <image1> worn on a runner\'s foot mid-stride on [SURFACE], low side angle at ground level, natural light. Keep the shape, materials and colours of the shoe unchanged.'),
+  // Gaming
+  ind('Gaming', 'Sketch to character art', 'klein', // GAM-IMG-01 (4/3)
+    'Render this character sketch as finished game concept art: [CHARACTER]. Full body, the pose and silhouette from the sketch, plain mid-grey background, stylised realism, painterly detail. Keep the proportions and every shape of the sketch identical.',
+    'Render the sketch in <image1> as finished game concept art: [CHARACTER]. Full body, plain mid-grey background, stylised realism, painterly detail. Keep the pose, silhouette and proportions of <image1> unchanged.'),
+  ind('Gaming', 'Turnaround sheet', 'qwen', // GAM-IMG-02 (4/5)
+    'Show this exact character as a turnaround sheet: front, three-quarter, side and back views in one row at identical scale, neutral A-pose, flat mid-grey background, even light. Keep every costume detail and colour identical in each view.',
+    'Show the character in <image1> as a turnaround sheet: front, three-quarter, side and back views in one row at identical scale, neutral A-pose, flat mid-grey background, even light. Keep every costume detail and colour unchanged in each view.'),
+  ind('Gaming', 'Thumbnail to environment', 'qwen', // GAM-IMG-03 (4/4)
+    'Develop this thumbnail into a finished game environment: [ENVIRONMENT]. Keep the composition, the horizon line and the major value shapes identical. Painterly concept art, atmospheric perspective.',
+    'Develop the thumbnail in <image1> into a finished game environment: [ENVIRONMENT]. Keep the composition, horizon line and major value shapes of <image1> unchanged. Painterly concept art, atmospheric perspective.'),
+  ind('Gaming', 'Genre transform', 'klein', // GAM-IMG-04 (5/4)
+    'Transform this landscape into game environment concept art as a [GENRE]. Replace the content and mood completely, but keep the terrain shape, the horizon line and the camera angle identical.',
+    'Transform <image1> into game environment concept art as a [GENRE]. Replace the content and mood, but keep the terrain shape, horizon line and camera angle of <image1> unchanged.'),
+  ind('Gaming', 'Presentation polish', 'klein', // GAM-IMG-08 (4/2)
+    'Refine this concept art to presentation quality: sharper details, cleaner edges, richer texture. Keep the composition, the design and the colours identical.',
+    'Refine <image1> to presentation quality: sharper details, cleaner edges, richer texture. Keep the composition, design and colours unchanged.'),
+  // Movie
+  ind('Movie', 'Sketch to keyframe', 'klein', // MOV-IMG-01 (3/3)
+    'Develop this rough composition into a cinematic film keyframe: [SCENE]. Keep the composition and camera framing identical. Anamorphic look, volumetric light, film grain, muted grade.',
+    'Develop the rough composition in <image1> into a cinematic film keyframe: [SCENE]. Keep the composition and camera framing of <image1> unchanged. Anamorphic look, volumetric light, film grain, muted grade.'),
+  ind('Movie', 'Lighting and time of day', 'qwen', // MOV-IMG-02 (4/5)
+    'Change only the lighting and atmosphere to [LIGHTING], cinematic and physically motivated. Keep the scene, the composition, the figures and the camera identical.',
+    'Change only the lighting and atmosphere of <image1> to [LIGHTING], cinematic and physically motivated. Keep the scene, composition, figures and camera unchanged.'),
+  ind('Movie', 'Location to genre', 'klein', // MOV-IMG-06 (4/2)
+    'Reimagine this location as a [GENRE] film set: change the architecture dressing, props, lighting and atmosphere to fit the genre. Keep the layout, the perspective and the camera position identical. Cinematic keyframe, film grain.',
+    'Reimagine the location in <image1> as a [GENRE] film set: change the dressing, props, lighting and atmosphere to fit the genre. Keep the layout, perspective and camera position of <image1> unchanged. Cinematic keyframe, film grain.'),
+  ind('Movie', 'Re-render as medium', 'qwen', // MOV-IMG-07 (3/4)
+    'Re-render this keyframe as a [MEDIUM]. Keep the composition and the lighting design identical.',
+    'Re-render <image1> as a [MEDIUM]. Keep the composition and lighting design of <image1> unchanged.'),
+  // Automotive
+  ind('Automotive', 'Sketch to render', 'qwen', // AUT-IMG-01 (3/4)
+    'Turn this side-view car sketch into a photorealistic studio render, exact side profile, seamless white-to-grey background with a soft floor reflection. Keep the proportions exactly: wheelbase, overhangs, greenhouse, beltline, wheel arches and every feature line. Paint: [PAINT].',
+    'Turn the car sketch in <image1> into a photorealistic studio render, exact side profile, seamless white-to-grey background, soft floor reflection. Keep the wheelbase, overhangs, greenhouse, beltline, wheel arches and every feature line of <image1> unchanged. Paint: [PAINT].'),
+  ind('Automotive', 'Clay model', 'klein', // AUT-IMG-02 (4/4)
+    'Show this exact car as a full-size design-studio clay model: matte warm-grey clay, no paint, no glass tint, no badges, the wheels in clay too, long softbox highlights over the surfaces. Keep the proportions and every feature line identical.',
+    'Show the car in <image1> as a full-size design-studio clay model: matte warm-grey clay, no paint, no glass tint, no badges, clay wheels, long softbox highlights. Keep its proportions and every feature line unchanged.'),
+  ind('Automotive', 'Chrome reflection study', 'qwen', // AUT-IMG-03 (3/5)
+    'Show this exact car finished in mirror chrome in a studio with evenly spaced vertical strip lights reflected cleanly across the panels, three-quarter front view. Keep the proportions and every feature line identical.',
+    'Show the car in <image1> finished in mirror chrome in a studio with evenly spaced vertical strip lights reflected cleanly across the panels, three-quarter front view. Keep its proportions and every feature line unchanged.'),
+  ind('Automotive', 'Paint finish', 'klein', // AUT-IMG-08 (4/2); one finish per run
+    'Repaint this car in [FINISH]. Keep the shape, the wheels, the glass, the lighting, the angle and the background identical.',
+    'Repaint the car in <image1> in [FINISH]. Keep the shape, wheels, glass, lighting, angle and background unchanged.'),
+  ind('Automotive', 'Four-view board', 'klein', // AUT-IMG-06 (4/4)
+    'Show this exact car as a design presentation board: front, rear, side profile and top-down plan at consistent scale on a clean white background, studio light. Keep the same paint, wheels and details in every view.',
+    'Show the car in <image1> as a design presentation board: front, rear, side profile and top-down plan at consistent scale, clean white background, studio light. Keep the same paint, wheels and details in every view.'),
+  ind('Automotive', 'Three-quarter view', 'klein', // AUT-VID-01 helper
+    'Show this exact car in a three-quarter front view on a studio turntable, long softbox reflections, seamless light-grey studio. Keep its proportions, paint, wheels and details identical.',
+    'Show the car in <image1> in a three-quarter front view on a studio turntable, long softbox reflections, seamless light-grey studio. Keep its proportions, paint, wheels and details unchanged.'),
+];
 
 // ---- Relight: [label, light described as a phrase] -------------------------------------------------------------
 const RELIGHT: [string, string][] = [
@@ -90,6 +186,9 @@ const STYLES: [string, string][] = [
 ];
 
 const presets: EditPreset[] = [
+  // ---- Industries first (DECISIONS 110): the instructions that scored best in the 2026-10-03 test suite, made
+  // reusable with [SLOTS]; `best` is the model that won that test (after the seed-7 re-runs, report-2026-10-03.md)
+  ...INDUSTRY,
   // ---- Angles (bespoke: each move needs its own preservation wording)
   {
     id: 'close-up', label: 'Close-up', category: 'Angles',

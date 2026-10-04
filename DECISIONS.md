@@ -731,3 +731,12 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     1.6:1 are shown whole on their tiles; tile titles take two lines. **Video:** "Add a start frame first (step 1)" under
     the Animate button while it waits. **Home:** the six cards in one row. Accessible names are unchanged (the e2e
     suite and the test runner open Advanced where they type a seed).
+110. **Presets for JP's five industries** (Koos: "make sure we have presets for the industries we want to design in").
+    **Edit presets** (first in the Presets menu): Apparel 6, Footwear 7, Gaming 5, Movie 4, Automotive 6 — the
+    instructions that scored best in the 2026-10-03 suite, generalised with [SLOTS] (garment, material, colours, genre,
+    lighting, paint…), each with Klein and Qwen wording and `best` set to the model that won that test (after the
+    seed-7 re-runs): Qwen for sketch → render on footwear and cars, turnarounds, multi-view, environments, lighting,
+    re-render as a medium and chrome; Klein for the rest. Sheets with many colourways/finishes in one picture are left
+    out on purpose — both models miscount grids and garble labels — so Colourway and Paint finish do one per run. The
+    helpers the video tests needed (On a model, On foot, Three-quarter view) are presets too. **Generate styles**: Apparel
+    flat, Footwear studio, Game concept, Film still, Car studio (one style sentence each, per model).
