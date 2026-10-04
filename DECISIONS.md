@@ -757,3 +757,14 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     Detection is a word list (`src/shared/hints.ts`, unit-tested: "scarf" is not a car). **Transparent background** is no
     longer remembered between sessions — it was left ticked by accident twice in one day and turned a studio shot into
     a cut-out with holes; it now lasts the tab's session like the prompt.
+113. **Qwen-Image 2.1 viewpoint-orbit LoRA: installed, A/B'd** (Koos: "review and see if we can benefit from it").
+    `ML-Intern-lab/Qwen-Image-2.1-viewpoint-orbit-LoRA` (steps2000res768, 168 MB, Qwen research licence — non-commercial;
+    fine for JP's private use). Its keys say `diffusion_model.*`; ComfyUI only maps Qwen 2.1's split MLP halves
+    (`img_mlp.gate_layer` / `proj`) onto the fused `gate_up` under the `transformer.*` or bare names, so 128 of 448
+    weights were silently dropped ("lora key not loaded"). Fix: a renamed copy `qwen-image-2.1-viewpoint-orbit-comfy
+    .safetensors` (keys `transformer.*`), the download kept as `.safetensors.orig`; with it no key is dropped. Darkroom's
+    LoRA catalogue now counts those halves as fitting the fused layer (it filed the LoRA under "another model"). A/B on
+    three Library cut-outs, seed 7, Darkroom's Qwen Instruct graph at 25 steps (`scripts/try-orbit.ts`,
+    `tests/results/orbit-ab/`): on the **shoe** and the **jacket** plain Qwen hardly turns them, the LoRA gives real
+    three-quarter, side, back and elevated views; on the **car** both turn it about equally. Misses: the shoe's orbit
+    views came back on white (transparency lost), and 180° on the jacket showed the front again.
