@@ -1456,4 +1456,31 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(page.getByLabel('Seed')).not.toHaveValue('42');
     await expect(page.getByLabel('Instruction')).toHaveValue(/grey clay render/);
   });
+
+  test('Generate: a vehicle prompt suggests Car studio, lettering suggests Qwen; Transparent background is not remembered (DECISIONS 112)', async () => {
+    await page.goto('/#/generate');
+    await page.getByRole('group', { name: 'Model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByRole('group', { name: 'Style preset' }).getByRole('button', { name: 'None', exact: true }).click();
+    await page.getByLabel('Prompt').fill('A rugged overlander vehicle, matte black, with "OVERLANDER" in chrome letters on the hood');
+    await expect(page.getByText('A vehicle: the Car studio style keeps wheels and proportions right.')).toBeVisible();
+    await page.getByRole('button', { name: 'Use Car studio' }).click();
+    await expect(page.getByRole('group', { name: 'Style preset' }).getByRole('button', { name: 'Car studio' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText(/A vehicle: the Car studio style/)).toHaveCount(0);
+    await page.getByRole('button', { name: 'Switch to Qwen' }).click();
+    await expect(page.getByRole('group', { name: 'Model' }).getByRole('button', { name: /^Qwen-Image 2.1/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByRole('button', { name: 'Switch to Qwen' })).toHaveCount(0);
+    // a shoe gets no vehicle hint
+    await page.getByLabel('Prompt').fill('A lightweight trail running shoe, side view');
+    await expect(page.getByText(/A vehicle: the Car studio style/)).toHaveCount(0);
+    // transparency lasts the session only: a new tab starts without it
+    await page.getByLabel('Transparent background').check();
+    const fresh = await page.context().newPage();
+    await fresh.goto('/#/generate');
+    await fresh.getByRole('group', { name: 'Model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await expect(fresh.getByLabel('Transparent background')).not.toBeChecked();
+    await fresh.close();
+    await page.getByLabel('Transparent background').uncheck();
+    await page.getByRole('group', { name: 'Style preset' }).getByRole('button', { name: 'None', exact: true }).click();
+    await page.getByRole('group', { name: 'Model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+  });
 });

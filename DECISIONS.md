@@ -749,3 +749,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     says it leaves the picture itself as it is and points to Instruct for a new background (a studio car "extended"
     into a night street kept its white studio in the middle); Enhance › Restore says it treats haze, fog and soft focus
     as damage (a foggy dawn came back clear) and points to Upscale for a clean picture with that mood.
+112. **Vehicle and lettering hints; Transparent background lasts one session** (Koos: Klein drew a vehicle's wheels in
+    the wrong places; "when choosing car studio preset the results are much better"). With the Car studio style both
+    models drew a coherent vehicle — wheels in the arches, one body — so the fix is the style, not a model switch: when
+    the Generate prompt describes a vehicle and another style is chosen, a line under Style offers **Use Car studio**.
+    Words in quotes on Klein offer **Switch to Qwen** (Qwen spelled "OVERLANDER"; Klein garbled side lettering).
+    Detection is a word list (`src/shared/hints.ts`, unit-tested: "scarf" is not a car). **Transparent background** is no
+    longer remembered between sessions — it was left ticked by accident twice in one day and turned a studio shot into
+    a cut-out with holes; it now lasts the tab's session like the prompt.
