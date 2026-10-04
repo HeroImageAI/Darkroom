@@ -261,6 +261,12 @@ export class Store {
     return rows.map((r) => decode<Item>(r, JSON_ITEM)!);
   }
 
+  /** The pictures of one Sheet maker run (and its sheet), by the id kept in their ui (DECISIONS 118). */
+  itemsBySheet(id: string): Item[] {
+    const rows = this.db.prepare("SELECT * FROM items WHERE json_extract(ui, '$.sheet') = ? AND deleted_at IS NULL ORDER BY created_at, id").all(id) as any[];
+    return rows.map((r) => decode<Item>(r, JSON_ITEM)!);
+  }
+
   /** Merge keys into an item's ui. */
   setItemUi(id: string, patch: Record<string, unknown>): void {
     const it = this.getItem(id);

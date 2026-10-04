@@ -1535,4 +1535,65 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect.poll(async () => (await (await page.request.get(`/api/items?q=${encodeURIComponent('e2e shoe · turntable')}&limit=5`)).json()).items.find((i: any) => i.kind === 'video')?.duration ?? 0, { timeout: 600_000 }).toBeGreaterThan(4.5);
     await page.getByPlaceholder(/Search/).first().fill('');
   });
+
+  test('Edit: Try both models runs Klein and Qwen on one instruction and keeps the one you pick (DECISIONS 116)', async () => {
+    const pic = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByLabel('Instruction').fill('Make it a snowy winter scene. Keep everything else unchanged.');
+    const posts: any[] = [];
+    page.on('request', (r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && posts.push(r.postDataJSON()));
+    await page.getByRole('button', { name: 'Try both models' }).click();
+    await expect(page.getByRole('status', { name: 'Both models' })).toBeVisible();
+    await expect.poll(() => posts.length).toBe(2);
+    expect(posts.map((p) => p.workflow).sort()).toEqual(['klein_edit', 'qwen_edit']);
+    expect(posts[0].params.seed).toBe(posts[1].params.seed);
+    const pick = page.getByRole('dialog', { name: 'Both models' });
+    await expect(pick).toBeVisible({ timeout: 300_000 });
+    await expect(pick.getByRole('img')).toHaveCount(2);
+    await shot(page, 'edit-try-both');
+    await pick.getByRole('button', { name: 'Keep Qwen-Image 2.1' }).click();
+    await expect(page.getByText(/1 version moved to Recently deleted/).last()).toBeVisible();
+    const shown = (await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json()).item;
+    expect(shown.model).toMatch(/Qwen/);
+  });
+
+  test('Edit: Shape in Instruct redraws the picture in another shape, on both models (DECISIONS 117)', async () => {
+    const pic = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && (i.width ?? 0) <= (i.height ?? 0));
+    test.skip(!pic, 'needs a square or portrait picture');
+    for (const model of ['Klein 9B', 'Qwen-Image 2.1']) {
+      await page.goto(`/#/edit/${pic.id}`);
+      await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+      await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: new RegExp(`^${model}`) }).click();
+      await page.getByRole('group', { name: 'Result shape' }).getByRole('button', { name: '16:9' }).click();
+      await page.getByLabel('Instruction').fill('Make it a cinematic widescreen frame of the same scene. Keep the subject and its look.');
+      const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+      await page.getByRole('button', { name: 'Apply instruction Ctrl+Enter' }).click();
+      expect((await sent).postDataJSON().params.shape).toBe('16:9');
+      await page.waitForURL((u) => !u.toString().endsWith(pic.id), { timeout: 300_000 });
+      const it = (await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json()).item;
+      expect(it.width / it.height).toBeCloseTo(16 / 9, 1);
+      await shot(page, `edit-shape-${model.startsWith('Klein') ? 'klein' : 'qwen'}`);
+    }
+    await page.getByRole('group', { name: 'Result shape' }).getByRole('button', { name: 'Keep' }).click();
+  });
+
+  test('Edit: Sheet maker — a [SLOT] and one value per line make one picture each and one labelled sheet (DECISIONS 118)', async () => {
+    const pic = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByLabel('Instruction').fill('Recolour the main subject in [COLOURS]. Keep everything else identical.');
+    await page.getByLabel('Sheet values').fill('deep red\ncobalt blue\nforest green');
+    const sent = page.waitForResponse((r) => r.url().endsWith(`/api/items/${pic.id}/sheet`));
+    await page.getByRole('button', { name: 'Make a sheet of 3' }).click();
+    const body = (await sent).request().postDataJSON();
+    expect(body.labels).toEqual(['deep red', 'cobalt blue', 'forest green']);
+    expect(body.prompts[1]).toMatch(/cobalt blue/);
+    await expect(page.getByText(/Sheet ready:/).last()).toBeVisible({ timeout: 300_000 });
+    const sheet = ((await (await page.request.get('/api/items?limit=10')).json()).items as any[]).find((i) => i.mode === 'sheet' && /colours sheet$/.test(i.title));
+    expect(sheet.params.labels).toEqual(['deep red', 'cobalt blue', 'forest green']);
+    expect(sheet.width).toBeGreaterThan(sheet.height); // three in a row
+    await shot(page, 'edit-sheet');
+  });
 });

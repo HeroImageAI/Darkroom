@@ -787,3 +787,22 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     LTX key moments at ¼, ½ and ¾ of 5 s with the picture as start and end frame (strength 0.7, Final 720p, "one
     continuous shot"), titled "{name} · turntable". On the e2e shoe it makes a full 360° — side, toe, other side, heel,
     back to the side — where a plain "turntable" prompt managed about a quarter turn (walk-through, test suite).
+116. **Try both models** (audit #1). Edit › Instruct has **Try both models** next to Enhance instruction: the instruction
+    goes to Klein 9B and Qwen-Image 2.1 at once on one seed, each in its own wording (`composeImagePrompt` per model)
+    with its own LoRAs and the Klein version; a strip on the stage shows both progressing; when both are in, a
+    side-by-side asks **Keep Klein 9B / Keep Qwen-Image 2.1 / Keep both** — keeping one moves the other to Recently
+    deleted (Undo) and opens the kept version. Not with the red circle (Qwen only). e2e: one seed, two workflows, keep
+    Qwen.
+117. **Shape in Instruct** (audit #4; MOV-IMG-01 turned every Movie keyframe and video portrait). Instruct has **Shape**:
+    Keep / 16:9 / 3:2 / 1:1 / 4:5 / 9:16. With a shape the server starts the sampler from an empty latent of that shape
+    (~1 MP, multiples of 32) instead of the encoded picture, and resizes the result to the picture's own pixel count in
+    the new shape (multiples of 16); the picture stays the model's reference, so it is redrawn to fill the frame
+    (`src/shared/shape.ts`, both graphs unit-tested). Not with "Only change the masked area" or the red circle. e2e: a
+    portrait picture to 16:9 on Klein and on Qwen (1376×768 each).
+118. **Sheet maker** (audit #5: both models miscount grids and garble labels — FTW-IMG-04, AUT-IMG-08, APP-IMG-04).
+    When the instruction holds a `[SLOT]` (the industry presets Colourway, Paint finish, Fabric swap… or your own text),
+    Instruct shows **Sheet**: one value per line (2–9). **Make a sheet of N** sends one Instruct per value on one seed
+    (the slot filled in, each model's own wording, the chosen shape, LoRAs and Klein version); each lands as its own
+    version titled "{name} · {value}", and when the last is in the server lays them out — 2 or 3 to a row on white —
+    with the values typed underneath and "{name} · {slot} sheet" on top: a Library item (mode `sheet`) on the
+    picture's board, the pictures and labels in its params. e2e: three recolours, one labelled sheet.

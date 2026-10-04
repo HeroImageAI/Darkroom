@@ -225,6 +225,22 @@ app.post('/api/items/:id/turn', async (req, reply) => {
   }
 });
 
+/** Sheet maker (DECISIONS 118): one Instruct per value, then one labelled grid. */
+app.post('/api/items/:id/sheet', async (req, reply) => {
+  const it = store.getItem((req.params as { id: string }).id);
+  if (!it || it.kind !== 'image') return reply.code(404).send({ error: 'Picture not found' });
+  const b = (req.body ?? {}) as { workflow?: string; model?: string; prompts?: unknown; labels?: unknown; seed?: unknown; name?: unknown; extra?: Record<string, string> };
+  const prompts = Array.isArray(b.prompts) ? b.prompts.filter((x): x is string => typeof x === 'string' && !!x.trim()) : [];
+  const labels = Array.isArray(b.labels) ? b.labels.map((x) => String(x ?? '').slice(0, 60)) : [];
+  if (prompts.length < 2 || prompts.length > 9 || labels.length !== prompts.length) return reply.code(400).send({ error: 'A sheet takes 2 to 9 values, one per line.' });
+  if (b.workflow !== 'qwen_edit' && b.workflow !== 'klein_edit') return reply.code(400).send({ error: 'A sheet is made with Instruct.' });
+  try {
+    return { jobs: await jobs.sheet(it, { workflow: b.workflow, model: b.model === 'qwen' ? 'qwen' : 'klein', prompts, labels, seed: typeof b.seed === 'number' ? b.seed : Math.floor(Math.random() * 2 ** 31), name: String(b.name ?? 'sheet').slice(0, 60), extra: b.extra }) };
+  } catch (e) {
+    return reply.code(400).send({ error: (e as Error).message });
+  }
+});
+
 /** Turnaround (DECISIONS 114): three turns and one sheet of the four sides. */
 app.post('/api/items/:id/turnaround', async (req, reply) => {
   const it = store.getItem((req.params as { id: string }).id);

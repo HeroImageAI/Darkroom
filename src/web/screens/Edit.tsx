@@ -26,8 +26,12 @@ import {
   X,
   ChevronRight,
   RotateCw,
+  Check,
+  LayoutGrid,
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
+import { deleteWithUndo } from '../lib/remove';
+import { SHAPES, type Shape } from '../../shared/shape';
 import { ORBIT_LORA, orbitLabel, type OrbitAngle, type OrbitHeight, type OrbitMove, type OrbitSide } from '../../shared/orbit';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
 import { useItemLoad, usePersistent, useSessionState } from '../lib/hooks';
@@ -166,6 +170,93 @@ function Editor({ item }: { item: Item }) {
       .then((c) => setOrbitReady(c.qwen.some((l) => ORBIT_LORA.test(l.name))))
       .catch(() => setOrbitReady(false));
   }, [mode, orbitReady]);
+  // Shape in Instruct (DECISIONS 117): keep the picture's shape, or redraw it in another
+  const [shape, setShape] = useSessionState<'keep' | Shape>('edit.shape', 'keep');
+  // Sheet maker (DECISIONS 118): a [SLOT] in the instruction + one value per line = one picture each, one labelled grid
+  const [sheetLines, setSheetLines] = useSessionState('edit.sheet', '');
+  const slotOf = () => /\[([A-Z][A-Z ]{1,30})\]/.exec(prompt);
+  const sheetValues = sheetLines.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 9);
+  const makeSheet = async () => {
+    const slotMatch = slotOf();
+    if (!slotMatch || sheetValues.length < 2) return;
+    try {
+      const T = boot!.prompts;
+      const em = editModel as ImageModelKey;
+      const prompts = sheetValues.map((v) => composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt.split(slotMatch[0]).join(v) }));
+      const extra: Record<string, string> = { ...weightsNow(), ...(lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(shape !== 'keep' ? { shape } : {}) };
+      const r = await api.post<{ jobs: Job[] }>(`/api/items/${item.id}/sheet`, { workflow: wfFor('instruct'), model: em, prompts, labels: sheetValues, seed: nextSeed(), name: `${slotMatch[1].toLowerCase()} sheet`, extra });
+      toast(`Making ${r.jobs.length} pictures for the sheet (about ${Math.round((r.jobs.length * (em === 'klein' ? 15 : 25)) / 60) || 1} min). Each one lands as a version; the labelled sheet goes to the Library when the last is in.`, 'info', 9000);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
+  // Try both models (DECISIONS 116): one instruction to Klein and Qwen on the same seed, then pick
+  const [both, setBoth] = useState<{ jobs: Record<'klein' | 'qwen', string>; done: Partial<Record<'klein' | 'qwen', string>>; failed: string[] } | null>(null);
+  const [bothPick, setBothPick] = useState<{ klein: Item; qwen: Item } | null>(null);
+  useEffect(
+    () =>
+      onJob((j) => {
+        setBoth((b) => {
+          if (!b) return b;
+          const m = (Object.keys(b.jobs) as ('klein' | 'qwen')[]).find((k) => b.jobs[k] === j.id);
+          if (!m) return b;
+          if (j.status === 'done' && j.result_ids[0]) return { ...b, done: { ...b.done, [m]: j.result_ids[0] } };
+          if (j.status === 'error' || j.status === 'lost' || j.status === 'cancelled') return { ...b, failed: [...b.failed, m] };
+          return b;
+        });
+      }),
+    [],
+  );
+  useEffect(() => {
+    if (!both) return;
+    if (both.failed.length) {
+      toast(`${both.failed.map((m) => (m === 'klein' ? 'Klein 9B' : 'Qwen-Image 2.1')).join(' and ')} could not finish; the other result is in the versions.`, 'error');
+      setBoth(null);
+      return;
+    }
+    if (both.done.klein && both.done.qwen) {
+      const ids = both.done as Record<'klein' | 'qwen', string>;
+      setBoth(null);
+      void Promise.all([api.item(ids.klein), api.item(ids.qwen)]).then(([k, q]) => setBothPick({ klein: k.item, qwen: q.item }));
+    }
+  }, [both]);
+  const tryBoth = async () => {
+    if (running || both) return;
+    if (!prompt.trim()) return toast('Type an instruction first, e.g. “make it night time”.', 'info');
+    try {
+      const T = boot!.prompts;
+      const masked = onlyMasked && !maskEmpty;
+      const inp = await api.asInput(item.id);
+      const mask = masked ? await uploadMask() : undefined;
+      const seed = nextSeed();
+      const jobs = {} as Record<'klein' | 'qwen', string>;
+      for (const m of ['klein', 'qwen'] as const) {
+        const workflow = boot?.manifest.edit?.instruct?.[m] ?? (m === 'qwen' ? 'qwen_edit' : 'klein_edit');
+        const params: Record<string, string | number> = {
+          image_1: inp.name,
+          seed,
+          prompt: composeImagePrompt(T, { model: m, mode: 'instruct', text: prompt, masked }),
+          ...(ref ? { image_2: ref.name } : {}),
+          ...(mask ? { mask } : { ...(shape !== 'keep' ? { shape } : {}) }),
+          ...(m === 'klein' && kleinWeights ? { klein_weights: kleinWeights } : {}),
+          ...((editLoras[m] ?? []).length ? { loras: JSON.stringify(editLoras[m]) } : {}),
+        };
+        const j = await api.submit({ workflow, params, meta: { mode: 'edit:instruct', model: m === 'klein' ? 'Klein 9B edit' : 'Qwen-Image 2.1 edit', prompt: prompt.trim(), parentId: item.id, ui: item.ui } });
+        jobs[m] = j.id;
+      }
+      setBoth({ jobs, done: {}, failed: [] });
+      toast('Both models are on it — Klein first (~15 s), then Qwen (~25 s). You choose when both are in.', 'info', 6000);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
+  const keepFromBoth = async (keep: 'klein' | 'qwen' | 'both') => {
+    const pick = bothPick;
+    setBothPick(null);
+    if (!pick) return;
+    if (keep !== 'both') await deleteWithUndo([pick[keep === 'klein' ? 'qwen' : 'klein'].id], 'version');
+    go('edit', keep === 'qwen' ? pick.qwen.id : pick.klein.id);
+  };
   const turnaround = async () => {
     try {
       const r = await api.post<{ jobs: Job[] }>(`/api/items/${item.id}/turnaround`);
@@ -573,6 +664,7 @@ function Editor({ item }: { item: Item }) {
       const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt, masked, circled: circle }) };
       if (ref) params.image_2 = ref.name;
       if (masked) params.mask = await uploadMask();
+      if (shape !== 'keep' && !masked && !circle) params.shape = shape;
       if (circle) {
         const name = await uploadCircled();
         if (!name) return toast('Paint over the object to circle first (B for brush).', 'info');
@@ -1026,6 +1118,15 @@ function Editor({ item }: { item: Item }) {
               }}
             />
           )}
+          {both && (
+            <div className="both-strip" role="status" aria-label="Both models">
+              {(['klein', 'qwen'] as const).map((m) => (
+                <span key={m} className={both.done[m] ? 'done' : ''}>
+                  {both.done[m] ? <Check size={13} /> : <Loader2 size={13} className="spin" />} {m === 'klein' ? 'Klein 9B' : 'Qwen-Image 2.1'}
+                </span>
+              ))}
+            </div>
+          )}
           {running && (
             <div className="progress-overlay" style={{ zIndex: 2 }}>
               <span className="big-status">{job!.status === 'queued' ? 'Waiting in queue' : job!.stage}</span>
@@ -1091,6 +1192,30 @@ function Editor({ item }: { item: Item }) {
           {compare && <span className="note">Hover the picture to compare · hold Space for the original</span>}
         </div>
       </section>
+      {bothPick && (
+        <div className="compare-overlay" role="dialog" aria-label="Both models">
+          <div className="compare-bar">
+            <strong>Klein 9B or Qwen-Image 2.1?</strong>
+            <span className="muted">{prompt.trim().slice(0, 90)}</span>
+            <div style={{ flex: 1 }} />
+            <button className="btn sm" onClick={() => void keepFromBoth('both')}>
+              Keep both
+            </button>
+          </div>
+          <div className="compare-side">
+            {(['klein', 'qwen'] as const).map((m) => (
+              <figure key={m}>
+                <img src={fileUrl(bothPick[m].id)} alt={m === 'klein' ? 'Klein 9B' : 'Qwen-Image 2.1'} />
+                <figcaption>
+                  <button className="btn primary" onClick={() => void keepFromBoth(m)}>
+                    Keep {m === 'klein' ? 'Klein 9B' : 'Qwen-Image 2.1'}
+                  </button>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      )}
 
       <aside className="panel right" aria-label="Edit settings">
         <div className="panel-scroll">
@@ -1175,6 +1300,14 @@ function Editor({ item }: { item: Item }) {
                 >
                   {instrBusy ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Enhance instruction
                 </button>
+                <button
+                  className="btn sm ghost"
+                  disabled={!prompt.trim() || running || !!both || !online || circled}
+                  title="Run this instruction on Klein 9B and Qwen-Image 2.1 at once (same seed), then keep the one you like"
+                  onClick={() => void tryBoth()}
+                >
+                  <Columns2 size={14} /> Try both models
+                </button>
                 {instrUndo !== null && (
                   <button className="btn sm ghost" onClick={() => (setPrompt(instrUndo), setInstrUndo(null))}>
                     Undo
@@ -1184,6 +1317,38 @@ function Editor({ item }: { item: Item }) {
             </>
           )}
 
+          {mode === 'instruct' && slotOf() && (
+            <div className="sheet-maker">
+              <p className="section-label">
+                Sheet <span className="mono">{sheetValues.length ? `${sheetValues.length} pictures` : ''}</span>
+              </p>
+              <label className="field">
+                <span>One {slotOf()![1].toLowerCase()} per line — each becomes its own picture, then one labelled sheet</span>
+                <textarea className="input" rows={4} value={sheetLines} onChange={(e) => setSheetLines(e.target.value)} placeholder={'e.g.\nblack with a volt-green sole\nnavy with a red heel\nsand and terracotta'} aria-label="Sheet values" />
+              </label>
+              <button type="button" className="btn sm" style={{ marginTop: 6 }} disabled={sheetValues.length < 2 || running || !online} onClick={() => void makeSheet()}>
+                <LayoutGrid size={14} /> Make a sheet of {sheetValues.length || '…'}
+              </button>
+            </div>
+          )}
+          {mode === 'instruct' && (
+            <div>
+              <p className="section-label">Shape</p>
+              <div className="pills" role="group" aria-label="Result shape">
+                {(['keep', ...SHAPES] as const).map((x) => (
+                  <button key={x} type="button" className="pill accent" aria-pressed={shape === x} disabled={x !== 'keep' && !maskEmpty && onlyMasked} onClick={() => setShape(x)}>
+                    {x === 'keep' ? 'Keep' : x}
+                  </button>
+                ))}
+              </div>
+              {shape !== 'keep' && (
+                <p className="note" style={{ marginTop: 6 }}>
+                  The picture is redrawn to fill a {shape} frame: the model may add to the sides or the top and bottom to make it fit.
+                  {!maskEmpty && onlyMasked ? ' Not with “Only change the masked area”.' : ''}
+                </p>
+              )}
+            </div>
+          )}
           {/* Instruct changes the whole picture until you paint: the mask settings appear with the first stroke (audit #2) */}
           {mode === 'instruct' && maskEmpty && (
             <p className="note mask-hint">
