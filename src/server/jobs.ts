@@ -17,6 +17,7 @@ import type { FileRef, Item, Job, Store } from './db.js';
 import { backToSize } from '../shared/fullsize.js';
 import { injectLoras, parseLoras } from '../shared/loras.js';
 import { LoraLibrary, type LoraFamily } from './loras.js';
+import { copyMeasure, looksCopied } from './copycheck.js';
 
 export interface SubmitRequest {
   workflow: string;
@@ -563,13 +564,22 @@ export class JobManager {
       if (!ids.length) return this.fail(jobId, 'ComfyUI finished but produced no image.');
     }
     const maskFiles = spec.outputs.mask ? filesFromHistory(h, findByTitle(prompt, spec.outputs.mask)).map(ref) : [];
+    // Qwen Instruct sometimes returns its input with a grain added for a given seed (DECISIONS 107): say so
+    let copied: { low: number; grain: number } | null = null;
+    if (job.workflow === 'qwen_edit' && job.meta.mode === 'edit:instruct' && !p.mask && parent?.kind === 'image' && ids.length) {
+      const out = this.store.getItem(ids[0])!;
+      const m = await Promise.all([this.comfy.view(parent.file), this.comfy.view(out.file)])
+        .then(([a, b]) => copyMeasure(Buffer.from(a), Buffer.from(b)))
+        .catch(() => null);
+      if (m && looksCopied(m)) copied = { low: Math.round(m.low * 10) / 10, grain: Math.round(m.grain * 100) / 100 };
+    }
     this.patch(jobId, {
       status: 'done',
       progress: 1,
       stage: 'Done',
       finished_at: finished,
       result_ids: ids,
-      ...(maskFiles.length ? { meta: { ...job.meta, maskFiles } } : {}),
+      ...(maskFiles.length || copied ? { meta: { ...job.meta, ...(maskFiles.length ? { maskFiles } : {}), ...(copied ? { copied } : {}) } } : {}),
     });
     this.broadcast({ type: 'library', ids });
     void this.runChain(this.store.getJob(jobId)!, ids);

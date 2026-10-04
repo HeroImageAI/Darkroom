@@ -26,7 +26,7 @@ const ui = (action: string, spec: object) => {
 for (const e of plan.entries ?? []) {
   for (const t of e.titles as string[]) {
     const best = e.best === t;
-    console.log(t, ui('annotate', { id: id(t), board: e.board, appendNotes: `score: ${e.score}/5 — ${e.why}${best ? '\nprovisional-best' : ''}`, ...(best ? { favourite: true } : {}), log: { test_id: e.test, model: e.model, seed: 42, library_item_id: id(t), library_item_name: t, status: e.status ?? 'OK', score: e.score, provisional_best: best, notes: e.why } }));
+    console.log(t, ui('annotate', { id: id(t), board: e.board, appendNotes: `score: ${e.score}/5 — ${e.why}${best ? '\nprovisional-best' : ''}`, ...(best ? { favourite: true } : {}), log: { test_id: e.test, model: e.model, seed: e.seed ?? 42, library_item_id: id(t), library_item_name: t, status: e.status ?? 'OK', score: e.score, provisional_best: best, notes: e.why } }));
   }
 }
 for (const c of plan.compares ?? []) console.log(c.test, ui('compare', { testId: c.test, a: id(c.a), b: id(c.b), labelA: c.a, labelB: c.b, title: `${c.test} · Compare Klein vs Qwen`, board: c.board }));

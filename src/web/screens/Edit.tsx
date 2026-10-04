@@ -286,7 +286,20 @@ function Editor({ item }: { item: Item }) {
         if (j.status === 'done' && j.result_ids[0]) {
           sessionStorage.removeItem('dr.edit.job');
           go('edit', j.result_ids[0]);
-          toast('New version saved. Earlier versions are untouched.', 'ok');
+          const parentId = (j.meta as any).parentId as string | undefined;
+          // Qwen sometimes returns the picture almost unchanged for a given seed (DECISIONS 107)
+          if ((j.meta as any).copied && parentId)
+            toast('Qwen returned almost the same picture — this happens with some seeds. Try another seed.', 'info', 15000, {
+              label: 'Try another seed',
+              run: () => {
+                // stored directly too: by now Edit may show the copy in a new instance of this screen
+                const next = { seed: randomSeed(), locked: false };
+                sessionStorage.setItem('dr.edit.seed', JSON.stringify(next));
+                setEditSeed(next);
+                go('edit', parentId);
+              },
+            });
+          else toast('New version saved. Earlier versions are untouched.', 'ok');
         }
         if (j.status === 'error' || j.status === 'lost') toast(j.error ?? 'That edit failed.', 'error');
       }),

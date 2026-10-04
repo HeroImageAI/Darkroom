@@ -695,3 +695,19 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
 106. **A locked Edit seed stays locked after a run** (Apparel pilot finding 1, Koos: "fix the seed lock"). Edit moves to
     the new version after every run, which rebuilt the screen and drew a fresh random seed; the seed now lives in the
     session (`useSessionState('edit.seed')`), so 42 stays 42 and locked until you unlock it. e2e covers a finished run.
+107. **Qwen Instruct says when it returned the picture unchanged** (test-suite finding 12, Koos: "look into it", then
+    "do both"). Qwen-Image 2.1 at CFG 1 follows an instruction for most seeds but, for some seed and picture
+    combinations, returns the input with a fine grain added. Seed 42, used for every run of the 2026-10-03 suite, did
+    this for FTW-IMG-02/06 and AUT-IMG-02/03/06; seeds 1–9 all made the four-view board and the clay render
+    (`scripts/try-qwen-copy.ts`, `tests/results/qwen-copy/`). Darkroom's graph matches the official template (its
+    empty starting latent, 50 steps and an `<image1>` tag change nothing); CFG 4 with a negative fixed the car but not
+    the shoe and doubles the time, so CFG stays 1. After a Qwen Instruct without a mask the server compares the result
+    with its input (`src/server/copycheck.ts`, small greyscale copies): **grain** = fine detail of the result ÷ that of
+    the input, **low** = mean difference of blurred copies. Copy when grain ≥ 1.6 and low ≤ 25: every known copy had
+    grain ≥ 1.9, no Qwen result that followed its instruction had more than 1.5 (`scripts/try-copycheck.ts` on all 100
+    suite edits). Only Qwen Instruct is checked — some Klein styles (a marker sketch) add real fine detail. The result
+    is still saved; Edit says "Qwen returned almost the same picture" with **Try another seed**, which goes back to the
+    original with a new seed and the instruction kept. A plain pixel difference cannot tell them apart (a clay render
+    of a white shoe differs from it as little as the copy does). Re-run on seed 7, Qwen moved from 1 to 4–5 on those
+    tests; AUT-IMG-07's chained steps and MOV-IMG-06 stay weak on both seeds (a real limit, and still flagged when it
+    copies). e2e covers the warning with the shoe at seed 42.
