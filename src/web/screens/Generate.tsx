@@ -366,6 +366,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
       width: ww,
       height: hh,
       batch: cur.batch,
+      // Fast (DECISIONS 119): the server adds Turbo8 and runs 8 steps
+      ...((q as { fast?: boolean } | undefined)?.fast ? { fast: 1 } : {}),
     };
     cur.refs.forEach((r, i) => (params[`image_${i + 1}`] = r.name));
     const loras = cur.loras?.[cur.model] ?? [];

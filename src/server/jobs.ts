@@ -22,6 +22,10 @@ import { ORBIT_LORA, orbitLabel, orbitPrompt, TURNAROUND, type OrbitMove } from 
 import { outputDirFromArgv } from './trash.js';
 import { applyShape, shapeSizes, SHAPES, type Shape } from '../shared/shape.js';
 
+/** Qwen-Image 2.1 helper LoRAs (DECISIONS 119), found in the loras folder by name. */
+const TURBO_LORA = /turbo8.*\.safetensors$/i;
+const CONSISTENCY_LORA = /qwen-image-2\.1-consistency(?!-2000).*\.safetensors$/i;
+
 export interface SubmitRequest {
   workflow: string;
   params: ParamValues;
@@ -363,6 +367,23 @@ export class JobManager {
         Object.assign(node.inputs, { 'format.codec.encoding': 're-encode', 'format.codec.encoding.crf': 18 });
     // your own LoRAs (DECISIONS 86): only ones made for this job's model, put on the graph's model
     const loras = parseLoras(req.params.loras);
+    // Qwen helpers Darkroom adds itself (DECISIONS 119): Turbo8 for Fast (8 steps), and the Consistency LoRA on a
+    // whole-picture instruction so it stays on the picture's frame (not for Turn it or a new shape, which move it)
+    if (spec.family.startsWith('qwen') && (req.workflow === 'qwen_edit' || req.workflow === 'qwen_t2i' || req.workflow === 'qwen_ref')) {
+      const have = (await this.loraLibrary.catalogue(this.loraModels())).qwen.map((l) => l.name);
+      const add = (re: RegExp) => {
+        const name = have.find((n) => re.test(n));
+        if (name && !loras.some((l) => l.name === name)) loras.push({ name, strength: 1 });
+        return !!name;
+      };
+      const on = (v: unknown) => v === true || v === 1 || v === '1' || v === 'true';
+      if (on(req.params.fast)) {
+        if (!add(TURBO_LORA)) throw new WorkflowError('Fast needs the Turbo8 LoRA for Qwen-Image 2.1 in your ComfyUI loras folder.');
+        for (const id of findByTitle(prompt, 'DR_SAMPLER')) prompt[id].inputs.steps = 8;
+      }
+      const wholePicture = req.workflow === 'qwen_edit' && req.meta.mode === 'edit:instruct' && !req.params.mask && !req.params.shape;
+      if (wholePicture && req.params.keep_frame !== 0 && req.params.keep_frame !== '0') add(CONSISTENCY_LORA);
+    }
     if (loras.length) {
       const family = spec.family === 'klein' ? 'klein' : spec.family.startsWith('qwen') ? 'qwen' : spec.family === 'ltx' ? 'ltx' : null;
       if (!family || !findByTitle(prompt, 'DR_MODEL').length) throw new WorkflowError('LoRAs can only be used with Klein 9B, Qwen-Image 2.1 and LTX 2.5.');

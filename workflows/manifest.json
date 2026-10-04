@@ -144,6 +144,34 @@
         ]
       },
       "quality": {
+        "fast": {
+          "label": "Fast",
+          "note": "8 steps with Turbo8, ~1 MP (~10 s)",
+          "steps": 8,
+          "fast": true,
+          "aspects": {
+            "1:1": [
+              1024,
+              1024
+            ],
+            "4:5": [
+              928,
+              1152
+            ],
+            "3:2": [
+              1248,
+              832
+            ],
+            "16:9": [
+              1376,
+              768
+            ],
+            "9:16": [
+              768,
+              1376
+            ]
+          }
+        },
         "standard": {
           "label": "Draft",
           "note": "25 steps, ~1 MP (fast iteration)",

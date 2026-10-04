@@ -547,6 +547,12 @@ app.post('/api/jobs/dismiss', async (req) => {
 
 app.get('/api/jobs/active', async () => store.activeJobs().map(publicJob));
 
+/** The graph a job was sent to ComfyUI with (read-only; for checking what Darkroom added, e.g. LoRAs and steps). */
+app.get('/api/jobs/:id/graph', async (req, reply) => {
+  const j = store.getJob((req.params as { id: string }).id);
+  return j ? j.api_prompt : reply.code(404).send({ error: 'Job not found' });
+});
+
 app.post('/api/jobs/:id/cancel', async (req) => {
   await jobs.cancel((req.params as { id: string }).id);
   return { ok: true };

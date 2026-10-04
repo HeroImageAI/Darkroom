@@ -1596,4 +1596,58 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(sheet.width).toBeGreaterThan(sheet.height); // three in a row
     await shot(page, 'edit-sheet');
   });
+
+  test('Qwen helpers: Fast runs 8 steps with Turbo8; a whole-picture instruction gets the Consistency LoRA, Turn it does not (DECISIONS 119)', async () => {
+    const cat = await (await page.request.get('/api/loras')).json();
+    const names = cat.qwen.map((l: any) => l.name).join(' ');
+    test.skip(!/turbo8/i.test(names) || !/consistency/i.test(names), 'Turbo8 or the Consistency LoRA is not on this machine');
+    const graphOf = async (jobId: string) => (await (await page.request.get(`/api/jobs/${jobId}/graph`)).json()) as Record<string, any>;
+    const loraNames = (g: Record<string, any>) => Object.values(g).filter((n: any) => /Lora/.test(n.class_type)).map((n: any) => n.inputs.lora_name).join(' ');
+    // Generate · Qwen · Fast
+    await page.goto('/#/generate');
+    await page.getByRole('group', { name: 'Model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await page.getByRole('group', { name: 'Quality' }).getByRole('button', { name: 'Fast' }).click();
+    await page.getByLabel('Prompt').fill('A ceramic teapot on a linen tablecloth, morning light');
+    const sent = page.waitForResponse((r) => r.url().endsWith('/api/jobs') && r.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
+    const job = await (await sent).json();
+    const g = await graphOf(job.id);
+    expect(loraNames(g)).toMatch(/turbo8/i);
+    expect(Object.values(g).find((n: any) => n._meta?.title === 'DR_SAMPLER').inputs.steps).toBe(8);
+    await page.request.post(`/api/jobs/${job.id}/cancel`);
+    await page.getByRole('group', { name: 'Quality' }).getByRole('button', { name: 'Draft' }).click();
+    // Edit · Qwen Instruct: Consistency on its own
+    const pic = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate');
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await page.getByLabel('Instruction').fill('Make it a watercolour painting. Keep the composition.');
+    const sent2 = page.waitForResponse((r) => r.url().endsWith('/api/jobs') && r.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Apply instruction Ctrl+Enter' }).click();
+    const j2 = await (await sent2).json();
+    expect(loraNames(await graphOf(j2.id))).toMatch(/consistency/i);
+    await page.request.post(`/api/jobs/${j2.id}/cancel`);
+    // the switch turns it off
+    await openEditAdvanced(page);
+    await page.getByLabel('Keep edits on the frame').uncheck();
+    const sent3 = page.waitForResponse((r) => r.url().endsWith('/api/jobs') && r.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Apply instruction Ctrl+Enter' }).click();
+    const j3 = await (await sent3).json();
+    expect(loraNames(await graphOf(j3.id))).not.toMatch(/consistency/i);
+    await page.request.post(`/api/jobs/${j3.id}/cancel`);
+    await page.getByLabel('Keep edits on the frame').check();
+  });
+
+  test('Video: no picture yet — Make the first frame paints the opening shot and sets it as the start frame (DECISIONS 120)', async () => {
+    await page.goto('/#/video');
+    const fresh = page.getByRole('button', { name: /^New$/ });
+    if (await fresh.isEnabled().catch(() => false)) await fresh.click();
+    await page.getByLabel('Opening shot', { exact: true }).fill('A lone lighthouse on a cliff at dusk, storm clouds over the sea');
+    await page.getByRole('group', { name: 'Opening shot shape' }).getByRole('button', { name: '16:9' }).click();
+    await page.getByRole('button', { name: 'Make the first frame' }).click();
+    await expect(page.getByText('First frame ready. Describe what moves, then Animate.').last()).toBeVisible({ timeout: 180_000 });
+    await expect(page.getByLabel('Opening shot', { exact: true })).toHaveCount(0); // a start frame is set
+    await expect(page.getByRole('group', { name: 'Camera' }).getByRole('button', { name: 'Turntable' })).toBeVisible();
+    await shot(page, 'video-opening-shot');
+  });
 });

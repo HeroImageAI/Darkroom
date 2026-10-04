@@ -806,3 +806,25 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     version titled "{name} · {value}", and when the last is in the server lays them out — 2 or 3 to a row on white —
     with the values typed underneath and "{name} · {slot} sheet" on top: a Library item (mode `sheet`) on the
     picture's board, the pictures and labels in its params. e2e: three recolours, one labelled sheet.
+119. **Qwen helper LoRAs: Fast and Keep edits on the frame** (audit #6, #7; Koos: "do the remaining from the audit,
+    download what you need"). Downloaded (non-gated): `turbo8_lora_step2500.safetensors` (1.36 GB, chriswritescode,
+    Qwen research licence), `qwen-image-2.1-consistency.safetensors` (159 MB, ausboss, step 1500 — the card's
+    recommended one), and `Flux2-Klein-9B-Enhanced-Details.safetensors` (331 MB, dx8152 `realistic.safetensors`; a normal
+    Klein LoRA in the picker). All load with no dropped keys. A/B on three Library edits, seed 7
+    (`scripts/try-qwen-loras.ts`, `tests/results/qwen-loras/`): Consistency took a watercolour restyle's drift from 11 px
+    to 0 and changed nothing on edits that were already on the frame; Turbo8 at 8 steps ran ~10 s against ~26 s, as good
+    on product edits, a little looser on a painterly restyle (16 steps at 0.65 was no better). So: the server adds the
+    **Consistency LoRA** to every whole-picture Qwen Instruct (not with a mask, Turn it or a new Shape — those are meant
+    to move the frame), with *Keep edits on the frame* in Edit › Advanced to switch it off; **Fast** adds Turbo8 and runs
+    8 steps — a Quality option on Generate (Fast / Draft / Native 2K) and a switch in Edit › Advanced (the Qwen card then
+    says ~10 s). `GET /api/jobs/:id/graph` returns the graph a job was sent with. LTX Ingredients is gated: Koos
+    downloads it; it is not wired in yet.
+120. **Camera wording retuned, Turntable chip, text → video by a first frame** (audit #8, P4). A/B on the scavenger,
+    Draft, seed 11 (`scripts/try-camera.ts`, `tests/results/camera-ab/`): the old Static sentence kept the framing on
+    that seed but the background drifted into a dust storm; "Static tripod shot: the camera does not move, zoom or push
+    in, and the framing stays exactly the same…" kept framing and background. The new Orbit sentence (arcs sideways at
+    the same distance and height, same size in frame) turned him further, to a profile. New **Turntable** chip (the
+    object turns, the camera stays still), its tooltip pointing to Turn it › Make a turnaround › Animate as a turntable
+    for a real 360°. **Text → video**: with no start frame, Video offers *Describe the opening shot* (16:9 / 9:16 / 1:1)
+    → **Make the first frame** (Klein, ~10 s, titled "Opening shot · …"), set as the start frame; then motion and
+    Animate as usual — LTX's image-to-video quality with a frame you can see first.
