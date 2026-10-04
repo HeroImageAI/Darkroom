@@ -1,0 +1,137 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- complementary "Video settings":
+  - heading "1 Frames New" [level=2]:
+    - text: 1 Frames
+    - button "New" [disabled]
+  - paragraph: Start frame
+  - text: Add image
+  - button "Add image"
+  - paragraph: End frame (optional)
+  - text: Add image
+  - button "Add image"
+  - button "Start from library"
+  - button "Swap start and end frames" [disabled]
+  - button "End from library"
+  - paragraph: Drag from the Library, drop a file, paste — or use “Animate” on any picture.
+  - heading "2 What should move?" [level=2]
+  - textbox "Motion prompt":
+    - /placeholder: e.g. She turns her head towards the window and smiles; curtains sway in the breeze.
+  - button "Suggest motion" [disabled]
+  - paragraph: "One flowing present-tense paragraph, 4-8 sentences: what moves, how the camera moves, and any sound. Don't describe the still picture. 0 words"
+  - group "Camera":
+    - button "Static"
+    - button "Slow push-in"
+    - button "Pull back"
+    - button "Orbit"
+    - button "Pan left"
+    - button "Handheld"
+  - paragraph: Sound
+  - group "Sound":
+    - button "From the scene" [pressed]
+    - button "Describe"
+    - button "Silent"
+  - paragraph: Effect
+  - group "Effect":
+    - button "None" [pressed]
+    - button "Slow motion"
+    - button "Cinemagraph"
+  - paragraph:
+    - text: LoRAs none for LTX 2.5
+    - button "Refresh LoRAs"
+  - heading "3 LTX 2.5 · length and quality" [level=2]
+  - paragraph: Length
+  - group "Length":
+    - button "Auto"
+    - button "3 s"
+    - button "5 s" [pressed]
+    - button "8 s"
+  - paragraph: Quality
+  - group "Quality":
+    - button "Draft (480p)" [pressed]
+    - button "Final (720p)"
+    - button "1080p"
+  - text: 864×480 24 fps 5.0 s 121 frames ≈ 57s
+  - checkbox "Notify when done" [checked]
+  - text: Notify when done
+  - button "Animate Ctrl+Enter" [disabled]
+  - paragraph: Add a start frame first (step 1).
+- region "Player":
+  - heading "No take selected" [level=2]
+  - paragraph: Pick a start frame, describe the motion, then press Animate. Start with Draft to check the motion quickly, then render it at 720p or 1080p.
+- complementary "Takes":
+  - paragraph: Takes 30
+  - button "Show this take": The motion carries on smoothly. LTX 2.5 · filling the gap · Draft 864×480 · 1.8 s · 21.822 fps rendered in 52s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 1m 04s
+  - button "Delete this take"
+  - button "Show this take": The motion carries on smoothly. LTX 2.5 · filling the gap · Draft 864×480 · 1.8 s · 21.822 fps rendered in 51s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 57s
+  - button "Delete this take"
+  - button "Show this take": The motion carries on smoothly. LTX 2.5 · filling the gap · Draft 864×480 · 1.8 s · 21.822 fps rendered in 50s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 57s
+  - button "Delete this take"
+  - button "Show this take": The motion carries on smoothly. LTX 2.5 · filling the gap · Draft 864×480 · 1.8 s · 21.822 fps rendered in 50s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 56s
+  - button "Delete this take"
+  - button "Show this take": The motion carries on smoothly. LTX 2.5 · filling the gap · Draft 864×480 · 1.8 s · 21.822 fps rendered in 56s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 58s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 1m 06s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 57s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 58s
+  - button "Delete this take"
+  - button "Show this take": One continuous shot without any cuts. The motion carries on smoothly. LTX 2.5 · filling the gap · Draft 864×480 · 1.8 s · 21.822 fps rendered in 39s
+  - button "Delete this take"
+  - button "Show this take": One continuous shot without any cuts. The motion carries on smoothly. LTX 2.5 · filling the gap · Draft 864×480 · 1.8 s · 21.822 fps rendered in 40s
+  - button "Delete this take"
+  - button "Show this take": One continuous shot without any cuts. The creature raises one branch-like arm toward the light. LTX 2.5 · retaking · Draft 864×480 · 1.3 s · 24.006 fps rendered in 35s
+  - button "Delete this take"
+  - button "Show this take": The model keeps walking toward the camera, then stops at the end of the runway and poses. LTX 2.5 · extending · Draft 864×480 · 3.2 s · 25.26 fps rendered in 47s
+  - button "Delete this take"
+  - button "Show this take": One continuous shot without any cuts. The sneaker keeps turning slowly on the turntable. LTX 2.5 · filling the gap · Draft 864×480 · 2.3 s · 24.003 fps rendered in 43s
+  - button "Delete this take"
+  - button "Show this take": One continuous shot without any cuts. The creature raises one branch-like arm toward the light. LTX 2.5 · retaking · Draft 864×480 · 1.0 s · 24 fps rendered in 36s
+  - button "Delete this take"
+  - button "Show this take": The model keeps walking toward the camera, then stops at the end of the runway and poses. LTX 2.5 · extending · Draft 864×480 · 3.0 s · 24 fps rendered in 35s
+  - button "Delete this take"
+  - button "Show this take": One continuous shot without any cuts. The sneaker keeps turning slowly on the turntable. LTX 2.5 · filling the gap · Draft 864×480 · 2.0 s · 24 fps rendered in 40s
+  - button "Delete this take"
+  - button "Show this take": The captain speaks to her crew, looking into the camera, lips moving with every word. LTX 2.5 · extending · Draft 864×480 · 6.0 s · 24 fps rendered in 1m 34s
+  - button "Delete this take"
+  - button "Show this take": The moss-covered forest creature slowly turns its head, mist drifting through the pines, light shafts shifting. LTX 2.5 864×480 · 3.0 s · 24 fps rendered in 44s
+  - button "Delete this take"
+  - button "Show this take": The model walks toward the camera down the white runway, jacket moving with each step. Static camera. LTX 2.5 864×480 · 3.0 s · 24 fps rendered in 46s
+  - button "Delete this take"
+  - button "Show this take": The sneaker turns slowly on a hidden turntable. Static camera, soft studio light. LTX 2.5 864×480 · 3.0 s · 24 fps rendered in 44s
+  - button "Delete this take"
+  - button "Show this take": The sneaker turns slowly on a hidden turntable. Static camera, soft studio light. LTX 2.5 864×480 · 3.0 s · 24 fps rendered in 44s
+  - button "Delete this take"
+  - button "Show this take": The starship captain stands still and listens, then takes a breath. Static camera. LTX 2.5 864×480 · 2.0 s · 24 fps rendered in 38s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 56s
+  - button "Delete this take"
+  - button "Show this take": Waves crash against the rocks and the raincoat flaps in the wind. The camera slowly pushes in toward the subject until it fills most of the frame. LTX 2.5 · Draft 480×864 · 3.0 s · 24 fps rendered in 56s
+  - button "Delete this take"
+  - button "Show this take": crf crf test 480×864 · 3.0 s · 24 fps rendered in 58s
+  - button "Delete this take"
+  - button "See all videos in the Library"
+- status

@@ -297,6 +297,17 @@ export function Library() {
             <Search size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--muted)' }} />
             <input ref={searchRef} className="input" style={{ paddingLeft: 34 }} placeholder="Search prompt, seed or tag  ( / )" value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
+          <span className="mono muted item-count">{total} items</span>
+          {!trash && (
+            <>
+              <button className="btn sm" aria-pressed={selectMode} onClick={() => (selectMode ? clearSelection() : setSelecting(true))} title="Tick several pictures and videos to delete, move or favourite them together. Tip: drag a box over the grid, Ctrl-click, or Shift-click for a range.">
+                <CheckSquare size={14} /> {selectMode ? 'Done' : 'Select'}
+              </button>
+              <button className="btn sm upload-btn" disabled={!!uploading} onClick={() => uploadRef.current?.click()} title="Add your own pictures and videos to the Library (or drop them on the grid)">
+                {uploading ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {uploading ? `Adding ${uploading}…` : 'Upload'}
+              </button>
+            </>
+          )}
           <input
             ref={uploadRef}
             className="sr"
@@ -311,18 +322,20 @@ export function Library() {
             }}
           />
         </div>
+        <div className="library-body">
         {!trash && (
-          <div className="board-row" role="group" aria-label="Boards">
-            <button className="pill" aria-pressed={shownBoard === 'all'} onClick={() => setShownBoard('all')}>
+          // boards as a column, like folders (audit #3): the grid gets the width
+          <nav className="board-col" role="group" aria-label="Boards">
+            <button className="board-link" aria-pressed={shownBoard === 'all'} onClick={() => setShownBoard('all')}>
               All boards
             </button>
-            <button className="pill" aria-pressed={shownBoard === 'none'} onClick={() => setShownBoard('none')}>
+            <button className="board-link" aria-pressed={shownBoard === 'none'} onClick={() => setShownBoard('none')}>
               No board <span className="mono muted">{noBoardCount}</span>
             </button>
             {boards.map((b) => (
-              <button key={b.id} className="pill board-pill" aria-pressed={shownBoard === b.id} onClick={() => setShownBoard(b.id)}>
-                {b.cover && <img src={thumbUrl(b.cover)} alt="" />}
-                {b.name} <span className="mono muted">{b.count}</span>
+              <button key={b.id} className="board-link board-pill" aria-pressed={shownBoard === b.id} onClick={() => setShownBoard(b.id)} title={b.name}>
+                {b.cover ? <img src={thumbUrl(b.cover)} alt="" /> : <span className="board-nocover" />}
+                <span className="board-name">{b.name}</span> <span className="mono muted">{b.count}</span>
               </button>
             ))}
             <button className="btn ghost sm" onClick={() => setBoardDialog('new')}>
@@ -341,15 +354,9 @@ export function Library() {
                 </button>
               </span>
             )}
-            <span className="mono muted item-count">{total} items</span>
-            <button className="btn sm" aria-pressed={selectMode} onClick={() => (selectMode ? clearSelection() : setSelecting(true))} title="Tick several pictures and videos to delete, move or favourite them together. Tip: drag a box over the grid, Ctrl-click, or Shift-click for a range.">
-              <CheckSquare size={14} /> {selectMode ? 'Done' : 'Select'}
-            </button>
-            <button className="btn sm upload-btn" disabled={!!uploading} onClick={() => uploadRef.current?.click()} title="Add your own pictures and videos to the Library (or drop them on the grid)">
-              {uploading ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {uploading ? `Adding ${uploading}…` : 'Upload'}
-            </button>
-          </div>
+          </nav>
         )}
+        <div className="library-main">
         {(selectMode || trash) && (
           <div className="selection-bar" role="toolbar" aria-label="Selection">
             {selectMode ? (
@@ -482,6 +489,8 @@ export function Library() {
               </button>
             </div>
           )}
+        </div>
+        </div>
         </div>
       </section>
       {sel && !selectMode && (
@@ -629,6 +638,9 @@ function UseAsMenu({ item, x, y, onClose, onDelete }: { item: Item; x: number; y
   );
 }
 
+/** Show the whole picture on its tile: compare sheets, and pictures much wider or taller than square. */
+const wholeTile = (it: Item) => it.mode === 'compare' || (!!it.width && !!it.height && (it.width / it.height > 1.6 || it.height / it.width > 1.6));
+
 function Tile({
   item,
   selected,
@@ -677,7 +689,7 @@ function Tile({
         position: 'relative',
         aspectRatio: '1',
         padding: 0,
-        borderRadius: 10,
+        borderRadius: 3,
         overflow: 'hidden',
         border: `2px solid ${selected || picked ? 'var(--accent)' : 'transparent'}`,
         background: 'var(--panel)',
@@ -686,7 +698,8 @@ function Tile({
       {item.kind === 'video' && hover ? (
         <video ref={vid} src={fileUrl(item.id)} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       ) : (
-        <img src={thumbUrl(item.id)} alt="" loading="lazy" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        // a compare sheet or a very wide/tall picture is shown whole: cropped square, both halves were cut off (audit #9)
+        <img src={thumbUrl(item.id)} alt="" loading="lazy" draggable={false} style={{ width: '100%', height: '100%', objectFit: wholeTile(item) ? 'contain' : 'cover', display: 'block', background: wholeTile(item) ? '#0b0908' : undefined }} />
       )}
       <span style={{ position: 'absolute', left: 6, bottom: 6, display: 'flex', gap: 4 }}>
         {item.kind === 'video' && (
@@ -705,7 +718,7 @@ function Tile({
           </span>
         )}
       </span>
-      {item.favourite && <Heart size={16} fill="#F0B44C" color="#F0B44C" style={{ position: 'absolute', right: 8, top: 8 }} />}
+      {item.favourite && <Heart size={16} fill="var(--accent)" color="var(--accent)" style={{ position: 'absolute', right: 8, top: 8 }} />}
       {item.title && <span className="tile-title">{item.title}</span>}
     </button>
     <button

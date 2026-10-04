@@ -1,0 +1,67 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- navigation "Tools":
+  - button "Move (V)"
+  - button "Mask brush (B)" [pressed]
+  - button "Eraser (E)"
+  - button "Lasso (L)"
+  - button "Smart select (S)"
+  - button "Outpaint frame (O)"
+  - button "Crop (C)"
+  - button "Undo (Ctrl+Z)"
+  - button "Redo (Ctrl+Y)"
+- region "Canvas":
+  - img "Picture being edited"
+  - button "Upload"
+  - button "Upload your own picture"
+  - button "Fit"
+  - button "100%"
+  - text: 53% Versions
+  - group "Versions":
+    - button "v1" [pressed]
+    - button "v2"
+  - button "Compare" [disabled]
+- complementary "Edit settings":
+  - text: v1 1728×1152 made with Klein 9B · nsfwKlein
+  - paragraph: Mode
+  - group "Edit mode":
+    - button "Instruct"
+    - button "Inpaint"
+    - button "Outpaint"
+    - button "Enhance"
+    - button "Layers"
+    - button "Remove BG" [pressed]
+    - button "Upscale"
+  - group "Background removal method":
+    - button "Fast" [pressed]
+    - button "Best quality (Qwen)"
+  - paragraph: Real transparency (PNG with alpha). The soft edge comes from a matting model (good on hair and fur); naming the subject lets SAM 3.1 pick which object to keep.
+  - text: Subject (optional)
+  - textbox "Subject (optional)":
+    - /placeholder: e.g. "the woman" or "the bottle"
+  - text: Edge model
+  - combobox "Edge model":
+    - option "BiRefNet (default)" [selected]
+    - option "Lucida (alternative)"
+  - text: Edge 0px
+  - slider "Grow or shrink the edge": "0"
+  - checkbox "Also make a clean background plate (Qwen-Image 2.1)"
+  - text: Also make a clean background plate (Qwen-Image 2.1)
+  - paragraph: Every apply saves a new version; nothing is overwritten.
+  - button "Remove background Ctrl+Enter"
+  - link "Download":
+    - /url: /api/items/f5795ea3-6c05-46f8-a7f8-8dd5d762f1a5/file?which=main&download=1
+  - button "Animate"
+- status

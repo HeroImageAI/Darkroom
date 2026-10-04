@@ -826,7 +826,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
             <button
               aria-pressed={it.id === selected}
               aria-label={`Show: ${it.prompt || 'picture'}`}
-              title="Delete key removes it (Undo in the notice)"
+              title={`${it.title || it.prompt || 'Picture'}
+Delete key removes it (Undo in the notice)`}
               onClick={() => setSelected(it.id)}
               onKeyDown={(e) => e.key === 'Delete' && (e.preventDefault(), void removeFromHistory(it.id))}
               draggable

@@ -4,7 +4,7 @@
   "models": {
     "klein": {
       "label": "Klein 9B",
-      "tagline": "Fast · 4 steps",
+      "tagline": "Fast · styles, materials",
       "licence": "FLUX.2 [klein] 9B: FLUX Non-Commercial License (personal/non-commercial use).",
       "t2i": "klein_t2i",
       "ref": "klein_ref",
@@ -102,7 +102,7 @@
     },
     "qwen": {
       "label": "Qwen-Image 2.1",
-      "tagline": "Text & layout",
+      "tagline": "Exact shapes, text, layouts",
       "licence": "Qwen-Image 2.1: Qwen Research License - non-commercial use only.",
       "t2i": "qwen_t2i",
       "ref": "qwen_ref",

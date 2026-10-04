@@ -9,6 +9,12 @@ import { expect, test, type Page } from '@playwright/test';
 
 const shot = (page: Page, name: string) => page.screenshot({ path: `proof/v2-${name}.png` });
 
+/** Edit keeps Seed, LoRAs and the Klein version under Advanced (v3.22): open it when it is closed. */
+async function openEditAdvanced(page: Page) {
+  const d = page.locator('details.edit-adv');
+  if ((await d.getAttribute('open')) === null) await d.locator('summary').click();
+}
+
 async function firstItem(page: Page, pred: (i: any) => boolean): Promise<any> {
   const r = await page.request.get('/api/items?limit=200');
   return ((await r.json()).items as any[]).find(pred);
@@ -168,12 +174,17 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.goto(`/#/edit/${it.id}`);
     await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
-    await expect(page.getByLabel(/Point at it with a red circle/)).toBeDisabled();
+    // the mask settings appear with the first stroke (v3.22): before that, only a hint
+    await expect(page.getByLabel(/Point at it with a red circle/)).toHaveCount(0);
+    await expect(page.getByText(/To change only part of the picture, paint over it/)).toBeVisible();
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     await page.keyboard.press('s');
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
     await expect(page.getByText(/Selection added to the mask/).last()).toBeVisible({ timeout: 240_000 });
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await expect(page.getByLabel(/Point at it with a red circle/)).toBeDisabled(); // Qwen only
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     await page.getByLabel(/Point at it with a red circle/).check();
     await expect(page.getByLabel(/Only change the masked area/)).toBeDisabled();
     await page.getByLabel('Instruction').fill('Replace them with a lighthouse keeper in a bright red raincoat.');
@@ -890,7 +901,8 @@ test.describe.serial('Darkroom v2 features', () => {
     const sent: any[] = [];
     page.on('request', (r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && sent.push(r.postDataJSON()));
     await page.getByRole('button', { name: 'Generate Ctrl+Enter' }).click();
-    await expect(page.locator('button[title*="vintage car parked by the sea"]')).toHaveCount(2, { timeout: 240_000 });
+    // the Variations strip only: History tooltips carry the prompt too (v3.22)
+    await expect(page.locator('.strip[aria-label="Variations"] button[title*="vintage car parked by the sea"]')).toHaveCount(2, { timeout: 240_000 });
     expect(sent).toHaveLength(2);
     expect(sent[0].params.seed).toBe(sent[1].params.seed);
     expect(sent[0].meta.prompt).toMatch(/a red vintage car/);
@@ -1331,6 +1343,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.goto(`/#/edit/${pic.id}`);
     await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await openEditAdvanced(page);
     await page.getByLabel('Seed').fill('42');
     await page.getByLabel('Instruction').fill('Make it a rainy day.');
     const run = async () => {
@@ -1431,6 +1444,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.goto(`/#/edit/${src.id}`);
     await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await openEditAdvanced(page);
     await page.getByLabel('Seed').fill('42');
     await page.getByLabel('Instruction').fill('Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.');
     await page.getByRole('button', { name: /Apply instruction/ }).click();

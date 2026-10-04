@@ -1,0 +1,81 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- navigation "Tools":
+  - button "Move (V)"
+  - button "Mask brush (B)"
+  - button "Eraser (E)"
+  - button "Lasso (L)"
+  - button "Smart select (S)"
+  - button "Outpaint frame (O)" [pressed]
+  - button "Crop (C)"
+  - button "Undo (Ctrl+Z)"
+  - button "Redo (Ctrl+Y)"
+- region "Canvas":
+  - img "Picture being edited"
+  - button "Upload"
+  - button "Upload your own picture"
+  - button "Fit"
+  - button "100%"
+  - text: 53% Versions
+  - group "Versions":
+    - button "v1" [pressed]
+    - button "v2"
+  - button "Compare" [disabled]
+- complementary "Edit settings":
+  - text: v1 1728×1152 made with Klein 9B · nsfwKlein
+  - paragraph: Mode
+  - group "Edit mode":
+    - button "Instruct"
+    - button "Inpaint"
+    - button "Outpaint" [pressed]
+    - button "Enhance"
+    - button "Layers"
+    - button "Remove BG"
+    - button "Upscale"
+  - paragraph: Model
+  - group "Edit model":
+    - button "Klein 9B Styles, materials · ~15 s":
+      - strong: Klein 9B
+      - text: Styles, materials · ~15 s
+    - button "Qwen-Image 2.1 Exact shapes, layouts · ~25 s" [pressed]:
+      - strong: Qwen-Image 2.1
+      - text: Exact shapes, layouts · ~25 s
+  - text: Describe the surroundings (optional)
+  - textbox "Describe the surroundings (optional)":
+    - /placeholder: e.g. a wide misty lake with pine trees
+  - paragraph: New size 1728 × 1152
+  - text: left
+  - spinbutton "left": "0"
+  - text: top
+  - spinbutton "top": "0"
+  - text: right
+  - spinbutton "right": "0"
+  - text: bottom
+  - spinbutton "bottom": "0"
+  - button "To 16:9"
+  - button "To 1:1"
+  - button "Zoom out 1.5×"
+  - button "Reset"
+  - paragraph: "Frame tool (O): drag any edge of the picture outwards. Press Fit to see the whole frame. Extending again later works: any black left at the edges is filled too."
+  - paragraph: Reference (optional)
+  - text: Drop or browse
+  - button "Drop or browse"
+  - group: Advanced
+  - paragraph: Every apply saves a new version; nothing is overwritten.
+  - button "Extend canvas Ctrl+Enter"
+  - link "Download":
+    - /url: /api/items/f5795ea3-6c05-46f8-a7f8-8dd5d762f1a5/file?which=main&download=1
+  - button "Animate"
+- status
