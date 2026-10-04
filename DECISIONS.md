@@ -768,3 +768,15 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     `tests/results/orbit-ab/`): on the **shoe** and the **jacket** plain Qwen hardly turns them, the LoRA gives real
     three-quarter, side, back and elevated views; on the **car** both turn it about equally. Misses: the shoe's orbit
     views came back on white (transparency lost), and 180° on the jacket showed the front again.
+114. **Turn it and Turnaround** (Koos: "yes build Turn it and Turnaround"). A new Edit mode, **Turn it**, between
+    Outpaint and Enhance: angle 45° / 90° / 135° / 180° or *Height only*, *To the left / To the right* (hidden at 180°
+    and height-only), *Low / Eye level / From above*; the note reads the move back ("Turned 90° right"). It runs
+    Qwen-Image 2.1's instruction graph with the viewpoint-orbit LoRA (DECISIONS 113) in the LoRA card's own words
+    (`src/shared/orbit.ts`, unit-tested). The LoRA works on cut-outs: a picture without transparency is cut out first
+    (Remove BG, a few seconds; chain `turn_pre`, Edit waits for the turn), and a turned view that comes back on white
+    is cut out again (follow-up job). **Make a turnaround (4 sides)** sends three turns — 90° right, 180°, 90° left — and
+    when the third lands the server lays the picture and its three views in one labelled row on white, a Library item
+    "{title} · turnaround" (mode `sheet`) on the picture's board; views and sheet share `ui.turnaround`. Titles follow
+    the picture: "Trail shoe · cut-out", "Trail shoe · turned 90° right". Without the LoRA the mode says so and does not
+    run. e2e: a shoe with its background → cut-out → turned 90° right (title, prompt, LoRA checked) → turnaround sheet of
+    four (2.4 min). Known: a turnaround view can keep a pale background (it is not cut out again before the sheet).

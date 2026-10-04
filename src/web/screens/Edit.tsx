@@ -25,8 +25,10 @@ import {
   Wand2,
   X,
   ChevronRight,
+  RotateCw,
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
+import { ORBIT_LORA, orbitLabel, type OrbitAngle, type OrbitHeight, type OrbitMove, type OrbitSide } from '../../shared/orbit';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
 import { useItemLoad, usePersistent, useSessionState } from '../lib/hooks';
 import { CompareView } from '../components/Compare';
@@ -53,7 +55,7 @@ import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline'
 import { onJob, toast, useApp } from '../store';
 
 type Tool = 'move' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
-type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
+type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
 /** restore = edit-style (default; fixes blur and low resolution), restore_upscale = restore then SeedVR2 2x,
  *  subtle = low-denoise img2img touch-up for pictures that are already clean (Addenda Phase 2, DECISIONS 66). */
 type EnhanceKind = 'restore' | 'restore_upscale' | 'subtle';
@@ -84,6 +86,7 @@ const MODES: { id: Mode; label: string }[] = [
   { id: 'instruct', label: 'Instruct' },
   { id: 'inpaint', label: 'Inpaint' },
   { id: 'outpaint', label: 'Outpaint' },
+  { id: 'turn', label: 'Turn it' },
   { id: 'enhance', label: 'Enhance' },
   { id: 'layers', label: 'Layers' },
   { id: 'remove_bg', label: 'Remove BG' },
@@ -153,6 +156,25 @@ function Editor({ item }: { item: Item }) {
   // kept for the session, so a locked seed stays locked when Edit moves on to the new version (test-suite finding 1)
   const [editSeed, setEditSeed] = useSessionState<{ seed: number; locked: boolean }>('edit.seed', { seed: randomSeed(), locked: false });
   const [advOpen, setAdvOpen] = useSessionState('edit.advanced', false);
+  // Turn it (DECISIONS 114)
+  const [turnMove, setTurnMove] = useSessionState<OrbitMove>('edit.turn', { angle: 45, side: 'right', height: 'eye' });
+  const [orbitReady, setOrbitReady] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (mode !== 'turn' || orbitReady !== null) return;
+    api
+      .get<{ qwen: { name: string }[] }>('/api/loras')
+      .then((c) => setOrbitReady(c.qwen.some((l) => ORBIT_LORA.test(l.name))))
+      .catch(() => setOrbitReady(false));
+  }, [mode, orbitReady]);
+  const turnaround = async () => {
+    try {
+      const r = await api.post<{ jobs: Job[] }>(`/api/items/${item.id}/turnaround`);
+      if (r.jobs[0]) setJobId(r.jobs[0].id);
+      toast('Turnaround: three new views are on their way; the sheet of all four sides lands in the Library when they are done.', 'info', 9000);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
   const seedRef = useRef(editSeed);
   seedRef.current = editSeed;
   const nextSeed = () => {
@@ -285,7 +307,7 @@ function Editor({ item }: { item: Item }) {
         if (jobId && (j.meta as any).followOf === jobId) return setJobId(j.id);
         if (j.id !== jobId) return;
         const chainKind = (j.meta as any).chain?.kind as string | undefined;
-        if (j.status === 'done' && (chainKind === 'upscale' || chainKind === 'enhance')) return; // wait for the follow-up
+        if (j.status === 'done' && (chainKind === 'upscale' || chainKind === 'enhance' || chainKind === 'turn_pre')) return; // wait for the follow-up (Turn it: the cut-out comes first)
         if (j.status === 'done' && (j.meta as any).layers) {
           sessionStorage.removeItem('dr.edit.job');
           setLayerGroup(((j.meta as any).groupId as string | undefined) ?? j.id);
@@ -508,6 +530,15 @@ function Editor({ item }: { item: Item }) {
 
   const apply = async () => {
     if (running) return;
+    if (mode === 'turn' && tool !== 'crop') {
+      try {
+        const j = await api.post<Job>(`/api/items/${item.id}/turn`, turnMove);
+        setJobId(j.id);
+      } catch (e) {
+        toast((e as Error).message, 'error');
+      }
+      return;
+    }
     if (tool === 'crop') {
       if (!crop || crop.w < 16 || crop.h < 16) return toast('Drag a crop box on the picture first.', 'info');
       return submit('crop', { width: Math.round(crop.w), height: Math.round(crop.h), x: Math.round(crop.x), y: Math.round(crop.y) }, 'edit:crop', 'Crop');
@@ -832,7 +863,7 @@ function Editor({ item }: { item: Item }) {
   const applyLabel =
     tool === 'crop'
       ? 'Apply crop'
-      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', enhance: 'Enhance', remove_bg: 'Remove background', layers: 'Make layers', upscale: `Upscale ${upScale}×` }[mode];
+      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', turn: 'Turn it', enhance: 'Enhance', remove_bg: 'Remove background', layers: 'Make layers', upscale: `Upscale ${upScale}×` }[mode];
 
   return (
     <div className="screen" style={{ gridTemplateColumns: '68px 1fr 392px' }}>
@@ -1482,6 +1513,42 @@ function Editor({ item }: { item: Item }) {
               </div>
             </div>
           )}
+          {mode === 'turn' && (
+            <div className="turn-panel">
+              <p className="section-label">Turn the camera</p>
+              <div className="pills" role="group" aria-label="Turn angle">
+                {([45, 90, 135, 180, 0] as OrbitAngle[]).map((a) => (
+                  <button key={a} type="button" className="pill accent" aria-pressed={turnMove.angle === a} onClick={() => setTurnMove((m) => ({ ...m, angle: a, height: a === 0 && m.height === 'eye' ? 'elevated' : m.height }))}>
+                    {a === 0 ? 'Height only' : `${a}°`}
+                  </button>
+                ))}
+              </div>
+              {turnMove.angle !== 0 && turnMove.angle !== 180 && (
+                <div className="segmented" role="group" aria-label="Turn direction" style={{ marginTop: 8 }}>
+                  {(['left', 'right'] as OrbitSide[]).map((d) => (
+                    <button key={d} type="button" aria-pressed={turnMove.side === d} onClick={() => setTurnMove((m) => ({ ...m, side: d }))}>
+                      {d === 'left' ? 'To the left' : 'To the right'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="segmented" role="group" aria-label="Camera height" style={{ marginTop: 8 }}>
+                {(['low', 'eye', 'elevated'] as OrbitHeight[]).map((h) => (
+                  <button key={h} type="button" aria-pressed={turnMove.height === h} disabled={turnMove.angle === 0 && h === 'eye'} onClick={() => setTurnMove((m) => ({ ...m, height: h }))}>
+                    {h === 'low' ? 'Low' : h === 'eye' ? 'Eye level' : 'From above'}
+                  </button>
+                ))}
+              </div>
+              <p className="note" style={{ marginTop: 8 }}>
+                {orbitLabel(turnMove)}. Qwen-Image 2.1 with the viewpoint-orbit LoRA draws the same object from there. It works on a cut-out: a picture with a background is cut out first. Best on products, garments and shoes; 90° has to invent the hidden side.
+              </p>
+              {orbitReady === false && <p className="note warn">The viewpoint-orbit LoRA is not in your ComfyUI loras folder, so Turn it cannot run.</p>}
+              <button type="button" className="btn" style={{ marginTop: 8 }} disabled={!online || running || orbitReady === false} onClick={() => void turnaround()} title="Three turns (90° right, 180°, 90° left) and one sheet of all four sides in the Library">
+                <RotateCw size={15} /> Make a turnaround (4 sides)
+              </button>
+            </div>
+          )}
+
           {mode === 'upscale' && (
             <div>
               <p className="section-label">

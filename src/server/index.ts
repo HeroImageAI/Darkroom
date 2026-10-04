@@ -31,6 +31,7 @@ import { sanitiseDoc } from '../shared/compose.js';
 import { duration as timelineDuration, endOf, exactFrames, exportSize, ordered, planGeneration, sanitiseTimeline, type GenerateRequest } from '../shared/timeline.js';
 import { planVideo } from '../shared/manifest.js';
 import { desktopPython, grabFrame, inputDirFromArgv, inside, runExport } from './timeline.js';
+import { validMove, type OrbitMove } from '../shared/orbit.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -207,6 +208,31 @@ app.post('/api/import/video', async (req, reply) => {
     return slim(item);
   } catch (e) {
     return reply.code(500).send({ error: (e as Error).message });
+  }
+});
+
+/** Turn it (DECISIONS 114): a new view of a picture with the Qwen-Image 2.1 viewpoint-orbit LoRA. */
+app.post('/api/items/:id/turn', async (req, reply) => {
+  const it = store.getItem((req.params as { id: string }).id);
+  if (!it || it.kind !== 'image') return reply.code(404).send({ error: 'Picture not found' });
+  const b = (req.body ?? {}) as Partial<OrbitMove>;
+  const move = { angle: Number(b.angle), side: b.side === 'left' ? 'left' : 'right', height: b.height === 'low' || b.height === 'elevated' ? b.height : 'eye' } as OrbitMove;
+  if (!validMove(move)) return reply.code(400).send({ error: 'Pick an angle, or a low or elevated view.' });
+  try {
+    return await jobs.turn(it, move);
+  } catch (e) {
+    return reply.code(400).send({ error: (e as Error).message });
+  }
+});
+
+/** Turnaround (DECISIONS 114): three turns and one sheet of the four sides. */
+app.post('/api/items/:id/turnaround', async (req, reply) => {
+  const it = store.getItem((req.params as { id: string }).id);
+  if (!it || it.kind !== 'image') return reply.code(404).send({ error: 'Picture not found' });
+  try {
+    return { jobs: await jobs.turnaround(it) };
+  } catch (e) {
+    return reply.code(400).send({ error: (e as Error).message });
   }
 });
 
