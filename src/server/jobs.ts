@@ -37,6 +37,8 @@ export interface SubmitRequest {
     layers?: boolean;
     /** Set on server-side follow-up jobs: the job whose chain started this one (the UI follows it). */
     followOf?: string;
+    /** The new item's Library title, when Darkroom can name it (Timeline AI clips). */
+    title?: string;
   };
   /** Proceed even if the VRAM check fails. */
   force?: boolean;
@@ -498,6 +500,7 @@ export class JobManager {
       tags: [] as string[],
       job_id: job.id,
       input_name: null,
+      ...(typeof job.meta.title === 'string' ? { title: job.meta.title } : {}),
       group_id: (job.meta.groupId as string | undefined) ?? (job.meta.layers ? job.id : null),
       // a new version stays in its picture's board; anything new goes to the board you are working in
       board_id: parent ? (parent.board_id ?? null) : this.liveBoard(job.meta.boardId),
