@@ -36,6 +36,36 @@
       "label": "Screen print",
       "klein": "Printed as a screen print in two or three flat spot colours, with visible halftone dots, slight misregistration and bold graphic shapes on textured paper.",
       "qwen": "Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."
+    },
+    {
+      "id": "apparel",
+      "label": "Apparel flat",
+      "klein": "Presented as an apparel product image: the garment shown flat or on an invisible mannequin, front view, seamless light-grey backdrop, soft even studio light, true fabric texture and colour.",
+      "qwen": "Style: apparel product photography - garment flat or on an invisible mannequin, front view, seamless light-grey backdrop, soft even studio light, true fabric texture and colour."
+    },
+    {
+      "id": "footwear",
+      "label": "Footwear studio",
+      "klein": "Presented as a footwear product render: the shoe in lateral side view on a seamless white background with a soft contact shadow, crisp materials and clean studio light.",
+      "qwen": "Style: footwear product render - lateral side view, seamless white background, soft contact shadow, crisp material detail, clean studio light."
+    },
+    {
+      "id": "game",
+      "label": "Game concept",
+      "klein": "Painted as game concept art: stylised realism with painterly detail, a clear readable silhouette, a limited palette and atmospheric depth.",
+      "qwen": "Style: game concept art - stylised realism, painterly detail, clear readable silhouette, limited palette, atmospheric depth."
+    },
+    {
+      "id": "film",
+      "label": "Film still",
+      "klein": "Framed as a cinematic film still: anamorphic widescreen, motivated light with deep shadows, a muted colour grade and fine film grain.",
+      "qwen": "Style: cinematic film still - anamorphic widescreen framing, motivated lighting, deep shadows, muted colour grade, fine film grain."
+    },
+    {
+      "id": "car",
+      "label": "Car studio",
+      "klein": "Presented as an automotive studio photograph: the car on a seamless white-to-grey cyclorama, long softbox reflections running cleanly along the body, a soft floor reflection.",
+      "qwen": "Style: automotive studio photography - seamless white-to-grey cyclorama, long softbox reflections along the body, soft floor reflection."
     }
   ]
 }
