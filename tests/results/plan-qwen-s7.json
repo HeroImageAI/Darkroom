@@ -1,0 +1,141 @@
+[
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Reimagine this location as a 1970s sci-fi film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "1970s sci-fi",
+  "title": "MOV-IMG-06 · Qwen · s7 · 1970s sci-fi",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Reimagine this location as a gothic horror film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "gothic horror",
+  "title": "MOV-IMG-06 · Qwen · s7 · gothic horror",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "MOV-IMG-06",
+  "sourceTitle": "MOV-IMG-06 · input · location photo",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Reimagine this location as a post-flood dystopia film set. Keep the layout, perspective and camera position of the photo; change the architecture dressing, props, lighting and atmosphere to fit the genre. Cinematic keyframe, film grain.",
+  "variable": "post-flood dystopia",
+  "title": "MOV-IMG-06 · Qwen · s7 · post-flood dystopia",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Develop this sketch into a refined designer's marker rendering on grey paper: confident lines, grey marker tones, white highlights, a touch of colour in the lights.",
+  "sourceTitle": "AUT-IMG-01 · input · side sketch",
+  "title": "AUT-IMG-07 · Qwen · s7 · step 1",
+  "variable": "step 1",
+  "note": "on the sketch; re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Develop this marker rendering into a polished digital rendering with accurate reflections, still showing a slight illustrative quality.",
+  "sourceTitle": "AUT-IMG-07 · Qwen · s7 · step 1",
+  "title": "AUT-IMG-07 · Qwen · s7 · step 2",
+  "variable": "step 2",
+  "note": "on step 1; re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-07",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Develop this into a production-ready photoreal studio image of the car in metallic deep green paint.",
+  "sourceTitle": "AUT-IMG-07 · Qwen · s7 · step 2",
+  "title": "AUT-IMG-07 · Qwen · s7 · step 3",
+  "variable": "step 3",
+  "note": "on step 2; re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-02",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Same shoe, same view and silhouette. Rework the materials by zone: upper in a coarse recycled knit with visible yarn texture; toe and heel overlays in smooth full-grain leather; the eyestay in matte TPU film; midsole in a translucent blue-tinted foam; outsole in gum rubber. Clean, crisp boundaries between every material zone.",
+  "title": "FTW-IMG-02 · Qwen · s7",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.",
+  "variable": "grey clay render with no materials or colour",
+  "title": "FTW-IMG-06 · Qwen · s7 · grey clay render",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Present this shoe as a designer marker sketch with grey tones and a single colour accent. Keep its exact shape and proportions.",
+  "variable": "designer marker sketch with grey tones and a single colour accent",
+  "title": "FTW-IMG-06 · Qwen · s7 · designer marker sketch",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "FTW-IMG-06",
+  "sourceTitle": "FTW-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Present this shoe as a exploded view showing each component floating apart. Keep its exact shape and proportions.",
+  "variable": "exploded view showing each component floating apart",
+  "title": "FTW-IMG-06 · Qwen · s7 · exploded view showing",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-02",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "The same car rendered as a full-size design-studio clay model: matte warm-grey clay, no paint, no glass tint, no badges, the wheels as clay too. Three-quarter front view, studio lighting with long softbox highlights so the surface transitions and feature lines are clearly visible.",
+  "title": "AUT-IMG-02 · Qwen · s7",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-03",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "The same car, three-quarter front view, finished in mirror chrome, in a studio with evenly spaced vertical strip lights reflected in the surfaces. The reflection lines run cleanly and continuously across the panels.",
+  "title": "AUT-IMG-03 · Qwen · s7",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ },
+ {
+  "action": "instruct",
+  "testId": "AUT-IMG-06",
+  "sourceTitle": "AUT-IMG-01 · Qwen · s42",
+  "model": "qwen",
+  "seed": 7,
+  "prompt": "Automotive design presentation board of this exact car in four views at consistent scale: front, rear, side profile and top-down plan. Same paint, wheels and details in every view. Clean white background, studio lighting.",
+  "title": "AUT-IMG-06 · Qwen · s7",
+  "note": "re-run on seed 7: with seed 42 Qwen returned its input (DECISIONS 107)"
+ }
+]

@@ -1421,4 +1421,25 @@ test.describe.serial('Darkroom v2 features', () => {
     expect((await page.request.get(`/api/items/${ids[0]}`)).status()).toBe(404);
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
   });
+
+  test('Edit: Qwen Instruct that returns its picture unchanged says so and offers another seed (DECISIONS 107)', async () => {
+    // a Qwen render of a shoe; with seed 42 Qwen copies it instead of making the clay render (test suite, 2026-10-03)
+    await page.goto('/#/library');
+    await page.getByLabel('Upload pictures to the Library').setInputFiles('tests/fixtures/qwen-copy/shoe.png');
+    await expect(page.getByText(/1 picture added to your Library/).last()).toBeVisible({ timeout: 60_000 });
+    const src = (await (await page.request.get('/api/items?limit=1')).json()).items[0];
+    await page.goto(`/#/edit/${src.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
+    await page.getByLabel('Seed').fill('42');
+    await page.getByLabel('Instruction').fill('Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.');
+    await page.getByRole('button', { name: /Apply instruction/ }).click();
+    await expect(page.getByText(/Qwen returned almost the same picture/)).toBeVisible({ timeout: 300_000 });
+    expect(page.url()).not.toContain(src.id); // the copy is still saved as a version
+    await shot(page, 'edit-qwen-copied');
+    await page.getByRole('button', { name: 'Try another seed' }).click();
+    await expect(page).toHaveURL(new RegExp(`#/edit/${src.id}$`));
+    await expect(page.getByLabel('Seed')).not.toHaveValue('42');
+    await expect(page.getByLabel('Instruction')).toHaveValue(/grey clay render/);
+  });
 });

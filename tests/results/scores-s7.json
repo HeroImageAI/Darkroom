@@ -1,0 +1,101 @@
+{
+ "entries": [
+  {
+   "test": "FTW-IMG-02",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "seed": 7,
+   "titles": [
+    "FTW-IMG-02 · Qwen · s7"
+   ],
+   "score": 4,
+   "why": "seed 7: blue-tint foam midsole and gum outsole clear, silhouette exact; the knit and leather zones still timid",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "FTW-IMG-06",
+   "board": "TS 2026-10-03 · 02 Footwear",
+   "model": "Qwen",
+   "seed": 7,
+   "titles": [
+    "FTW-IMG-06 · Qwen · s7 · grey clay render",
+    "FTW-IMG-06 · Qwen · s7 · designer marker sketch",
+    "FTW-IMG-06 · Qwen · s7 · exploded view showing"
+   ],
+   "score": 4,
+   "why": "seed 7: a real grey clay render, a light marker sketch with one red accent, an exploded view of the sole layers (upper stays whole)",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-02",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "seed": 7,
+   "titles": [
+    "AUT-IMG-02 · Qwen · s7"
+   ],
+   "score": 4,
+   "why": "seed 7: a convincing warm-grey clay model, wheels in clay; side view, not three-quarter",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-03",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "seed": 7,
+   "titles": [
+    "AUT-IMG-03 · Qwen · s7"
+   ],
+   "score": 5,
+   "why": "seed 7: mirror chrome, three-quarter front view as asked, clean continuous strip-light reflections",
+   "best": "AUT-IMG-03 · Qwen · s7",
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-06",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "seed": 7,
+   "titles": [
+    "AUT-IMG-06 · Qwen · s7"
+   ],
+   "score": 4,
+   "why": "seed 7: front, rear, three-quarter side and top-down plan of the same car; one view is ¾ instead of a true profile",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "AUT-IMG-07",
+   "board": "TS 2026-10-03 · 05 Automotive",
+   "model": "Qwen",
+   "seed": 7,
+   "titles": [
+    "AUT-IMG-07 · Qwen · s7 · step 1",
+    "AUT-IMG-07 · Qwen · s7 · step 2",
+    "AUT-IMG-07 · Qwen · s7 · step 3"
+   ],
+   "score": 2,
+   "why": "seed 7: the same as seed 42 — step 1 good, steps 2 and 3 return the drawing with heavy grain (a real Qwen limit on its own output)",
+   "best": null,
+   "status": "OK"
+  },
+  {
+   "test": "MOV-IMG-06",
+   "board": "TS 2026-10-03 · 04 Movie",
+   "model": "Qwen",
+   "seed": 7,
+   "titles": [
+    "MOV-IMG-06 · Qwen · s7 · 1970s sci-fi",
+    "MOV-IMG-06 · Qwen · s7 · gothic horror",
+    "MOV-IMG-06 · Qwen · s7 · post-flood dystopia"
+   ],
+   "score": 2,
+   "why": "seed 7: only the flood version changes the scene; 1970s sci-fi and gothic stay a lightly regraded photo",
+   "best": null,
+   "status": "OK"
+  }
+ ]
+}
