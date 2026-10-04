@@ -29,6 +29,23 @@ describe('LoRA fit', () => {
   it('Kohya-style names are matched too', () => {
     expect(loraFit({ 'lora_unet_double_blocks_0_img_attn_proj.lora_down.weight': { shape: [16, 4096] } }, klein).score).toBe(1);
   });
+  it('Qwen-Image 2.1: LoRAs for the MLP halves fit the fused gate_up layer ComfyUI loads (orbit LoRA)', () => {
+    const qwen21 = modelModules({
+      'transformer_blocks.0.attn.to_q.weight': { shape: [4096, 4096] },
+      'transformer_blocks.0.img_mlp.gate_up.weight': { shape: [24576, 4096] },
+      'transformer_blocks.0.img_mlp.out.weight': { shape: [4096, 12288] },
+    });
+    const f = loraFit(
+      {
+        'diffusion_model.transformer_blocks.0.attn.to_q.lora_A.weight': { shape: [32, 4096] },
+        'diffusion_model.transformer_blocks.0.img_mlp.gate_layer.lora_A.weight': { shape: [32, 4096] },
+        'diffusion_model.transformer_blocks.0.img_mlp.proj.lora_A.weight': { shape: [32, 4096] },
+        'diffusion_model.transformer_blocks.0.img_mlp.out.lora_A.weight': { shape: [32, 12288] },
+      },
+      qwen21,
+    );
+    expect(f.score).toBe(1);
+  });
   it('a LoRA for another architecture does not fit', () => {
     expect(loraFit({ 'transformer.transformer_blocks.0.attn.add_k_proj.lora_A.weight': { shape: [64, 3072] } }, klein).score).toBe(0);
   });

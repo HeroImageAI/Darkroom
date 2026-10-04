@@ -1483,4 +1483,41 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.getByRole('group', { name: 'Style preset' }).getByRole('button', { name: 'None', exact: true }).click();
     await page.getByRole('group', { name: 'Model' }).getByRole('button', { name: /^Klein 9B/ }).click();
   });
+
+  test('Edit: Turn it shows the object from another angle; Turnaround makes three views and one sheet (DECISIONS 114)', async () => {
+    const cat = await (await page.request.get('/api/loras')).json();
+    test.skip(!cat.qwen.some((l: any) => /viewpoint-orbit/i.test(l.name)), 'the viewpoint-orbit LoRA is not on this machine');
+    // a shoe render with its white background: Turn it cuts it out first, then turns it
+    await page.goto('/#/library');
+    await page.getByLabel('Upload pictures to the Library').setInputFiles('tests/fixtures/qwen-copy/shoe.png');
+    await expect(page.getByText(/1 picture added to your Library/).last()).toBeVisible({ timeout: 60_000 });
+    const src = (await (await page.request.get('/api/items?limit=1')).json()).items[0];
+    await page.request.patch(`/api/items/${src.id}`, { data: { title: 'e2e shoe' } });
+    await page.goto(`/#/edit/${src.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Turn it' }).click();
+    await page.getByRole('group', { name: 'Turn angle' }).getByRole('button', { name: '90°' }).click();
+    await page.getByRole('group', { name: 'Turn direction' }).getByRole('button', { name: 'To the right' }).click();
+    await expect(page.getByText(/^Turned 90° right\./)).toBeVisible();
+    const sent = page.waitForRequest((r) => r.url().endsWith(`/api/items/${src.id}/turn`));
+    await page.getByRole('button', { name: /^Turn it Ctrl\+Enter/ }).click();
+    expect((await sent).postDataJSON()).toMatchObject({ angle: 90, side: 'right', height: 'eye' });
+    // the cut-out comes first, then the turned view: Edit waits for the turn
+    await expect.poll(async () => ((await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json()).item?.mode), { timeout: 300_000 }).toMatch(/edit:turn|edit:remove_bg/);
+    await expect.poll(async () => (await (await page.request.get(`/api/items?q=${encodeURIComponent('e2e shoe · turned 90° right')}&limit=5`)).json()).items.length, { timeout: 300_000 }).toBeGreaterThan(0);
+    const turned = (await (await page.request.get(`/api/items?q=${encodeURIComponent('e2e shoe · turned 90° right')}&limit=5`)).json()).items[0];
+    expect(turned.prompt).toBe('Turned 90° right');
+    expect(turned.params.prompt).toMatch(/^<orbit> rotate the camera 90 degrees to the right, eye level\./);
+    expect(turned.params.loras).toMatch(/viewpoint-orbit/);
+    await shot(page, 'edit-turn');
+    // Turnaround from the turned view's source cut-out
+    await page.goto(`/#/edit/${turned.parent_id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Turn it' }).click();
+    await page.getByRole('button', { name: /Make a turnaround/ }).click();
+    await expect(page.getByText(/Turnaround ready:/).last()).toBeVisible({ timeout: 600_000 });
+    const sheet = (await (await page.request.get(`/api/items?q=${encodeURIComponent('e2e shoe · turnaround')}&limit=5`)).json()).items.find((i: any) => i.mode === 'sheet');
+    expect(sheet).toBeTruthy();
+    expect(sheet.params.views).toHaveLength(4);
+    expect(sheet.width / sheet.height).toBeGreaterThan(3); // four views in a row
+    await shot(page, 'edit-turnaround');
+  });
 });

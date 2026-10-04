@@ -255,6 +255,19 @@ export class Store {
     return this.db.prepare('UPDATE timelines SET deleted_at = NULL WHERE id = ?').run(id).changes > 0;
   }
 
+  /** The views of one Turnaround (and its sheet), by the id kept in their ui (DECISIONS 114). */
+  itemsByTurnaround(id: string): Item[] {
+    const rows = this.db.prepare("SELECT * FROM items WHERE json_extract(ui, '$.turnaround') = ? AND deleted_at IS NULL ORDER BY created_at, id").all(id) as any[];
+    return rows.map((r) => decode<Item>(r, JSON_ITEM)!);
+  }
+
+  /** Merge keys into an item's ui. */
+  setItemUi(id: string, patch: Record<string, unknown>): void {
+    const it = this.getItem(id);
+    if (!it) return;
+    this.db.prepare('UPDATE items SET ui = ? WHERE id = ?').run(JSON.stringify({ ...(it.ui ?? {}), ...patch }), id);
+  }
+
   groupItems(groupId: string): Item[] {
     const rows = this.db.prepare('SELECT * FROM items WHERE group_id = ? AND deleted_at IS NULL ORDER BY created_at, id').all(groupId) as any[];
     return rows.map((r) => decode<Item>(r, JSON_ITEM)!);

@@ -86,7 +86,10 @@ export function loraFit(lora: Record<string, { shape?: number[] } | Record<strin
     if (!shape || shape.length !== 2) continue;
     layers++;
     const name = strip(k.replace(SUFFIX, ''));
-    const width = name.startsWith('lora_unet_') ? underscored.get(name.slice('lora_unet_'.length)) : model.get(name);
+    // Qwen-Image 2.1 in ComfyUI fuses img_mlp.gate_layer + proj into gate_up at load; LoRAs address the halves, and
+    // ComfyUI maps them onto the fused layer (comfy/lora.py) — so the halves fit when the model has gate_up
+    const fused = (n: string) => n.replace(/\.img_mlp\.(gate_layer|proj)$/, '.img_mlp.gate_up');
+    const width = name.startsWith('lora_unet_') ? underscored.get(name.slice('lora_unet_'.length)) : (model.get(name) ?? model.get(fused(name)));
     if (width === shape[1]) hits++;
   }
   return { score: layers ? hits / layers : 0, declared, layers };

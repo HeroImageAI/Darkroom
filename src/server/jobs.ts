@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import sharp from 'sharp';
+import sharp, { type OverlayOptions } from 'sharp';
 import { checkMatte } from '../shared/matte.js';
 import { mp4Info } from './mp4info.js';
 import { restoreJoinPrompt, type RestoreWindow } from '../shared/restore.js';
@@ -18,6 +18,8 @@ import { backToSize } from '../shared/fullsize.js';
 import { injectLoras, parseLoras } from '../shared/loras.js';
 import { LoraLibrary, type LoraFamily } from './loras.js';
 import { copyMeasure, looksCopied } from './copycheck.js';
+import { ORBIT_LORA, orbitLabel, orbitPrompt, TURNAROUND, type OrbitMove } from '../shared/orbit.js';
+import { outputDirFromArgv } from './trash.js';
 
 export interface SubmitRequest {
   workflow: string;
@@ -607,6 +609,26 @@ export class JobManager {
   /** Follow-up work declared by a finished job (e.g. Extend = render continuation, then join). */
   private async runChain(job: Job, newIds: string[]): Promise<void> {
     const chain = job.meta.chain as { kind?: string; firstItemId?: string } | undefined;
+    // Turn it (DECISIONS 114): a picture with a background was cut out first; now turn the cut-out
+    if (chain?.kind === 'turn_pre' && newIds[0]) {
+      const c = chain as Record<string, any>;
+      const cut = this.store.getItem(newIds[0]);
+      if (cut) await this.turn(cut, c.move as OrbitMove, { turnaround: c.turnaround, view: c.view, sourceId: c.sourceId, followOf: job.id }).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Turn it: ' + friendlyError((e as Error).message) }));
+      return;
+    }
+    if (chain?.kind === 'turn' && newIds[0]) {
+      const c = chain as Record<string, any>;
+      if (c.turnaround) return void this.tryTurnaround(String(c.turnaround), String(c.sourceId)).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Turnaround sheet: ' + (e as Error).message }));
+      // the LoRA sometimes paints the background white: cut the new view out again so it stays a cut-out
+      const it = this.store.getItem(newIds[0]);
+      if (it && !(await this.hasAlpha(it.file).catch(() => true)))
+        await this.submit({
+          workflow: 'qwen_remove_bg',
+          params: { image_1: await this.asInput(it), seed: Math.floor(Math.random() * 2 ** 31) },
+          meta: { mode: 'edit:remove_bg', model: 'Qwen-Image 2.1 extraction', prompt: it.prompt, parentId: it.id, ui: it.ui, followOf: job.id, ...(it.title ? { title: it.title } : {}) },
+        }).catch(() => undefined);
+      return;
+    }
     if (chain?.kind === 'plate') {
       // Background plate: Qwen-Image 2.1 inpaints the (dilated) subject mask on the ORIGINAL picture.
       const done = this.store.getJob(job.id);
@@ -882,6 +904,91 @@ export class JobManager {
   }
 
   /** A finished picture file into the Library (P3 compare sheets). */
+  /** Does this picture have see-through pixels? */
+  async hasAlpha(f: FileRef): Promise<boolean> {
+    const st = await sharp(Buffer.from(await this.comfy!.view(f))).stats();
+    return st.channels.length >= 4 && st.channels[3].min < 250;
+  }
+
+  /**
+   * Turn it (DECISIONS 114): the same object seen from another angle, by Qwen-Image 2.1 with the viewpoint-orbit LoRA.
+   * The LoRA works on cut-outs, so a picture with a background is cut out first (one more job, a few seconds).
+   */
+  async turn(src: Item, move: OrbitMove, o: { turnaround?: string; view?: number; sourceId?: string; followOf?: string } = {}): Promise<Job> {
+    const lora = (await this.loraLibrary.catalogue(this.loraModels())).qwen.find((l) => ORBIT_LORA.test(l.name));
+    if (!lora) throw new WorkflowError('Turn it needs the Qwen-Image 2.1 viewpoint-orbit LoRA in your ComfyUI loras folder.');
+    const prompt = orbitPrompt(move);
+    const label = orbitLabel(move);
+    const ui = { ...(src.ui ?? {}), ...(o.turnaround ? { turnaround: o.turnaround, view: o.view } : {}) };
+    if (!(await this.hasAlpha(src.file).catch(() => false)))
+      return this.submit({
+        workflow: 'qwen_remove_bg',
+        params: { image_1: await this.asInput(src), seed: Math.floor(Math.random() * 2 ** 31) },
+        meta: { mode: 'edit:remove_bg', model: 'Qwen-Image 2.1 extraction', prompt: src.prompt, parentId: src.id, ui: src.ui, ...(src.title ? { title: `${src.title} · cut-out` } : {}), ...(o.followOf ? { followOf: o.followOf } : {}), chain: { kind: 'turn_pre', move, turnaround: o.turnaround, view: o.view, sourceId: o.sourceId ?? src.id } },
+      });
+    // named after the picture: the cut-out's title, else the picture it was cut from
+    const base = (src.title || (o.sourceId ? this.store.getItem(o.sourceId)?.title : '') || '').replace(/ · cut-out$/, '');
+    return this.submit({
+      workflow: 'qwen_edit',
+      params: { image_1: await this.asInput(src), prompt, seed: Math.floor(Math.random() * 2 ** 31), loras: JSON.stringify([{ name: lora.name, strength: 1 }]) },
+      meta: {
+        mode: 'edit:turn',
+        model: 'Qwen-Image 2.1 · Turn it',
+        prompt: label,
+        parentId: src.id,
+        ui,
+        ...(base ? { title: `${base} · ${label.toLowerCase()}` } : {}),
+        ...(o.followOf ? { followOf: o.followOf } : {}),
+        chain: { kind: 'turn', move, turnaround: o.turnaround, view: o.view, sourceId: o.sourceId ?? src.id },
+      },
+    });
+  }
+
+  /** Turnaround: three turns of one picture; when all three are in, one sheet of the four sides. */
+  async turnaround(src: Item): Promise<Job[]> {
+    const g = crypto.randomUUID();
+    const out: Job[] = [];
+    for (const [i, m] of TURNAROUND.entries()) out.push(await this.turn(src, m, { turnaround: g, view: i + 1, sourceId: src.id }));
+    return out;
+  }
+
+  private async tryTurnaround(g: string, sourceId: string): Promise<void> {
+    const all = this.store.itemsByTurnaround(g);
+    const views = all.filter((v) => v.mode === 'edit:turn');
+    if (views.length < TURNAROUND.length || all.some((v) => v.mode === 'sheet')) return;
+    const src = this.store.getItem(sourceId);
+    // the sheet starts with the cut-out the turns were made from (the source itself, or the cut-out made first)
+    const first = this.store.getItem(views[0].parent_id ?? sourceId) ?? src;
+    if (!first || !this.comfy) return;
+    const ordered = [first, ...[...views].sort((a, b) => Number((a.ui as any)?.view ?? 0) - Number((b.ui as any)?.view ?? 0))];
+    const labels = ['As made', ...TURNAROUND.map(orbitLabel)];
+    const H = 768;
+    const pics = await Promise.all(ordered.map(async (it) => sharp(Buffer.from(await this.comfy!.view(it.file))).flatten({ background: '#ffffff' }).resize({ height: H }).png().toBuffer({ resolveWithObject: true })));
+    const gap = 24;
+    const bar = 56;
+    const W = pics.reduce((w, p) => w + p.info.width, 0) + gap * (pics.length + 1);
+    let x = gap;
+    const parts: OverlayOptions[] = [];
+    const texts: string[] = [];
+    for (const [i, p] of pics.entries()) {
+      parts.push({ input: p.data, left: x, top: bar });
+      texts.push(`<text x="${x}" y="36" font-family="Segoe UI, Arial" font-size="24" fill="#3a332e">${labels[i]}</text>`);
+      x += p.info.width + gap;
+    }
+    const svg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${bar}">${texts.join('')}</svg>`);
+    const sheet = await sharp({ create: { width: W, height: H + bar + gap, channels: 3, background: '#ffffff' } }).composite([{ input: svg, left: 0, top: 0 }, ...parts]).png().toBuffer();
+    const outDir = outputDirFromArgv(((await this.comfy.systemStats()) as { system?: { argv?: string[] } }).system?.argv);
+    if (!outDir) throw new Error("ComfyUI doesn't report its output folder.");
+    const name = `turnaround_${Date.now().toString(36)}_${crypto.randomBytes(2).toString('hex')}.png`;
+    fs.mkdirSync(path.join(outDir, 'darkroom', 'sheet'), { recursive: true });
+    fs.writeFileSync(path.join(outDir, 'darkroom', 'sheet', name), sheet);
+    const base = (src?.title || first.title || 'Picture').replace(/ · cut-out$/, '');
+    const item = await this.addPicture({ file: { filename: name, subfolder: 'darkroom/sheet', type: 'output' }, name: `${base} · turnaround`, title: `${base} · turnaround`, mode: 'sheet', model: 'Turnaround', params: { turnaround: g, views: ordered.map((v) => v.id) }, boardId: src?.board_id ?? first.board_id });
+    this.store.setItemUi(item.id, { turnaround: g });
+    this.broadcast({ type: 'library', ids: [item.id] });
+    this.broadcast({ type: 'toast', kind: 'ok', text: `Turnaround ready: "${base} · turnaround" is in your Library, with the three new views.` });
+  }
+
   async addPicture(a: { file: FileRef; name: string; title?: string; mode: string; model: string; params: Record<string, unknown>; boardId?: unknown }): Promise<Item> {
     const item: Item = {
       id: crypto.randomUUID(),

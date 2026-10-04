@@ -563,3 +563,5 @@ details.edit-adv > :not(summary) { margin-top: 10px; }
 /* Generate hints (DECISIONS 112) */
 .hint-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0 0; color: var(--accent); }
 .hint-row .btn { min-height: 28px; padding: 0 8px; color: var(--text); border-color: var(--input); }
+/* Turn it (DECISIONS 114) */
+.turn-panel .segmented button:disabled { opacity: .35; }
