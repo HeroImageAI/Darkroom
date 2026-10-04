@@ -1,0 +1,252 @@
+[
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Trail shoe · Klein",
+  "title": "Trail shoe · clay render",
+  "preset": "Clay render",
+  "slots": {},
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Trail shoe · Klein",
+  "title": "Trail shoe · marker sketch",
+  "preset": "Marker sketch",
+  "slots": {
+   "ACCENT": "moss green"
+  },
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Trail shoe · Klein",
+  "title": "Trail shoe · exploded view",
+  "preset": "Exploded view",
+  "slots": {},
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Trail shoe · Klein",
+  "title": "Trail shoe · material zones",
+  "preset": "Material zones",
+  "slots": {
+   "UPPER": "a coarse recycled knit",
+   "OVERLAYS": "smooth full-grain leather",
+   "MIDSOLE": "a translucent blue-tinted foam",
+   "OUTSOLE": "gum rubber"
+  },
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Trail shoe · Klein",
+  "title": "Trail shoe · colourway black volt",
+  "preset": "Colourway",
+  "slots": {
+   "COLOURS": "black upper with a volt-green midsole and black outsole"
+  },
+  "model": "qwen"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Trail shoe · Klein",
+  "title": "Trail shoe · on foot",
+  "preset": "On foot",
+  "slots": {
+   "SURFACE": "a rocky mountain trail"
+  },
+  "model": "klein"
+ },
+ {
+  "action": "inpaint",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Trail shoe · Klein",
+  "title": "Trail shoe · orange outsole",
+  "selectText": "outsole",
+  "prompt": "a bright orange lugged rubber outsole with deep multi-directional lugs",
+  "model": "klein"
+ },
+ {
+  "action": "mode",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Trail shoe · Klein",
+  "title": "Trail shoe · cut-out",
+  "mode": "Remove BG",
+  "button": "Remove background"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "EV crossover · Qwen",
+  "title": "EV crossover · clay model",
+  "preset": "Clay model",
+  "slots": {},
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "EV crossover · Qwen",
+  "title": "EV crossover · chrome study",
+  "preset": "Chrome reflection study",
+  "slots": {},
+  "model": "qwen"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "EV crossover · Qwen",
+  "title": "EV crossover · matte sand",
+  "preset": "Paint finish",
+  "slots": {
+   "FINISH": "a matte satin sand paint"
+  },
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "EV crossover · Qwen",
+  "title": "EV crossover · four-view board",
+  "preset": "Four-view board",
+  "slots": {},
+  "model": "klein"
+ },
+ {
+  "action": "outpaint",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "EV crossover · Qwen",
+  "title": "EV crossover · wider, city at night",
+  "model": "qwen",
+  "padFrac": {
+   "left": 0.25,
+   "right": 0.25
+  },
+  "prompt": "a wet city street at night with neon reflections on the asphalt"
+ },
+ {
+  "action": "mode",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "EV crossover · Qwen",
+  "title": "EV crossover · cut-out",
+  "mode": "Remove BG",
+  "button": "Remove background"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Rain shell · Klein",
+  "title": "Rain shell · waxed canvas",
+  "preset": "Fabric swap",
+  "slots": {
+   "FABRIC": "waxed cotton canvas"
+  },
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Rain shell · Klein",
+  "title": "Rain shell · navy yellow",
+  "preset": "Colourway",
+  "slots": {
+   "COLOURS": "deep navy with a bright yellow hood lining and zip pulls"
+  },
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Rain shell · Klein",
+  "title": "Rain shell · on a model",
+  "preset": "On a model",
+  "slots": {
+   "MODEL": "young woman with short dark hair"
+  },
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Rain shell · Klein",
+  "title": "Rain shell · multi-view",
+  "preset": "Multi-view sheet",
+  "slots": {},
+  "model": "qwen"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Desert scavenger · Klein",
+  "title": "Desert scavenger · turnaround",
+  "preset": "Turnaround sheet",
+  "slots": {},
+  "model": "qwen"
+ },
+ {
+  "action": "inpaint",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Desert scavenger · Klein",
+  "title": "Desert scavenger · mask",
+  "selectText": "goggles",
+  "prompt": "a cracked leather mask with two glowing amber lenses",
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Desert scavenger · Klein",
+  "title": "Desert scavenger · polished",
+  "preset": "Presentation polish",
+  "slots": {},
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Lighthouse keeper · Qwen",
+  "title": "Lighthouse keeper · storm",
+  "preset": "Lighting and time of day",
+  "slots": {
+   "LIGHTING": "a violent storm at night with lightning over the sea"
+  },
+  "model": "qwen"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Lighthouse keeper · Qwen",
+  "title": "Lighthouse keeper · 1970s sci-fi",
+  "preset": "Location to genre",
+  "slots": {
+   "GENRE": "1970s sci-fi"
+  },
+  "model": "klein"
+ },
+ {
+  "action": "instruct",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Lighthouse keeper · Qwen",
+  "title": "Lighthouse keeper · charcoal panel",
+  "preset": "Re-render as medium",
+  "slots": {
+   "MEDIUM": "charcoal storyboard panel"
+  },
+  "model": "qwen"
+ },
+ {
+  "action": "enhance",
+  "testId": "WALK-2-edit",
+  "sourceTitle": "Lighthouse keeper · Qwen",
+  "title": "Lighthouse keeper · restored",
+  "model": "klein",
+  "strength": "Restore"
+ }
+]
