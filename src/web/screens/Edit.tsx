@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo } from '../lib/remove';
+import { SHAPES, type Shape } from '../../shared/shape';
 import { ORBIT_LORA, orbitLabel, type OrbitAngle, type OrbitHeight, type OrbitMove, type OrbitSide } from '../../shared/orbit';
 import { ProgressBar, randomSeed, useHotkey } from '../components/common';
 import { useItemLoad, usePersistent, useSessionState } from '../lib/hooks';
@@ -168,6 +169,8 @@ function Editor({ item }: { item: Item }) {
       .then((c) => setOrbitReady(c.qwen.some((l) => ORBIT_LORA.test(l.name))))
       .catch(() => setOrbitReady(false));
   }, [mode, orbitReady]);
+  // Shape in Instruct (DECISIONS 117): keep the picture's shape, or redraw it in another
+  const [shape, setShape] = useSessionState<'keep' | Shape>('edit.shape', 'keep');
   // Try both models (DECISIONS 116): one instruction to Klein and Qwen on the same seed, then pick
   const [both, setBoth] = useState<{ jobs: Record<'klein' | 'qwen', string>; done: Partial<Record<'klein' | 'qwen', string>>; failed: string[] } | null>(null);
   const [bothPick, setBothPick] = useState<{ klein: Item; qwen: Item } | null>(null);
@@ -215,7 +218,7 @@ function Editor({ item }: { item: Item }) {
           seed,
           prompt: composeImagePrompt(T, { model: m, mode: 'instruct', text: prompt, masked }),
           ...(ref ? { image_2: ref.name } : {}),
-          ...(mask ? { mask } : {}),
+          ...(mask ? { mask } : { ...(shape !== 'keep' ? { shape } : {}) }),
           ...(m === 'klein' && kleinWeights ? { klein_weights: kleinWeights } : {}),
           ...((editLoras[m] ?? []).length ? { loras: JSON.stringify(editLoras[m]) } : {}),
         };
@@ -642,6 +645,7 @@ function Editor({ item }: { item: Item }) {
       const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt, masked, circled: circle }) };
       if (ref) params.image_2 = ref.name;
       if (masked) params.mask = await uploadMask();
+      if (shape !== 'keep' && !masked && !circle) params.shape = shape;
       if (circle) {
         const name = await uploadCircled();
         if (!name) return toast('Paint over the object to circle first (B for brush).', 'info');
@@ -1294,6 +1298,24 @@ function Editor({ item }: { item: Item }) {
             </>
           )}
 
+          {mode === 'instruct' && (
+            <div>
+              <p className="section-label">Shape</p>
+              <div className="pills" role="group" aria-label="Result shape">
+                {(['keep', ...SHAPES] as const).map((x) => (
+                  <button key={x} type="button" className="pill accent" aria-pressed={shape === x} disabled={x !== 'keep' && !maskEmpty && onlyMasked} onClick={() => setShape(x)}>
+                    {x === 'keep' ? 'Keep' : x}
+                  </button>
+                ))}
+              </div>
+              {shape !== 'keep' && (
+                <p className="note" style={{ marginTop: 6 }}>
+                  The picture is redrawn to fill a {shape} frame: the model may add to the sides or the top and bottom to make it fit.
+                  {!maskEmpty && onlyMasked ? ' Not with “Only change the masked area”.' : ''}
+                </p>
+              )}
+            </div>
+          )}
           {/* Instruct changes the whole picture until you paint: the mask settings appear with the first stroke (audit #2) */}
           {mode === 'instruct' && maskEmpty && (
             <p className="note mask-hint">

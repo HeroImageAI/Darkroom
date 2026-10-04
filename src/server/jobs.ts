@@ -20,6 +20,7 @@ import { LoraLibrary, type LoraFamily } from './loras.js';
 import { copyMeasure, looksCopied } from './copycheck.js';
 import { ORBIT_LORA, orbitLabel, orbitPrompt, TURNAROUND, type OrbitMove } from '../shared/orbit.js';
 import { outputDirFromArgv } from './trash.js';
+import { applyShape, shapeSizes, SHAPES, type Shape } from '../shared/shape.js';
 
 export interface SubmitRequest {
   workflow: string;
@@ -343,6 +344,13 @@ export class JobManager {
         prompt[mathId] = { class_type: 'ComfyMathExpression', inputs: { expression: `a / ${speed}`, 'values.a': node.inputs.frame_rate }, _meta: { title: 'Motion fps' } };
         node.inputs.frame_rate = [mathId, 0];
       }
+    }
+    // Shape in Instruct (DECISIONS 117): the result in another shape — an empty canvas of that shape instead of the picture
+    const shape = req.params.shape;
+    if (typeof shape === 'string' && (SHAPES as readonly string[]).includes(shape) && !req.params.mask && (req.workflow === 'qwen_edit' || req.workflow === 'klein_edit')) {
+      const parent = req.meta.parentId ? this.store.getItem(req.meta.parentId) : null;
+      const { work, full } = shapeSizes(shape as Shape, parent?.width ?? 1024, parent?.height ?? 1024);
+      if (!applyShape(prompt, req.workflow === 'qwen_edit' ? 'qwen' : 'klein', work, full)) throw new WorkflowError('This edit cannot change the shape.');
     }
     // Silent (DECISIONS 97): the clip is saved without its audio track
     if (req.params.silent === true || req.params.silent === 1 || req.params.silent === 'true') {

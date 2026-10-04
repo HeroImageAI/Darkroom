@@ -1557,4 +1557,24 @@ test.describe.serial('Darkroom v2 features', () => {
     const shown = (await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json()).item;
     expect(shown.model).toMatch(/Qwen/);
   });
+
+  test('Edit: Shape in Instruct redraws the picture in another shape, on both models (DECISIONS 117)', async () => {
+    const pic = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && (i.width ?? 0) <= (i.height ?? 0));
+    test.skip(!pic, 'needs a square or portrait picture');
+    for (const model of ['Klein 9B', 'Qwen-Image 2.1']) {
+      await page.goto(`/#/edit/${pic.id}`);
+      await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct' }).click();
+      await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: new RegExp(`^${model}`) }).click();
+      await page.getByRole('group', { name: 'Result shape' }).getByRole('button', { name: '16:9' }).click();
+      await page.getByLabel('Instruction').fill('Make it a cinematic widescreen frame of the same scene. Keep the subject and its look.');
+      const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+      await page.getByRole('button', { name: 'Apply instruction Ctrl+Enter' }).click();
+      expect((await sent).postDataJSON().params.shape).toBe('16:9');
+      await page.waitForURL((u) => !u.toString().endsWith(pic.id), { timeout: 300_000 });
+      const it = (await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json()).item;
+      expect(it.width / it.height).toBeCloseTo(16 / 9, 1);
+      await shot(page, `edit-shape-${model.startsWith('Klein') ? 'klein' : 'qwen'}`);
+    }
+    await page.getByRole('group', { name: 'Result shape' }).getByRole('button', { name: 'Keep' }).click();
+  });
 });
