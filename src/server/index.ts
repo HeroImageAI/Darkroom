@@ -236,6 +236,42 @@ app.post('/api/items/:id/turnaround', async (req, reply) => {
   }
 });
 
+/**
+ * Turntable (DECISIONS 115): a turnaround's four views as LTX key moments — the picture, 90° right, 180°, 90° left —
+ * and back to the picture at the end, so LTX turns the object between known angles instead of guessing a 360°.
+ */
+app.post('/api/items/:id/turntable', async (req, reply) => {
+  const sheet = store.getItem((req.params as { id: string }).id);
+  const ids = ((sheet?.params as any)?.views ?? []) as string[];
+  const views = ids.map((v) => store.getItem(v)).filter((v): v is NonNullable<typeof v> => !!v && v.kind === 'image');
+  if (!sheet || sheet.mode !== 'sheet' || views.length !== 4) return reply.code(400).send({ error: 'Pick a turnaround sheet (it has four views).' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running. Start it from the status pill at the top." });
+  try {
+    // cut-outs on white: LTX reads no transparency, and a black background would turn with the object
+    const flat = async (it: (typeof views)[number], tag: string) => {
+      const png = await sharp(Buffer.from(await jobs.comfy!.view(it.file))).flatten({ background: '#ffffff' }).png().toBuffer();
+      const up = await jobs.comfy!.upload('image', new Blob([new Uint8Array(png)]), `turntable_${sheet.id.slice(0, 8)}_${tag}.png`, { subfolder: 'darkroom', overwrite: true });
+      return up.subfolder ? `${up.subfolder}/${up.name}` : up.name;
+    };
+    const names = await Promise.all(views.map((v, i) => flat(v, String(i))));
+    const seconds = 5;
+    const model = (manifest() as any).video?.ltx;
+    const vp = planVideo(model, 'final', seconds, views[0].width ?? 1280, views[0].height ?? 720);
+    const ex = exactFrames(seconds, 24);
+    const keys = [1, 2, 3].map((i) => ({ image: names[i], frame: Math.round((i / 4) * (ex.frames - 1)), strength: 0.7 }));
+    const base = (sheet.title ?? 'Turnaround').replace(/ · turnaround$/, '');
+    const motion = `One continuous shot without any cuts. The ${base.toLowerCase()} turns slowly on a studio turntable through one full rotation, showing every side, then faces the camera as at the start. Static camera, soft even studio light, plain white background.`;
+    const job = await jobs.submit({
+      workflow: vp.workflow,
+      params: { start_image: names[0], end_image: names[0], motion_prompt: motion, seed: Math.floor(Math.random() * 2 ** 31), frames: ex.frames, fps: ex.fps, width: vp.width, height: vp.height, key_moments: JSON.stringify(keys) },
+      meta: { mode: 'video', model: 'LTX 2.5 · turntable', prompt: `${base}: turntable from its turnaround`, title: `${base} · turntable`, parentId: sheet.id, ui: { model: 'ltx', quality: 'final' }, estimateSec: vp.estimateSec ?? undefined, durationSec: seconds },
+    });
+    return job;
+  } catch (e) {
+    return reply.code(500).send({ error: 'Could not start the turntable: ' + (e as Error).message });
+  }
+});
+
 /** Make a library item usable as a workflow input (uploads it once to ComfyUI's input folder). */
 app.post('/api/items/:id/as-input', async (req, reply) => {
   const { id } = req.params as { id: string };

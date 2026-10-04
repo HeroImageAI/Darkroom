@@ -616,12 +616,29 @@ export class JobManager {
       if (cut) await this.turn(cut, c.move as OrbitMove, { turnaround: c.turnaround, view: c.view, sourceId: c.sourceId, followOf: job.id }).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Turn it: ' + friendlyError((e as Error).message) }));
       return;
     }
+    if (chain?.kind === 'turn_cut') {
+      const c = chain as Record<string, any>;
+      return void this.tryTurnaround(String(c.turnaround), String(c.sourceId)).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Turnaround sheet: ' + (e as Error).message }));
+    }
     if (chain?.kind === 'turn' && newIds[0]) {
       const c = chain as Record<string, any>;
-      if (c.turnaround) return void this.tryTurnaround(String(c.turnaround), String(c.sourceId)).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Turnaround sheet: ' + (e as Error).message }));
       // the LoRA sometimes paints the background white: cut the new view out again so it stays a cut-out
       const it = this.store.getItem(newIds[0]);
-      if (it && !(await this.hasAlpha(it.file).catch(() => true)))
+      const clear = it ? await this.hasAlpha(it.file).catch(() => true) : true;
+      if (c.turnaround) {
+        if (it && !clear) {
+          // a turnaround view waits for its clean cut-out; the sheet is made when every view has one (DECISIONS 115)
+          this.store.setItemUi(it.id, { needsCut: true });
+          await this.submit({
+            workflow: 'qwen_remove_bg',
+            params: { image_1: await this.asInput(it), seed: Math.floor(Math.random() * 2 ** 31) },
+            meta: { mode: 'edit:remove_bg', model: 'Qwen-Image 2.1 extraction', prompt: it.prompt, parentId: it.id, ui: { ...(it.ui ?? {}), cutOf: it.id }, ...(it.title ? { title: it.title } : {}), chain: { kind: 'turn_cut', turnaround: c.turnaround, sourceId: c.sourceId } },
+          }).catch(() => this.store.setItemUi(it.id, { needsCut: false }));
+          return;
+        }
+        return void this.tryTurnaround(String(c.turnaround), String(c.sourceId)).catch((e) => this.broadcast({ type: 'toast', kind: 'error', text: 'Turnaround sheet: ' + (e as Error).message }));
+      }
+      if (it && !clear)
         await this.submit({
           workflow: 'qwen_remove_bg',
           params: { image_1: await this.asInput(it), seed: Math.floor(Math.random() * 2 ** 31) },
@@ -954,13 +971,22 @@ export class JobManager {
 
   private async tryTurnaround(g: string, sourceId: string): Promise<void> {
     const all = this.store.itemsByTurnaround(g);
-    const views = all.filter((v) => v.mode === 'edit:turn');
-    if (views.length < TURNAROUND.length || all.some((v) => v.mode === 'sheet')) return;
+    if (all.some((v) => v.mode === 'sheet')) return;
+    // one final picture per view: its clean cut-out when it needed one, else the turned view itself
+    const views: Item[] = [];
+    for (let v = 1; v <= TURNAROUND.length; v++) {
+      const turned = all.find((x) => x.mode === 'edit:turn' && Number((x.ui as any)?.view) === v);
+      const cut = all.find((x) => x.mode === 'edit:remove_bg' && Number((x.ui as any)?.view) === v);
+      const done = cut ?? (turned && !(turned.ui as any)?.needsCut ? turned : null);
+      if (!done) return;
+      views.push(done);
+    }
     const src = this.store.getItem(sourceId);
     // the sheet starts with the cut-out the turns were made from (the source itself, or the cut-out made first)
-    const first = this.store.getItem(views[0].parent_id ?? sourceId) ?? src;
+    const firstTurn = all.find((x) => x.mode === 'edit:turn');
+    const first = this.store.getItem(firstTurn?.parent_id ?? sourceId) ?? src;
     if (!first || !this.comfy) return;
-    const ordered = [first, ...[...views].sort((a, b) => Number((a.ui as any)?.view ?? 0) - Number((b.ui as any)?.view ?? 0))];
+    const ordered = [first, ...views];
     const labels = ['As made', ...TURNAROUND.map(orbitLabel)];
     const H = 768;
     const pics = await Promise.all(ordered.map(async (it) => sharp(Buffer.from(await this.comfy!.view(it.file))).flatten({ background: '#ffffff' }).resize({ height: H }).png().toBuffer({ resolveWithObject: true })));
