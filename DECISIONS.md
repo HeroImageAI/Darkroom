@@ -740,3 +740,12 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     out on purpose — both models miscount grids and garble labels — so Colourway and Paint finish do one per run. The
     helpers the video tests needed (On a model, On foot, Three-quarter view) are presets too. **Generate styles**: Apparel
     flat, Footwear studio, Game concept, Film still, Car studio (one style sentence each, per model).
+111. **Walk-through fixes** (Koos: "start with your own generation, then edit, then compose, then video, then
+    timeline. Testing each feature along the way" — on a clean Library, 2026-10-04, `tests/run/walk-*.ts`, log
+    `tests/results/run-2026-10-04-walk.jsonl`). Titles now name things everywhere a picture is picked or shown: Compose
+    layers and the Library picker (title, else prompt), Timeline clips, the Inspector and the bin's add buttons; the
+    clips Timeline AI makes are titled after the film ("Darkroom reel · fill / extension / retake"). The version strip
+    shows one frame for the pictures of one Layers run (they share a version number; it showed "v6" twice). Outpaint
+    says it leaves the picture itself as it is and points to Instruct for a new background (a studio car "extended"
+    into a night street kept its white studio in the middle); Enhance › Restore says it treats haze, fog and soft focus
+    as damage (a foggy dawn came back clear) and points to Upscale for a clean picture with that mood.

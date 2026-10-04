@@ -52,7 +52,7 @@ async function createComposition(doc: ComposeDoc, name?: string): Promise<void> 
 }
 
 /** Picture layer for a library item, at its file's real size. */
-async function pictureFor(item: Pick<Item, 'id' | 'prompt'>): Promise<{ layer: Omit<ComposeLayer, 'x' | 'y' | 'w' | 'h'>; w: number; h: number }> {
+async function pictureFor(item: Pick<Item, 'id' | 'prompt'> & { title?: string | null }): Promise<{ layer: Omit<ComposeLayer, 'x' | 'y' | 'w' | 'h'>; w: number; h: number }> {
   const inp = await api.asInput(item.id);
   let w = inp.width ?? 0;
   let h = inp.height ?? 0;
@@ -61,7 +61,8 @@ async function pictureFor(item: Pick<Item, 'id' | 'prompt'>): Promise<{ layer: O
     w = img.naturalWidth;
     h = img.naturalHeight;
   }
-  const name = (item.prompt || 'Picture').replace(/\s+/g, ' ').slice(0, 40);
+  // a layer is named like the picture in the Library: its title, else its prompt (walk-through 2026-10-04)
+  const name = (item.title || item.prompt || 'Picture').replace(/\s+/g, ' ').slice(0, 40);
   return { layer: { id: uid(), kind: 'picture', name, src: inp.name, itemId: item.id, cutout: false }, w, h };
 }
 
@@ -88,7 +89,7 @@ function ComposeStart() {
     const a = ASPECTS.find((x) => x.label === aspect)!;
     void createComposition(emptyDoc(a.w, a.h)).catch((e) => toast((e as Error).message, 'error'));
   };
-  const fromItem = async (item: Pick<Item, 'id' | 'prompt'>) => {
+  const fromItem = async (item: Pick<Item, 'id' | 'prompt'> & { title?: string | null }) => {
     setBusy(true);
     try {
       const p = await pictureFor(item);
@@ -322,7 +323,7 @@ function ComposeEditor({ id }: { id: string }) {
   );
 
   // ---- adding pieces
-  const addPicture = async (item: Pick<Item, 'id' | 'prompt'>) => {
+  const addPicture = async (item: Pick<Item, 'id' | 'prompt'> & { title?: string | null }) => {
     try {
       const p = await pictureFor(item);
       const d = docRef.current!;

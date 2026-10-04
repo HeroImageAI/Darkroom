@@ -767,6 +767,8 @@ app.post('/api/timelines/:id/generate', async (req, reply) => {
         model: `LTX 2.5 · ${label.toLowerCase()}`,
         // named after what you asked for (the "one continuous shot" lead-in is Darkroom's, not yours)
         prompt: String(b.prompt ?? '').trim().slice(0, 300) || label,
+        // titled after the film, so the clip is recognisable in the bin and the Library (walk-through 2026-10-04)
+        title: `${t.name || 'Film'} · ${({ fill: 'fill', extend: 'extension', retake: 'retake' } as const)[b.request.kind]}`,
         ui: { model: 'ltx', quality, timelineId: id },
         estimateSec: vp.estimateSec ?? undefined,
         durationSec: plan.seconds,

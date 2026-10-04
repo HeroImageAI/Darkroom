@@ -1,0 +1,80 @@
+[
+ {
+  "action": "video",
+  "testId": "WALK-4-video",
+  "board": "Footwear",
+  "title": "Trail shoe · turntable",
+  "startTitle": "Trail shoe · Klein",
+  "sourceTitle": "Trail shoe · Klein",
+  "prompt": "The trail running shoe rotates slowly on a white studio turntable, showing its side, toe and heel, soft studio light with a gentle rim light.",
+  "seconds": 5,
+  "camera": "Static"
+ },
+ {
+  "action": "video",
+  "testId": "WALK-4-video",
+  "board": "Footwear",
+  "title": "Trail shoe · clay to colour",
+  "startTitle": "Trail shoe · clay render",
+  "sourceTitle": "Trail shoe · clay render",
+  "prompt": "The grey clay model of the shoe slowly takes on its materials and colours, spreading from heel to toe, until it is the finished green and sand shoe.",
+  "seconds": 5,
+  "camera": "Static",
+  "endTitle": "Trail shoe · Klein"
+ },
+ {
+  "action": "video",
+  "testId": "WALK-4-video",
+  "board": "Footwear",
+  "title": "Trail shoe · sunrise on the trail",
+  "startTitle": "Trail shoe on the trail",
+  "sourceTitle": "Trail shoe on the trail",
+  "prompt": "Mist drifts through the valley below as the sunrise light grows warmer on the rocks and the shoe; a light breeze moves the heather.",
+  "seconds": 5,
+  "camera": "Slow push-in"
+ },
+ {
+  "action": "video",
+  "testId": "WALK-4-video",
+  "board": "Automotive",
+  "title": "EV crossover · rain in the city",
+  "startTitle": "EV crossover in the city",
+  "sourceTitle": "EV crossover in the city",
+  "prompt": "Light rain falls on the wet street, neon signs flicker and their reflections ripple on the car and the asphalt.",
+  "seconds": 5,
+  "camera": "Slow push-in"
+ },
+ {
+  "action": "video",
+  "testId": "WALK-4-video",
+  "board": "Apparel",
+  "title": "Rain shell · first raindrops",
+  "startTitle": "Rain shell · on a model",
+  "sourceTitle": "Rain shell · on a model",
+  "prompt": "The model looks up as the first raindrops fall, pulls the hood of the orange jacket up and smiles; the fabric creases naturally.",
+  "seconds": 5,
+  "camera": "Static"
+ },
+ {
+  "action": "video",
+  "testId": "WALK-4-video",
+  "board": "Gaming",
+  "title": "Desert scavenger · idle",
+  "startTitle": "Desert scavenger · Klein",
+  "sourceTitle": "Desert scavenger · Klein",
+  "prompt": "The desert scavenger stands breathing slowly, shifting his weight; the cloth wraps flutter in a warm wind and fine dust drifts past.",
+  "seconds": 5,
+  "camera": "Static"
+ },
+ {
+  "action": "video",
+  "testId": "WALK-4-video",
+  "board": "Movie",
+  "title": "Lighthouse keeper · the storm",
+  "startTitle": "Lighthouse keeper · storm",
+  "sourceTitle": "Lighthouse keeper · storm",
+  "prompt": "Lightning flashes over the black sea, rain lashes the cottage and the keeper steps back from the doorway as the lighthouse beam sweeps through the storm.",
+  "seconds": 5,
+  "camera": "Slow push-in"
+ }
+]

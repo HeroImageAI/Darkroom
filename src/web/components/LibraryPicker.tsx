@@ -14,12 +14,12 @@ export function LibraryPicker({ title, onPick, onClose }: { title: string; onPic
   }, [q]);
   return (
     <Dialog title={title} onClose={onClose}>
-      <input className="input" placeholder="Search prompt, seed or tag" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search library" />
+      <input className="input" placeholder="Search title, prompt or seed" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search library" />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, maxHeight: 360, overflowY: 'auto' }} role="list">
         {items === null && <p className="note">Loading…</p>}
         {items?.length === 0 && <p className="note">No pictures match.</p>}
         {items?.map((it) => (
-          <button key={it.id} role="listitem" className="btn" style={{ padding: 0, aspectRatio: '1', overflow: 'hidden', minHeight: 0 }} onClick={() => onPick(it)} title={it.prompt} aria-label={`Use ${it.prompt || 'picture'}`}>
+          <button key={it.id} role="listitem" className="btn" style={{ padding: 0, aspectRatio: '1', overflow: 'hidden', minHeight: 0 }} onClick={() => onPick(it)} title={it.title || it.prompt} aria-label={`Use ${it.title || it.prompt || 'picture'}`}>
             <img src={thumbUrl(it.id)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </button>
         ))}

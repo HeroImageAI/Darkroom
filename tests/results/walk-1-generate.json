@@ -1,0 +1,92 @@
+[
+ {
+  "action": "board",
+  "board": "Footwear"
+ },
+ {
+  "action": "board",
+  "board": "Automotive"
+ },
+ {
+  "action": "board",
+  "board": "Apparel"
+ },
+ {
+  "action": "board",
+  "board": "Gaming"
+ },
+ {
+  "action": "board",
+  "board": "Movie"
+ },
+ {
+  "action": "generate",
+  "testId": "WALK-1-generate",
+  "board": "Footwear",
+  "title": "Trail shoe · Klein",
+  "model": "klein",
+  "style": "Footwear studio",
+  "aspect": "3:2",
+  "prompt": "A lightweight trail running shoe with a sculpted foam midsole, a breathable engineered-mesh upper in moss green and sand, suede overlays and an aggressive lugged black outsole."
+ },
+ {
+  "action": "generate",
+  "testId": "WALK-1-generate",
+  "board": "Footwear",
+  "title": "Trail shoe · Qwen",
+  "model": "qwen",
+  "style": "Footwear studio",
+  "aspect": "3:2",
+  "prompt": "A lightweight trail running shoe with a sculpted foam midsole, a breathable engineered-mesh upper in moss green and sand, suede overlays and an aggressive lugged black outsole."
+ },
+ {
+  "action": "generate",
+  "testId": "WALK-1-generate",
+  "board": "Automotive",
+  "title": "EV crossover · Klein",
+  "model": "klein",
+  "style": "Car studio",
+  "aspect": "16:9",
+  "prompt": "A compact electric crossover concept car with a clean monolithic body, a full-width front light bar, flush door handles and large aero wheels, in metallic midnight blue."
+ },
+ {
+  "action": "generate",
+  "testId": "WALK-1-generate",
+  "board": "Automotive",
+  "title": "EV crossover · Qwen",
+  "model": "qwen",
+  "style": "Car studio",
+  "aspect": "16:9",
+  "prompt": "A compact electric crossover concept car with a clean monolithic body, a full-width front light bar, flush door handles and large aero wheels, in metallic midnight blue."
+ },
+ {
+  "action": "generate",
+  "testId": "WALK-1-generate",
+  "board": "Apparel",
+  "title": "Rain shell · Klein",
+  "model": "klein",
+  "style": "Apparel flat",
+  "aspect": "4:5",
+  "prompt": "A technical rain shell jacket with a storm hood, taped seams, a waterproof front zip and two chest pockets with water-resistant zips, in burnt orange ripstop nylon."
+ },
+ {
+  "action": "generate",
+  "testId": "WALK-1-generate",
+  "board": "Gaming",
+  "title": "Desert scavenger · Klein",
+  "model": "klein",
+  "style": "Game concept",
+  "aspect": "4:5",
+  "prompt": "A desert scavenger character in layered sun-bleached cloth, scavenged armour plates, brass goggles and a backpack of salvaged tools, full body, standing, plain mid-grey background."
+ },
+ {
+  "action": "generate",
+  "testId": "WALK-1-generate",
+  "board": "Movie",
+  "title": "Lighthouse keeper · Qwen",
+  "model": "qwen",
+  "style": "Film still",
+  "aspect": "16:9",
+  "prompt": "A lone lighthouse keeper in an oilskin coat stands in the doorway of a weathered stone cottage at dawn, fog rolling in from the sea behind her, the lighthouse beam cutting through the mist."
+ }
+]

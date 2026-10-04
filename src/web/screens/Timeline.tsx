@@ -557,7 +557,7 @@ function TimelineEditor({ id }: { id: string }) {
                     key={c.id}
                     role="listitem"
                     className={`tl-clip${selId === c.id ? ' selected' : ''}${c.muted ? ' muted' : ''}`}
-                    aria-label={`Clip ${it?.prompt?.slice(0, 40) || ''}`}
+                    aria-label={`Clip ${(it?.title || it?.prompt)?.slice(0, 40) || ''}`}
                     data-id={c.id}
                     style={{ left: c.start * zoom, width: Math.max(4, lengthOf(c) * zoom), backgroundImage: `url(${thumbUrl(c.itemId)})` }}
                     onPointerDown={(e) => {
@@ -566,7 +566,7 @@ function TimelineEditor({ id }: { id: string }) {
                     }}
                   >
                     {fade > 0 && <span className="tl-fade" style={{ width: fade * zoom }} title={`Crossfade ${fade.toFixed(2)} s`} />}
-                    <span className="tl-clip-name">{it?.prompt?.slice(0, 60) || '…'}</span>
+                    <span className="tl-clip-name">{(it?.title || it?.prompt)?.slice(0, 60) || '…'}</span>
                     {c.muted && <VolumeX size={12} className="tl-clip-mute" />}
                     <span className="tl-edge left" onPointerDown={(e) => (setSel({ kind: 'clip', id: c.id }), startDrag(e, { kind: 'trim', track: 'clip', id: c.id, edge: 'left', before: doc }))} title="Drag to trim the start" />
                     <span className="tl-edge right" onPointerDown={(e) => (setSel({ kind: 'clip', id: c.id }), startDrag(e, { kind: 'trim', track: 'clip', id: c.id, edge: 'right', before: doc }))} title="Drag to trim the end" />
@@ -609,7 +609,7 @@ function TimelineEditor({ id }: { id: string }) {
           {selClip ? (
             <>
               <p className="section-label">Clip</p>
-              <p style={{ margin: 0 }}>{items[selClip.itemId]?.prompt?.slice(0, 160) || '…'}</p>
+              <p style={{ margin: 0 }} title={items[selClip.itemId]?.prompt || undefined}>{items[selClip.itemId]?.title || items[selClip.itemId]?.prompt?.slice(0, 160) || '…'}</p>
               <p className="mono muted" style={{ fontSize: 12, margin: 0 }}>
                 {timecode(selClip.start)} → {timecode(endOf(selClip))} · {lengthOf(selClip).toFixed(2)} s of {(items[selClip.itemId]?.duration ?? 0).toFixed(2)} s
               </p>
@@ -875,7 +875,7 @@ function ClipBin({ onAdd, onSound }: { onAdd: (it: Item) => void; onSound: (f: F
                 <img src={thumbUrl(v.id)} alt="" loading="lazy" draggable={false} />
                 <span className="tl-bin-name" title={v.title || v.prompt || undefined}>{v.title || v.prompt?.slice(0, 50) || v.mode}</span>
                 <span className="mono tl-bin-len">{v.duration ? `${v.duration.toFixed(1)}s` : ''}</span>
-                <button className="btn ghost sm icon" onClick={() => onAdd(v)} aria-label={`Add ${v.prompt?.slice(0, 40) || 'video'} to the end`} title="Add to the end of the film">
+                <button className="btn ghost sm icon" onClick={() => onAdd(v)} aria-label={`Add ${(v.title || v.prompt)?.slice(0, 40) || 'video'} to the end`} title="Add to the end of the film">
                   <Plus size={15} />
                 </button>
               </div>
