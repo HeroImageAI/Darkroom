@@ -70,7 +70,7 @@ export function Home() {
   return (
     <div className="screen home" style={{ gridTemplateColumns: '1fr', overflowY: 'auto' }}>
       <div className="home-inner">
-        <h1 className="home-title">What would you like to do?</h1>
+        <h1 className="home-title">What are we developing today?</h1>
 
         <nav className="home-cards" aria-label="Start">
           {CARDS.map((c) => (

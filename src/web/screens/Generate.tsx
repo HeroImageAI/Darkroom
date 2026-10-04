@@ -753,7 +753,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
             </div>
           ) : selectedItem ? (
             <div className="frame" style={frameStyle}>
-              <img src={fileUrl(selectedItem.id)} alt={selectedItem.prompt} />
+              <img key={selectedItem.id} className="develop" src={fileUrl(selectedItem.id)} alt={selectedItem.prompt} />
             </div>
           ) : (
             <div className="empty">

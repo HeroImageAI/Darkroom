@@ -1,0 +1,100 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "TS 2026-10-03 · 00 Inputs"
+    - option "TS 2026-10-03 · 01 Apparel"
+    - option "TS 2026-10-03 · 02 Footwear"
+    - option "TS 2026-10-03 · 03 Gaming"
+    - option "TS 2026-10-03 · 04 Movie"
+    - option "TS 2026-10-03 · 05 Automotive"
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- navigation "Tools":
+  - button "Move (V)"
+  - button "Mask brush (B)" [pressed]
+  - button "Eraser (E)"
+  - button "Lasso (L)"
+  - button "Smart select (S)"
+  - button "Outpaint frame (O)"
+  - button "Crop (C)"
+  - button "Undo (Ctrl+Z)"
+  - button "Redo (Ctrl+Y)"
+- region "Canvas":
+  - img "Picture being edited"
+  - button "Upload"
+  - button "Upload your own picture"
+  - button "Fit"
+  - button "100%"
+  - text: 71% Versions
+  - group "Versions":
+    - button "v1" [pressed]
+    - button "v2"
+    - button "v3"
+    - button "v4"
+    - button "v5"
+    - button "v6"
+    - button "v7"
+  - button "Compare" [disabled]
+- complementary "Edit settings":
+  - text: v1 1024×1024 made with Qwen-Image 2.1
+  - paragraph: Mode
+  - group "Edit mode":
+    - button "Instruct" [pressed]
+    - button "Inpaint"
+    - button "Outpaint"
+    - button "Enhance"
+    - button "Layers"
+    - button "Remove BG"
+    - button "Upscale"
+  - paragraph: Model
+  - group "Edit model":
+    - button "Klein 9B Fast · ~15 s":
+      - strong: Klein 9B
+      - text: Fast · ~15 s
+    - button "Qwen-Image 2.1 Precise · ~25 s" [pressed]:
+      - strong: Qwen-Image 2.1
+      - text: Precise · ~25 s
+  - paragraph:
+    - text: LoRAs none for Qwen-Image 2.1
+    - button "Refresh LoRAs"
+  - text: Seed
+  - textbox "Seed": "172396987948150"
+  - button "Seed unlocked — a new seed every run"
+  - button "New random seed"
+  - text: Instruction
+  - textbox "Instruction":
+    - /placeholder: e.g. Replace the sky with a stormy sunset. Keep everything else unchanged.
+  - combobox "Presets":
+    - option "Presets…" [selected]
+  - button "Save as my preset" [disabled]
+  - button "Enhance instruction" [disabled]
+  - paragraph: Mask empty
+  - text: Brush size 64px
+  - slider "Brush size 64px": "64"
+  - text: Feather 8px
+  - slider "Feather 8px": "8"
+  - button "Invert"
+  - button "Clear"
+  - paragraph: B brush · E eraser · L lasso (hold Shift on release to subtract) · [ ] size · V or Alt-drag pans · wheel zooms
+  - checkbox "Only change the masked area (paint a mask first)" [checked] [disabled]
+  - text: Only change the masked area (paint a mask first)
+  - checkbox "Point at it with a red circle (paint over the object first)" [disabled]
+  - text: Point at it with a red circle (paint over the object first)
+  - paragraph: Reference (optional)
+  - text: Drop or browse
+  - button "Drop or browse"
+  - paragraph: Every apply saves a new version; nothing is overwritten.
+  - button "Apply instruction Ctrl+Enter"
+  - link "Download":
+    - /url: /api/items/deaf8684-ee7a-423d-acf8-db47d087612d/file?which=main&download=1
+  - button "Animate"
+- status

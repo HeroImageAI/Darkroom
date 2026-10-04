@@ -1,0 +1,129 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "TS 2026-10-03 · 00 Inputs"
+    - option "TS 2026-10-03 · 01 Apparel"
+    - option "TS 2026-10-03 · 02 Footwear"
+    - option "TS 2026-10-03 · 03 Gaming"
+    - option "TS 2026-10-03 · 04 Movie"
+    - option "TS 2026-10-03 · 05 Automotive"
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- complementary "Generate settings":
+  - text: Prompt
+  - button "New" [disabled]
+  - button "From picture"
+  - button "Choose File"
+  - button "Restore"
+  - button "Choose File"
+  - button "Enhance"
+  - textbox "Prompt":
+    - /placeholder: Describe the image… e.g. a ceramic teapot on a linen tablecloth, morning light
+  - paragraph: "Tip: {red|green|blue} in the prompt makes one picture per option."
+  - paragraph: Model
+  - group "Model":
+    - button "Klein 9B Fast · 4 steps" [pressed]:
+      - strong: Klein 9B
+      - text: Fast · 4 steps
+    - button "Qwen-Image 2.1 Text & layout":
+      - strong: Qwen-Image 2.1
+      - text: Text & layout
+  - text: Klein version
+  - combobox "Klein version":
+    - option "Official Klein 9B" [selected]
+    - option "nsfwKlein (9.1 GB)"
+  - paragraph: Quality ~1 MP, ~8 s
+  - group "Quality":
+    - button "Standard" [pressed]
+    - button "High"
+  - paragraph: Aspect 1024 × 1024
+  - group "Aspect ratio":
+    - button "1:1" [pressed]
+    - button "4:5"
+    - button "3:2"
+    - button "16:9"
+    - button "9:16"
+  - paragraph: Style
+  - group "Style preset":
+    - button "None" [pressed]
+    - button "Photographic"
+    - button "Concept art"
+    - button "Product shot"
+    - button "Ink sketch"
+    - button "Screen print"
+  - paragraph: References 0/3
+  - text: Drop, paste or browse
+  - button "Drop, paste or browse"
+  - button "Screen"
+  - text: Optional.
+  - paragraph:
+    - text: LoRAs
+    - button "Refresh LoRAs"
+  - combobox "Add a LoRA":
+    - option "Add a Klein 9B LoRA…" [selected]
+    - option "bfs_head_v1_flux-klein_9b_step3500_rank128 (632 MB)"
+    - option "flux2_klein_9b_refcontrol_lineart (158 MB)"
+    - option "Flux2-Klein-9B-consistency-V2 (316 MB)"
+    - option "Flux2-Klein-Image-RestoreV1 (237 MB)"
+    - option "refcontrol_v2_poses (158 MB)"
+  - paragraph: Only LoRAs made for Klein 9B are listed; 16 others are for other models.
+  - paragraph: Batch
+  - group "Batch size":
+    - button "×1" [pressed]
+    - button "×2"
+    - button "×3"
+    - button "×4"
+  - group: Advanced
+  - button "Generate Ctrl+Enter"
+- region "Result":
+  - heading "Nothing developed yet" [level=2]
+  - paragraph: Write a prompt on the left and press Generate (Ctrl+Enter). Drop or paste up to three pictures to use as references.
+- complementary "History":
+  - heading "History" [level=3]
+  - 'button "Show: A four-panel film storyboard in a 2×2 grid, showing a continuous sequence: 1) wide shot of a figure approaching the farmhouse at dawn, 2) close-up of a hand pushing the door open, 3) interior reverse shot of the figure in the doorway, 4) extreme close-up of the figure''s eyes reacting. Consistent character, costume and lighting across panels. Charcoal and grey-wash storyboard style, panel numbers in the corners."'
+  - button "Delete this picture"
+  - 'button "Show: Film creature concept: a large desert predator, a hybrid of a pangolin and a hyena, with overlapping armoured scales, a long low body and glowing amber eyes. Three-quarter view, standing on cracked salt flats, overcast light. Highly detailed, grounded, believable anatomy, cinematic concept art."'
+  - button "Delete this picture"
+  - 'button "Show: Wide shot: a vintage pickup truck parked beside a windmill in an empty field at blue hour. The headlights are off and a single figure leans against the bumper. Cinematic, anamorphic, muted grade."'
+  - button "Delete this picture"
+  - 'button "Show: An interior workshop full of half-repaired machines. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A sandstorm approaching a canyon village. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A rusted armoured truck converted into a mobile home. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A faction leader seated on a throne of salvaged car seats. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A desert market street at dusk. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A game prop design sheet of eight scavenged weapons and tools for the desert scavenger faction: a crossbow from car parts, a pipe-wrench club, a solar-cell lantern, a water-filter canteen, a grappling hook, a signal flare gun, a machete with a leaf-spring blade, a hand-cranked radio. Each item isolated, consistent scale indicator, flat grey background, consistent painterly style."'
+  - button "Delete this picture"
+  - 'button "Show: A four-panel film storyboard in a 2×2 grid, showing a continuous sequence: 1) wide shot of a figure approaching the farmhouse at dawn, 2) close-up of a hand pushing the door open, 3) interior reverse shot of the figure in the doorway, 4) extreme close-up of the figure''s eyes reacting. Consistent character, costume and lighting across panels. Charcoal and grey-wash storyboard style, panel numbers in the corners."'
+  - button "Delete this picture"
+  - 'button "Show: Film creature concept: a large desert predator, a hybrid of a pangolin and a hyena, with overlapping armoured scales, a long low body and glowing amber eyes. Three-quarter view, standing on cracked salt flats, overcast light. Highly detailed, grounded, believable anatomy, cinematic concept art."'
+  - button "Delete this picture"
+  - 'button "Show: Wide shot: a vintage pickup truck parked beside a windmill in an empty field at blue hour. The headlights are off and a single figure leans against the bumper. Cinematic, anamorphic, muted grade."'
+  - button "Delete this picture"
+  - 'button "Show: An interior workshop full of half-repaired machines. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A sandstorm approaching a canyon village. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A rusted armoured truck converted into a mobile home. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A faction leader seated on a throne of salvaged car seats. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A desert market street at dusk. Stylised painterly game concept art, warm ochre and dusty teal palette, soft rim lighting, visible brushwork, slightly exaggerated proportions."'
+  - button "Delete this picture"
+  - 'button "Show: A game prop design sheet of eight scavenged weapons and tools for the desert scavenger faction: a crossbow from car parts, a pipe-wrench club, a solar-cell lantern, a water-filter canteen, a grappling hook, a signal flare gun, a machete with a leaf-spring blade, a hand-cranked radio. Each item isolated, consistent scale indicator, flat grey background, consistent painterly style."'
+  - button "Delete this picture"
+  - button "See all in Library"
+- status

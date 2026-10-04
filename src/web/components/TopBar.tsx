@@ -18,9 +18,11 @@ const TABS: { id: Screen; label: string; icon: typeof ImageIcon }[] = [
 export function Logo() {
   return (
     <button type="button" className="logo" onClick={() => go('home')} title="Home" aria-label="Darkroom — Home">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-        <circle cx="12" cy="12" r="9" />
-        <circle cx="12" cy="12" r="3.5" />
+      {/* an enlarger lens: the iris of six blades (DECISIONS 108) */}
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 2l3.2 6.6M20.66 7l-7.3.6M20.66 17l-4.1-6M12 22l-3.2-6.6M3.34 17l7.3-.6M3.34 7l4.1 6" />
+        <polygon points="13.4,9.2 15,12 13.6,14.8 10.6,14.8 9,12 10.4,9.2" fill="currentColor" stroke="none" opacity=".35" />
       </svg>
       Darkroom
     </button>
@@ -96,6 +98,8 @@ export function TopBar({ screen }: { screen: Screen }) {
           <span className="mono vram-text">{used !== null && total ? `${used.toFixed(1)}/${total.toFixed(0)} GB` : '–'}</span>
         </div>
         <div className="queue-count" title={`${status?.queue ?? 0} jobs waiting or running in ComfyUI`}>
+          {/* the darkroom's safelight: on while something is developing */}
+          <span className={`safelight ${active.length || status?.queue ? 'on' : ''}`} aria-hidden="true" />
           <ListOrdered size={15} />
           {status?.queue ?? 0}<span className="queue-word"> queued</span>
         </div>

@@ -653,7 +653,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.goto('/#/library');
     await expect(page.getByRole('region', { name: 'Library' })).toBeVisible();
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'What would you like to do?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'What are we developing today?' })).toBeVisible();
     const start = page.getByRole('navigation', { name: 'Start' });
     for (const name of ['Generate', 'Edit', 'Compose', 'Video', 'Library']) await expect(start.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
     await shot(page, 'home');

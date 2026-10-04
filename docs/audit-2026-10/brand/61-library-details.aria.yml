@@ -1,0 +1,279 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- region "Library":
+  - group "Filter":
+    - button "All" [pressed]
+    - button "Favourites"
+    - button "Klein"
+    - button "Qwen"
+    - button "Edits"
+    - button "Composed"
+    - button "Videos"
+    - button "Recently deleted"
+  - button "Stacks" [pressed]
+  - text: Search
+  - textbox "Search":
+    - /placeholder: Search prompt, seed or tag  ( / )
+  - button "Upload pictures to the Library"
+  - group "Boards":
+    - button "All boards" [pressed]
+    - button "No board 1497"
+    - button "New board"
+    - text: 709 items
+    - button "Select"
+    - button "Upload"
+  - list "Library items":
+    - listitem:
+      - button "image Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions." [pressed]: v2 2
+      - checkbox "Select Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."
+    - listitem:
+      - button "image Compare · Klein 9B · nsfwKlein · s18113280237704 vs Klein 9B · s18113280237704": Compare · Klein 9B · nsfwKlein · s18113280237704 vs Klein 9B · s18113280237704
+      - checkbox "Select Compare · Klein 9B · nsfwKlein · s18113280237704 vs Klein 9B · s18113280237704"
+    - listitem:
+      - button "image APP-IMG-01 · Klein · s42 · 1791097856189": v2 2 APP-IMG-01 · Klein · s42 · 1791097856189
+      - checkbox "Select Make it a rainy day."
+    - listitem:
+      - button "image 03_text_scene"
+      - checkbox "Select 03_text_scene"
+    - listitem:
+      - button "image a red classic car parked on the stone quay of a fishing harbour, overcast day"
+      - checkbox "Select a red classic car parked on the stone quay of a fishing harbour, overcast day"
+    - listitem:
+      - button "image a red classic car parked on the stone quay of a fishing harbour, overcast day"
+      - checkbox "Select a red classic car parked on the stone quay of a fishing harbour, overcast day"
+    - listitem:
+      - button "image 09_car": v2 2
+      - checkbox "Select 09_car"
+    - listitem:
+      - button "image 08_lowres_src"
+      - checkbox "Select 08_lowres_src"
+    - listitem:
+      - button "image portrait of an old fisherman with a weathered face, overcast light."
+      - checkbox "Select portrait of an old fisherman with a weathered face, overcast light."
+    - listitem:
+      - button "image a blue vintage car parked by the sea, photograph."
+      - checkbox "Select a blue vintage car parked by the sea, photograph."
+    - listitem:
+      - button "image a red vintage car parked by the sea, photograph."
+      - checkbox "Select a red vintage car parked by the sea, photograph."
+    - listitem:
+      - button "image edit:crop": v2 2
+      - checkbox "Select edit:crop"
+    - listitem:
+      - button "image Make it an overcast day.": v5 5
+      - checkbox "Select Make it an overcast day."
+    - listitem:
+      - button "image 10_interior"
+      - checkbox "Select 10_interior"
+    - listitem:
+      - button "image 09_car"
+      - checkbox "Select 09_car"
+    - listitem:
+      - button "image 01_portrait"
+      - checkbox "Select 01_portrait"
+    - listitem:
+      - button "video The motion carries on smoothly.": 1.8s
+      - checkbox "Select The motion carries on smoothly."
+    - listitem:
+      - button "video Film 8": 12.5s
+      - checkbox "Select Film 8"
+    - listitem:
+      - button "video old-footage-10s": 10.0s
+      - checkbox "Select old-footage-10s"
+    - listitem:
+      - 'button "image Poster with the bold headline \"DARKROOM\" and the line \"open every night\" beneath, a crescent moon over rooftops. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."': v7 7
+      - 'checkbox "Select Poster with the bold headline \"DARKROOM\" and the line \"open every night\" beneath, a crescent moon over rooftops. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."'
+    - listitem:
+      - button "image the person": v7 7
+      - checkbox "Select the person"
+    - listitem:
+      - button "image a bakery storefront with a hand-painted sign reading \"SUNRISE BAKERY\", cobbled street."
+      - checkbox "Select a bakery storefront with a hand-painted sign reading \"SUNRISE BAKERY\", cobbled street."
+    - listitem:
+      - button "image A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."
+      - checkbox "Select A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."
+    - listitem:
+      - button "image Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.": v2 2
+      - checkbox "Select Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."
+    - listitem:
+      - button "image Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.": v2 2
+      - checkbox "Select Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."
+    - listitem:
+      - button "image Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.": v2 2
+      - checkbox "Select Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."
+    - listitem:
+      - button "image Compare · Klein 9B · nsfwKlein · s203443356721296 vs Klein 9B · s203443356721296": Compare · Klein 9B · nsfwKlein · s203443356721296 vs Klein 9B · s203443356721296
+      - checkbox "Select Compare · Klein 9B · nsfwKlein · s203443356721296 vs Klein 9B · s203443356721296"
+    - listitem:
+      - button "image APP-IMG-01 · Klein · s42 · 1791050732506": v2 2 APP-IMG-01 · Klein · s42 · 1791050732506
+      - checkbox "Select Make it a rainy day."
+    - listitem:
+      - button "image 03_text_scene"
+      - checkbox "Select 03_text_scene"
+    - listitem:
+      - button "image a red classic car parked on the stone quay of a fishing harbour, overcast day"
+      - checkbox "Select a red classic car parked on the stone quay of a fishing harbour, overcast day"
+    - listitem:
+      - button "image a red classic car parked on the stone quay of a fishing harbour, overcast day"
+      - checkbox "Select a red classic car parked on the stone quay of a fishing harbour, overcast day"
+    - listitem:
+      - button "image 09_car": v2 2
+      - checkbox "Select 09_car"
+    - listitem:
+      - button "image 08_lowres_src"
+      - checkbox "Select 08_lowres_src"
+    - listitem:
+      - button "image portrait of an old fisherman with a weathered face, overcast light."
+      - checkbox "Select portrait of an old fisherman with a weathered face, overcast light."
+    - listitem:
+      - button "image a blue vintage car parked by the sea, photograph."
+      - checkbox "Select a blue vintage car parked by the sea, photograph."
+    - listitem:
+      - button "image a red vintage car parked by the sea, photograph."
+      - checkbox "Select a red vintage car parked by the sea, photograph."
+    - listitem:
+      - button "image edit:crop": v2 2
+      - checkbox "Select edit:crop"
+    - listitem:
+      - button "image Make it an overcast day.": v5 5
+      - checkbox "Select Make it an overcast day."
+    - listitem:
+      - button "image 10_interior"
+      - checkbox "Select 10_interior"
+    - listitem:
+      - button "image 09_car"
+      - checkbox "Select 09_car"
+    - listitem:
+      - button "image 01_portrait"
+      - checkbox "Select 01_portrait"
+    - listitem:
+      - button "video The motion carries on smoothly.": 1.8s
+      - checkbox "Select The motion carries on smoothly."
+    - listitem:
+      - button "video Film 7": 12.5s
+      - checkbox "Select Film 7"
+    - listitem:
+      - button "video old-footage-10s": 10.0s
+      - checkbox "Select old-footage-10s"
+    - listitem:
+      - 'button "image Poster with the bold headline \"DARKROOM\" and the line \"open every night\" beneath, a crescent moon over rooftops. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."': v7 7
+      - 'checkbox "Select Poster with the bold headline \"DARKROOM\" and the line \"open every night\" beneath, a crescent moon over rooftops. Style: screen-printed poster - two to three flat spot colours, visible halftone dots, slight colour misregistration, bold graphic shapes, textured uncoated paper."'
+    - listitem:
+      - button "image the person": v7 7
+      - checkbox "Select the person"
+    - listitem:
+      - button "image a bakery storefront with a hand-painted sign reading \"SUNRISE BAKERY\", cobbled street."
+      - checkbox "Select a bakery storefront with a hand-painted sign reading \"SUNRISE BAKERY\", cobbled street."
+    - listitem:
+      - button "image A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."
+      - checkbox "Select A lighthouse keeper in a yellow raincoat standing on wet rocks, stormy sea, dramatic clouds. Shot as a natural-light photograph on a 35 mm lens, with shallow depth of field, true-to-life colour and fine film grain."
+    - listitem:
+      - button "image Make it a rainy day.": v2 2
+      - checkbox "Select Make it a rainy day."
+    - listitem:
+      - button "image Compare · Klein 9B · nsfwKlein · s194382402676866 vs Klein 9B · s194382402676866": Compare · Klein 9B · nsfwKlein · s194382402676866 vs Klein 9B · s194382402676866
+      - checkbox "Select Compare · Klein 9B · nsfwKlein · s194382402676866 vs Klein 9B · s194382402676866"
+    - listitem:
+      - button "image APP-IMG-01 · Klein · s42 · 1791041335850": APP-IMG-01 · Klein · s42 · 1791041335850
+      - checkbox "Select 03_text_scene"
+    - listitem:
+      - button "image a red classic car parked on the stone quay of a fishing harbour, overcast day"
+      - checkbox "Select a red classic car parked on the stone quay of a fishing harbour, overcast day"
+    - listitem:
+      - button "image a red classic car parked on the stone quay of a fishing harbour, overcast day"
+      - checkbox "Select a red classic car parked on the stone quay of a fishing harbour, overcast day"
+    - listitem:
+      - button "image 09_car": v2 2
+      - checkbox "Select 09_car"
+    - listitem:
+      - button "image 08_lowres_src"
+      - checkbox "Select 08_lowres_src"
+    - listitem:
+      - button "image portrait of an old fisherman with a weathered face, overcast light."
+      - checkbox "Select portrait of an old fisherman with a weathered face, overcast light."
+    - listitem:
+      - button "image a blue vintage car parked by the sea, photograph."
+      - checkbox "Select a blue vintage car parked by the sea, photograph."
+    - listitem:
+      - button "image a red vintage car parked by the sea, photograph."
+      - checkbox "Select a red vintage car parked by the sea, photograph."
+    - listitem:
+      - button "image edit:crop": v2 2
+      - checkbox "Select edit:crop"
+    - listitem:
+      - button "image Make it an overcast day.": v5 5
+      - checkbox "Select Make it an overcast day."
+  - button "Load more"
+- complementary "Details":
+  - img "Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions."
+  - button "Send to Edit"
+  - button "Animate"
+  - link "Download":
+    - /url: /api/items/6fd391ca-f15f-4115-b9be-16f347ef61b0/file?which=main&download=1
+  - button "Favourite"
+  - button "Delete"
+  - text: Title
+  - textbox "Title":
+    - /placeholder: Present this shoe as a grey clay render with no materials or
+  - text: Notes
+  - textbox "Notes":
+    - /placeholder: Your notes
+  - paragraph: Versions 2
+  - list "Versions":
+    - listitem "Version 1": v1
+    - listitem "Version 2": v2
+  - button "Delete all 2 versions"
+  - text: Board
+  - combobox "Board":
+    - option "No board" [selected]
+  - paragraph: More
+  - button "Reuse settings"
+  - button "Enhance"
+  - button "Upscale 2×"
+  - link "Settings (JSON)":
+    - /url: /api/items/6fd391ca-f15f-4115-b9be-16f347ef61b0/settings
+  - button "Open graph in ComfyUI"
+  - paragraph: Describe with Qwen3-VL
+  - 'button "Caption: short"'
+  - button "Detailed"
+  - button "Klein-style"
+  - button "Prompt → Klein"
+  - button "Prompt → Qwen"
+  - paragraph: Prompt
+  - paragraph: Present this shoe as a grey clay render with no materials or colour. Keep its exact shape and proportions.
+  - term: Type
+  - definition: Instruction edit
+  - term: Model
+  - definition: Qwen-Image 2.1 edit
+  - term: Workflow
+  - definition: qwen_edit.json
+  - term: Seed
+  - definition: "42"
+  - term: Size
+  - definition: 1080 × 764
+  - term: Render time
+  - definition: 29s
+  - term: Version
+  - definition: v2 (edited from an earlier version)
+  - term: Created
+  - definition: 2026/10/04, 09:11:36
+  - term: File
+  - definition: darkroom/edit_00576_.png
+  - term: image_1
+  - definition: darkroom/lib_d343dec1-f6ab-4483-8c86-51345a5aba0c_main.png
+  - term: seed
+  - definition: "42"
+  - button "Copy settings as JSON"
+- status

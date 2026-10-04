@@ -1,0 +1,29 @@
+- banner:
+  - button "Darkroom — Home": Darkroom
+  - navigation "Screens":
+    - button "Generate"
+    - button "Edit"
+    - button "Compose"
+    - button "Video"
+    - button "Timeline"
+    - button "Library"
+  - text: Working board
+  - combobox "Working board":
+    - option "No board" [selected]
+    - option "TS 2026-10-03 · 00 Inputs"
+    - option "TS 2026-10-03 · 01 Apparel"
+    - option "TS 2026-10-03 · 02 Footwear"
+    - option "TS 2026-10-03 · 03 Gaming"
+    - option "TS 2026-10-03 · 04 Movie"
+    - option "TS 2026-10-03 · 05 Automotive"
+    - option "＋ New board…"
+  - text: 0.38.2 0
+- heading "Timeline" [level=1]
+- paragraph: "Put your takes, your own videos and your own sound together into one film: trim, split, crossfade, add music or a voice, and export an MP4."
+- button "New film"
+- heading "Your films 1" [level=2]
+- list:
+  - listitem:
+    - button "Open MOV-VID-03 · Timeline · continuity sequence": MOV-VID-03 · Timeline · continuity sequence 2026/10/03, 20:33:09
+    - button "Delete MOV-VID-03 · Timeline · continuity sequence"
+- status

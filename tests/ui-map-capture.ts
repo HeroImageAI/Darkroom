@@ -2,13 +2,13 @@
  * Phase 0 of the test-suite run (tests/ui-map.md): open Darkroom like a user, visit every screen and mode, and save
  * a screenshot plus the accessibility tree (the names a user and the test runner see). Read-only: it clicks tabs and
  * mode pills, never Generate / Apply / Delete.
- *   npx tsx tests/ui-map-capture.ts [url]
+ *   npx tsx tests/ui-map-capture.ts [url] [out dir]
  */
 import fs from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const url = process.argv[2] ?? 'http://127.0.0.1:5178';
-const out = 'tests/results/screenshots/phase0';
+const out = process.argv[3] ?? 'tests/results/screenshots/phase0';
 fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ channel: 'msedge', headless: false, slowMo: 150 });
 const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
