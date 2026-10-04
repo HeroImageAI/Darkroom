@@ -828,3 +828,13 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     for a real 360°. **Text → video**: with no start frame, Video offers *Describe the opening shot* (16:9 / 9:16 / 1:1)
     → **Make the first frame** (Klein, ~10 s, titled "Opening shot · …"), set as the start frame; then motion and
     Animate as usual — LTX's image-to-video quality with a frame you can see first.
+121. **Video from a reference: LTX 2.5 Ingredients** (audit #5 of the model list; Koos downloaded the gated
+    `ltx-2.5-22b-ic-lora-ingredients-0.9.safetensors`). A new graph `ltx25_ingredients` derived from Refine: the
+    reference sheet is a picture repeated as the IC-LoRA guide video (RepeatImageBatch), sampling starts from an empty
+    video latent — no first frame, as the LoRA was trained (first_frame_conditioning 0) — at 768×448, 121 frames, 24 fps,
+    one stage, the card's negative prompt, silent. **Video from this reference…** in the Library details of any picture
+    asks what happens; the server builds the sheet as the card wants it — the views on black, no text: a turnaround's
+    four views in a row, or the one picture — and writes "Reference sheet: … / Generated video: …". Test: the e2e shoe's
+    turnaround in a forest stream, the camera circling — the exact shoe (sculpted midsole, grey and white panels) in a
+    scene it was never in. With the product small in a busy action shot (a runner's legs at dawn) it is not recognisable:
+    keep the product the subject.

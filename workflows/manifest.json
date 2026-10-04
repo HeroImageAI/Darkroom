@@ -4673,6 +4673,109 @@
         "last": "DR_LAST_FRAME"
       }
     },
+    "ltx25_ingredients": {
+      "file": "ltx25_ingredients.json",
+      "family": "ltx",
+      "kind": "video",
+      "label": "LTX 2.5 video from a reference sheet (IC-LoRA Ingredients)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Reference sheet",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "motion_prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_MOTION_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "width": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_WIDTH",
+              "input": "value"
+            }
+          ],
+          "default": 864,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "height": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_HEIGHT",
+              "input": "value"
+            }
+          ],
+          "default": 480,
+          "min": 256,
+          "max": 1920,
+          "step": 32
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/video/refined"
+        },
+        "frames": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_FRAMES",
+              "input": "value"
+            }
+          ],
+          "default": 121,
+          "min": 9,
+          "max": 257
+        },
+        "fps": {
+          "type": "float",
+          "targets": [
+            {
+              "title": "DR_FPS",
+              "input": "value"
+            }
+          ],
+          "default": 24
+        }
+      },
+      "outputs": {
+        "video": "DR_OUTPUT",
+        "poster": "DR_POSTER",
+        "last": "DR_LAST_FRAME"
+      }
+    },
     "ltx25_v2v_refine": {
       "file": "ltx25_v2v_refine.json",
       "family": "ltx",

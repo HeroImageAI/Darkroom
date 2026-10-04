@@ -288,6 +288,45 @@ app.post('/api/items/:id/turntable', async (req, reply) => {
   }
 });
 
+/**
+ * Ingredients (DECISIONS 121): a video that keeps a product or character as it is, from a reference sheet, with LTX
+ * 2.5's Ingredients IC-LoRA. The sheet is built here as the LoRA wants it — the views on black, no text: a
+ * turnaround's four views in a row, or the one picture — and the prompt is "Reference sheet: … / Generated video: …".
+ */
+app.post('/api/items/:id/ingredients', async (req, reply) => {
+  const it = store.getItem((req.params as { id: string }).id);
+  if (!it || it.kind !== 'image') return reply.code(404).send({ error: 'Picture not found' });
+  const motion = String(((req.body ?? {}) as { motion?: unknown }).motion ?? '').trim().slice(0, 1500);
+  if (!motion) return reply.code(400).send({ error: 'Describe what happens in the video.' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running. Start it from the status pill at the top." });
+  const cat = await jobs.loraLibrary.catalogue(jobs.loraModels()).catch(() => null);
+  if (!cat?.ltxTools?.some((l) => /ic-lora-ingredients/i.test(l.name))) return reply.code(409).send({ error: 'Ingredients needs the LTX 2.5 IC-LoRA Ingredients in your ComfyUI loras folder.' });
+  try {
+    const ids = it.mode === 'sheet' && Array.isArray((it.params as any)?.views) ? ((it.params as any).views as string[]) : [it.id];
+    const views = ids.map((v) => store.getItem(v)).filter((v): v is NonNullable<typeof v> => !!v && v.kind === 'image');
+    const W = 1536, H = 896, pad = 32;
+    const cell = Math.floor((W - pad * (views.length + 1)) / views.length);
+    const parts = await Promise.all(
+      views.map(async (v, i) => {
+        const png = await sharp(Buffer.from(await jobs.comfy!.view(v.file))).ensureAlpha().resize({ width: cell, height: H - pad * 2, fit: 'inside' }).png().toBuffer({ resolveWithObject: true });
+        return { input: png.data, left: pad + i * (cell + pad) + Math.round((cell - png.info.width) / 2), top: Math.round((H - png.info.height) / 2) };
+      }),
+    );
+    const sheetPng = await sharp({ create: { width: W, height: H, channels: 3, background: '#000000' } }).composite(parts).png().toBuffer();
+    const up = await jobs.comfy.upload('image', new Blob([new Uint8Array(sheetPng)]), `ingredients_${it.id.slice(0, 8)}.png`, { subfolder: 'darkroom', overwrite: true });
+    const base = (it.title || it.prompt || 'the subject').replace(/ · (turnaround|cut-out)$/, '').slice(0, 80);
+    const desc = views.length > 1 ? `${base}, shown from ${views.length} sides (front, side, back) on a black background.` : `${base}, on a black background.`;
+    const job = await jobs.submit({
+      workflow: 'ltx25_ingredients',
+      params: { image_1: up.subfolder ? `${up.subfolder}/${up.name}` : up.name, motion_prompt: `Reference sheet: ${desc}\n\nGenerated video: ${motion}`, seed: Math.floor(Math.random() * 2 ** 31), width: 768, height: 448, frames: 121, fps: 24 },
+      meta: { mode: 'video', model: 'LTX 2.5 · ingredients', prompt: motion, title: `${base} · ingredients`, parentId: it.id, ui: { model: 'ltx', quality: 'draft' }, durationSec: 5 },
+    });
+    return job;
+  } catch (e) {
+    return reply.code(500).send({ error: 'Could not start the video: ' + (e as Error).message });
+  }
+});
+
 /** Make a library item usable as a workflow input (uploads it once to ComfyUI's input folder). */
 app.post('/api/items/:id/as-input', async (req, reply) => {
   const { id } = req.params as { id: string };

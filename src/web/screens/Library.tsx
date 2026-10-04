@@ -758,6 +758,46 @@ const MODE_LABEL: Record<string, string> = {
   import: 'Imported',
 };
 
+/** Ingredients (DECISIONS 121): what happens in a video that keeps this picture's product or character as it is. */
+function IngredientsDialog({ item, onClose }: { item: Item; onClose: () => void }) {
+  const [motion, setMotion] = useState('');
+  const [busy, setBusy] = useState(false);
+  const turnaround = item.mode === 'sheet' && ((item.params as any)?.views ?? []).length > 1;
+  const go2 = async () => {
+    setBusy(true);
+    try {
+      await api.post(`/api/items/${item.id}/ingredients`, { motion });
+      toast('Video on its way (LTX 2.5 Ingredients, about 1–2 minutes). It lands in the Library and among your takes on Video.', 'info', 9000, { label: 'Open Video', run: () => go('video') });
+      onClose();
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Dialog title="Video from this reference" onClose={onClose}>
+      <p className="note">
+        {turnaround
+          ? 'The four views become the reference sheet (on black, as Ingredients wants it): the product or character stays as it is from every side.'
+          : 'This picture becomes the reference sheet (on black). For a product or character, a turnaround sheet from Edit › Turn it keeps it truest from every side.'}
+      </p>
+      <label className="field">
+        <span>What happens in the video?</span>
+        <textarea className="input" rows={4} value={motion} onChange={(e) => setMotion(e.target.value)} aria-label="What happens in the video" placeholder="e.g. A runner laces up the shoe on a wet city street at dawn, then jogs away from the camera." />
+      </label>
+      <div className="row">
+        <button className="btn" onClick={onClose}>
+          Cancel
+        </button>
+        <button className="btn primary" disabled={!motion.trim() || busy} onClick={() => void go2()}>
+          {busy ? <Loader2 size={14} className="spin" /> : <Film size={14} />} Make the video
+        </button>
+      </div>
+    </Dialog>
+  );
+}
+
 function Detail({
   item,
   comfyUrl,
@@ -782,6 +822,7 @@ function Detail({
   onDeleteVersions: (ids: string[]) => void;
 }) {
   const [fav, setFav] = useState(item.favourite);
+  const [ingredientsFor, setIngredientsFor] = useState<Item | null>(null);
   const [vlm, setVlm] = useState<{ busy: string | null; text: string | null; label: string }>({ busy: null, text: (item.ui as any)?.caption ?? null, label: 'Caption' });
   useEffect(() => setVlm({ busy: null, text: (item.ui as any)?.caption ?? null, label: 'Caption' }), [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const runVlm = async (task: 'caption' | 'reverse', variant: string, label: string) => {
@@ -860,6 +901,13 @@ function Detail({
                   <Film size={14} /> Animate
                 </button>
               )}
+              {/* Ingredients (DECISIONS 121): a video that keeps this product or character as it is */}
+              {item.kind === 'image' && (
+                <button className="btn sm" title="A 5-second video (LTX 2.5 Ingredients) that keeps this product or character as it is — best from a turnaround sheet" onClick={() => setIngredientsFor(item)}>
+                  <Film size={14} /> Video from this reference…
+                </button>
+              )}
+              {ingredientsFor && <IngredientsDialog item={ingredientsFor} onClose={() => setIngredientsFor(null)} />}
               {/* a turnaround's four views drive a turntable video (DECISIONS 115) */}
               {item.mode === 'sheet' && ((item.params as any)?.views ?? []).length === 4 && (
                 <button

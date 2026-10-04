@@ -457,7 +457,7 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(JSON.parse(slow.params.loras)[0].name).toMatch(/slow-motion-control/);
     await effect.getByRole('button', { name: 'Cinemagraph' }).click();
     const cine = await animate();
-    expect(cine.params.motion_prompt).toMatch(/^CINEMAGRAPH_MOTION, Pedestrians cross the street\. The camera holds a locked-off static shot.* Seamless natural loop\.$/);
+    expect(cine.params.motion_prompt).toMatch(/^CINEMAGRAPH_MOTION, Pedestrians cross the street\. Static tripod shot: the camera does not move.* Seamless natural loop\.$/);
     expect(JSON.parse(cine.params.loras)[0]).toMatchObject({ strength: 1.1 });
     expect(cine.params.motion_speed).toBeUndefined();
     await effect.getByRole('button', { name: 'None' }).click();
@@ -1649,5 +1649,25 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(page.getByLabel('Opening shot', { exact: true })).toHaveCount(0); // a start frame is set
     await expect(page.getByRole('group', { name: 'Camera' }).getByRole('button', { name: 'Turntable' })).toBeVisible();
     await shot(page, 'video-opening-shot');
+  });
+
+  test('Library: Video from this reference — a turnaround becomes an Ingredients reference sheet and a video (DECISIONS 121)', async () => {
+    const cat = await (await page.request.get('/api/loras')).json();
+    test.skip(!cat.ltxTools.some((l: any) => /ic-lora-ingredients/i.test(l.name)), 'the Ingredients IC-LoRA is not on this machine');
+    const sheet = ((await (await page.request.get('/api/items?q=turnaround&limit=20')).json()).items as any[]).find((i) => i.mode === 'sheet');
+    test.skip(!sheet, 'needs a turnaround sheet (the Turn it test makes one)');
+    await page.goto('/#/library');
+    await page.getByPlaceholder(/Search/).first().fill(sheet.title);
+    await page.locator(`.tile-wrap[data-id="${sheet.id}"] .tile`).click();
+    await page.getByRole('complementary', { name: 'Details' }).getByRole('button', { name: 'Video from this reference…' }).click();
+    const dlg = page.getByRole('dialog', { name: 'Video from this reference' });
+    await dlg.getByLabel('What happens in the video').fill('The shoe stands on a mossy rock in a forest stream; the camera slowly circles it.');
+    const sent = page.waitForResponse((r) => r.url().endsWith(`/api/items/${sheet.id}/ingredients`));
+    await dlg.getByRole('button', { name: 'Make the video' }).click();
+    const job = await (await sent).json();
+    expect(job.workflow).toBe('ltx25_ingredients');
+    expect(job.params.motion_prompt).toMatch(/^Reference sheet: .+ on a black background\.\n\nGenerated video: The shoe stands on a mossy rock/);
+    await expect.poll(async () => ((await (await page.request.get(`/api/jobs/${job.id}/items`)).json()) as any[])[0]?.duration ?? 0, { timeout: 600_000 }).toBeGreaterThan(4.5);
+    await page.getByPlaceholder(/Search/).first().fill('');
   });
 });
