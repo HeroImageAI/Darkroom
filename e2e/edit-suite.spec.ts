@@ -707,10 +707,13 @@ test.describe.serial('Edit suite · AI on the canvas and Compose in Edit (v3.28)
     expect(job.meta.mode).toBe('edit:enhance');
   });
 
-  test('Compose page: steps to build a scene, and an old composition opens in Edit as layers', async () => {
+  test('One door: Compose is gone from Home and the top bar; an old Compose link opens Edit, where old compositions open as layers', async () => {
+    await page.goto('/#/home');
+    await expect(page.getByRole('button', { name: /^Compose/ })).toHaveCount(0);
+    await expect(page.getByRole('navigation').getByText('Compose', { exact: true })).toHaveCount(0);
     await page.goto('/#/compose');
-    await expect(page.getByRole('heading', { name: 'Compose' })).toBeVisible();
-    await expect(page.getByText('AI › Compose: Blend edges, Harmonise or Reimagine')).toBeVisible();
+    await expect(page).toHaveURL(/#\/edit$/);
+    await expect(page.getByText(/To build a scene: a canvas/)).toBeVisible();
     const comps = (await (await page.request.get('/api/compositions')).json()) as any[];
     test.skip(!comps.length, 'no compositions in this library');
     const comp = (await (await page.request.get(`/api/compositions/${comps[0].id}`)).json()) as any;

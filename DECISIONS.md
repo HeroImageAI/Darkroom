@@ -911,3 +911,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     picture and paint layer in its place, flips and hidden kept, the scene description as the Compose prompt, its render
     mode kept); the compositions themselves stay untouched. The old Compose screen's code is gone (git keeps it);
     composeCanvas.ts keeps only what the conversion draws with.
+126. **One door: Compose leaves Home and the top bar** (Koos: "did we not combine them into one?"). v3.28 kept Compose as
+    a separate entry (a guide page); two doors into one canvas was still confusing. Home now has five cards (Generate,
+    Edit, Video, Timeline, Library) and Edit's card says what it does now: paint, retouch, build scenes in layers, and AI
+    fill, refine, compose or extend, on a picture or a blank canvas. The top bar has no Compose tab. Edit's start
+    screen offers the blank canvas, a one-line recipe for building a scene, and your old compositions (six, then Show
+    all) with Open in Edit; it is anchored to the top so a long page scrolls instead of clipping. An old #/compose link
+    opens Edit, and #/compose/<id> opens that composition in Edit as layers; "Continue where you left off" never points
+    to Compose.

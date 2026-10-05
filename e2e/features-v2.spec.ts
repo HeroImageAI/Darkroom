@@ -666,7 +666,9 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'What are we developing today?' })).toBeVisible();
     const start = page.getByRole('navigation', { name: 'Start' });
-    for (const name of ['Generate', 'Edit', 'Compose', 'Video', 'Library']) await expect(start.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
+    for (const name of ['Generate', 'Edit', 'Video', 'Timeline', 'Library']) await expect(start.getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
+    // Compose is part of Edit (DECISIONS 126)
+    await expect(start.getByRole('button', { name: /^Compose/ })).toHaveCount(0);
     await shot(page, 'home');
     await page.getByRole('button', { name: /Continue where you left off/ }).click();
     await expect(page).toHaveURL(/#\/library$/);

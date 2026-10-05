@@ -41,7 +41,8 @@ export function lastRoute(): { screen: Screen; path: string } | null {
     const last = localStorage.getItem(LAST);
     if (!last) return null;
     const screen = last.split(/[/?]/)[0] as Screen;
-    return ['generate', 'edit', 'compose', 'video', 'timeline', 'library'].includes(screen) ? { screen, path: last } : null;
+    // Compose is part of Edit now (DECISIONS 126): no "continue" back to it
+    return ['generate', 'edit', 'video', 'timeline', 'library'].includes(screen) ? { screen, path: last } : null;
   } catch {
     return null;
   }
