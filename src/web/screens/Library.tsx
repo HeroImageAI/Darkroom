@@ -180,6 +180,27 @@ export function Library() {
     setPicked([]);
     setSelecting(false);
   };
+  /** The selection as one ZIP, downloaded by the browser. */
+  const [zipping, setZipping] = useState(false);
+  const downloadAll = async (ids: string[]) => {
+    setZipping(true);
+    try {
+      const r = await fetch('/api/items/download', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids }) });
+      if (!r.ok) throw new Error(((await r.json().catch(() => null)) as { error?: string } | null)?.error ?? 'Could not make the download.');
+      const name = /filename="([^"]+)"/.exec(r.headers.get('content-disposition') ?? '')?.[1] ?? 'darkroom.zip';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(await r.blob());
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+      const missing = Number(r.headers.get('x-darkroom-missing') ?? 0);
+      if (missing) toast(`${missing} of the ${ids.length} could not be found and were left out.`, 'info');
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setZipping(false);
+    }
+  };
   const favouriteAll = async (ids: string[], favourite: boolean) => {
     try {
       await Promise.all(ids.map((id) => api.favourite(id, favourite)));
@@ -392,6 +413,9 @@ export function Library() {
                       }}
                     >
                       <Columns2 size={14} /> Compare
+                    </button>
+                    <button className="btn sm" disabled={!picked.length || zipping} onClick={() => void downloadAll(picked)} title="All the ticked pictures and videos in one ZIP">
+                      {zipping ? <Loader2 size={14} className="spin" /> : <Download size={14} />} Download
                     </button>
                     <button className="btn sm" disabled={!picked.length} onClick={() => void favouriteAll(picked, !picked.every((id) => items.find((i) => i.id === id)?.favourite))}>
                       <Heart size={14} /> {picked.length && picked.every((id) => items.find((i) => i.id === id)?.favourite) ? 'Unfavourite' : 'Favourite'}

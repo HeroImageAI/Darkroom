@@ -2,6 +2,7 @@
  * End-to-end tests for the v2 features (prompt system, local VLM, smart select, compare, video frames).
  * Real UI -> real ComfyUI. Screenshots to proof/v2-*.png.
  */
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -1193,6 +1194,23 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(item.title).toMatch(/^Compare · .+ vs .+/);
     expect(item.width).toBeGreaterThan(item.height); // two pictures next to each other
     await dlg.getByRole('button', { name: 'Close compare' }).click();
+    await page.keyboard.press('Escape');
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
+  });
+
+  test('Library: the ticked pictures download as one ZIP (polish round 2)', async () => {
+    await page.goto('/#/library');
+    await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Klein' }).click();
+    const tiles = page.getByRole('list', { name: 'Library items' }).getByRole('listitem');
+    await page.getByRole('button', { name: 'Select', exact: true }).click();
+    await tiles.nth(0).click();
+    await tiles.nth(1).click();
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('toolbar', { name: 'Selection' }).getByRole('button', { name: 'Download' }).click()]);
+    expect(dl.suggestedFilename()).toBe('darkroom-2-items.zip');
+    const { unzipSync } = await import('fflate');
+    const files = Object.keys(unzipSync(new Uint8Array(fs.readFileSync((await dl.path())!))));
+    expect(files).toHaveLength(2);
+    for (const f of files) expect(f).toMatch(/^[a-z0-9-]+\.(png|jpg|webp)$/);
     await page.keyboard.press('Escape');
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
   });
