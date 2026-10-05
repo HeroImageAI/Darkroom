@@ -28,6 +28,9 @@ import {
   RotateCw,
   Check,
   LayoutGrid,
+  Paintbrush,
+  Layers as LayersIcon,
+  Pipette,
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo } from '../lib/remove';
@@ -52,13 +55,17 @@ import { importFailedMessage, importPictures } from '../lib/importer';
 import { LoraPicker } from '../components/LoraPicker';
 import { KleinWeights, kleinLabel, useFinetunes } from '../components/KleinWeights';
 import type { LoraUse } from '../../shared/loras';
+import { placeOnCanvas, type DocJson } from '../../shared/doc';
+import { CanvasDoc, loadImage } from '../lib/doc';
+import { DEFAULT_BRUSH, type BrushSettings } from '../lib/brush';
+import { CanvasLayers } from '../components/CanvasLayers';
 
 /** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
 const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
-type Tool = 'move' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
+type Tool = 'move' | 'paint' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
 type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
 /** restore = edit-style (default; fixes blur and low resolution), restore_upscale = restore then SeedVR2 2x,
  *  subtle = low-denoise img2img touch-up for pictures that are already clean (Addenda Phase 2, DECISIONS 66). */
@@ -78,6 +85,7 @@ interface Rect {
 
 const TOOLS: { id: Tool; label: string; key: string; icon: typeof Brush; disabled?: string }[] = [
   { id: 'move', label: 'Move', key: 'V', icon: Hand },
+  { id: 'paint', label: 'Paint on a layer', key: 'P', icon: Paintbrush },
   { id: 'brush', label: 'Mask brush', key: 'B', icon: Brush },
   { id: 'eraser', label: 'Eraser', key: 'E', icon: Eraser },
   { id: 'lasso', label: 'Lasso', key: 'L', icon: Lasso },
@@ -96,6 +104,11 @@ const MODES: { id: Mode; label: string }[] = [
   { id: 'remove_bg', label: 'Remove BG' },
   { id: 'upscale', label: 'Upscale' },
 ];
+
+/** AI results that land on the canvas as a layer when layers are on (DECISIONS 122); others open as a version. */
+const LAYERABLE: Record<string, string> = { 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Enhance', 'edit:remove_bg': 'Cut-out' };
+/** Pen pressure; a mouse or finger paints at full pressure. */
+const pressureOf = (e: { pointerType: string; pressure: number }) => (e.pointerType === 'pen' ? e.pressure : 1);
 
 const CHECKER = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='16' height='16' fill='%23222'/%3E%3Crect width='8' height='8' fill='%232b2b2b'/%3E%3Crect x='8' y='8' width='8' height='8' fill='%232b2b2b'/%3E%3C/svg%3E\")";
 const ZERO_PAD: Pad = { left: 0, top: 0, right: 0, bottom: 0 };
@@ -230,7 +243,7 @@ function Editor({ item }: { item: Item }) {
     try {
       const T = boot!.prompts;
       const masked = onlyMasked && !maskEmpty;
-      const inp = await api.asInput(item.id);
+      const inp = await inputFor();
       const mask = masked ? await uploadMask() : undefined;
       const seed = nextSeed();
       const jobs = {} as Record<'klein' | 'qwen', string>;
@@ -346,7 +359,29 @@ function Editor({ item }: { item: Item }) {
   const imgRef = useRef<HTMLImageElement>(null);
   const viewCanvas = useRef<HTMLCanvasElement>(null);
   const layer = useRef<MaskLayer | null>(null);
-  const drag = useRef<{ kind: 'pan' | 'paint' | 'lasso' | 'frame' | 'crop' | 'sam'; sx: number; sy: number; vx: number; vy: number; side?: keyof Pad; start?: Pad; origin?: { x: number; y: number } } | null>(null);
+  // Edit canvas layers (DECISIONS 122): null until you start layers or open a picture that has them
+  const docRef = useRef<CanvasDoc | null>(null);
+  const [doc, setDoc] = useState<CanvasDoc | null>(null);
+  const [docVer, setDocVer] = useState(0);
+  const [docStarting, setDocStarting] = useState(false);
+  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error' | 'none'>('none');
+  const [flattening, setFlattening] = useState(false);
+  const [panel, setPanel] = useSessionState<'ai' | 'layers'>('edit.panel', 'ai');
+  const [paint, setPaint] = usePersistent<BrushSettings>('edit.brush', DEFAULT_BRUSH);
+  const [paintErase, setPaintErase] = useState(false);
+  const [recentColours, setRecentColours] = usePersistent<string[]>('edit.colours', []);
+  const compCanvas = useRef<HTMLCanvasElement>(null);
+  const strokePt = useRef<{ x: number; y: number } | null>(null);
+  /** the selection a running edit used, to mask its result layer */
+  const jobMask = useRef<HTMLCanvasElement | null>(null);
+  /** one undo order across the AI mask and the canvas layers */
+  const order = useRef<{ undo: ('mask' | 'doc')[]; redo: ('mask' | 'doc')[] }>({ undo: [], redo: [] });
+  const pushOrder = (k: 'mask' | 'doc') => {
+    order.current.undo.push(k);
+    if (order.current.undo.length > 200) order.current.undo.shift();
+    order.current.redo = [];
+  };
+  const drag = useRef<{ kind: 'pan' | 'paint' | 'stroke' | 'lasso' | 'frame' | 'crop' | 'sam'; sx: number; sy: number; vx: number; vy: number; side?: keyof Pad; start?: Pad; origin?: { x: number; y: number } } | null>(null);
 
   const job: Job | undefined = jobId ? jobs[jobId] : undefined;
   const running = !!job && (job.status === 'queued' || job.status === 'running');
@@ -378,7 +413,174 @@ function Editor({ item }: { item: Item }) {
   useEffect(() => {
     if (!viewCanvas.current) return;
     layer.current = new MaskLayer(W, H, viewCanvas.current);
+    layer.current.onCheckpoint = () => pushOrder('mask');
   }, [W, H]);
+
+  // ---- Edit canvas layers (DECISIONS 122)
+  const attachDoc = (d: CanvasDoc) => {
+    docRef.current = d;
+    d.onPush = () => pushOrder('doc');
+    setDoc(d);
+    setDocVer(d.version);
+    setSaveState(d.isProject ? 'saved' : 'none');
+  };
+  useEffect(() => {
+    if (!item.layered) return;
+    let off = false;
+    setDocStarting(true);
+    api
+      .get<DocJson>(`/api/items/${item.id}/project`)
+      .then((j) => CanvasDoc.fromJson(j))
+      .then((d) => {
+        if (!off) attachDoc(d);
+      })
+      .catch(() => toast('Could not open the layers of this picture.', 'error'))
+      .finally(() => !off && setDocStarting(false));
+    return () => {
+      off = true;
+    };
+  }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!doc) return;
+    let raf = 0;
+    const draw = () => {
+      raf = 0;
+      const c = compCanvas.current;
+      if (c) doc.renderChanges(c);
+    };
+    const offPaint = doc.onPaint(() => {
+      if (!raf) raf = requestAnimationFrame(draw);
+    });
+    let timer: number | undefined;
+    const offChange = doc.subscribe(() => {
+      setDocVer(doc.version);
+      if (!doc.isProject) return;
+      setSaveState('unsaved');
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        setSaveState('saving');
+        doc
+          .save()
+          .then(() => setSaveState('saved'))
+          .catch(() => setSaveState('error'));
+      }, 1200);
+    });
+    draw();
+    return () => {
+      offPaint();
+      offChange();
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+      if (doc.unsaved) void doc.save().catch(() => undefined);
+    };
+  }, [doc]);
+  // a fresh on-screen canvas (back from Compare) needs the whole picture once
+  useEffect(() => {
+    if (doc && compCanvas.current) doc.render(compCanvas.current);
+  }, [doc, compare]);
+  // don't lose layers that are still being saved by closing the tab
+  useEffect(() => {
+    if (saveState !== 'unsaved' && saveState !== 'saving') return;
+    const h = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener('beforeunload', h);
+    return () => window.removeEventListener('beforeunload', h);
+  }, [saveState]);
+  const starting = useRef<Promise<CanvasDoc | null> | null>(null);
+  const ensureDoc = (): Promise<CanvasDoc | null> => {
+    if (docRef.current) return Promise.resolve(docRef.current);
+    if (starting.current) return starting.current;
+    setDocStarting(true);
+    starting.current = CanvasDoc.fromItem(item.id, W, H)
+      .then((d) => (attachDoc(d), d))
+      .catch(() => (toast('Could not open the picture for painting.', 'error'), null))
+      .finally(() => {
+        starting.current = null;
+        setDocStarting(false);
+      });
+    return starting.current;
+  };
+  /** The picture the AI works on: the merged layers when there are any, else the picture itself. */
+  const inputFor = async (): Promise<{ name: string }> => {
+    const d = docRef.current;
+    if (d?.isProject) return api.upload(await d.flattenBlob(), 'canvas.png');
+    return api.asInput(item.id);
+  };
+  const addItemLayer = async (it: Item, kind: 'picture' | 'result' = 'picture', name?: string, where: 'top' | 'above' = 'above') => {
+    const d = await ensureDoc();
+    if (!d) return;
+    try {
+      const img = await loadImage(fileUrl(it.id));
+      d.addImageLayer(img, { name: name ?? (it.title || `v${it.version} · ${it.mode.replace(/^edit:/, '')}`), kind, source: it.id, where });
+      setPanel('layers');
+    } catch {
+      toast('Could not add that picture as a layer.', 'error');
+    }
+  };
+  /** A finished AI result on top of the canvas, masked to the selection it used; anything that doesn't fit opens as a version. */
+  const addResultLayer = async (d: CanvasDoc, id: string, mode: string, model: string) => {
+    try {
+      const { item: r } = await api.item(id);
+      const fits = !!r.width && !!r.height && placeOnCanvas(r.width, r.height, d.width, d.height).exact && r.width <= d.width * 1.05;
+      if (!fits) return go('edit', id);
+      const img = await loadImage(fileUrl(id));
+      const mask = jobMask.current;
+      jobMask.current = null;
+      d.addImageLayer(img, { name: `${LAYERABLE[mode] ?? 'Result'} · ${model.replace(/ (edit|fill|extraction)$/, '')}`, kind: 'result', source: id, mask, where: 'top' });
+      // the selection now lives on as the layer's mask
+      if (mask && layer.current) {
+        layer.current.clear();
+        setMaskEmpty(true);
+      }
+      setPanel('layers');
+      toast(`The result is on a new layer at the top${mask ? ', masked to your selection' : ''}. It is kept as v${r.version} too.`, 'ok', 9000, { label: 'Open the version', run: () => go('edit', id) });
+    } catch {
+      go('edit', id);
+    }
+  };
+  const flattenToVersion = async () => {
+    const d = docRef.current;
+    if (!d) return;
+    setFlattening(true);
+    try {
+      await d.save().catch(() => undefined);
+      const r = await fetch(`/api/items/${item.id}/flatten?layers=${d.layers.length}`, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: await d.flattenBlob() });
+      const j = (await r.json()) as Item & { error?: string };
+      if (!r.ok) throw new Error(j.error ?? 'Could not save the version.');
+      toast(`Saved as v${j.version}. Your layers stay with v${item.version}.`, 'ok', 9000, { label: `Back to the layers`, run: () => go('edit', item.id) });
+      go('edit', j.id);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setFlattening(false);
+    }
+  };
+  const exportPng = async () => {
+    const d = docRef.current;
+    if (!d) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(await d.flattenBlob());
+    a.download = `darkroom-${(item.title || item.prompt || 'canvas').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40).replace(/^-|-$/g, '') || 'canvas'}-layers.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+  const pickColour = (e: { clientX: number; clientY: number }) => {
+    const p = toImage(e);
+    let c = docRef.current ? compCanvas.current : null;
+    if (!c) {
+      c = document.createElement('canvas');
+      c.width = W;
+      c.height = H;
+      c.getContext('2d')!.drawImage(imgRef.current!, 0, 0, W, H);
+    }
+    const px = c.getContext('2d', { willReadFrequently: true })!.getImageData(Math.min(W - 1, Math.max(0, Math.floor(p.x))), Math.min(H - 1, Math.max(0, Math.floor(p.y))), 1, 1).data;
+    const hex = '#' + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
+    setPaint((s) => ({ ...s, color: hex }));
+  };
+  const choosePaint = () => {
+    setTool('paint');
+    setPanel('layers');
+    void ensureDoc();
+  };
 
   const fit = useCallback(() => {
     const el = stageRef.current;
@@ -412,6 +614,10 @@ function Editor({ item }: { item: Item }) {
         }
         if (j.status === 'done' && j.result_ids[0]) {
           sessionStorage.removeItem('dr.edit.job');
+          // layers on: the result comes in as a layer (it is a version too)
+          const d = docRef.current;
+          const jm = j.meta as any;
+          if (d?.isProject && LAYERABLE[jm.mode] && !jm.copied) return void addResultLayer(d, j.result_ids[0], jm.mode, String(jm.model ?? ''));
           go('edit', j.result_ids[0]);
           const parentId = (j.meta as any).parentId as string | undefined;
           // Qwen sometimes returns the picture almost unchanged for a given seed (DECISIONS 107)
@@ -440,13 +646,34 @@ function Editor({ item }: { item: Item }) {
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (compare || e.button === 2) return;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* a pointer the browser no longer tracks */
+    }
     const base = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
+    if (tool === 'paint' && e.button === 0 && e.altKey) return pickColour(e);
     if (tool === 'move' || e.button === 1 || e.altKey) {
       drag.current = { kind: 'pan', ...base };
       return;
     }
     const p = toImage(e);
+    if (tool === 'paint') {
+      const d = docRef.current;
+      if (!d) {
+        void ensureDoc();
+        return toast('Getting the canvas ready: paint again in a moment.', 'info');
+      }
+      const why = d.paintBlocker();
+      if (why) return toast(why, 'info');
+      // the pen's eraser end erases
+      const erase = paintErase || (e.pointerType === 'pen' && (e.buttons & 32) !== 0);
+      if (d.beginStroke(paint, erase, p.x, p.y, pressureOf(e))) {
+        strokePt.current = p;
+        drag.current = { kind: 'stroke', ...base };
+      }
+      return;
+    }
     if (tool === 'brush' || tool === 'eraser') {
       layer.current?.beginStroke(p.x, p.y, brush, tool === 'eraser');
       drag.current = { kind: 'paint', ...base };
@@ -476,6 +703,15 @@ function Editor({ item }: { item: Item }) {
     else if (d.kind === 'paint') {
       const p = toImage(e);
       layer.current?.strokeTo(p.x, p.y, brush, tool === 'eraser');
+    } else if (d.kind === 'stroke') {
+      // every pen sample, not just one per frame: smooth curves with a Wacom
+      const ne = e.nativeEvent as PointerEvent;
+      const evs = ne.getCoalescedEvents?.() ?? [];
+      for (const ev of evs.length ? evs : [ne]) {
+        const q = toImage(ev);
+        docRef.current?.strokeTo(q.x, q.y, pressureOf(ev));
+        strokePt.current = q;
+      }
     } else if (d.kind === 'lasso') setLasso((pts) => [...(pts ?? []), toImage(e)]);
     else if (d.kind === 'frame' && d.side && d.start) {
       const dx = (e.clientX - d.sx) / view.scale;
@@ -500,6 +736,10 @@ function Editor({ item }: { item: Item }) {
     if (d.kind === 'paint') {
       layer.current?.endStroke();
       setMaskEmpty(!!layer.current?.isEmpty());
+    } else if (d.kind === 'stroke') {
+      docRef.current?.endStroke(strokePt.current?.x ?? null, strokePt.current?.y ?? null);
+      strokePt.current = null;
+      if (!paintErase) setRecentColours((r) => [paint.color, ...r.filter((c) => c !== paint.color)].slice(0, 8));
     } else if (d.kind === 'lasso' && lasso) {
       layer.current?.fillPolygon(lasso, e.shiftKey);
       setLasso(null);
@@ -557,13 +797,39 @@ function Editor({ item }: { item: Item }) {
 
   // Undo/redo: mask strokes first; otherwise step through saved versions (never deletes anything).
   const versionIndex = lineage.findIndex((v) => v.id === item.id);
+  // With layers on, Undo walks the mask and layer steps in the order you made them and never leaves the picture.
   const undo = () => {
-    if (layer.current?.undo()) return setMaskEmpty(layer.current.isEmpty());
+    const o = order.current;
+    for (let k = o.undo.pop(); k; k = o.undo.pop()) {
+      if (k === 'mask' && layer.current?.undo()) {
+        o.redo.push(k);
+        return setMaskEmpty(layer.current.isEmpty());
+      }
+      if (k === 'doc' && docRef.current?.undo()) return void o.redo.push(k);
+    }
+    if (docRef.current?.isProject) return toast('Nothing more to undo here. Earlier versions are in the strip below.', 'info');
     if (versionIndex > 0) go('edit', lineage[versionIndex - 1].id);
   };
   const redo = () => {
-    if (layer.current?.redo()) return setMaskEmpty(layer.current.isEmpty());
+    const o = order.current;
+    for (let k = o.redo.pop(); k; k = o.redo.pop()) {
+      if (k === 'mask' && layer.current?.redo()) {
+        o.undo.push(k);
+        return setMaskEmpty(layer.current.isEmpty());
+      }
+      if (k === 'doc' && docRef.current?.redo()) return void o.undo.push(k);
+    }
+    if (docRef.current?.isProject) return;
     if (versionIndex >= 0 && versionIndex < lineage.length - 1) go('edit', lineage[versionIndex + 1].id);
+  };
+  /** History panel: undo `n` layer steps. */
+  const undoDocSteps = (n: number) => {
+    for (let i = 0; i < n; i++) {
+      const at = order.current.undo.lastIndexOf('doc');
+      if (at < 0 || !docRef.current?.undo()) break;
+      order.current.undo.splice(at, 1);
+      order.current.redo.push('doc');
+    }
   };
 
   useHotkey((e) => (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey, (e) => (e.preventDefault(), undo()), [lineage, item.id]);
@@ -572,12 +838,23 @@ function Editor({ item }: { item: Item }) {
     (e) => !e.ctrlKey && !e.metaKey && !e.altKey && TOOLS.some((t) => t.key.toLowerCase() === e.key.toLowerCase() && !t.disabled),
     (e) => {
       const t = TOOLS.find((x) => x.key.toLowerCase() === e.key.toLowerCase())!.id;
+      if (t === 'paint') return choosePaint();
       setTool(t);
       if (t === 'frame') setMode('outpaint');
     },
     [],
   );
-  useHotkey((e) => e.key === '[' || e.key === ']', (e) => setBrush((b) => Math.max(4, Math.min(400, b + (e.key === ']' ? 8 : -8)))), []);
+  useHotkey(
+    (e) => e.key === '[' || e.key === ']',
+    (e) => {
+      const up = e.key === ']';
+      if (tool === 'paint') setPaint((s) => ({ ...s, size: Math.max(1, Math.min(500, Math.round(s.size * (up ? 1.15 : 1 / 1.15)) + (up ? 1 : -1))) }));
+      else setBrush((b) => Math.max(4, Math.min(400, b + (up ? 8 : -8))));
+    },
+    [tool],
+  );
+  // X: paint / erase with the Paint tool
+  useHotkey((e) => tool === 'paint' && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'x', () => setPaintErase((x) => !x), [tool]);
 
   /** Mask PNG; `blur` defaults to the Feather slider (crop-and-stitch passes 0 and feathers in the graph). */
   const uploadMask = async (blur = feather) => {
@@ -590,12 +867,10 @@ function Editor({ item }: { item: Item }) {
     const mc = layer.current!.mask;
     const bb = maskBBox(mc.getContext('2d')!.getImageData(0, 0, mc.width, mc.height).data, mc.width, mc.height);
     if (!bb) return null;
-    const img = new Image();
-    img.src = fileUrl(item.id);
-    await img.decode();
+    const img: HTMLCanvasElement | HTMLImageElement = docRef.current?.isProject ? docRef.current.flatten() : await loadImage(fileUrl(item.id));
     const c = document.createElement('canvas');
-    c.width = img.naturalWidth;
-    c.height = img.naturalHeight;
+    c.width = img instanceof HTMLImageElement ? img.naturalWidth : img.width;
+    c.height = img instanceof HTMLImageElement ? img.naturalHeight : img.height;
     const g = c.getContext('2d')!;
     g.drawImage(img, 0, 0);
     const sx = c.width / mc.width;
@@ -612,7 +887,18 @@ function Editor({ item }: { item: Item }) {
 
   const submit = async (workflow: string, params: Record<string, string | number>, modeKey: string, model: string, promptText = '') => {
     try {
-      const inp = await api.asInput(item.id);
+      const inp = await inputFor();
+      // a result layer gets the selection this edit used as its mask
+      const mc = layer.current?.mask;
+      if (params.mask && mc) {
+        const c = document.createElement('canvas');
+        c.width = mc.width;
+        c.height = mc.height;
+        const g = c.getContext('2d')!;
+        g.filter = 'blur(3px)';
+        g.drawImage(mc, 0, 0);
+        jobMask.current = c;
+      } else jobMask.current = null;
       const j = await api.submit({
         workflow,
         params: { image_1: inp.name, seed: nextSeed(), ...params, ...(LORA_MODES.has(modeKey) && lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(LORA_MODES.has(modeKey) ? weightsNow() : {}), ...(LORA_MODES.has(modeKey) ? qwenExtras(editModel) : {}) },
@@ -791,7 +1077,7 @@ function Editor({ item }: { item: Item }) {
             : undefined;
       const enhanceMeta = { mode: 'edit:enhance', model: label, prompt: item.prompt, ui, chain };
       try {
-        const inp = await api.asInput(item.id);
+        const inp = await inputFor();
         const j = preScale
           ? // small source: SeedVR2 first, then the touch-up runs on its result (server chain)
             await api.submit({
@@ -825,7 +1111,7 @@ function Editor({ item }: { item: Item }) {
       const matteName = bgMatte.startsWith('lucida') ? 'Lucida' : 'BiRefNet';
       const plateCaption = caption ?? ((item.ui as any)?.caption as string | undefined) ?? null;
       try {
-        const inp = await api.asInput(item.id);
+        const inp = await inputFor();
         const j = await api.submit({
           workflow: 'remove_bg',
           params: { image_1: inp.name, ...params },
@@ -976,6 +1262,7 @@ function Editor({ item }: { item: Item }) {
             aria-label={`${t.label} (${t.key})`}
             disabled={!!t.disabled}
             onClick={() => {
+              if (t.id === 'paint') return choosePaint();
               setTool(t.id);
               if (t.id === 'frame') setMode('outpaint');
             }}
@@ -1028,6 +1315,14 @@ function Editor({ item }: { item: Item }) {
             </button>
           </div>
         ) : null}
+        {item.mode === 'edit:canvas' && typeof (item.params as any)?.project === 'string' && !running ? (
+          <div className="banner" role="status">
+            <span>This version was flattened from layers. The layers are still there to keep working on.</span>
+            <button className="btn sm" onClick={() => go('edit', (item.params as any).project)}>
+              <LayersIcon size={14} /> Open the layers
+            </button>
+          </div>
+        ) : null}
         {item.deleted_at ? (
           <div className="banner" role="status">
             <span>This picture is in Recently deleted.</span>
@@ -1044,12 +1339,13 @@ function Editor({ item }: { item: Item }) {
             minHeight: 0,
             position: 'relative',
             overflow: 'hidden',
-            cursor: tool === 'move' ? 'grab' : tool === 'brush' || tool === 'eraser' ? 'none' : 'crosshair',
+            cursor: tool === 'move' ? 'grab' : tool === 'brush' || tool === 'eraser' || tool === 'paint' ? 'none' : 'crosshair',
             touchAction: 'none',
           }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
           onPointerLeave={() => setCursor(null)}
           onWheel={onWheel}
         >
@@ -1078,7 +1374,17 @@ function Editor({ item }: { item: Item }) {
                 src={fileUrl(item.id)}
                 alt="Picture being edited"
                 draggable={false}
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', userSelect: 'none', background: CHECKER }}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', userSelect: 'none', background: CHECKER, visibility: doc ? 'hidden' : undefined }}
+              />
+            )}
+            {doc && !compare && (
+              <canvas
+                ref={compCanvas}
+                data-testid="layers-canvas"
+                width={doc.width}
+                height={doc.height}
+                aria-label="Layers"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', background: CHECKER, pointerEvents: 'none' }}
               />
             )}
             <MaskOutlineDefs />
@@ -1108,20 +1414,73 @@ function Editor({ item }: { item: Item }) {
               <div style={{ position: 'absolute', left: crop.x * view.scale, top: crop.y * view.scale, width: crop.w * view.scale, height: crop.h * view.scale, border: '2px solid var(--accent)', boxShadow: '0 0 0 9999px rgba(0,0,0,.5)', pointerEvents: 'none' }} />
             )}
           </div>
-          {(tool === 'brush' || tool === 'eraser') && cursor && !compare && (
-            <div
-              aria-hidden="true"
-              style={{
-                position: 'absolute',
-                left: cursor.x - (brush * view.scale) / 2,
-                top: cursor.y - (brush * view.scale) / 2,
-                width: brush * view.scale,
-                height: brush * view.scale,
-                pointerEvents: 'none',
-                border: `1.5px solid ${tool === 'eraser' ? '#EDEBE5' : '#F0B44C'}`,
-                borderRadius: '50%',
-              }}
-            />
+          {(tool === 'brush' || tool === 'eraser' || tool === 'paint') && cursor && !compare && (() => {
+            const size = Math.max(4, (tool === 'paint' ? paint.size : brush) * view.scale);
+            return (
+              <div
+                aria-hidden="true"
+                className={tool === 'paint' ? 'paint-cursor' : undefined}
+                style={{
+                  position: 'absolute',
+                  left: cursor.x - size / 2,
+                  top: cursor.y - size / 2,
+                  width: size,
+                  height: size,
+                  pointerEvents: 'none',
+                  border: `1.5px solid ${tool === 'eraser' || (tool === 'paint' && paintErase) ? '#EDEBE5' : tool === 'paint' ? paint.color : '#F0B44C'}`,
+                  borderRadius: '50%',
+                }}
+              />
+            );
+          })()}
+          {tool === 'paint' && !compare && (
+            <div className="paint-bar" role="toolbar" aria-label="Paint" onPointerDown={(e) => e.stopPropagation()}>
+              <label className="swatch-main" title="Colour (Alt-click the picture to pick one)">
+                <input type="color" value={paint.color} onChange={(e) => setPaint((s) => ({ ...s, color: e.target.value }))} aria-label="Paint colour" />
+              </label>
+              <div className="swatches" aria-label="Recent colours">
+                {recentColours.map((c) => (
+                  <button key={c} type="button" style={{ background: c }} title={c} aria-label={`Use ${c}`} onClick={() => setPaint((s) => ({ ...s, color: c }))} />
+                ))}
+              </div>
+              <span className="note" title="Alt-click the picture to pick a colour">
+                <Pipette size={13} /> Alt
+              </span>
+              <label className="mini" title="Brush size ([ and ])">
+                Size <b className="mono">{paint.size}</b>
+                <input type="range" min={1} max={500} value={paint.size} onChange={(e) => setPaint((s) => ({ ...s, size: Number(e.target.value) }))} aria-label="Brush size" />
+              </label>
+              <label className="mini" title="Hard edge or soft airbrush">
+                Hardness <b className="mono">{Math.round(paint.hardness * 100)}</b>
+                <input type="range" min={0} max={100} value={Math.round(paint.hardness * 100)} onChange={(e) => setPaint((s) => ({ ...s, hardness: Number(e.target.value) / 100 }))} aria-label="Brush hardness" />
+              </label>
+              <label className="mini">
+                Opacity <b className="mono">{Math.round(paint.opacity * 100)}%</b>
+                <input type="range" min={1} max={100} value={Math.round(paint.opacity * 100)} onChange={(e) => setPaint((s) => ({ ...s, opacity: Number(e.target.value) / 100 }))} aria-label="Brush opacity" />
+              </label>
+              <label className="mini" title="Stabiliser: the line lags behind the pen to smooth out wobble">
+                Smooth <b className="mono">{Math.round(paint.smoothing * 100)}</b>
+                <input type="range" min={0} max={90} value={Math.round(paint.smoothing * 100)} onChange={(e) => setPaint((s) => ({ ...s, smoothing: Number(e.target.value) / 100 }))} aria-label="Stabiliser" />
+              </label>
+              <div className="pen-toggles" title="What pen pressure changes">
+                Pen
+                <button type="button" className={`pill ${paint.pressureSize ? 'on' : ''}`} aria-pressed={paint.pressureSize} onClick={() => setPaint((s) => ({ ...s, pressureSize: !s.pressureSize }))}>
+                  size
+                </button>
+                <button type="button" className={`pill ${paint.pressureOpacity ? 'on' : ''}`} aria-pressed={paint.pressureOpacity} onClick={() => setPaint((s) => ({ ...s, pressureOpacity: !s.pressureOpacity }))}>
+                  opacity
+                </button>
+              </div>
+              <button type="button" className={`btn sm ${paintErase ? 'on' : ''}`} aria-pressed={paintErase} onClick={() => setPaintErase((x) => !x)} title="Erase (X). The pen's eraser end erases too.">
+                <Eraser size={14} /> {doc?.target === 'mask' ? (paintErase ? 'Show' : 'Hide') : 'Erase'}
+              </button>
+              {doc && (
+                <span className="paint-target">
+                  on <b>{doc.activeLayer?.name}</b>
+                  {doc.target === 'mask' ? ' · mask' : ''}
+                </span>
+              )}
+            </div>
           )}
           {both && (
             <div className="both-strip" role="status" aria-label="Both models">
@@ -1231,6 +1590,33 @@ function Editor({ item }: { item: Item }) {
             </span>
             <span title="The model that made the version you are looking at">made with {item.model}</span>
           </div>
+          <div className="segmented panel-tabs" role="tablist" aria-label="Edit panels">
+            <button type="button" role="tab" aria-selected={panel === 'ai'} aria-pressed={panel === 'ai'} onClick={() => setPanel('ai')}>
+              <Wand2 size={14} /> AI
+            </button>
+            <button type="button" role="tab" aria-selected={panel === 'layers'} aria-pressed={panel === 'layers'} onClick={() => setPanel('layers')}>
+              <LayersIcon size={14} /> Layers {doc && doc.layers.length > 1 ? <span className="mono">{doc.layers.length}</span> : null}
+            </button>
+          </div>
+          {panel === 'layers' ? (
+            <CanvasLayers
+              doc={doc}
+              version={docVer}
+              starting={docStarting}
+              onStart={() => void ensureDoc()}
+              lineage={lineage}
+              itemId={item.id}
+              onAddItem={(it) => void addItemLayer(it)}
+              onMaskFromSelection={(id) => layer.current && docRef.current?.addMask(id, layer.current.mask, 'Mask from selection')}
+              hasSelection={!maskEmpty}
+              onFlatten={() => void flattenToVersion()}
+              flattening={flattening}
+              onExport={() => void exportPng()}
+              onUndoTo={undoDocSteps}
+              saveState={saveState}
+            />
+          ) : (
+          <>
           <div>
             <p className="section-label">Mode</p>
             <div className="pills" role="group" aria-label="Edit mode">
@@ -1693,6 +2079,22 @@ function Editor({ item }: { item: Item }) {
               <div style={{ marginTop: 10 }}>
                 <LayersPanel rows={layersState.rows} setRows={layersState.setRows} />
               </div>
+              {layersState.rows.length > 0 && (
+                <button
+                  type="button"
+                  className="btn sm"
+                  style={{ marginTop: 8 }}
+                  title="Put these layers on the canvas to paint, mask and blend them"
+                  onClick={async () => {
+                    for (const r of [...layersState.rows].reverse().filter((x) => x.visible)) {
+                      const it = layersState.items[r.id];
+                      if (it) await addItemLayer(it, 'picture', r.name, 'top');
+                    }
+                  }}
+                >
+                  <LayersIcon size={14} /> Open as canvas layers
+                </button>
+              )}
             </div>
           )}
           {mode === 'turn' && (
@@ -1791,8 +2193,13 @@ function Editor({ item }: { item: Item }) {
             </div>
           )}
           {tool === 'crop' && <p className="note warn">Crop: drag a box on the picture. {crop ? `${Math.round(crop.w)} × ${Math.round(crop.h)} at ${Math.round(crop.x)}, ${Math.round(crop.y)}` : ''}</p>}
-          <p className="note">Every apply saves a new version; nothing is overwritten.</p>
+          <p className="note">
+            {doc?.isProject ? 'Layers are on: the AI works on the merged layers, and a result that fits comes back as a new layer (and a version).' : 'Every apply saves a new version; nothing is overwritten.'}
+          </p>
+          </>
+          )}
         </div>
+        {panel === 'ai' && (
         <div className="panel-foot">
           {running ? (
             <button className="btn big danger" onClick={() => api.cancel(job!.id)}>
@@ -1812,6 +2219,7 @@ function Editor({ item }: { item: Item }) {
             </button>
           </div>
         </div>
+        )}
       </aside>
     </div>
   );

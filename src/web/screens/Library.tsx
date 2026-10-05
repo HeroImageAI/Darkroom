@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, CheckSquare, Columns2, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2, Plus } from 'lucide-react';
+import { Check, CheckSquare, Columns2, Copy, ImagePlus, Loader2, Download, ExternalLink, Film, Heart, Layers, Layers2, Maximize2, RotateCcw, Search, Share2, Sparkles, Trash2, Plus } from 'lucide-react';
 import { api, type Board, downloadUrl, fileUrl, graphUrl, thumbUrl, type Item } from '../api';
 import { Dialog, formatDuration, Pills } from '../components/common';
 import { BoardNameDialog, useBoards } from '../components/Boards';
@@ -710,6 +710,11 @@ function Tile({
         {item.kind === 'image' && item.version > 1 && (
           <span className="mono" style={{ fontSize: 11, background: 'rgba(18,18,16,.85)', padding: '2px 6px', borderRadius: 4 }}>
             v{item.version}
+          </span>
+        )}
+        {item.layered && (
+          <span className="mono stack-badge" title="Has layers in Edit (open it there to keep working on them)" aria-label="Has layers">
+            <Layers2 size={11} /> layers
           </span>
         )}
         {stacked && (item.stack_count ?? 1) > 1 && (

@@ -575,3 +575,50 @@ details.edit-adv > :not(summary) { margin-top: 10px; }
 .sheet-maker textarea { min-height: 96px; }
 /* Text → video: the opening shot (DECISIONS 120) */
 .opening-shot { margin-top: 10px; padding: 10px; border: 1px dashed var(--input); border-radius: var(--r); }
+/* Edit canvas layers and paint (DECISIONS 122) */
+.panel-tabs { margin: 0 0 4px; }
+.panel-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; }
+.canvas-layers { display: flex; flex-direction: column; gap: 10px; }
+.layers-head { display: flex; align-items: baseline; justify-content: space-between; }
+.save-state { font: 11px var(--mono); color: var(--muted); }
+.save-state.saving, .save-state.unsaved { color: var(--accent); }
+.save-state.error { color: #e8765f; }
+.input.sm { padding: 6px 8px; font-size: 12px; min-height: 32px; }
+.btn.xs { min-height: 26px; padding: 0 6px; font-size: 12px; }
+.btn.icon.xs { width: 26px; height: 26px; min-height: 26px; padding: 0; }
+.layer-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r); max-height: 320px; overflow-y: auto; }
+.layer-row { display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.layer-row:last-child { border-bottom: 0; }
+.layer-row:hover { background: var(--raised); }
+.layer-row.on { background: var(--raised); box-shadow: inset 2px 0 0 var(--accent); }
+.layer-row.hidden .layer-name, .layer-row.hidden .layer-thumb { opacity: .45; }
+.thumb-wrap { display: inline-flex; padding: 2px; border: 1px solid transparent; border-radius: 4px; }
+.thumb-wrap.target { border-color: var(--accent); }
+.thumb-wrap.mask.off { opacity: .4; outline: 1px dashed #e8765f; }
+.layer-thumb { display: block; max-width: 40px; max-height: 40px; border-radius: 2px; }
+.layer-name { flex: 1; min-width: 0; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; flex-direction: column; }
+.layer-name small { font: 10.5px var(--mono); color: var(--muted); }
+input.layer-name { flex: 1; }
+.layer-props { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: var(--r); }
+.layer-actions .btn.icon.sm { width: 34px; min-height: 32px; padding: 0; }
+.layer-history .history-list { list-style: none; margin: 6px 0 0; padding: 0; max-height: 160px; overflow-y: auto; display: flex; flex-direction: column-reverse; }
+.layer-history .history-list li { font-size: 12px; }
+.layer-history .history-list li.future { padding: 3px 6px; text-decoration: line-through; }
+details.layer-history summary { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.paint-bar { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 3; display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; white-space: nowrap; max-width: calc(100% - 20px); overflow-x: auto; padding: 6px 10px; border-radius: 12px; background: rgba(15,13,12,.92); border: 1px solid var(--line); font-size: 11.5px; color: var(--muted); }
+.paint-bar .note { margin: 0; display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; }
+.paint-bar .btn.sm { min-height: 28px; padding: 0 8px; font-size: 12px; }
+.paint-bar .mini { display: flex; flex-direction: column; gap: 0; width: 76px; flex: none; }
+.paint-bar .mini b { color: var(--text); font-weight: 500; }
+.paint-bar .mini input { width: 100%; }
+.swatch-main input { width: 28px; height: 28px; padding: 0; border: 2px solid var(--line); border-radius: 50%; background: none; cursor: pointer; }
+.swatch-main input::-webkit-color-swatch-wrapper { padding: 0; }
+.swatch-main input::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.swatches { display: flex; gap: 4px; }
+.swatches button { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--line); padding: 0; cursor: pointer; }
+.pen-toggles { display: flex; align-items: center; gap: 4px; }
+.pen-toggles .pill { min-height: 24px; padding: 0 8px; font-size: 11.5px; }
+.pen-toggles .pill.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.paint-target { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.paint-target b { color: var(--text); font-weight: 500; }
+.paint-cursor { box-shadow: 0 0 0 1px rgba(0,0,0,.55); }

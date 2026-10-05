@@ -6,7 +6,8 @@ import { getState } from './store';
 
 export type { Board };
 
-export type Item = Omit<DbItem, 'api_prompt'>;
+/** `layered`: has Edit canvas layers saved with it (DECISIONS 122) */
+export type Item = Omit<DbItem, 'api_prompt'> & { layered?: boolean };
 export type Job = Omit<DbJob, 'api_prompt'>;
 
 export interface Status {
