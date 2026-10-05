@@ -919,3 +919,22 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     all) with Open in Edit; it is anchored to the top so a long page scrolls instead of clipping. An old #/compose link
     opens Edit, and #/compose/<id> opens that composition in Edit as layers; "Continue where you left off" never points
     to Compose.
+127. **Review of the Edit suite (v3.25–v3.28.1), fixes.** *Bugs:* (1) **Layers stopped saving** after a save that had
+    nothing new (e.g. the one Flatten, Turn it or Animate makes first): with nothing to upload, the save finished before
+    `saving` was set, left it set for good, and every later save silently did nothing while Edit showed "Saved" — the
+    save now always awaits once first (since v3.25). (2) A Compose render was masked to the selection, so with no
+    selection it came back as an invisible layer; Fill › Background with a subject selected was masked to the subject
+    instead of the outside — submit() now takes the result layer's mask explicitly (selection, inverse, none).
+    (3) Turn it, Turnaround, the Sheet maker, Animate and Download read the saved picture, not your layers: with layers
+    on they now save them as a version first (and say so; Download gives the merged PNG). (4) Compose's Auto said "only
+    paint on the canvas" and picked Reimagine for a plain photo: one picture with nothing placed suggests Harmonise.
+    *UX:* a result of another size (Expand, Upscale) says your layers stay with the earlier version, with a way back;
+    Paint or Shapes on a plain picture starts a layer of its own; with layers on, a pasted (outside the AI tab) or
+    dropped picture, or one dragged from the Library, becomes a layer, and the Library's Use as… has "Layer in Edit"
+    (and says Fill / Expand, not Inpaint / Outpaint); a layered picture's thumbnail shows the merged layers (saved with
+    the layers; thumbnails now revalidate by ETag); the selection is called a selection everywhere (no more "mask"),
+    with all its tools in the hint; Change strength shows only for Fill › Replace; a large photo warns that a
+    whole-picture Refine works at ~2 MP. *UI:* 14 tools fit a 720 px-high screen (Undo / Redo moved up to the view
+    controls), the colour swatch shows a dark colour, Fit keeps the picture clear of the buttons over the canvas.
+    e2e: the run cancels the job it started (not "whatever is active"), waits for Edit to be free before the next
+    Apply, Clone is checked against its source vs what was under it.

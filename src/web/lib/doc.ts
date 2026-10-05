@@ -1071,6 +1071,14 @@ export class CanvasDoc {
     };
   }
 
+  private async savePreview(): Promise<void> {
+    const s = Math.min(1, 480 / Math.max(this.width, this.height));
+    const c = newCanvas(Math.max(1, Math.round(this.width * s)), Math.max(1, Math.round(this.height * s)));
+    c.getContext('2d')!.drawImage(this.flatten(), 0, 0, c.width, c.height);
+    const blob = await new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('preview'))), 'image/png'));
+    await fetch(`/api/items/${this.itemId}/project/preview`, { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: blob });
+  }
+
   get unsaved(): boolean {
     return this.isProject && (this.saving !== null || this.pending().length > 0 || this.dirtyJson);
   }
@@ -1094,8 +1102,13 @@ export class CanvasDoc {
       return this.saving;
     }
     this.saving = (async () => {
+      // always asynchronous: with nothing to upload this would otherwise finish before `this.saving` is even set,
+      // leave it set for good, and every later save would silently do nothing (DECISIONS 127)
+      await Promise.resolve();
       try {
+        let uploaded = false;
         for (const p of this.pending()) {
+          uploaded = true;
           const c = p.part === 'masks' ? p.l.maskCanvas! : p.l.canvas;
           const blob = await new Promise<Blob>((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not save a layer'))), 'image/png'));
           const r = await fetch(`/api/items/${this.itemId}/project/${p.part}/${p.l.id}`, { method: 'PUT', headers: { 'Content-Type': 'image/png' }, body: blob });
@@ -1104,11 +1117,14 @@ export class CanvasDoc {
         }
         const j = this.toJson();
         const text = JSON.stringify({ ...j, updatedAt: 0 });
+        const changed = text !== this.lastJson || uploaded;
         if (text !== this.lastJson) {
           const r = await fetch(`/api/items/${this.itemId}/project`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(j) });
           if (!r.ok) throw new Error('Could not save the layers');
           this.lastJson = text;
         }
+        // the Library's thumbnail shows the merged layers
+        if (changed) await this.savePreview().catch(() => undefined);
         this.everSaved = true;
         this.dirtyJson = false;
       } finally {

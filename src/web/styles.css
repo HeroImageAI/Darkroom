@@ -704,3 +704,9 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 .old-compositions { width: 100%; max-width: 640px; margin: 0 auto; text-align: left; display: block; }
 .old-compositions .compose-list { display: grid; grid-template-columns: 1fr; gap: 6px; }
 .old-compositions .compose-card { width: 100%; box-sizing: border-box; }
+/* Review fixes (DECISIONS 127): the Edit tool column fits 14 tools on a 720 px screen; a dark colour still shows */
+.edit-tools { align-items: center; padding: 10px 0; gap: 4px; overflow-y: auto; }
+.edit-tools .btn.icon { min-height: 40px; height: 40px; width: 44px; flex: none; }
+@media (max-height: 800px) { .edit-tools { gap: 2px; padding: 6px 0; } .edit-tools .btn.icon { min-height: 36px; height: 36px; } }
+.view-sep { width: 1px; align-self: stretch; margin: 4px 2px; background: var(--line); }
+.colour-dot { box-shadow: inset 0 0 0 2px rgba(255,255,255,.18); }

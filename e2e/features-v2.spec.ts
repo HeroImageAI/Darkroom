@@ -186,7 +186,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await expect(page.getByLabel(/Point at it with a red circle/)).toBeDisabled(); // Qwen only
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     await page.getByLabel(/Point at it with a red circle/).check();
-    await expect(page.getByLabel(/Only change the masked area/)).toBeDisabled();
+    await expect(page.getByLabel(/Only change the selection/)).toBeDisabled();
     await page.getByLabel('Instruction').fill('Replace them with a lighthouse keeper in a bright red raincoat.');
     const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
     const before = page.url();

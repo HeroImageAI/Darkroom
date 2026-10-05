@@ -345,6 +345,20 @@ app.put('/api/items/:id/project', async (req, reply) => {
   return doc ? { ok: true, updatedAt: doc.updatedAt } : reply.code(400).send({ error: 'That is not a layer document.' });
 });
 
+/** The merged layers, small: becomes the picture's thumbnail, so the Library shows your layered work (DECISIONS 127). */
+app.put('/api/items/:id/project/preview', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  if (!store.getItem(id)) return reply.code(404).send({ error: 'Picture not found' });
+  if (!Buffer.isBuffer(req.body)) return reply.code(400).send({ error: 'Send the preview as image/png.' });
+  try {
+    await sharp(req.body).resize(480, 480, { fit: 'inside' }).webp({ quality: 82 }).toFile(jobs.thumbPath(id));
+    broadcast({ type: 'library' });
+    return { ok: true };
+  } catch (e) {
+    return reply.code(400).send({ error: (e as Error).message });
+  }
+});
+
 app.put('/api/items/:id/project/:part/:layer', async (req, reply) => {
   const { id, part, layer } = req.params as { id: string; part: string; layer: string };
   if (!store.getItem(id)) return reply.code(404).send({ error: 'Picture not found' });
@@ -1174,7 +1188,12 @@ app.get('/api/items/:id/thumb', async (req, reply) => {
     if (!item || !f || !jobs.comfy) return reply.code(404).send({ error: 'No thumbnail' });
     await jobs.makeThumb(id, f);
   }
-  reply.header('content-type', 'image/webp').header('cache-control', 'private, max-age=86400');
+  // revalidated each time (a cheap 304): a picture's thumbnail changes when its layers do
+  const st = fs.statSync(p);
+  const etag = `"${st.size.toString(36)}-${Math.round(st.mtimeMs).toString(36)}"`;
+  reply.header('etag', etag).header('cache-control', 'private, no-cache');
+  if (req.headers['if-none-match'] === etag) return reply.code(304).send();
+  reply.header('content-type', 'image/webp');
   return reply.send(fs.createReadStream(p));
 });
 

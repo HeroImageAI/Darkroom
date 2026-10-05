@@ -217,8 +217,8 @@ test.describe.serial('Edit suite · large photos', () => {
     await page.goto(`/#/edit/${it.id}`);
     await expect(page.getByAltText('Picture being edited')).toBeVisible();
     await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
-    await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(1, { timeout: 60_000 });
-    await page.getByRole('button', { name: 'New layer', exact: true }).click();
+    // a plain picture gets a layer to paint on by itself
+    await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(2, { timeout: 60_000 });
     await page.getByLabel('Brush size').fill('80');
     const b = (await page.getByAltText('Picture being edited').boundingBox())!;
     const ms = await page.evaluate(
@@ -288,8 +288,10 @@ test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
     const { width: W, height: H } = pic;
     await page.goto(`/#/edit/${pic.id}`);
     await expect(page.getByAltText('Picture being edited')).toBeVisible();
+    // Paint on a plain picture starts a layer of its own (DECISIONS 127)
     await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
-    await page.getByRole('button', { name: 'New layer', exact: true }).click();
+    await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(2);
+    await expect(page.locator('.layer-row.on')).toContainText('Layer 1');
     await pickBrush('Ink pen');
     await page.getByLabel('Brush size').fill('14');
     await pickBrush('Marker');
@@ -617,6 +619,9 @@ test.describe.serial('Edit suite · AI on the canvas and Compose in Edit (v3.28)
   test.afterAll(async () => page.context().close());
   /** the job a click sends, then cancelled (we only check what was asked) */
   const jobFrom = async (click: () => Promise<void>) => {
+    // Edit ignores Apply while a job runs: let the last (cancelled) one clear first
+    await expect.poll(async () => ((await (await page.request.get('/api/jobs/active')).json()) as any[]).length, { timeout: 60_000 }).toBe(0);
+    await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toHaveCount(0, { timeout: 30_000 });
     posted.length = 0;
     await click();
     await expect.poll(() => posted.length).toBeGreaterThan(0);
@@ -729,5 +734,81 @@ test.describe.serial('Edit suite · AI on the canvas and Compose in Edit (v3.28)
     expect(proj.layers[0].name).toBe('Paper');
     await expect(page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Compose', exact: true })).toHaveAttribute('aria-pressed', 'true');
     await shot(page, 'composition-in-edit');
+  });
+});
+
+test.describe.serial('Edit suite · review fixes (DECISIONS 127)', () => {
+  let page: Page;
+  let pic: { id: string; width: number; height: number; version: number };
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+    page = await ctx.newPage();
+  });
+  test.afterAll(async () => page.context().close());
+  const thumbTag = async (id: string) => (await page.request.get(`/api/items/${id}/thumb`)).headers()['etag'];
+
+  test('A dropped picture becomes a layer; the Library thumbnail follows the layers; Download gives the merged picture', async () => {
+    pic = await pickPicture(page);
+    const before = await thumbTag(pic.id);
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
+    await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(2);
+    await stroke(page, [[pic.width * 0.2, pic.height * 0.2], [pic.width * 0.6, pic.height * 0.2]], pic.width, pic.height);
+    await saved(page);
+    await expect.poll(() => thumbTag(pic.id), { timeout: 20_000 }).not.toBe(before);
+    // drop a picture file from the computer: with layers on it becomes a layer, not a new picture
+    const bytes = [...(await sharp({ create: { width: 200, height: 120, channels: 4, background: { r: 30, g: 140, b: 60, alpha: 1 } } }).png().toBuffer())];
+    await page.evaluate(async (b) => {
+      const file = new File([new Uint8Array(b)], 'swatch.png', { type: 'image/png' });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const el = document.querySelector('[data-testid="edit-canvas"]')!.parentElement!;
+      el.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
+      el.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+    }, bytes);
+    await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(3);
+    await expect(page.locator('.layer-row.on')).toContainText('swatch');
+    expect(page.url()).toContain(pic.id);
+    // Download (AI panel) with layers on: the merged layers as a PNG
+    await page.getByRole('tab', { name: /AI/ }).click();
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('.panel-foot').getByRole('button', { name: 'Download' }).click()]);
+    expect(dl.suggestedFilename()).toMatch(/-layers\.png$/);
+  });
+
+  test('Turn it with layers on saves them as a version first and turns that', async () => {
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Turn it', exact: true }).click();
+    const turned = page.waitForRequest((r) => /\/api\/items\/[0-9a-f-]+\/turn$/.test(r.url()) && r.method() === 'POST');
+    await page.getByRole('button', { name: /^Turn it/ }).last().click();
+    const req = await turned;
+    const id = req.url().split('/').slice(-2)[0];
+    expect(id).not.toBe(pic.id);
+    const v = (await (await page.request.get(`/api/items/${id}`)).json()).item;
+    expect(v).toMatchObject({ mode: 'edit:canvas', parent_id: pic.id });
+    await expect(page.getByText(/Your layers were saved as v\d+ first, so Turn it uses them/)).toBeVisible();
+    // stop Turn it (its first step; the turn itself would follow it)
+    const job = (await (await req.response())!.json()) as { id: string };
+    await page.request.post(`/api/jobs/${job.id}/cancel`);
+  });
+
+  test('A Compose render with no selection comes back as a visible layer (no stray mask)', async () => {
+    await page.goto(`/#/edit/${pic.id}`);
+    await expect(page.getByTestId('layers-canvas')).toBeVisible();
+    // Edit is free again once the cancelled Turn it has ended
+    await page.getByRole('tab', { name: /AI/ }).click();
+    await expect(page.locator('.panel-foot .btn.big')).not.toHaveText(/Cancel/, { timeout: 180_000 });
+    await page.getByRole('tab', { name: /AI/ }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Compose', exact: true }).click();
+    await page.getByRole('group', { name: 'Render mode' }).getByRole('button', { name: /Harmonise/ }).click();
+    await page.getByRole('button', { name: /Render · Harmonise/ }).click();
+    await expect(page.getByText(/The result is on a new layer at the top/)).toBeVisible({ timeout: 300_000 });
+    // the AI tab stays open
+    await expect(page.getByRole('group', { name: 'Edit mode' })).toBeVisible();
+    await page.getByRole('tab', { name: /Layers/ }).click();
+    await saved(page);
+    // saved (this broke after a save with nothing new in it, e.g. the one before Turn it: DECISIONS 127)
+    const proj = await (await page.request.get(`/api/items/${pic.id}/project`)).json();
+    const top = proj.layers[proj.layers.length - 1];
+    expect(top).toMatchObject({ kind: 'result', mask: false });
+    await shot(page, 'compose-result-layer');
   });
 });

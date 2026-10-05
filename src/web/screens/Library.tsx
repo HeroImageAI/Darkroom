@@ -602,8 +602,8 @@ function UseAsMenu({ item, x, y, onClose, onDelete }: { item: Item; x: number; y
   })();
   const entries: [string, () => void, boolean?][] = [
     ['Edit', () => go('edit', item.id)],
-    ['Inpaint', () => editIn('inpaint')],
-    ['Outpaint', () => editIn('outpaint')],
+    ['Fill', () => editIn('inpaint')],
+    ['Expand', () => editIn('outpaint')],
     ['Enhance', () => editIn('enhance')],
     ['Upscale', () => editIn('upscale')],
     ['Generate reference', () => go('generate', undefined, { ref: item.id })],
@@ -611,6 +611,14 @@ function UseAsMenu({ item, x, y, onClose, onDelete }: { item: Item; x: number; y
       'Edit reference (for the picture open in Edit)',
       () => {
         sessionStorage.setItem('dr.edit.ref', item.id);
+        go('edit', lastEdit!);
+      },
+      !lastEdit || lastEdit === item.id,
+    ],
+    [
+      'Layer in Edit (on the picture open there)',
+      () => {
+        sessionStorage.setItem('dr.edit.addLayer', item.id);
         go('edit', lastEdit!);
       },
       !lastEdit || lastEdit === item.id,
