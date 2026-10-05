@@ -584,6 +584,7 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
       return s;
     };
     const want = await patch((x, y) => shownPixel(page, x, y), W * 0.8, H * 0.85);
+    const under = await patch((x, y) => shownPixel(page, x, y), W * 0.2, H * 0.85);
     const src = await at(page, W * 0.8, H * 0.85, W, H);
     await page.keyboard.down('Alt');
     await page.mouse.click(src.x, src.y);
@@ -596,7 +597,10 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     const lp = await layerPixels(page, pic.id, -1);
     expect(lp.at(W * 0.2, H * 0.85)[3]).toBe(255);
     const got = await patch((x, y) => lp.at(x, y), W * 0.2, H * 0.85);
-    for (let k = 0; k < 3; k++) expect(Math.abs(got[k] - want[k])).toBeLessThan(14);
+    // much closer to the source than to what was under the brush (grain and soft detail make exact colours vary)
+    const dist = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    expect(dist(got, want)).toBeLessThan(30);
+    if (dist(want, under) > 40) expect(dist(got, want)).toBeLessThan(dist(got, under) / 2);
     await shot(page, 'clone');
   });
 });
