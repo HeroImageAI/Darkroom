@@ -743,6 +743,9 @@ function Editor({ item }: { item: Item }) {
     if (d?.isProject) return api.upload(await d.flattenBlob(), 'canvas.png');
     return api.asInput(item.id);
   };
+  /** What the local VLM looks at: the merged layers on a layered canvas (its base is often a blank page), else the picture. */
+  const vlmPicture = async (): Promise<{ input: string } | { itemId: string; save: true }> =>
+    docRef.current?.isProject ? { input: (await inputFor()).name } : { itemId: item.id, save: true };
   const addItemLayer = async (it: Item, kind: 'picture' | 'result' = 'picture', name?: string, where: 'top' | 'above' = 'above') => {
     const d = await ensureDoc();
     if (!d) return;
@@ -1327,18 +1330,18 @@ function Editor({ item }: { item: Item }) {
       // Qwen's official fill templates want a caption of the original; describe the picture once and remember it.
       toast('Describing the picture first (local Qwen3-VL)…', 'info');
       try {
-        caption = (await api.vlm({ task: 'caption', variant: 'short', itemId: item.id, save: true })).text;
+        caption = (await api.vlm({ task: 'caption', variant: 'short', ...(await vlmPicture()) })).text;
       } catch {
         caption = null;
       }
     }
     /** Lineage / saved caption, or describe the picture now with the local VLM (saved to the item). */
     const ensureCaption = async (variant: 'short' | 'klein'): Promise<string | null> => {
-      const known = caption ?? ((item.ui as any)?.caption as string | undefined) ?? null;
+      const known = caption ?? (docRef.current?.isProject ? null : (((item.ui as any)?.caption as string | undefined) ?? null));
       if (known) return known;
       toast('Describing the picture first (local Qwen3-VL)…', 'info');
       try {
-        return (await api.vlm({ task: 'caption', variant, itemId: item.id, save: true })).text;
+        return (await api.vlm({ task: 'caption', variant, ...(await vlmPicture()) })).text;
       } catch {
         return null;
       }
@@ -2388,7 +2391,7 @@ function Editor({ item }: { item: Item }) {
                   onClick={async () => {
                     setInstrBusy(true);
                     try {
-                      const r = await api.vlm({ task: 'edit_enhance', variant: editModel, text: prompt, itemId: item.id });
+                      const r = await api.vlm({ task: 'edit_enhance', variant: editModel, text: prompt, ...(await vlmPicture()) });
                       setInstrUndo(prompt);
                       setPrompt(r.text);
                       toast(`Instruction rewritten by ${r.model ?? 'the local model'} in ${r.seconds}s. Edit it freely; Undo brings yours back.`, 'ok', 7000);

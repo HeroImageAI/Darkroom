@@ -16,7 +16,7 @@ import { Store, type FileRef, type LibraryQuery } from './db.js';
 import { desktopRunning, launchDesktop, tailDesktopLog } from './desktop.js';
 import { discoverComfy } from './discovery.js';
 import { JobManager, publicJob, VramWarning, type SubmitRequest } from './jobs.js';
-import { buildVlm2Request, nearestAspect, parsePeJson, dropCameraSentences, dropCopiedSound, withCameraMoves, withSound, type SoundMode, withEnhanceStyle, type Vlm2Entry, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
+import { buildVlm2Request, nearestAspect, parsePeJson, unusableAnswer, dropCameraSentences, dropCopiedSound, withCameraMoves, withSound, type SoundMode, withEnhanceStyle, type Vlm2Entry, type Vlm2Prompts, type Vlm2Task } from '../shared/vlm.js';
 import { validateTemplates } from '../shared/prompts.js';
 import { samPointsJson } from '../shared/workflow.js';
 import { layersToPsd, layersToZip, type LayerInput } from './layers.js';
@@ -538,11 +538,29 @@ ${params.prompt}`;
   }
   const t0 = Date.now();
   try {
-    const job = await jobs.submit({ workflow: request.workflow, params, meta: { mode: `vlm:${b.task}`, model: request.modelLabel, prompt: b.text ?? '' } });
-    const done = await jobs.waitFor(job.id);
+    let label = request.modelLabel;
+    const ask = async () => {
+      const job = await jobs.submit({ workflow: request.workflow, params, meta: { mode: `vlm:${b.task}`, model: label, prompt: b.text ?? '' } });
+      return jobs.waitFor(job.id);
+    };
+    let done = await ask();
     if (done.status !== 'done') return reply.code(500).send({ error: done.error ?? 'The model did not answer.' });
+    // a collapsed answer (filler, a run-away JSON spec, cut off) — DECISIONS 129
+    if (request.output === 'text' && unusableAnswer(String((done.meta as Record<string, unknown>).text ?? ''), b.task)) {
+      if (b.task === 'edit_enhance' && b.variant === 'qwen') {
+        // PE-I2I collapses the same way again on a new seed, thinking on or not (A/B on a sketch): the general VLM
+        // writes the instruction instead (the Klein rewrite, plain words Qwen also follows), in ~5 s
+        const fb = buildVlm2Request(readJson<Vlm2Prompts>(path.join(cfg.paths.presets, 'vlm_prompts.json')), 'edit_enhance', 'klein', b.text ?? '');
+        Object.assign(params, fb.params, { seed: Math.floor(Math.random() * 2 ** 31) });
+        label = `${fb.modelLabel} (stand-in for ${request.modelLabel})`;
+      } else if (b.seed === undefined) params.seed = Math.floor(Math.random() * 2 ** 31);
+      done = await ask();
+      if (done.status !== 'done') return reply.code(500).send({ error: done.error ?? 'The model did not answer.' });
+    }
     const meta = done.meta as Record<string, unknown>;
     let text = String(meta.text ?? '');
+    if (request.output === 'text' && unusableAnswer(text, b.task))
+      return reply.code(502).send({ error: `${label} gave an answer that is no use as a prompt (twice). Try again, or switch to Klein 9B for this.` });
     // camera chips own the camera (DECISIONS 94): the written motion keeps none of its own
     if (b.task === 'motion' && Array.isArray(b.camera) && b.camera.length) text = dropCameraSentences(text);
     // your sound description is added by Video itself (DECISIONS 97): the written motion keeps no copy of it
@@ -550,7 +568,7 @@ ${params.prompt}`;
     let ratio: string | null = null;
     if (request.output === 'json_ratio') ({ text, ratio } = parsePeJson(String(meta.raw ?? text)));
     if (b.save && b.itemId && b.task === 'caption') store.updateItem(b.itemId, { caption: text });
-    return { text, seconds: Math.round((Date.now() - t0) / 100) / 10, model: request.modelLabel, ...(ratio ? { ratio, aspect: nearestAspect(ratio) } : {}) };
+    return { text, seconds: Math.round((Date.now() - t0) / 100) / 10, model: label, ...(ratio ? { ratio, aspect: nearestAspect(ratio) } : {}) };
   } catch (e) {
     return reply.code(500).send({ error: (e as Error).message });
   }

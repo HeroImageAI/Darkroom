@@ -953,3 +953,17 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     strongest 5–17 % of edges, soft-edged) as a drawing on a new layer, on white paper, above the picture — hide the
     paper to trace over the photo, change the lines, render again. Depth and pose would still need the add-on and its
     models; not needed for this, so not downloaded.
+129. **Enhance instruction on a drawing (JP's report: "a the \" a \" the …" in the box).** Two causes. (1) On a
+    layered canvas the VLM looked at the item's own picture — a New canvas is a blank page — not the layers you see;
+    Enhance, and the caption Qwen's Fill / Expand ask for, now send the merged layers (`vlmPicture()`; a caption of the
+    merged canvas is not saved onto the item). On the blank page PE-I2I had invented a white leather sneaker. (2) The
+    Qwen-Image 2.1 PE-I2I enhancer collapses on drawings: a coloured sneaker sketch + "Product photo of this sneaker",
+    8 seeds: 4 clean, 3 run-away answers (a JSON "attributes" spec that turns into an endless list of objects, or
+    quote-filler), 1 leaked its reasoning. Not fixed by settings: temperature 0.7 failed 8/8, thinking on (4096 tokens,
+    the official template) 6/6, the `qwen_image` loader the same as before; real photos stay clean (3/3 "make it
+    night"). So `unusableAnswer()` (repeated filler, mostly quote marks, JSON for an enhance, under 6 words) checks
+    every written answer: an unusable PE-I2I instruction is rewritten at once by Qwen3-VL 8B with the Klein edit
+    rewrite (plain words Qwen also follows; the toast names the stand-in), other tasks ask again once with a new seed,
+    and a second failure is an error message — the box is never filled with filler. Seeds 2 / 3 / 5 that collapsed
+    now give clean instructions in 19–39 s; a clean PE answer is kept as it was. e2e: drawing + Qwen + Enhance sends
+    the merged canvas and gets a real instruction.

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, VLM_VARIANTS, withEnhanceStyle, dropCameraSentences, withCameraMoves, withSound, dropCopiedSound, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
+import { buildVlm2Request, buildVlmRequest, cleanVlmOutput, nearestAspect, parsePeJson, unusableAnswer, VLM_VARIANTS, withEnhanceStyle, dropCameraSentences, withCameraMoves, withSound, dropCopiedSound, type VlmPrompts, type VlmTask } from '../src/shared/vlm';
 
 const P = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'presets', 'vlm_prompts.json'), 'utf8')) as VlmPrompts;
 
@@ -180,5 +180,19 @@ describe('dropCopiedSound', () => {
     expect(dropCopiedSound(t, 'Gulls cry and a ship horn sounds twice.')).toBe('The boats bob gently. The orange buoy bobs near the dock.');
     expect(dropCopiedSound(t, '')).toBe(t);
     expect(dropCopiedSound('Gulls cry.', 'Gulls cry.')).toBe('Gulls cry.'); // never empties it
+  });
+});
+describe('unusableAnswer (DECISIONS 129)', () => {
+  it('catches the collapsed PE-I2I answers seen on a blank canvas', () => {
+    expect(unusableAnswer('{"a, the a a it, a a a, a a " the a a a, a, the " the the the by the the  the a, and the the a,, " a " " "  a,, " " the a " ",, " ", a', 'edit_enhance')).toBe(true);
+    expect(unusableAnswer('"a" "a" "the" "a" the the a a the " the a "a" the the, " the " the a " a a a the the the a', 'edit_enhance')).toBe(true);
+    expect(unusableAnswer('{"specification_version": "1.0", "product": {"name": "the sneaker from <image1>"}}', 'edit_enhance')).toBe(true);
+    expect(unusableAnswer('Support surface: polished light warm', 'edit_enhance')).toBe(true);
+    expect(unusableAnswer('   ', 'caption')).toBe(true);
+  });
+  it('keeps real answers', () => {
+    expect(unusableAnswer('Change the time of day from dusk to night: replace the pink sunset glow with a deep night sky full of stars, and keep the lighthouse, the cliff and the sea exactly as they are.', 'edit_enhance')).toBe(false);
+    expect(unusableAnswer('Add "SALE" in red letters on the sign; keep the shop front identical.', 'edit_enhance')).toBe(false);
+    expect(unusableAnswer('A red apple.', 'caption')).toBe(false);
   });
 });
