@@ -555,7 +555,7 @@ details.edit-adv > :not(summary) { margin-top: 10px; }
 .take-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
 .animate-hint { text-align: center; margin: -2px 0 0; }
 /* Home: the six rooms in one row (Library no longer alone on a second row), three by two on narrower screens */
-.home-cards { grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.home-cards { grid-template-columns: repeat(5, 1fr); gap: 10px; }
 .home-card { padding: 18px 16px; min-height: 0; }
 .home-card-title { font-size: 24px; }
 .home-card-text { font-size: 13px; }
@@ -700,3 +700,7 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 .compose-card img, .compose-thumb-empty { width: 72px; height: 48px; object-fit: cover; border-radius: 4px; background: #222; flex: none; }
 .compose-card-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .compose-card-text strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scene-steps { max-width: 560px; margin: 4px auto 0; text-align: center; }
+.old-compositions { width: 100%; max-width: 640px; margin: 0 auto; text-align: left; display: block; }
+.old-compositions .compose-list { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.old-compositions .compose-card { width: 100%; box-sizing: border-box; }

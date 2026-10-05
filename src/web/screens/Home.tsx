@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Clapperboard, Film, ImagePlus, Layers, Library as LibraryIcon, Loader2, Shapes, Wand2 } from 'lucide-react';
+import { ArrowRight, Clapperboard, Film, ImagePlus, Layers, Library as LibraryIcon, Loader2, Wand2 } from 'lucide-react';
 import { api, thumbUrl, type Item } from '../api';
 import { importFailedMessage, importPictures, importVideos, isVideoFile } from '../lib/importer';
 import { go, lastRoute, type Screen } from '../router';
@@ -7,14 +7,13 @@ import { toast, useApp } from '../store';
 
 const CARDS: { screen: Screen; title: string; text: string; icon: typeof Wand2 }[] = [
   { screen: 'generate', title: 'Generate', text: 'Create a new picture from a prompt with Klein 9B or Qwen-Image 2.1.', icon: Wand2 },
-  { screen: 'edit', title: 'Edit', text: 'Change, fix, extend or upscale a picture — one of yours or one you made.', icon: Layers },
-  { screen: 'compose', title: 'Compose', text: 'Build a scene on a canvas in Edit: pictures, cut-outs and paint, rendered into one picture.', icon: Shapes },
+  { screen: 'edit', title: 'Edit', text: 'Paint, retouch and build scenes in layers, and let the AI fill, refine, compose or extend. A picture or a blank canvas.', icon: Layers },
   { screen: 'video', title: 'Video', text: 'Bring a picture to life as a clip with LTX 2.5, with sound.', icon: Film },
   { screen: 'timeline', title: 'Timeline', text: 'Put your clips, your own videos and your own sound together into one film.', icon: Clapperboard },
   { screen: 'library', title: 'Library', text: 'Everything you have made or brought in, with its settings.', icon: LibraryIcon },
 ];
 
-const SCREEN_LABEL: Record<string, string> = { generate: 'Generate', edit: 'Edit', compose: 'Compose', video: 'Video', timeline: 'Timeline', library: 'Library' };
+const SCREEN_LABEL: Record<string, string> = { generate: 'Generate', edit: 'Edit', video: 'Video', timeline: 'Timeline', library: 'Library' };
 
 /** Start screen: pick what to do, bring in your own pictures, or carry on where you left off. */
 export function Home() {

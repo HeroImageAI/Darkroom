@@ -79,6 +79,7 @@ const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 import { createCanvas } from '../lib/canvasStart';
+import { OldCompositions } from '../components/OldCompositions';
 
 type Tool = 'move' | 'transform' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'marquee' | 'lasso' | 'wand' | 'smart' | 'frame' | 'crop';
 /** tools that make a selection with Shift = add, Alt = subtract (DECISIONS 124) */
@@ -2888,10 +2889,10 @@ function EditEmpty() {
     return () => window.removeEventListener('paste', onPaste);
   });
   return (
-    <div className="screen" style={{ placeItems: 'center', overflowY: 'auto' }}>
-      <div className="empty" style={{ maxWidth: 760 }}>
-        <h2>Open a picture to edit</h2>
-        <p>Drop an image here, paste one (Ctrl+V), or pick a recent result. Edits are always saved as new versions.</p>
+    <div className="screen" style={{ placeItems: 'start center', overflowY: 'auto' }}>
+      <div className="empty" style={{ maxWidth: 760, margin: '32px auto' }}>
+        <h2>Open a picture to edit, or start a canvas</h2>
+        <p>Drop an image here, paste one (Ctrl+V), pick a recent result, or start from a blank canvas to paint or build a scene. Edits are always saved as new versions.</p>
         <div
           className={`drop ${over ? 'drag' : ''}`}
           style={{ width: 420, height: 150 }}
@@ -2926,6 +2927,9 @@ function EditEmpty() {
         <div className="field-row" style={{ gap: 8, justifyContent: 'center' }}>
           <NewCanvasButton label="Start from a blank canvas" onCreate={(w, h, bg) => void createCanvas(w, h, bg)} />
         </div>
+        <p className="note scene-steps">
+          To build a scene: a canvas (or a picture as the background) · Layers › Picture… to add pieces · the scissors to cut them out · Transform (T) to place them · paint · AI › Compose to render one picture.
+        </p>
         <button
           className="btn sm"
           disabled={!online || busy}
@@ -2963,6 +2967,7 @@ function EditEmpty() {
             </div>
           </>
         )}
+        <OldCompositions />
       </div>
     </div>
   );

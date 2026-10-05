@@ -584,6 +584,7 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
       return s;
     };
     const want = await patch((x, y) => shownPixel(page, x, y), W * 0.8, H * 0.85);
+    const under = await patch((x, y) => shownPixel(page, x, y), W * 0.2, H * 0.85);
     const src = await at(page, W * 0.8, H * 0.85, W, H);
     await page.keyboard.down('Alt');
     await page.mouse.click(src.x, src.y);
@@ -596,7 +597,10 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     const lp = await layerPixels(page, pic.id, -1);
     expect(lp.at(W * 0.2, H * 0.85)[3]).toBe(255);
     const got = await patch((x, y) => lp.at(x, y), W * 0.2, H * 0.85);
-    for (let k = 0; k < 3; k++) expect(Math.abs(got[k] - want[k])).toBeLessThan(14);
+    // much closer to the source than to what was under the brush (grain and soft detail make exact colours vary)
+    const dist = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    expect(dist(got, want)).toBeLessThan(30);
+    if (dist(want, under) > 40) expect(dist(got, want)).toBeLessThan(dist(got, under) / 2);
     await shot(page, 'clone');
   });
 });
@@ -707,10 +711,13 @@ test.describe.serial('Edit suite · AI on the canvas and Compose in Edit (v3.28)
     expect(job.meta.mode).toBe('edit:enhance');
   });
 
-  test('Compose page: steps to build a scene, and an old composition opens in Edit as layers', async () => {
+  test('One door: Compose is gone from Home and the top bar; an old Compose link opens Edit, where old compositions open as layers', async () => {
+    await page.goto('/#/home');
+    await expect(page.getByRole('button', { name: /^Compose/ })).toHaveCount(0);
+    await expect(page.getByRole('navigation').getByText('Compose', { exact: true })).toHaveCount(0);
     await page.goto('/#/compose');
-    await expect(page.getByRole('heading', { name: 'Compose' })).toBeVisible();
-    await expect(page.getByText('AI › Compose: Blend edges, Harmonise or Reimagine')).toBeVisible();
+    await expect(page).toHaveURL(/#\/edit$/);
+    await expect(page.getByText(/To build a scene: a canvas/)).toBeVisible();
     const comps = (await (await page.request.get('/api/compositions')).json()) as any[];
     test.skip(!comps.length, 'no compositions in this library');
     const comp = (await (await page.request.get(`/api/compositions/${comps[0].id}`)).json()) as any;
