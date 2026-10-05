@@ -77,7 +77,9 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
     await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(2);
     await page.keyboard.press('p');
     await expect(page.getByRole('toolbar', { name: 'Paint' })).toBeVisible();
-    await page.getByLabel('Paint colour').fill('#d02020');
+    await page.getByRole('button', { name: /^Colour/ }).click();
+    await page.getByLabel('Hex colour').fill('#d02020');
+    await page.keyboard.press('Escape');
     await page.getByLabel('Brush size').fill('40');
     await stroke(page, [[W * 0.2, H * 0.5], [W * 0.8, H * 0.5]], W, H);
     await expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 15_000 });
