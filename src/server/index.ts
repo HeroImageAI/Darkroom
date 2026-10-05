@@ -1181,6 +1181,35 @@ app.get('/api/items/:id/file', async (req, reply) => {
   return reply.send(r.body ? Readable.fromWeb(r.body as any) : null);
 });
 
+/** Several Library items as one ZIP (the Library's selection → Download), named by title or prompt and version. */
+app.post('/api/items/download', async (req, reply) => {
+  const ids = idList(req.body).slice(0, 300);
+  if (!ids.length) return reply.code(400).send({ error: 'Pick something to download first.' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running, so the files can't be fetched." });
+  const files: Record<string, [Uint8Array, { level: 0 }]> = {};
+  let missing = 0;
+  for (const id of ids) {
+    const item = store.getItem(id);
+    if (!item?.file) continue;
+    const r = await fetch(jobs.comfy.viewUrl(item.file)).catch(() => null);
+    if (!r?.ok) {
+      missing++;
+      continue;
+    }
+    const slug = (item.title || item.prompt || item.mode).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 48).replace(/^-|-$/g, '') || 'darkroom';
+    const base = `${slug}${item.version > 1 ? `-v${item.version}` : ''}`;
+    const ext = path.extname(item.file.filename) || '.png';
+    let name = base + ext;
+    for (let n = 2; files[name]; n++) name = `${base}-${n}${ext}`;
+    files[name] = [new Uint8Array(await r.arrayBuffer()), { level: 0 }]; // pictures and videos are compressed already
+  }
+  if (!Object.keys(files).length) return reply.code(404).send({ error: 'None of those files could be found.' });
+  reply.header('content-type', 'application/zip');
+  reply.header('content-disposition', `attachment; filename="darkroom-${Object.keys(files).length}-items.zip"`);
+  if (missing) reply.header('x-darkroom-missing', String(missing));
+  return reply.send(Buffer.from(zipSync(files)));
+});
+
 /** Preview of an uploaded input (reference, mask, start frame). */
 app.get('/api/input', async (req, reply) => {
   const { name } = req.query as { name?: string };

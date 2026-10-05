@@ -982,3 +982,15 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     stroke; `?` lists every shortcut (current screen first); the progress readout names the model, not the graph;
     Delete forever also sends a canvas's project folder to the Recycle Bin. Two tests read a message left by the step
     before as their own success; they now wait for the new version to open.
+131. **Polish round 2.** `tests/session2.ts` on real models — apparel (a Qwen hoodie, Turn it), movie (a film still,
+    Expand to 16:9, Refine), gaming (a character, Try both models, Cut-out), the Library and a Timeline export —
+    3.8 min, every step worked. Found and changed: **Game concept / Concept art painted fake studio logos and
+    watermarks** in the corners (4 of 6 Klein pictures, `scripts/try-style-clean.ts`); "a clean, unbranded single
+    illustration" fixed it (0 of 6) where "…on a plain background" also wiped out scenes, so only the first went in.
+    The Library's **ticked pictures download as one ZIP** (`POST /api/items/download`, stored not recompressed, named by
+    title or prompt and version). **Home has a Draw or paint card** (a blank canvas) beside the upload; Recent on Home and
+    in Edit shows one tile per picture (stacks). Layout: the Library's search, count and buttons wrap as one group; the
+    Timeline keeps Export on the first row on a laptop; Edit's start page makes the blank canvas a main button. After
+    the event socket reconnects, screens re-read the Library (a change made while it was down was missed; found as a
+    flaky test). Checked and fine: Qwen PE-T2I Enhance on Generate, 8/8 clean (only PE-I2I collapses, DECISIONS 129).
+    The LTX Ingredients render still stalls now and then (~700 s instead of ~100 s, three times today) — environmental.

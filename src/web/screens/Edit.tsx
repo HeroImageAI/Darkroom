@@ -3010,7 +3010,7 @@ function EditEmpty() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [capture, setCapture] = useState<HTMLCanvasElement | null>(null);
   useEffect(() => {
-    api.items({ filter: 'all', limit: 24 }).then((r) => setRecent(r.items.filter((i) => i.kind === 'image').slice(0, 12)));
+    api.items({ filter: 'all', limit: 24, stack: 1 }).then((r) => setRecent(r.items.filter((i) => i.kind === 'image').slice(0, 12)));
   }, []);
   useEffect(
     () =>
@@ -3079,7 +3079,9 @@ function EditEmpty() {
           </label>
         </div>
         <div className="field-row" style={{ gap: 8, justifyContent: 'center' }}>
-          <NewCanvasButton label="Start from a blank canvas" onCreate={(w, h, bg) => void createCanvas(w, h, bg)} />
+          <span className="primary-pop">
+            <NewCanvasButton label="Start from a blank canvas" onCreate={(w, h, bg) => void createCanvas(w, h, bg)} />
+          </span>
         </div>
         <p className="note scene-steps">
           To build a scene: a canvas (or a picture as the background) · Layers › Picture… to add pieces · the scissors to cut them out · Transform (T) to place them · paint · AI › Compose to render one picture.
