@@ -3010,7 +3010,7 @@ function EditEmpty() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [capture, setCapture] = useState<HTMLCanvasElement | null>(null);
   useEffect(() => {
-    api.items({ filter: 'all', limit: 24 }).then((r) => setRecent(r.items.filter((i) => i.kind === 'image').slice(0, 12)));
+    api.items({ filter: 'all', limit: 24, stack: 1 }).then((r) => setRecent(r.items.filter((i) => i.kind === 'image').slice(0, 12)));
   }, []);
   useEffect(
     () =>

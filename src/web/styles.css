@@ -748,3 +748,7 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 .shortcuts kbd { font: 11.5px var(--mono); background: var(--raised); border: 1px solid var(--input); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--text); white-space: nowrap; }
 .layers-badge { font-size: 11px; background: rgba(18,18,16,.85); color: var(--text); padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,.18); }
 .library-tools { display: flex; gap: 12px; align-items: center; margin-left: auto; flex: 1 1 420px; justify-content: flex-end; min-width: 0; }
+.home-draw { cursor: default; align-items: flex-start; }
+.home-draw .home-continue-icon { width: 52px; height: 52px; flex: none; }
+.home-draw strong { font-family: var(--serif); font-weight: 400; font-size: 22px; }
+.home-draw .new-canvas .pop-panel { right: 0; left: auto; }

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Clapperboard, Film, ImagePlus, Layers, Library as LibraryIcon, Loader2, Wand2 } from 'lucide-react';
+import { ArrowRight, Clapperboard, Film, ImagePlus, Layers, Library as LibraryIcon, Loader2, PenLine, Wand2 } from 'lucide-react';
 import { api, thumbUrl, type Item } from '../api';
 import { importFailedMessage, importPictures, importVideos, isVideoFile } from '../lib/importer';
+import { createCanvas } from '../lib/canvasStart';
+import { NewCanvasButton } from '../components/CanvasTools';
 import { go, lastRoute, type Screen } from '../router';
 import { toast, useApp } from '../store';
 
@@ -28,7 +30,7 @@ export function Home() {
 
   useEffect(() => {
     api
-      .items({ filter: 'all', limit: 12 })
+      .items({ filter: 'all', limit: 12, stack: 1 }) // one tile per picture: its newest version
       .then((r) => setRecent(r.items.slice(0, 9)))
       .catch(() => undefined);
   }, [rev]);
@@ -115,6 +117,21 @@ export function Home() {
             />
           </section>
 
+          {!last && (
+            // nothing to carry on with: the other way in, a blank page to draw on (then Sketch renders it)
+            <section className="home-continue home-draw" aria-label="Draw or paint">
+              <span className="home-continue-icon">
+                <PenLine size={26} />
+              </span>
+              <span>
+                <strong>Draw or paint</strong>
+                <span className="note" style={{ display: 'block', margin: '2px 0 8px' }}>
+                  A blank canvas for your pen; Sketch turns the drawing into a finished picture.
+                </span>
+                <NewCanvasButton label="Blank canvas" onCreate={(w, h, bg) => void createCanvas(w, h, bg)} />
+              </span>
+            </section>
+          )}
           {last && (
             <button className="home-continue" onClick={() => (location.hash = `#/${last.path}`)}>
               {lastId ? (
