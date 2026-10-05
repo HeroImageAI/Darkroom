@@ -291,8 +291,9 @@ export function Library() {
               <Layers size={13} style={{ verticalAlign: '-2px' }} /> Stacks
             </button>
           )}
-          {/* the search box gives way first, so the header stays on one line at 1280–1440 px */}
-          <label style={{ position: 'relative', flex: '1 1 180px', maxWidth: 320, marginLeft: 'auto' }}>
+          {/* search, count and the buttons move as one group: on one line when there is room, else a tidy second row */}
+          <div className="library-tools">
+          <label style={{ position: 'relative', flex: '1 1 180px', maxWidth: 320 }}>
             <span className="sr">Search</span>
             <Search size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--muted)' }} />
             <input ref={searchRef} className="input" style={{ paddingLeft: 34 }} placeholder="Search  ( / )" title="Search prompts, titles, notes, seeds and tags. Press / to jump here." value={q} onChange={(e) => setQ(e.target.value)} />
@@ -308,6 +309,7 @@ export function Library() {
               </button>
             </>
           )}
+          </div>
           <input
             ref={uploadRef}
             className="sr"

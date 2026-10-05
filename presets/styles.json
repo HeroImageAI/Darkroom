@@ -16,8 +16,8 @@
     {
       "id": "concept",
       "label": "Concept art",
-      "klein": "Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting.",
-      "qwen": "Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork. Ultra HD, 4K, cinematic composition."
+      "klein": "Rendered as painterly digital concept art with a strong, readable silhouette, atmospheric perspective and dramatic directional lighting. A clean, unbranded single illustration.",
+      "qwen": "Style: painterly digital concept art for film production design - strong silhouette, atmospheric perspective, dramatic directional lighting, visible brushwork, a clean unbranded single illustration. Ultra HD, 4K, cinematic composition."
     },
     {
       "id": "product",
@@ -52,8 +52,8 @@
     {
       "id": "game",
       "label": "Game concept",
-      "klein": "Painted as game concept art: stylised realism with painterly detail, a clear readable silhouette, a limited palette and atmospheric depth.",
-      "qwen": "Style: game concept art - stylised realism, painterly detail, clear readable silhouette, limited palette, atmospheric depth."
+      "klein": "Painted as game concept art: stylised realism with painterly detail, a clear readable silhouette, a limited palette and atmospheric depth. A clean, unbranded single illustration.",
+      "qwen": "Style: game concept art - stylised realism, painterly detail, clear readable silhouette, limited palette, atmospheric depth. Clean, unbranded single illustration."
     },
     {
       "id": "film",
