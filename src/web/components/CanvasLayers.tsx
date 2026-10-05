@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, ImagePlus, Layers as LayersIcon, Lock, Merge, Plus, Save, SquareDashed, Trash2, Unlock, History, Loader2, SlidersHorizontal, Scissors } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, ImagePlus, Layers as LayersIcon, Lock, Merge, Plus, Save, SquareDashed, Trash2, Unlock, History, Loader2, SlidersHorizontal, Scissors, PenLine } from 'lucide-react';
 import { BLENDS, type Blend } from '../../shared/doc';
 import type { Item } from '../api';
 import type { CanvasDoc, Layer } from '../lib/doc';
@@ -269,6 +269,19 @@ export function CanvasLayers({
               }}>
               <Merge size={14} />
             </button>
+            {a.kind !== 'adjust' && (
+              <button
+                className="btn icon sm"
+                title="Line art: this layer's outlines as a drawing on a new layer, to trace over and render again with Sketch"
+                aria-label="Line art from the layer"
+                onClick={() => {
+                  const r = doc.lineArt(a.id);
+                  if (typeof r === 'string') toast(r, 'info');
+                }}
+              >
+                <PenLine size={14} />
+              </button>
+            )}
             {a.kind !== 'adjust' && (
               <button className="btn icon sm" title="Cut out: remove this layer's background (BiRefNet)" aria-label="Cut out the layer" disabled={cutting.includes(a.id)} onClick={() => onCutOut(a.id)}>
                 {cutting.includes(a.id) ? <Loader2 size={14} className="spin" /> : <Scissors size={14} />}

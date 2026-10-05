@@ -894,6 +894,68 @@ export class CanvasDoc {
     return new Promise((res, rej) => out.toBlob((b) => (b ? res(b) : rej(new Error('Could not read the layer'))), 'image/png'));
   }
 
+  /**
+   * Line art from a layer (DECISIONS 128): its outlines as dark lines on a new transparent layer above it — to trace
+   * over, change, and render again with Sketch. `detail` 0..1: how many edges become lines.
+   */
+  lineArt(id: string, detail = 0.5): Layer | string {
+    const l = this.layers.find((x) => x.id === id);
+    if (!l || l.kind === 'adjust') return 'Pick a picture or paint layer to take the lines from.';
+    const W = this.width;
+    const H = this.height;
+    const t = newCanvas(W, H);
+    const g = t.getContext('2d', { willReadFrequently: true })!;
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, W, H);
+    g.filter = 'blur(1.2px)';
+    g.drawImage(this.masked(l.canvas, l.maskOn ? l.maskCanvas : null, 'b'), 0, 0);
+    const px = g.getImageData(0, 0, W, H).data;
+    const lum = new Float32Array(W * H);
+    for (let i = 0; i < W * H; i++) lum[i] = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+    const mag = new Float32Array(W * H);
+    const hist = new Uint32Array(1024);
+    for (let y = 1; y < H - 1; y++)
+      for (let x = 1; x < W - 1; x++) {
+        const i = y * W + x;
+        const gx = lum[i - W + 1] + 2 * lum[i + 1] + lum[i + W + 1] - lum[i - W - 1] - 2 * lum[i - 1] - lum[i + W - 1];
+        const gy = lum[i + W - 1] + 2 * lum[i + W] + lum[i + W + 1] - lum[i - W - 1] - 2 * lum[i - W] - lum[i - W + 1];
+        const m = Math.hypot(gx, gy);
+        mag[i] = m;
+        hist[Math.min(1023, Math.floor(m / 2))]++;
+      }
+    // the strongest `share` of edges become lines
+    const share = 0.05 + Math.min(1, Math.max(0, detail)) * 0.12;
+    let acc = 0;
+    let thr = 2046;
+    for (let b = 1023; b >= 0; b--) {
+      acc += hist[b];
+      if (acc >= share * W * H) {
+        thr = Math.max(20, b * 2);
+        break;
+      }
+    }
+    const out = g.createImageData(W, H);
+    for (let i = 0; i < W * H; i++) {
+      const a = Math.max(0, Math.min(1, (mag[i] - thr) / thr + 0.35));
+      out.data[i * 4 + 3] = mag[i] >= thr * 0.75 ? Math.round(a * 255) : 0;
+    }
+    const c = newCanvas(W, H);
+    c.getContext('2d')!.putImageData(out, 0, 0);
+    // on white paper, so the drawing reads as one and Sketch renders the lines (hide the paper to trace over the picture)
+    const p = newCanvas(W, H);
+    const pg = p.getContext('2d')!;
+    pg.fillStyle = '#ffffff';
+    pg.fillRect(0, 0, W, H);
+    const paper = this.make({ name: 'Paper', kind: 'paint', canvas: p });
+    const line = this.make({ name: `${l.name} · line art`, kind: 'paint', canvas: c });
+    this.change('Line art', () => {
+      this.active = id;
+      this.insertAt(paper, 'above');
+      this.insertAt(line, 'above');
+    });
+    return line;
+  }
+
   /** The selected layer's own pixels as a selection mask (0..255), mask applied. */
   layerAlpha(id: string): Uint8Array | null {
     const l = this.layers.find((x) => x.id === id);
