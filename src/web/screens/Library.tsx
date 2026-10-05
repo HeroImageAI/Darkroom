@@ -295,9 +295,9 @@ export function Library() {
           <label style={{ position: 'relative', flex: '1 1 180px', maxWidth: 320, marginLeft: 'auto' }}>
             <span className="sr">Search</span>
             <Search size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--muted)' }} />
-            <input ref={searchRef} className="input" style={{ paddingLeft: 34 }} placeholder="Search prompt, seed or tag  ( / )" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input ref={searchRef} className="input" style={{ paddingLeft: 34 }} placeholder="Search  ( / )" title="Search prompts, titles, notes, seeds and tags. Press / to jump here." value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
-          <span className="mono muted item-count">{total} items</span>
+          <span className="mono muted item-count">{loading && !items.length ? '…' : `${total} items`}</span>
           {!trash && (
             <>
               <button className="btn sm" aria-pressed={selectMode} onClick={() => (selectMode ? clearSelection() : setSelecting(true))} title="Tick several pictures and videos to delete, move or favourite them together. Tip: drag a box over the grid, Ctrl-click, or Shift-click for a range.">
@@ -437,7 +437,13 @@ export function Library() {
             void upload([...e.dataTransfer.files]);
           }}
         >
-          {!loading && items.length === 0 ? (
+          {loading && items.length === 0 ? (
+            <div className="library-grid" aria-busy="true" aria-label="Loading the Library">
+              {Array.from({ length: 12 }, (_, i) => (
+                <div key={i} className="tile-skeleton" />
+              ))}
+            </div>
+          ) : items.length === 0 ? (
             <div className="empty" style={{ margin: '80px auto' }}>
               <h2>{trash ? 'Nothing deleted' : q || filter !== 'all' ? 'Nothing matches' : 'Your library is empty'}</h2>
               <p>
@@ -647,7 +653,8 @@ function UseAsMenu({ item, x, y, onClose, onDelete }: { item: Item; x: number; y
 }
 
 /** Show the whole picture on its tile: compare sheets, and pictures much wider or taller than square. */
-const wholeTile = (it: Item) => it.mode === 'compare' || (!!it.width && !!it.height && (it.width / it.height > 1.6 || it.height / it.width > 1.6));
+// only sheets and very wide or tall pictures are shown whole; 16:9 and 9:16 fill the tile like the rest
+const wholeTile = (it: Item) => it.mode === 'compare' || it.mode === 'sheet' || (!!it.width && !!it.height && (it.width / it.height > 2.05 || it.height / it.width > 2.05));
 
 function Tile({
   item,
@@ -721,13 +728,13 @@ function Tile({
           </span>
         )}
         {item.layered && (
-          <span className="mono stack-badge" title="Has layers in Edit (open it there to keep working on them)" aria-label="Has layers">
+          <span className="mono layers-badge" title="Has layers in Edit (open it there to keep working on them)" aria-label="Has layers">
             <Layers2 size={11} /> layers
           </span>
         )}
         {stacked && (item.stack_count ?? 1) > 1 && (
           <span className="mono stack-badge" title={`${item.stack_count} versions — select to see them all`} aria-label={`${item.stack_count} versions`}>
-            <Layers size={11} /> {item.stack_count}
+            <Copy size={11} /> {item.stack_count}
           </span>
         )}
       </span>

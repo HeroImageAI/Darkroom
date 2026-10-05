@@ -41,6 +41,20 @@ export class ApiError extends Error {
   }
 }
 
+/** The browser could not reach Darkroom's server at all ("Failed to fetch"): say so in words. */
+function offline(e: unknown): never {
+  if (e instanceof TypeError) throw new ApiError("Can't reach Darkroom's server. If you closed its window, start Darkroom again; otherwise wait a few seconds and try again.", 0, null);
+  throw e;
+}
+
+/** A status with no message from Darkroom, in words. */
+function plainError(status: number): string {
+  if (status === 502 || status === 503 || status === 504) return "Darkroom's server isn't answering (it may be restarting). Wait a few seconds and try again.";
+  if (status === 404) return 'That is no longer there (it may have been deleted).';
+  if (status === 413) return 'That file is too large.';
+  return `Something went wrong (error ${status}). Try again; if it keeps happening, restart Darkroom.`;
+}
+
 async function handle<T>(r: Response): Promise<T> {
   const text = await r.text();
   let body: any = null;
@@ -49,22 +63,22 @@ async function handle<T>(r: Response): Promise<T> {
   } catch {
     body = text;
   }
-  if (!r.ok) throw new ApiError(body?.error ?? body?.warning ?? `Request failed (${r.status})`, r.status, body);
+  if (!r.ok) throw new ApiError(body?.error ?? body?.warning ?? plainError(r.status), r.status, body);
   return body as T;
 }
 
 export const api = {
-  get: <T>(url: string) => fetch(url).then((r) => handle<T>(r)),
+  get: <T>(url: string) => fetch(url).then((r) => handle<T>(r), offline),
   post: <T>(url: string, body?: unknown) =>
-    fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) }).then((r) => handle<T>(r)),
+    fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}) }).then((r) => handle<T>(r), offline),
   patch: <T>(url: string, body: unknown) =>
-    fetch(url, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => handle<T>(r)),
+    fetch(url, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => handle<T>(r), offline),
   put: <T>(url: string, body: unknown) =>
-    fetch(url, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => handle<T>(r)),
+    fetch(url, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then((r) => handle<T>(r), offline),
   upload: (blob: Blob, filename: string) => {
     const fd = new FormData();
     fd.append('file', blob, filename);
-    return fetch('/api/upload', { method: 'POST', body: fd }).then((r) => handle<{ name: string; width: number | null; height: number | null }>(r));
+    return fetch('/api/upload', { method: 'POST', body: fd }).then((r) => handle<{ name: string; width: number | null; height: number | null }>(r), offline);
   },
   asInput: (id: string, which: 'main' | 'poster' | 'last' = 'main') =>
     api.post<{ name: string; width: number | null; height: number | null }>(`/api/items/${id}/as-input`, { which }),
@@ -75,7 +89,7 @@ export const api = {
   boards: () => api.get<{ boards: Board[]; none: number }>('/api/boards'),
   createBoard: (name: string) => api.post<Board>('/api/boards', { name }),
   renameBoard: (id: string, name: string) => api.patch<Board>(`/api/boards/${id}`, { name }),
-  deleteBoard: (id: string) => fetch(`/api/boards/${id}`, { method: 'DELETE' }).then((r) => handle<{ ok: true }>(r)),
+  deleteBoard: (id: string) => fetch(`/api/boards/${id}`, { method: 'DELETE' }).then((r) => handle<{ ok: true }>(r), offline),
   moveToBoard: (ids: string[], boardId: string | null) => api.post<{ moved: string[] }>('/api/items/board', { ids, boardId }),
   items: (q: { filter?: string; q?: string; limit?: number; offset?: number; board?: string; stack?: 1 }) =>
     api.get<{ total: number; items: Item[] }>(`/api/items?${new URLSearchParams(Object.entries(q).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]))}`),

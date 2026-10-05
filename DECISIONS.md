@@ -967,3 +967,18 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     and a second failure is an error message — the box is never filled with filler. Seeds 2 / 3 / 5 that collapsed
     now give clean instructions in 19–39 s; a clean PE answer is kept as it was. e2e: drawing + Qwen + Enhance sends
     the merged canvas and gets a real instruction.
+130. **Polish round 1 (JP: "make Darkroom the best version it can be").** Method: `tests/tour.ts` captures every screen,
+    Edit mode, tool and panel at 1600×1000 and 1280×800 (read-only); `tests/session.ts` works like a designer on real
+    models — a car generated, its wheel filled, a sneaker drawn on a blank canvas, coloured and rendered with Sketch,
+    graded with a look, the car animated (2.3 min) — logging every message. Changed: the Library shows loading tiles
+    (not "0 items"), 16:9 and 9:16 fill their tiles (only sheets and >2:1 are shown whole), the version-stack badge and
+    the "layers" badge differ; films are listed with a poster, clips and length, and opening a film no longer re-saves
+    it (it jumped to the top of the list); Video shows the shot about to be animated, and says when a take renders;
+    the Edit panel's mode chips and model cards are smaller, so the instruction box is above the fold at 1280×800;
+    Transform that moved nothing is cancelled, not applied (it turned plain pictures into layered projects); Klein is
+    Edit's first-time model (faster; won or tied 30 of 40 edits), your choice is still remembered; messages sit at the
+    top centre (they covered Edit's Apply and Video's Animate); "Request failed (502)" and "Failed to fetch" became
+    plain words; a failed autosave retries (3 s doubling to a minute) and says so, where it used to wait for the next
+    stroke; `?` lists every shortcut (current screen first); the progress readout names the model, not the graph;
+    Delete forever also sends a canvas's project folder to the Recycle Bin. Two tests read a message left by the step
+    before as their own success; they now wait for the new version to open.

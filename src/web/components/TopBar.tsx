@@ -5,6 +5,7 @@ import { go, type Screen } from '../router';
 import { toast, useApp } from '../store';
 import { Dialog } from './common';
 import { WorkingBoardPicker } from './Boards';
+import { ShortcutsButton } from './Shortcuts';
 
 const TABS: { id: Screen; label: string; icon: typeof ImageIcon }[] = [
   { id: 'generate', label: 'Generate', icon: Wand2 },
@@ -102,6 +103,7 @@ export function TopBar({ screen }: { screen: Screen }) {
           <ListOrdered size={15} />
           {status?.queue ?? 0}<span className="queue-word"> queued</span>
         </div>
+        <ShortcutsButton />
       </div>
       {log !== null && (
         <Dialog title="Comfy Desktop log" onClose={() => setLog(null)}>

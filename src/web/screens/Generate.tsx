@@ -767,7 +767,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
                 <span className="big-status">{job!.status === 'queued' ? 'Waiting in queue' : job!.stage || 'Working'}</span>
                 <ProgressBar value={job!.progress} />
                 <span className="readout">
-                  <b>{job!.workflow}</b> {w}×{h} · seed <b>{String(s.seed)}</b>
+                  <b>{String((job!.meta as Record<string, unknown> | null)?.model ?? job!.workflow).replace(/ (text to image|t2i)$/i, '')}</b> {w}×{h} · seed <b>{String(s.seed)}</b>
                 </span>
               </div>
             </div>
@@ -777,8 +777,11 @@ export function Generate({ query }: { query: URLSearchParams }) {
             </div>
           ) : (
             <div className="empty">
-              <h2>Nothing developed yet</h2>
-              <p>Write a prompt on the left and press Generate (Ctrl+Enter). Drop or paste up to three pictures to use as references.</p>
+              <h2>{history.length ? 'Ready for a new picture' : 'Nothing developed yet'}</h2>
+              <p>
+                Write a prompt on the left and press Generate (Ctrl+Enter). Drop or paste up to three pictures to use as references.
+                {history.length > 0 && ' Your earlier pictures are in History on the right: click one to see it again.'}
+              </p>
             </div>
           )}
         </div>
@@ -809,8 +812,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
               <a className="btn sm" href={downloadUrl(selectedItem.id)} download>
                 <Download size={15} /> Download
               </a>
-              <button className={`btn sm ${selectedItem.favourite ? 'on' : ''}`} aria-pressed={selectedItem.favourite} onClick={toggleFav}>
-                <Heart size={15} fill={selectedItem.favourite ? 'currentColor' : 'none'} /> Favourite
+              <button className={`btn sm icon ${selectedItem.favourite ? 'on' : ''}`} aria-pressed={selectedItem.favourite} onClick={toggleFav} aria-label="Favourite" title={selectedItem.favourite ? 'A favourite (click to undo)' : 'Favourite'}>
+                <Heart size={15} fill={selectedItem.favourite ? 'currentColor' : 'none'} />
               </button>
               <button className="btn sm" onClick={() => applyReuse(selectedItem)}>
                 <Copy size={15} /> Reuse settings

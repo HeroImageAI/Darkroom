@@ -49,7 +49,7 @@ async function library(board?: string) {
   if ((await stacks.getAttribute('aria-pressed')) === 'true') await stacks.click();
   if (board) await page.getByRole('group', { name: 'Boards' }).getByRole('button', { name: new RegExp(`^${board.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}( \\d+)?$`) }).click();
   else await page.getByRole('group', { name: 'Boards' }).getByRole('button', { name: 'All boards' }).click(); // search everything
-  const search = page.getByPlaceholder(/Search prompt/);
+  const search = page.getByPlaceholder(/^Search/);
   if (await search.inputValue()) await search.fill('');
   await page.getByRole('list', { name: 'Library items' }).or(page.getByText(/Nothing matches|library is empty/)).first().waitFor();
   await page.waitForTimeout(600);
@@ -58,7 +58,7 @@ async function library(board?: string) {
 /** A Library item with exactly this title (searched in the Library), or null. */
 async function findTitled(title: string, board?: string): Promise<string | null> {
   await library(board);
-  await page.getByPlaceholder(/Search prompt/).fill(title);
+  await page.getByPlaceholder(/^Search/).fill(title);
   await page.waitForTimeout(900);
   const tiles = page.locator('.tile-wrap');
   for (let i = 0; i < (await tiles.count()); i++) {
@@ -71,7 +71,7 @@ async function findTitled(title: string, board?: string): Promise<string | null>
 /** Open an item's Details in the Library (by its tile) and set title / notes / favourite. */
 async function annotate(id: string, o: { title?: string; notes?: string; appendNotes?: string; favourite?: boolean; board?: string }) {
   await library(o.board);
-  await page.getByPlaceholder(/Search prompt/).fill('');
+  await page.getByPlaceholder(/^Search/).fill('');
   const tile = page.locator(`.tile-wrap[data-id="${id}"]`);
   for (let i = 0; i < 20 && !(await tile.count()); i++) {
     const more = page.getByRole('button', { name: 'Load more' });
@@ -466,7 +466,7 @@ try {
   else if (action === 'list') {
     // every tile matching a search, across all boards: id and title as the Library shows them
     await library();
-    await page.getByPlaceholder(/Search prompt/).fill(a.q);
+    await page.getByPlaceholder(/^Search/).fill(a.q);
     await page.waitForTimeout(1500);
     const tiles = page.locator('.tile-wrap');
     const out: { id: string | null; title: string | null }[] = [];
@@ -476,12 +476,12 @@ try {
   else if (action === 'move') {
     // Library: tick the items in one board and Move to board (the selection bar)
     await library(a.fromBoard);
-    if (a.q) { await page.getByPlaceholder(/Search prompt/).fill(a.q); await page.waitForTimeout(1500); }
+    if (a.q) { await page.getByPlaceholder(/^Search/).fill(a.q); await page.waitForTimeout(1500); }
     await page.getByRole('button', { name: 'Select', exact: true }).click();
     for (const id of a.ids as string[]) await page.locator(`.tile-wrap[data-id="${id}"]`).getByRole('checkbox').click();
     await page.getByRole('toolbar', { name: 'Selection' }).getByLabel('Move to board').selectOption({ label: a.toBoard });
     await page.waitForTimeout(1200);
-    if (a.q) await page.getByPlaceholder(/Search prompt/).fill('');
+    if (a.q) await page.getByPlaceholder(/^Search/).fill('');
     result = { moved: (a.ids as string[]).length };
   }
   else if (action === 'mode') result = await editMode();

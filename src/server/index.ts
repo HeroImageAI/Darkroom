@@ -1148,6 +1148,8 @@ app.post('/api/items/purge', async (req, reply) => {
       if (p) files.add(p);
     }
     fs.rmSync(jobs.thumbPath(it.id), { force: true }); // Darkroom's own thumbnail cache, rebuilt on demand
+    const proj = projects.folder(it.id); // a layered canvas's layers go with it, to the Recycle Bin
+    if (proj) files.add(proj);
   }
   const r = await recycle([...files]);
   broadcast({ type: 'library' });

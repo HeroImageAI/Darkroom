@@ -68,7 +68,7 @@ import { floodMask } from '../../shared/flood';
 import { brushById, penGamma } from '../../shared/brushes';
 import { FillBar, NewCanvasButton, PaintBar, SelectBar, ShapeBar, type ColourState, type SelOpUi, type ShapeKind, type Symmetry } from '../components/CanvasTools';
 import { border as selBorder, combine as selCombine, growShrink } from '../../shared/selection';
-import { drawTransform, startTransform, TransformBar, TransformOverlay, type TransformState } from '../components/TransformTool';
+import { drawTransform, startTransform, TransformBar, TransformOverlay, untouched, type TransformState } from '../components/TransformTool';
 import { CanvasLayers } from '../components/CanvasLayers';
 import { AdjustPanel } from '../components/AdjustPanel';
 import { LOOKS } from '../../shared/adjust';
@@ -194,7 +194,8 @@ function Editor({ item }: { item: Item }) {
   const [tool, setTool] = useState<Tool>('brush');
   const [mode, setMode] = useState<Mode>(() => (sessionStorage.getItem('dr.edit.mode') as Mode) || 'instruct');
   const boot = useApp((s) => s.boot);
-  const [editModel, setEditModel] = useState<string>(() => localStorage.getItem('dr.edit.model') || 'qwen');
+  // first time: Klein (faster, and it won or tied 30 of 40 edits in the 2026-10-03 suite); after that, your last choice
+  const [editModel, setEditModel] = useState<string>(() => localStorage.getItem('dr.edit.model') || 'klein');
   // your own LoRAs per model (DECISIONS 86), used by Instruct, Inpaint, Outpaint and Enhance
   const [editLoras, setEditLoras] = usePersistent<Record<string, LoraUse[]>>('edit.loras', {});
   const lorasNow = (): LoraUse[] => (editModel === 'klein' || editModel === 'qwen' ? (editLoras[editModel] ?? []) : []);
@@ -567,18 +568,31 @@ function Editor({ item }: { item: Item }) {
       if (!raf) raf = requestAnimationFrame(draw);
     });
     let timer: number | undefined;
+    let warned = false;
+    // a save that fails (the server restarting, a network blip) is tried again, 3 s, 6 s, 12 s … up to a minute apart
+    const run = (attempt: number) => {
+      setSaveState('saving');
+      doc
+        .save()
+        .then(() => {
+          setSaveState('saved');
+          if (warned) toast('Your layers are saved again.', 'ok');
+          warned = false;
+        })
+        .catch(() => {
+          setSaveState('error');
+          if (!warned) toast("Your layers couldn't be saved just now. Darkroom keeps trying; leave this page open.", 'error', 9000);
+          warned = true;
+          clearTimeout(timer);
+          timer = window.setTimeout(() => run(attempt + 1), Math.min(60_000, 3000 * 2 ** attempt));
+        });
+    };
     const offChange = doc.subscribe(() => {
       setDocVer(doc.version);
       if (!doc.isProject) return;
       setSaveState('unsaved');
       clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        setSaveState('saving');
-        doc
-          .save()
-          .then(() => setSaveState('saved'))
-          .catch(() => setSaveState('error'));
-      }, 1200);
+      timer = window.setTimeout(() => run(0), 1200);
     });
     draw();
     return () => {
@@ -640,6 +654,7 @@ function Editor({ item }: { item: Item }) {
     const d = docRef.current;
     const s = tfRef.current;
     if (!d || !s) return;
+    if (untouched(s)) return cancelTf(); // only looked: the layer stays as it was, not a "Transform" step
     d.commitTransform(s.mode === 'free' ? 'Transform' : s.mode === 'perspective' ? 'Perspective' : 'Warp');
     setTf(null);
     // the selected part has moved: its old outline no longer fits
@@ -2166,7 +2181,7 @@ function Editor({ item }: { item: Item }) {
                       {adjLayer.name} <span className="mono">adjustment</span>
                     </p>
                     <span className={`save-state ${saveState}`} role="status" aria-label="Layers saved">
-                      {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : saveState === 'unsaved' ? 'Unsaved' : ''}
+                      {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved, retrying…' : saveState === 'unsaved' ? 'Unsaved' : ''}
                     </span>
                   </div>
                   <AdjustPanel adjust={adjLayer.adjust ?? {}} hist={hist ?? undefined} onChange={(p, label, key) => doc.setAdjust(adjLayer.id, p, label, key)} />

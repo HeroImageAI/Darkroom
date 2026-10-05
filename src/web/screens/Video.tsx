@@ -771,10 +771,35 @@ export function Video({ query }: { query: URLSearchParams }) {
           <Player key={sel.id} item={sel} onSaveFrame={saveFrame} onExtend={sel.workflow.startsWith('wan') ? undefined : extend} onSmooth={smooth} onRefine={ltxCat?.refine && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && !sel.workflow.startsWith('wan') ? refine : undefined} onCutOut={ltxCat?.alpha && Math.max(sel.width ?? 0, sel.height ?? 0) <= 1280 && (sel.frames ?? 0) <= 145 && !sel.workflow.startsWith('wan') && sel.mode !== 'matte' ? () => setCutoutFor(sel) : undefined} onRestore={ltxCat?.restore && sel.mode !== 'matte' ? () => setRestoreFor(sel) : undefined} online={online} />
         ) : (
           <div className="stage-main">
-            <div className="empty">
-              <h2>No take selected</h2>
-              <p>Pick a start frame, describe the motion, then press Animate. Start with Draft to check the motion quickly, then render it at 720p or 1080p.</p>
-            </div>
+            {s.start ? (
+              // the shot about to be animated, large: what the take will start from (and end on, with an end frame)
+              <div className="video-ready">
+                <div className="video-ready-frames">
+                  <figure>
+                    <img src={inputUrl(s.start.name)} alt="The shot to animate" />
+                    {s.end && <figcaption>Start</figcaption>}
+                  </figure>
+                  {s.end && (
+                    <figure>
+                      <img src={inputUrl(s.end.name)} alt="Where the shot ends" />
+                      <figcaption>End</figcaption>
+                    </figure>
+                  )}
+                </div>
+                <p className="note">
+                  {activeVideo.length
+                    ? `Rendering ${activeVideo.length === 1 ? 'a take' : `${activeVideo.length} takes`}: watch the progress in Takes on the right; the take opens here when it is done. You can keep working.`
+                    : s.motion.trim()
+                      ? 'Ready: press Animate (Ctrl+Enter). Start with Draft to check the motion quickly.'
+                      : 'Now say what should move (step 2), then press Animate.'}
+                </p>
+              </div>
+            ) : (
+              <div className="empty">
+                <h2>No take selected</h2>
+                <p>Pick a start frame, describe the motion, then press Animate. Start with Draft to check the motion quickly, then render it at 720p or 1080p.</p>
+              </div>
+            )}
           </div>
         )}
         {showFinalBar && (

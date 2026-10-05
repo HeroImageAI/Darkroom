@@ -41,6 +41,13 @@ function currentGrid(s: TransformState): Mesh {
   return { n: 4, pts: s.warp };
 }
 
+/** Nothing moved: applying would only mark the layer as changed (and turn a plain picture into a project). */
+export function untouched(s: TransformState): boolean {
+  const a = currentGrid(s).pts;
+  const b = gridMesh(s.box, 4).pts;
+  return a.every((p, i) => Math.abs(p.x - b[i].x) < 0.01 && Math.abs(p.y - b[i].y) < 0.01);
+}
+
 export function switchMode(s: TransformState, mode: TransformMode): TransformState {
   if (mode === s.mode) return s;
   const g = currentGrid(s);
