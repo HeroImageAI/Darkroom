@@ -12,6 +12,7 @@ import {
   ImagePlus,
   Lasso,
   Maximize,
+  Radio,
   Monitor,
   Loader2,
   Lock,
@@ -63,6 +64,7 @@ import { KleinWeights, kleinLabel, useFinetunes } from '../components/KleinWeigh
 import type { LoraUse } from '../../shared/loras';
 import { placeOnCanvas, type DocJson } from '../../shared/doc';
 import { CanvasDoc, loadImage } from '../lib/doc';
+import { LivePanel } from '../components/LivePaint';
 import { DEFAULT_BRUSH, settingsOf, type BrushSettings } from '../lib/brush';
 import { floodMask } from '../../shared/flood';
 import { brushById, penGamma } from '../../shared/brushes';
@@ -400,6 +402,8 @@ function Editor({ item }: { item: Item }) {
   const docRef = useRef<CanvasDoc | null>(null);
   const [doc, setDoc] = useState<CanvasDoc | null>(null);
   const [docVer, setDocVer] = useState(0);
+  // Live painting (v3.30): the canvas re-rendered by Klein whenever you pause
+  const [live, setLive] = useState(false);
   const [docStarting, setDocStarting] = useState(false);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error' | 'none'>('none');
   const [flattening, setFlattening] = useState(false);
@@ -894,9 +898,12 @@ function Editor({ item }: { item: Item }) {
     const th = H + pad.top + pad.bottom;
     // room at the top for the Upload / view buttons that float over the canvas
     const top = 56;
-    const s = Math.min((el.clientWidth - 64) / tw, (el.clientHeight - top - 32) / th, 2);
-    setView({ scale: s, x: (el.clientWidth - tw * s) / 2 + pad.left * s, y: top + (el.clientHeight - top - th * s) / 2 + pad.top * s });
-  }, [W, H, pad]);
+    // Live: the canvas fits beside the live panel (as wide as .live-panel), side by side
+    const right = live ? Math.min(el.clientWidth * 0.34, 380) + 24 : 0;
+    const room = el.clientWidth - right;
+    const s = Math.min((room - 64) / tw, (el.clientHeight - top - 32) / th, 2);
+    setView({ scale: s, x: (room - tw * s) / 2 + pad.left * s, y: top + (el.clientHeight - top - th * s) / 2 + pad.top * s });
+  }, [W, H, pad, live]);
 
   useEffect(() => {
     fit();
@@ -904,6 +911,8 @@ function Editor({ item }: { item: Item }) {
     window.addEventListener('resize', r);
     return () => window.removeEventListener('resize', r);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Live on / off: the canvas moves aside for the live panel, and back
+  useEffect(() => fit(), [live]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(
     () =>
@@ -2005,6 +2014,19 @@ function Editor({ item }: { item: Item }) {
               <Redo2 size={14} />
             </button>
             <span className="view-sep" aria-hidden="true" />
+            <button
+              className={`btn sm ${live ? 'on' : ''}`}
+              aria-pressed={live}
+              disabled={!comfyOnline && !live}
+              onClick={async () => {
+                if (live) return setLive(false);
+                if (await ensureDoc()) setLive(true);
+              }}
+              title="Live: Klein renders your drawing each time you pause painting (~4 s a frame); keep a frame you like as a layer"
+            >
+              <Radio size={14} /> Live
+            </button>
+            <span className="view-sep" aria-hidden="true" />
             <button className="btn sm" onClick={() => setRot((r) => r - 15)} title="Turn the view left (4)" aria-label="Turn view left">
               <RotateCcw size={14} />
             </button>
@@ -2029,6 +2051,22 @@ function Editor({ item }: { item: Item }) {
               {Math.round(view.scale * 100)}%
             </span>
           </div>
+          {live && doc && boot && (
+            <LivePanel
+              doc={doc}
+              docVer={docVer}
+              T={boot.prompts}
+              onClose={() => setLive(false)}
+              onKeep={(url) =>
+                void loadImage(url)
+                  .then((img) => {
+                    doc.addImageLayer(img, { name: 'Live · Klein 9B', kind: 'result', where: 'top' });
+                    setPanel('layers');
+                  })
+                  .catch(() => toast('Could not keep that frame.', 'error'))
+              }
+            />
+          )}
         </div>
 
         {/* the canvas tools' options: a row of their own, so they never cover the picture */}

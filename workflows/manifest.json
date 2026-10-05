@@ -5170,6 +5170,145 @@
         "poster": "DR_POSTER",
         "last": "DR_LAST_FRAME"
       }
+    },
+    "klein_edit_live": {
+      "file": "klein_edit_live.json",
+      "family": "klein",
+      "kind": "image",
+      "label": "Klein 9B live (0.25 MP)",
+      "params": {
+        "prompt": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_PROMPT",
+              "input": "text"
+            }
+          ],
+          "default": ""
+        },
+        "seed": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_SEED",
+              "input": "noise_seed"
+            }
+          ],
+          "default": 0,
+          "min": 0,
+          "max": 1125899906842624
+        },
+        "steps": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_STEPS",
+              "input": "steps"
+            }
+          ],
+          "default": 4,
+          "min": 1,
+          "max": 12
+        },
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "mask": {
+          "type": "image",
+          "label": "Mask",
+          "targets": [
+            {
+              "title": "DR_MASK",
+              "input": "image"
+            }
+          ],
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_MASK_LATENT",
+                "input": "samples"
+              },
+              {
+                "title": "DR_MASK_COMPOSITE",
+                "input": "source"
+              }
+            ],
+            "remove": [
+              "DR_MASK"
+            ]
+          }
+        },
+        "image_2": {
+          "type": "image",
+          "label": "Reference",
+          "targets": [
+            {
+              "title": "DR_IMAGE_2",
+              "input": "image"
+            }
+          ],
+          "whenMissing": {
+            "bypass": [
+              {
+                "title": "DR_REF_2_POS",
+                "input": "conditioning"
+              },
+              {
+                "title": "DR_REF_2_NEG",
+                "input": "conditioning"
+              }
+            ],
+            "remove": [
+              "DR_IMAGE_2"
+            ]
+          }
+        },
+        "grow": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_MASK_GROW",
+              "input": "expand"
+            }
+          ],
+          "default": 8,
+          "min": 0,
+          "max": 64
+        },
+        "feather": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_FEATHER",
+              "input": "blur_radius"
+            }
+          ],
+          "default": 6,
+          "min": 1,
+          "max": 31
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/live/frame"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {

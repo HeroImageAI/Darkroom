@@ -134,6 +134,8 @@ export interface SubmitBody {
     title?: string;
     /** Board for the new result(s); filled in from the working board by api.submit. */
     boardId?: string | null;
+    /** A live-painting frame: shown in Edit, never a Library item (v3.30). */
+    preview?: boolean;
   };
   force?: boolean;
 }
