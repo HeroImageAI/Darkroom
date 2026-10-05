@@ -370,6 +370,39 @@ app.get('/api/items/:id/project/:part/:layer', async (req, reply) => {
   return reply.send(fs.createReadStream(p));
 });
 
+/**
+ * New canvas (DECISIONS 125): a blank picture to build a scene on in Edit — what Compose's blank canvas was. Sizes are
+ * capped at 4096 a side; the colour is a paper tone, white, grey, black, or transparent.
+ */
+const PAPERS: Record<string, { r: number; g: number; b: number; alpha: number }> = {
+  paper: { r: 0xf2, g: 0xf0, b: 0xea, alpha: 1 },
+  white: { r: 255, g: 255, b: 255, alpha: 1 },
+  grey: { r: 0x80, g: 0x80, b: 0x80, alpha: 1 },
+  black: { r: 0, g: 0, b: 0, alpha: 1 },
+  transparent: { r: 0, g: 0, b: 0, alpha: 0 },
+};
+app.post('/api/canvas', async (req, reply) => {
+  const b = (req.body ?? {}) as { width?: unknown; height?: unknown; background?: unknown; name?: unknown; boardId?: unknown };
+  const w = Math.round(Number(b.width));
+  const h = Math.round(Number(b.height));
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w < 64 || h < 64 || w > 4096 || h > 4096) return reply.code(400).send({ error: 'Pick a canvas size between 64 and 4096 pixels a side.' });
+  const bg = PAPERS[String(b.background ?? 'paper')] ?? PAPERS.paper;
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
+  const outDir = outputDirFromArgv(((await jobs.comfy.systemStats()) as SystemStats).system?.argv);
+  if (!outDir) return reply.code(409).send({ error: "ComfyUI doesn't report its output folder." });
+  try {
+    const png = await sharp({ create: { width: w, height: h, channels: 4, background: bg } }).png().toBuffer();
+    const name = `blank_${Date.now().toString(36)}_${crypto.randomBytes(2).toString('hex')}.png`;
+    fs.mkdirSync(path.join(outDir, 'darkroom', 'canvas'), { recursive: true });
+    fs.writeFileSync(path.join(outDir, 'darkroom', 'canvas', name), png);
+    const title = (typeof b.name === 'string' && b.name.trim().slice(0, 120)) || `Canvas ${w}×${h}`;
+    const item = await jobs.addPicture({ file: { filename: name, subfolder: 'darkroom/canvas', type: 'output' }, name: title, title, mode: 'canvas', model: 'Blank canvas', params: { width: w, height: h, background: b.background ?? 'paper' }, boardId: b.boardId });
+    return slim(item);
+  } catch (e) {
+    return reply.code(500).send({ error: 'Could not make the canvas: ' + (e as Error).message });
+  }
+});
+
 /** Flatten to version: the canvas, merged in the browser, becomes the next version of the picture. */
 app.post('/api/items/:id/flatten', async (req, reply) => {
   const { id } = req.params as { id: string };

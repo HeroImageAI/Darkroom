@@ -66,17 +66,19 @@ import { CanvasDoc, loadImage } from '../lib/doc';
 import { DEFAULT_BRUSH, settingsOf, type BrushSettings } from '../lib/brush';
 import { floodMask } from '../../shared/flood';
 import { brushById, penGamma } from '../../shared/brushes';
-import { FillBar, PaintBar, SelectBar, ShapeBar, type ColourState, type SelOpUi, type ShapeKind, type Symmetry } from '../components/CanvasTools';
+import { FillBar, NewCanvasButton, PaintBar, SelectBar, ShapeBar, type ColourState, type SelOpUi, type ShapeKind, type Symmetry } from '../components/CanvasTools';
 import { border as selBorder, combine as selCombine, growShrink } from '../../shared/selection';
 import { drawTransform, startTransform, TransformBar, TransformOverlay, type TransformState } from '../components/TransformTool';
 import { CanvasLayers } from '../components/CanvasLayers';
 import { AdjustPanel } from '../components/AdjustPanel';
 import { LOOKS } from '../../shared/adjust';
+import { autoMode, MODES as RENDERS, renderPlan, type RenderMode } from '../../shared/compose';
 
 /** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
 const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
+import { createCanvas } from '../lib/canvasStart';
 
 type Tool = 'move' | 'transform' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'marquee' | 'lasso' | 'wand' | 'smart' | 'frame' | 'crop';
 /** tools that make a selection with Shift = add, Alt = subtract (DECISIONS 124) */
@@ -84,7 +86,9 @@ const SEL_TOOLS = new Set<Tool>(['marquee', 'lasso', 'wand']);
 /** tools that work on the canvas layers (DECISIONS 122, 123) */
 type CanvasTool = 'paint' | 'fill' | 'shape';
 const isCanvasTool = (t: Tool): t is CanvasTool => t === 'paint' || t === 'fill' || t === 'shape';
-type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
+type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'refine' | 'compose' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
+/** Fill (DECISIONS 125): what the selection should become */
+type FillKind = 'replace' | 'add' | 'remove' | 'background';
 /** restore = edit-style (default; fixes blur and low resolution), restore_upscale = restore then SeedVR2 2x,
  *  subtle = low-denoise img2img touch-up for pictures that are already clean (Addenda Phase 2, DECISIONS 66). */
 type EnhanceKind = 'restore' | 'restore_upscale' | 'subtle';
@@ -117,19 +121,22 @@ const TOOLS: { id: Tool; label: string; key: string; icon: typeof Brush; disable
   { id: 'crop', label: 'Crop', key: 'C', icon: Crop },
 ];
 
-const MODES: { id: Mode; label: string }[] = [
-  { id: 'instruct', label: 'Instruct' },
-  { id: 'inpaint', label: 'Inpaint' },
-  { id: 'outpaint', label: 'Outpaint' },
-  { id: 'turn', label: 'Turn it' },
-  { id: 'enhance', label: 'Enhance' },
-  { id: 'layers', label: 'Layers' },
-  { id: 'remove_bg', label: 'Remove BG' },
-  { id: 'upscale', label: 'Upscale' },
+/** The AI on the canvas first (Krita AI's fill modes, DECISIONS 125), then the other picture tools. */
+const MODES: { id: Mode; label: string; group: 'canvas' | 'more'; tip: string }[] = [
+  { id: 'instruct', label: 'Instruct', group: 'canvas', tip: 'Change the picture (or the selection) by saying what to do' },
+  { id: 'inpaint', label: 'Fill', group: 'canvas', tip: 'Replace, add to or remove what is in the selection, or replace the background' },
+  { id: 'outpaint', label: 'Expand', group: 'canvas', tip: 'Add new space around the picture' },
+  { id: 'refine', label: 'Refine', group: 'canvas', tip: 'Redraw what is there at a strength you choose: paintovers and sketches become finished, the layout stays' },
+  { id: 'compose', label: 'Compose', group: 'canvas', tip: 'Turn pieces placed on a background, and paint, into one picture: Blend edges, Harmonise or Reimagine' },
+  { id: 'turn', label: 'Turn it', group: 'more', tip: 'See the object from another angle' },
+  { id: 'enhance', label: 'Enhance', group: 'more', tip: 'Restore blur, noise and low resolution' },
+  { id: 'layers', label: 'Separate', group: 'more', tip: 'Split the picture into layers, one per object' },
+  { id: 'remove_bg', label: 'Cut-out', group: 'more', tip: 'Remove the background (real transparency)' },
+  { id: 'upscale', label: 'Upscale', group: 'more', tip: 'More pixels with SeedVR2' },
 ];
 
 /** AI results that land on the canvas as a layer when layers are on (DECISIONS 122); others open as a version. */
-const LAYERABLE: Record<string, string> = { 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Enhance', 'edit:remove_bg': 'Cut-out' };
+const LAYERABLE: Record<string, string> = { 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Refine', 'edit:remove_bg': 'Cut-out', compose: 'Compose' };
 /** Pen pressure; a mouse or finger paints at full pressure. */
 const pressureOf = (e: { pointerType: string; pressure: number }) => (e.pointerType === 'pen' ? e.pressure : 1);
 
@@ -421,6 +428,45 @@ function Editor({ item }: { item: Item }) {
   const [wandOpts, setWandOpts] = usePersistent('edit.wand', { tolerance: 32, contiguous: true, merged: true });
   const [selPx, setSelPx] = usePersistent('edit.selPx', 8);
   const [marq, setMarq] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  // the AI on the canvas (DECISIONS 125)
+  const [fillKind, setFillKind] = useSessionState<FillKind>('edit.fillKind', 'replace');
+  const [refineStrength, setRefineStrength] = useSessionState('edit.refine', 0.35);
+  const [composeMode, setComposeMode] = useSessionState<'auto' | RenderMode>('edit.composeMode', 'auto');
+  const [describing, setDescribing] = useState(false);
+  const [cStats, setCStats] = useState<{ paintCoverage: number; pictures: number }>({ paintCoverage: 0, pictures: 0 });
+  // cut-outs of single layers on their way back (job id → layer id)
+  const cutJobs = useRef(new Map<string, string>());
+  const [cutting, setCutting] = useState<string[]>([]);
+  const cutOutLayer = async (layerId: string) => {
+    const d = docRef.current;
+    const l = d?.layers.find((x) => x.id === layerId);
+    if (!d || !l) return;
+    try {
+      const up = await api.upload(await d.layerBlob(layerId), 'layer.png');
+      const j = await api.submit({ workflow: 'remove_bg', params: { image_1: up.name, matte: 'birefnet.safetensors', edge: 0 }, meta: { mode: 'edit:remove_bg', model: 'BiRefNet', prompt: l.name, title: `${l.name} · cut-out` } });
+      cutJobs.current.set(j.id, layerId);
+      setCutting((c) => [...c, layerId]);
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
+  useEffect(
+    () =>
+      onJob((j) => {
+        const layerId = cutJobs.current.get(j.id);
+        if (!layerId) return;
+        if (j.status === 'done' || j.status === 'error' || j.status === 'lost' || j.status === 'cancelled') {
+          cutJobs.current.delete(j.id);
+          setCutting((c) => c.filter((x) => x !== layerId));
+        }
+        if (j.status === 'done' && j.result_ids[0])
+          void loadImage(fileUrl(j.result_ids[0]))
+            .then((img) => docRef.current?.replacePixels(layerId, img, 'Cut out'))
+            .catch(() => toast('The cut-out could not be loaded.', 'error'));
+        else if (j.status === 'error' || j.status === 'lost') toast(j.error ?? 'The cut-out failed.', 'error');
+      }),
+    [],
+  );
   // Clone brush: where it copies from (Alt-click), and the offset it keeps once you start painting
   const [cloneSrc, setCloneSrc] = useState<{ x: number; y: number } | null>(null);
   const [cloneOff, setCloneOff] = useState<{ dx: number; dy: number } | null>(null);
@@ -618,6 +664,35 @@ function Editor({ item }: { item: Item }) {
     m.setAlpha(selCombine(m.alpha(), res.mask, op));
     setMaskEmpty(m.isEmpty());
   };
+  useEffect(() => {
+    if (mode !== 'compose' || !doc) return;
+    const t = setTimeout(() => setCStats(doc.composeStats()), 300);
+    return () => clearTimeout(t);
+  }, [mode, doc, docVer]);
+  const composeAuto = autoMode(cStats.paintCoverage, cStats.pictures);
+  const renderMode: RenderMode = composeMode === 'auto' ? composeAuto.mode : composeMode;
+  /** The local vision model reads the canvas as a plan for a real photo and writes the scene. */
+  const describeScene = async (): Promise<string | null> => {
+    setDescribing(true);
+    try {
+      const inp = await inputFor();
+      const r = await api.vlm({ task: 'scene', variant: 'default', input: inp.name, text: prompt });
+      setPrompt(r.text.trim());
+      return r.text.trim();
+    } catch (e) {
+      toast(`Could not describe the scene: ${(e as Error).message}`, 'error');
+      return null;
+    } finally {
+      setDescribing(false);
+    }
+  };
+  useEffect(() => {
+    if (sessionStorage.getItem('dr.edit.startLayers') !== item.id) return;
+    sessionStorage.removeItem('dr.edit.startLayers');
+    void ensureDoc().then((d) => {
+      if (d && d.layers.length === 1) d.addPaintLayer();
+    });
+  }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // a fresh on-screen canvas (back from Compare) needs the whole picture once
   useEffect(() => {
     if (doc && compCanvas.current) doc.render(compCanvas.current);
@@ -634,7 +709,7 @@ function Editor({ item }: { item: Item }) {
     if (docRef.current) return Promise.resolve(docRef.current);
     if (starting.current) return starting.current;
     setDocStarting(true);
-    starting.current = CanvasDoc.fromItem(item.id, W, H)
+    starting.current = CanvasDoc.fromItem(item.id, W, H, item.mode === 'canvas' ? 'Paper' : 'Picture')
       .then((d) => (attachDoc(d), d))
       .catch(() => (toast('Could not open the picture for painting.', 'error'), null))
       .finally(() => {
@@ -654,7 +729,7 @@ function Editor({ item }: { item: Item }) {
     if (!d) return;
     try {
       const img = await loadImage(fileUrl(it.id));
-      d.addImageLayer(img, { name: name ?? (it.title || `v${it.version} · ${it.mode.replace(/^edit:/, '')}`), kind, source: it.id, where });
+      d.addImageLayer(img, { name: name ?? (it.title || `v${it.version} · ${it.mode.replace(/^edit:/, '')}`), kind, source: it.id, where, fit: name ? 1 : 0.6 });
       setPanel('layers');
     } catch {
       toast('Could not add that picture as a layer.', 'error');
@@ -675,7 +750,7 @@ function Editor({ item }: { item: Item }) {
         layer.current.clear();
         setMaskEmpty(true);
       }
-      setPanel('layers');
+      // stay in the AI panel: the next step is often another AI step
       toast(`The result is on a new layer at the top${mask ? ', masked to your selection' : ''}. It is kept as v${r.version} too.`, 'ok', 9000, { label: 'Open the version', run: () => go('edit', id) });
     } catch {
       go('edit', id);
@@ -1203,20 +1278,46 @@ function Editor({ item }: { item: Item }) {
       }
       return submit(wfFor('instruct'), params, 'edit:instruct', `${modelLabel} edit`, prompt.trim());
     }
-    if (mode === 'inpaint') {
-      if (maskEmpty) return toast('Paint over the area to replace first (B for brush).', 'info');
-      if (!prompt.trim()) return toast('Describe what should appear in the masked area.', 'info');
+    /** Fill the selection (or everything outside it): crop-and-stitch around it, at a strength. */
+    const fillSelection = async (o: { text: string; remove?: boolean; invert?: boolean; denoise: number; label: string }) => {
       // Crop and stitch (Addenda Phase 3): sample only the mask's surroundings at a higher resolution, then composite
       // back. The plan comes from the painted mask (src/shared/cropstitch.ts).
-      const mc = layer.current!.mask;
+      let mc = layer.current!.mask;
+      if (o.invert) {
+        const inv = document.createElement('canvas');
+        inv.width = mc.width;
+        inv.height = mc.height;
+        const g = inv.getContext('2d')!;
+        g.fillStyle = '#fff';
+        g.fillRect(0, 0, inv.width, inv.height);
+        g.globalCompositeOperation = 'destination-out';
+        g.drawImage(mc, 0, 0);
+        mc = inv;
+      }
       const bb = maskBBox(mc.getContext('2d')!.getImageData(0, 0, mc.width, mc.height).data, mc.width, mc.height);
-      if (!bb) return toast('Paint over the area to replace first (B for brush).', 'info');
+      if (!bb) return toast('Select the area first (B to paint a selection, or M, L, W, S).', 'info');
       const plan = planCrop(bb, mc.width, mc.height);
-      // seam 0 = Auto: the A/B defaults (grow 8, blur 6); otherwise split between grow and blur (ImageBlur caps at 31)
+      const maskName = o.invert
+        ? (
+            await api.upload(
+              await new Promise<Blob>((res, rej) => {
+                const out = document.createElement('canvas');
+                out.width = mc.width;
+                out.height = mc.height;
+                const g = out.getContext('2d')!;
+                g.fillStyle = '#000';
+                g.fillRect(0, 0, out.width, out.height);
+                g.drawImage(mc, 0, 0);
+                out.toBlob((b) => (b ? res(b) : rej(new Error('Could not export the mask'))), 'image/png');
+              }),
+              'mask.png',
+            )
+          ).name
+        : await uploadMask(0);
       const params: Record<string, string | number> = {
-        prompt: composeImagePrompt(T, { model: em, mode: 'inpaint', text: prompt, caption, maskShown: em === 'qwen' }),
-        mask: await uploadMask(0),
-        denoise: strength,
+        prompt: composeImagePrompt(T, { model: em, mode: 'inpaint', text: o.text, caption, maskShown: em === 'qwen' && !o.remove, remove: o.remove }),
+        mask: maskName,
+        denoise: o.denoise,
         grow: seam ? Math.round(seam / 4) : 8,
         feather: seam ? Math.min(31, Math.max(1, Math.round(seam / 2))) : 6,
         crop_x: plan.crop.x,
@@ -1227,7 +1328,52 @@ function Editor({ item }: { item: Item }) {
         target_h: plan.target.h,
       };
       if (ref) params.image_2 = ref.name;
-      return submit(wfFor('inpaint'), params, 'edit:inpaint', `${modelLabel} fill`, prompt.trim());
+      return submit(wfFor('inpaint'), params, 'edit:inpaint', `${modelLabel} ${o.label}`, o.text.trim() || o.label);
+    };
+    if (mode === 'refine') {
+      // a selection: redraw it at the strength; none: the whole picture, with the low-strength touch-up graph
+      if (!maskEmpty) return fillSelection({ text: prompt.trim() || caption || 'the same subject, finished and detailed', denoise: refineStrength, label: 'refine' });
+      const cap = prompt.trim() || (await ensureCaption(em === 'klein' ? 'klein' : 'short'));
+      const plan = planEnhance(W, H);
+      const params: Record<string, string | number> = {
+        prompt: composeImagePrompt(T, { model: em, mode: 'enhance', text: '', caption: cap, strength: 'subtle' }),
+        megapixels: plan.megapixels,
+        denoise: refineStrength,
+      };
+      if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / refineStrength));
+      return submit(wfFor('enhance_subtle'), params, 'edit:enhance', `${modelLabel} refine ${Math.round(refineStrength * 100)}%`, prompt.trim() || 'Refine');
+    }
+    if (mode === 'compose') {
+      let scene = prompt.trim();
+      if (renderMode === 'reimagine' && !scene) {
+        toast('Describing the scene first, so the paint becomes the real thing…', 'info');
+        scene = (await describeScene()) ?? '';
+      }
+      const plan = renderPlan(renderMode, scene);
+      const params: Record<string, string | number> = { prompt: plan.prompt };
+      if (plan.mask) {
+        const m = docRef.current?.seamMask();
+        if (!m) return toast('Blend edges needs a background layer with pieces on top of it (add pictures as layers).', 'info');
+        params.mask = (await api.upload(await new Promise<Blob>((res, rej) => m.toBlob((b) => (b ? res(b) : rej(new Error('mask'))), 'image/png')), 'seams.png')).name;
+        if (plan.feather) params.feather = plan.feather;
+      }
+      const label = RENDERS.find((x) => x.id === renderMode)!.label;
+      return submit(plan.workflow, params, 'compose', `${plan.model} · ${label}`, scene || label);
+    }
+    if (mode === 'inpaint') {
+      if (fillKind === 'background') {
+        if (!prompt.trim()) return toast('Describe the new background, e.g. “a concrete loading dock at dusk”.', 'info');
+        // a selection of the subject: everything outside it is redrawn
+        if (!maskEmpty) return fillSelection({ text: prompt.trim(), invert: true, denoise: 1, label: 'new background' });
+        // no selection: the instruction does it (Qwen keeps the subject best)
+        const text = `Replace the background with ${prompt.trim().replace(/\.$/, '')}. Keep the main subject exactly as it is: same shape, colours, details and position.`;
+        return submit(wfFor('instruct'), { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text }) }, 'edit:instruct', `${modelLabel} edit`, text);
+      }
+      if (maskEmpty) return toast('Select the area first (B to paint a selection, or M, L, W, S).', 'info');
+      if (fillKind === 'remove') return fillSelection({ text: prompt.trim() || 'what is behind it, continuing the surrounding scene naturally', remove: true, denoise: 1, label: 'remove' });
+      if (!prompt.trim()) return toast(fillKind === 'add' ? 'Say what to add, e.g. “a coffee cup”.' : 'Describe what should appear in the selection.', 'info');
+      if (fillKind === 'add') return fillSelection({ text: `${prompt.trim().replace(/\.$/, '')}, placed naturally in the scene with its own shadow`, denoise: 1, label: 'add' });
+      return fillSelection({ text: prompt, denoise: strength, label: 'fill' });
     }
     if (mode === 'outpaint') {
       if (!pad.left && !pad.right && !pad.top && !pad.bottom) return toast('Choose how far to extend: drag an edge with the frame tool (O) or use a preset.', 'info');
@@ -1486,7 +1632,18 @@ function Editor({ item }: { item: Item }) {
   const applyLabel =
     tool === 'crop'
       ? 'Apply crop'
-      : { instruct: 'Apply instruction', inpaint: 'Fill masked area', outpaint: 'Extend canvas', turn: 'Turn it', enhance: 'Enhance', remove_bg: 'Remove background', layers: 'Make layers', upscale: `Upscale ${upScale}×` }[mode];
+      : {
+          instruct: 'Apply instruction',
+          inpaint: { replace: 'Fill the selection', add: 'Add to the selection', remove: 'Remove the selection', background: 'Replace the background' }[fillKind],
+          outpaint: 'Extend canvas',
+          refine: `Refine at ${Math.round(refineStrength * 100)}%`,
+          compose: `Render · ${RENDERS.find((x) => x.id === renderMode)!.label}`,
+          turn: 'Turn it',
+          enhance: 'Enhance',
+          remove_bg: 'Remove background',
+          layers: 'Make layers',
+          upscale: `Upscale ${upScale}×`,
+        }[mode];
 
   return (
     <div className="screen" style={{ gridTemplateColumns: '68px 1fr 392px' }}>
@@ -1706,6 +1863,7 @@ function Editor({ item }: { item: Item }) {
             </div>
           )}
           <div style={{ position: 'absolute', left: 12, top: 12, display: 'flex', gap: 6, zIndex: 3 }} onPointerDown={(e) => e.stopPropagation()}>
+            <NewCanvasButton onCreate={(w, h, bg) => void createCanvas(w, h, bg)} />
             <button className="btn sm" disabled={importing} onClick={() => uploadRef.current?.click()} title="Open one of your own pictures (or drop it on the canvas). Several at once go to the Library.">
               {importing ? <Loader2 size={14} className="spin" /> : <ImagePlus size={14} />} {importing ? 'Bringing in…' : 'Upload'}
             </button>
@@ -1962,30 +2120,38 @@ function Editor({ item }: { item: Item }) {
               onUndoTo={undoDocSteps}
               saveState={saveState}
               onOpenAdjust={() => setPanel('adjust')}
+              onCutOut={(id) => void cutOutLayer(id)}
+              cutting={cutting}
             />
           ) : (
           <>
           <div>
             <p className="section-label">Mode</p>
-            <div className="pills" role="group" aria-label="Edit mode">
-              {MODES.map((m) => (
-                <button
-                  key={m.id}
-                  className="pill accent"
-                  aria-pressed={mode === m.id}
-                  onClick={() => {
-                    setMode(m.id);
-                    if (m.id === 'outpaint') setTool('frame');
-                    else if (tool === 'frame' || tool === 'crop') setTool('brush');
-                  }}
-                >
-                  {m.label}
-                </button>
+            <div className="mode-groups" role="group" aria-label="Edit mode">
+              {(['canvas', 'more'] as const).map((grp) => (
+                <div key={grp} className="pills">
+                  <span className="mode-group-label">{grp === 'canvas' ? 'On the canvas' : 'More'}</span>
+                  {MODES.filter((m) => m.group === grp).map((m) => (
+                    <button
+                      key={m.id}
+                      className="pill accent"
+                      aria-pressed={mode === m.id}
+                      title={m.tip}
+                      onClick={() => {
+                        setMode(m.id);
+                        if (m.id === 'outpaint') setTool('frame');
+                        else if (tool === 'frame' || tool === 'crop') setTool('brush');
+                      }}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           </div>
 
-          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance') && boot && (
+          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance' || mode === 'refine') && boot && (
             <div>
               <p className="section-label">Model</p>
               <div className="cards" role="group" aria-label="Edit model">
@@ -2000,9 +2166,53 @@ function Editor({ item }: { item: Item }) {
             </div>
           )}
 
-          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint') && (
+          {mode === 'inpaint' && (
+            <div className="segmented" role="group" aria-label="Fill">
+              {(
+                [
+                  ['replace', 'Replace', 'Paint new content into the selection'],
+                  ['add', 'Add', 'Put something new into the selection, fitted into the scene'],
+                  ['remove', 'Remove', 'Take away what is in the selection; the surroundings fill in'],
+                  ['background', 'Background', 'Keep the selected subject, replace everything else (or, with no selection, the background)'],
+                ] as [FillKind, string, string][]
+              ).map(([k, l, t]) => (
+                <button key={k} type="button" aria-pressed={fillKind === k} title={t} onClick={() => setFillKind(k)}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
+          {mode === 'compose' && (
+            <div className="compose-panel">
+              <p className="section-label">
+                Render <span className="mono">{composeMode === 'auto' ? `auto · ${composeAuto.why}` : ''}</span>
+              </p>
+              <div className="cards" role="group" aria-label="Render mode">
+                {RENDERS.map((m) => (
+                  <button key={m.id} type="button" className="card" aria-pressed={renderMode === m.id} title={m.text} onClick={() => setComposeMode(composeMode === m.id ? 'auto' : m.id)}>
+                    <strong>{m.label}</strong>
+                    <small>{composeMode === 'auto' && composeAuto.mode === m.id ? 'Suggested' : m.model}</small>
+                  </button>
+                ))}
+              </div>
+              <p className="note">
+                {RENDERS.find((m) => m.id === renderMode)!.text} {doc ? '' : 'Tip: build the scene in Layers first (a background, pictures placed on it, paint), or start a New canvas.'}
+              </p>
+            </div>
+          )}
+          {(mode === 'instruct' || (mode === 'inpaint' && fillKind !== 'remove') || mode === 'outpaint' || mode === 'refine' || mode === 'compose') && (
             <label className="field">
-              <span>{mode === 'instruct' ? 'Instruction' : mode === 'inpaint' ? 'What should fill the masked area?' : 'Describe the surroundings (optional)'}</span>
+              <span>
+                {mode === 'instruct'
+                  ? 'Instruction'
+                  : mode === 'inpaint'
+                    ? { replace: 'What should fill the selection?', add: 'What to add?', remove: '', background: 'The new background' }[fillKind]
+                    : mode === 'refine'
+                      ? 'What it should look like (optional)'
+                      : mode === 'compose'
+                        ? 'Scene (optional)'
+                        : 'Describe the surroundings (optional)'}
+              </span>
               <textarea
                 ref={promptBox}
                 className="input"
@@ -2010,10 +2220,38 @@ function Editor({ item }: { item: Item }) {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder={
-                  mode === 'instruct' ? 'e.g. Replace the sky with a stormy sunset. Keep everything else unchanged.' : mode === 'inpaint' ? 'e.g. a stack of old books' : 'e.g. a wide misty lake with pine trees'
+                  mode === 'instruct'
+                    ? 'e.g. Replace the sky with a stormy sunset. Keep everything else unchanged.'
+                    : mode === 'inpaint'
+                      ? { replace: 'e.g. a stack of old books', add: 'e.g. a coffee cup', remove: '', background: 'e.g. a concrete loading dock at dusk' }[fillKind]
+                      : mode === 'refine'
+                        ? 'e.g. a leather sneaker, studio photo — or leave empty to keep the subject and finish it'
+                        : mode === 'compose'
+                          ? 'e.g. a runner on a wet city street at dawn'
+                          : 'e.g. a wide misty lake with pine trees'
                 }
               />
             </label>
+          )}
+          {mode === 'refine' && (
+            <div>
+              <label className="field" title="How much the AI may change: low keeps your picture and paintover and finishes them, high redraws more freely">
+                <span>
+                  Strength <b className="mono">{Math.round(refineStrength * 100)}%</b>
+                </span>
+                <input type="range" min={10} max={90} step={5} value={Math.round(refineStrength * 100)} aria-label="Refine strength" onChange={(e) => setRefineStrength(Number(e.target.value) / 100)} />
+              </label>
+              <p className="note">
+                {maskEmpty ? 'The whole picture is redrawn at this strength.' : 'Only the selection is redrawn at this strength.'} About 25–40% keeps the shapes and colours of a paintover and makes them real; 60% and up reinterprets them.
+              </p>
+            </div>
+          )}
+          {mode === 'compose' && (
+            <div className="field-row" style={{ gap: 6 }}>
+              <button type="button" className="btn sm ghost" disabled={describing || !online} onClick={() => void describeScene()} title="The local vision model reads the canvas as a plan for a real photo and writes the scene">
+                {describing ? <Loader2 size={14} className="spin" /> : <Sparkles size={14} />} Describe the scene
+              </button>
+            </div>
           )}
           {mode === 'instruct' && (
             <>
@@ -2094,7 +2332,7 @@ function Editor({ item }: { item: Item }) {
               To change only part of the picture, paint over it (B) or use Smart select (S).
             </p>
           )}
-          {(mode === 'inpaint' || (mode === 'instruct' && !maskEmpty)) && (
+          {((mode === 'inpaint' && fillKind !== 'background') || (mode === 'instruct' && !maskEmpty) || (mode === 'refine' && !maskEmpty)) && (
             <div>
               <p className="section-label">
                 Mask <span className="mono">{maskEmpty ? 'empty' : 'painted'}</span>
@@ -2684,6 +2922,9 @@ function EditEmpty() {
               }}
             />
           </label>
+        </div>
+        <div className="field-row" style={{ gap: 8, justifyContent: 'center' }}>
+          <NewCanvasButton label="Start from a blank canvas" onCreate={(w, h, bg) => void createCanvas(w, h, bg)} />
         </div>
         <button
           className="btn sm"

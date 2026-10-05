@@ -181,6 +181,7 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
     const before = (await (await page.request.get(`/api/items/${pic.id}/project`)).json()).layers.length;
     await page.getByRole('button', { name: /Apply instruction/ }).click();
     await expect(page.getByText(/The result is on a new layer at the top, masked to your selection/)).toBeVisible({ timeout: 180_000 });
+    await page.getByRole('tab', { name: /Layers/ }).click();
     await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(before + 1);
     await expect(page.locator('.layer-row.on')).toContainText('Instruct');
     await expect(page.locator('.layer-row.on .thumb-wrap.mask')).toBeVisible();
@@ -597,5 +598,129 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     const got = await patch((x, y) => lp.at(x, y), W * 0.2, H * 0.85);
     for (let k = 0; k < 3; k++) expect(Math.abs(got[k] - want[k])).toBeLessThan(14);
     await shot(page, 'clone');
+  });
+});
+
+test.describe.serial('Edit suite · AI on the canvas and Compose in Edit (v3.28)', () => {
+  let page: Page;
+  let canvasId = '';
+  const posted: any[] = [];
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
+    page.on('request', (r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && posted.push(r.postDataJSON()));
+  });
+  test.afterAll(async () => page.context().close());
+  /** the job a click sends, then cancelled (we only check what was asked) */
+  const jobFrom = async (click: () => Promise<void>) => {
+    posted.length = 0;
+    await click();
+    await expect.poll(() => posted.length).toBeGreaterThan(0);
+    const body = posted.pop();
+    posted.length = 0;
+    const active = (await (await page.request.get('/api/jobs/active')).json()) as any[];
+    for (const j of active) await page.request.post(`/api/jobs/${j.id}/cancel`);
+    return body;
+  };
+  const mode = (name: string) => page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name, exact: true }).click();
+
+  test('New canvas: a blank 4:5 picture opens in Edit with layers on and a layer to paint', async () => {
+    await page.goto('/#/edit');
+    await page.getByRole('button', { name: 'Start from a blank canvas' }).click();
+    await page.getByRole('button', { name: 'Paper White' }).click();
+    await page.getByRole('button', { name: 'Canvas 4:5' }).click();
+    await expect(page).toHaveURL(/#\/edit\/[0-9a-f-]+$/);
+    canvasId = page.url().split('/').pop()!;
+    await expect(page.getByText('896×1120')).toBeVisible();
+    const rows = page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option');
+    await expect(rows).toHaveCount(2);
+    await expect(rows.last()).toContainText('Paper');
+    const it = (await (await page.request.get(`/api/items/${canvasId}`)).json()).item;
+    expect(it).toMatchObject({ mode: 'canvas', width: 896, height: 1120 });
+    await shot(page, 'new-canvas');
+  });
+
+  test('A scene: a Library picture lands smaller and centred, the scissors cut it out, Compose suggests Harmonise and Blend edges sends a seam mask', async () => {
+    // a generated picture of another shape than the canvas (a piece for the scene)
+    const items = ((await (await page.request.get('/api/items?limit=300')).json()).items as any[]).filter((i) => i.kind === 'image' && i.mode === 'generate' && Math.abs(i.width / i.height - 0.8) > 0.1);
+    const piece = items.find((i) => i.seed != null)!;
+    await page.getByRole('button', { name: 'Picture…' }).click();
+    await page.getByRole('dialog').getByLabel('Search library').fill(String(piece.seed));
+    await page.getByRole('dialog').getByRole('listitem').first().click();
+    await saved(page);
+    let top = await layerPixels(page, canvasId, -1);
+    expect(top.at(5, 5)[3]).toBe(0); // the corner stays empty: the piece is at 60%, centred
+    expect(top.at(448, 560)[3]).toBe(255);
+    await page.getByRole('button', { name: 'Cut out the layer' }).click();
+    await page.locator('details.layer-history summary').click();
+    await expect(page.locator('.history-list')).toContainText('Cut out', { timeout: 120_000 });
+    await saved(page);
+    top = await layerPixels(page, canvasId, -1);
+    expect(top.layer.painted).toBe(true);
+    await page.getByRole('tab', { name: /AI/ }).click();
+    await mode('Compose');
+    const renders = page.getByRole('group', { name: 'Render mode' });
+    await expect(renders.getByRole('button', { name: /Harmonise/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(renders.getByRole('button', { name: /Harmonise/ })).toContainText('Suggested');
+    await renders.getByRole('button', { name: /Blend edges/ }).click();
+    await page.getByLabel('Scene (optional)').fill('on a wet city street at dawn');
+    const job = await jobFrom(() => page.getByRole('button', { name: /Render · Blend edges/ }).click());
+    expect(job.workflow).toBe('qwen_edit');
+    expect(job.params.mask).toBeTruthy();
+    expect(job.params.prompt).toMatch(/Blend the pasted elements.*wet city street at dawn/);
+    expect(job.meta.mode).toBe('compose');
+    await shot(page, 'compose-in-edit');
+  });
+
+  test('Fill: Remove needs no words, Background without a selection asks Qwen to swap it; Refine sends its strength', async () => {
+    await mode('Fill');
+    const fill = page.getByRole('group', { name: 'Fill' });
+    // Background with no selection: an instruction that keeps the subject
+    await fill.getByRole('button', { name: 'Background' }).click();
+    await page.getByLabel('The new background').fill('a concrete loading dock at dusk');
+    let job = await jobFrom(() => page.getByRole('button', { name: /Replace the background/ }).click());
+    expect(job.params.prompt).toMatch(/Replace the background with a concrete loading dock at dusk/);
+    // a selection, then Remove: the remove template, full strength
+    await page.getByRole('button', { name: 'Marquee select (M)' }).click();
+    const img = (await page.getByAltText('Picture being edited').boundingBox())!;
+    await page.mouse.move(img.x + img.width * 0.3, img.y + img.height * 0.3);
+    await page.mouse.down();
+    await page.mouse.move(img.x + img.width * 0.6, img.y + img.height * 0.6, { steps: 5 });
+    await page.mouse.up();
+    await fill.getByRole('button', { name: 'Remove' }).click();
+    await expect(page.getByLabel(/What should fill/)).toHaveCount(0);
+    job = await jobFrom(() => page.getByRole('button', { name: /Remove the selection/ }).click());
+    expect(job.params.mask).toBeTruthy();
+    expect(job.params.denoise).toBe(1);
+    expect(job.meta.model).toMatch(/remove$/);
+    // Refine inside the selection: inpaint at the strength
+    await mode('Refine');
+    await page.getByLabel('Refine strength').fill('40');
+    job = await jobFrom(() => page.getByRole('button', { name: /Refine at 40%/ }).click());
+    expect(job.params.denoise).toBeCloseTo(0.4);
+    expect(job.params.mask).toBeTruthy();
+    // no selection: the whole picture, with the touch-up graph
+    await page.keyboard.press('Control+d');
+    job = await jobFrom(() => page.getByRole('button', { name: /Refine at 40%/ }).click());
+    expect(job.params.mask).toBeUndefined();
+    expect(job.params.denoise).toBeCloseTo(0.4);
+    expect(job.meta.mode).toBe('edit:enhance');
+  });
+
+  test('Compose page: steps to build a scene, and an old composition opens in Edit as layers', async () => {
+    await page.goto('/#/compose');
+    await expect(page.getByRole('heading', { name: 'Compose' })).toBeVisible();
+    await expect(page.getByText('AI › Compose: Blend edges, Harmonise or Reimagine')).toBeVisible();
+    const comps = (await (await page.request.get('/api/compositions')).json()) as any[];
+    test.skip(!comps.length, 'no compositions in this library');
+    const comp = (await (await page.request.get(`/api/compositions/${comps[0].id}`)).json()) as any;
+    await page.getByRole('button', { name: `Open ${comps[0].name} in Edit` }).click();
+    await expect(page).toHaveURL(/#\/edit\/[0-9a-f-]+$/, { timeout: 60_000 });
+    const id = page.url().split('/').pop()!;
+    const proj = await (await page.request.get(`/api/items/${id}/project`)).json();
+    expect(proj.layers).toHaveLength(comp.doc.layers.length + 1);
+    expect(proj.layers[0].name).toBe('Paper');
+    await expect(page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Compose', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await shot(page, 'composition-in-edit');
   });
 });

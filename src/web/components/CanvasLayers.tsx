@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, ImagePlus, Layers as LayersIcon, Lock, Merge, Plus, Save, SquareDashed, Trash2, Unlock, History, Loader2, SlidersHorizontal } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, ImagePlus, Layers as LayersIcon, Lock, Merge, Plus, Save, SquareDashed, Trash2, Unlock, History, Loader2, SlidersHorizontal, Scissors } from 'lucide-react';
 import { BLENDS, type Blend } from '../../shared/doc';
 import type { Item } from '../api';
 import type { CanvasDoc, Layer } from '../lib/doc';
@@ -47,6 +47,8 @@ export function CanvasLayers({
   onUndoTo,
   saveState,
   onOpenAdjust,
+  onCutOut,
+  cutting,
 }: {
   doc: CanvasDoc | null;
   version: number;
@@ -65,6 +67,10 @@ export function CanvasLayers({
   saveState: 'saved' | 'saving' | 'unsaved' | 'error' | 'none';
   /** show the Adjust tab for an adjustment layer */
   onOpenAdjust: () => void;
+  /** remove the background of one layer (DECISIONS 125) */
+  onCutOut: (layerId: string) => void;
+  /** layers being cut out now */
+  cutting: string[];
 }) {
   const [picker, setPicker] = useState(false);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -263,6 +269,11 @@ export function CanvasLayers({
               }}>
               <Merge size={14} />
             </button>
+            {a.kind !== 'adjust' && (
+              <button className="btn icon sm" title="Cut out: remove this layer's background (BiRefNet)" aria-label="Cut out the layer" disabled={cutting.includes(a.id)} onClick={() => onCutOut(a.id)}>
+                {cutting.includes(a.id) ? <Loader2 size={14} className="spin" /> : <Scissors size={14} />}
+              </button>
+            )}
             <button className="btn icon sm" title="Delete layer (Undo brings it back)" aria-label="Delete layer" disabled={doc.layers.length < 2} onClick={() => doc.remove(a.id)}>
               <Trash2 size={14} />
             </button>

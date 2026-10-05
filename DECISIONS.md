@@ -891,3 +891,23 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     applies. **Clone** brush: Alt-click the source, then paint; the first stroke fixes the offset (aligned), copying
     what you see or only the selected layer. e2e: each run imports a fresh copy of a picture (the suite no longer runs
     out of unlayered ones); a 60 s action timeout so a missing control fails instead of hanging.
+125. **Edit suite v3.28: AI on the canvas, and Compose folded into Edit** (Koos agreed: one canvas, not two). Edit's AI
+    panel groups its modes as Krita AI does — **On the canvas**: Instruct, Fill, Expand, Refine, Compose; **More**: Turn it,
+    Enhance, Separate, Cut-out, Upscale (Inpaint → Fill, Outpaint → Expand, Layers → Separate, Remove BG → Cut-out).
+    **Fill** has four kinds: Replace (the old inpaint), Add (the prompt fitted into the scene with its own shadow),
+    Remove (no words needed: the remove template at full strength) and Background (with a selection of the subject,
+    everything outside it is redrawn; without one, a Qwen instruction swaps the background and keeps the subject).
+    **Refine** redraws what is there at a Strength (10–90 %): the selection through crop-and-stitch inpaint at that
+    denoise, or the whole picture through the low-strength touch-up graph — paintovers and sketches get finished and
+    keep their layout. **Compose** brings Compose's renders onto the canvas: Blend edges (seam mask built from the
+    layers: a band round every piece above the bottom layer plus contact-shadow strips, by distance transform),
+    Harmonise and Reimagine, Auto-suggested from paint coverage and picture pieces, a scene box and Describe the scene;
+    the render comes back as a layer like every AI result (and no longer flips you to the Layers tab). **New canvas**
+    (top of Edit, and on the empty Edit screen): a blank picture at 1:1, 4:5, 3:2, 2:3, 16:9 or 9:16 (about 1 MP, or
+    Large ×2), on paper, white, grey, black or clear, opened with layers on and a layer to paint (`POST /api/canvas`).
+    A Library picture added to a scene lands at 60 % centred, ready for Transform; the **scissors** on a layer cut it
+    out (BiRefNet) and put the cut-out back in its place. The **Compose** screen is now a short guide with New canvas,
+    Start from a picture, and your old compositions with **Open in Edit**, which makes a layered copy (paper, then each
+    picture and paint layer in its place, flips and hidden kept, the scene description as the Compose prompt, its render
+    mode kept); the compositions themselves stay untouched. The old Compose screen's code is gone (git keeps it);
+    composeCanvas.ts keeps only what the conversion draws with.
