@@ -1134,7 +1134,7 @@ function Editor({ item }: { item: Item }) {
       setMaskEmpty(!!layer.current?.isEmpty());
       setSamPts([]);
       setSamBox(null);
-      toast(`Selection ${samOp === 'subtract' ? 'removed from' : 'added to'} the mask (${r.seconds}s). Use it with Instruct, Inpaint or Remove BG.`, 'ok');
+      toast(`${samOp === 'subtract' ? 'Taken away from' : 'Added to'} the selection (${r.seconds}s). Use it with Instruct, Fill, Refine or Cut-out, or to paint inside.`, 'ok');
     } catch (err) {
       toast((err as Error).message, 'error');
     } finally {

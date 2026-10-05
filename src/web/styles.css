@@ -710,3 +710,5 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 @media (max-height: 800px) { .edit-tools { gap: 2px; padding: 6px 0; } .edit-tools .btn.icon { min-height: 36px; height: 36px; } }
 .view-sep { width: 1px; align-self: stretch; margin: 4px 2px; background: var(--line); }
 .colour-dot { box-shadow: inset 0 0 0 2px rgba(255,255,255,.18); }
+/* Try both's progress sits below the buttons over the canvas (Undo / Redo moved up there, DECISIONS 127) */
+.both-strip { top: 62px; }

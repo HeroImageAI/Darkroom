@@ -139,7 +139,7 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.keyboard.press('s');
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
-    await expect(page.getByText(/Selection added to the mask|Nothing was found/).last()).toBeVisible({ timeout: 240_000 });
+    await expect(page.getByText(/Added to the selection|Nothing was found/).last()).toBeVisible({ timeout: 240_000 });
     // the overlay draws a two-tone outline so the selection reads on any colour (the amber tint alone vanished on a yellow coat)
     expect(await page.getByTestId('mask-overlay').evaluate((el) => getComputedStyle(el).filter)).toContain('dr-mask-outline');
     await expect(page.locator('filter#dr-mask-outline')).toHaveCount(1);
@@ -157,7 +157,7 @@ test.describe.serial('Darkroom v2 features', () => {
       await page.keyboard.press('s');
       await page.getByLabel('Select by text').fill('person');
       await page.getByRole('button', { name: 'Find' }).click();
-      await expect(page.getByText(/Selection added to the mask/).last()).toBeVisible({ timeout: 240_000 });
+      await expect(page.getByText(/Added to the selection/).last()).toBeVisible({ timeout: 240_000 });
       await expect(page.getByText('Change strength')).toBeVisible();
       await page.getByLabel('What should fill the selection?').fill('a lighthouse keeper in a bright red raincoat');
       const before = page.url();
@@ -176,12 +176,12 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
     // the mask settings appear with the first stroke (v3.22): before that, only a hint
     await expect(page.getByLabel(/Point at it with a red circle/)).toHaveCount(0);
-    await expect(page.getByText(/To change only part of the picture, paint over it/)).toBeVisible();
+    await expect(page.getByText(/To change only part of the picture, select it first/)).toBeVisible();
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
     await page.keyboard.press('s');
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
-    await expect(page.getByText(/Selection added to the mask/).last()).toBeVisible({ timeout: 240_000 });
+    await expect(page.getByText(/Added to the selection/).last()).toBeVisible({ timeout: 240_000 });
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
     await expect(page.getByLabel(/Point at it with a red circle/)).toBeDisabled(); // Qwen only
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2.1/ }).click();
