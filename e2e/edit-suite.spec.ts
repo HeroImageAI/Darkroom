@@ -234,3 +234,146 @@ test.describe.serial('Edit suite · large photos', () => {
     await page.screenshot({ path: 'proof/es-large-photo.png' });
   });
 });
+
+/** The PNG of layer `i` (0 = bottom, -1 = top) of a picture's saved layers, decoded. */
+async function layerPixels(page: Page, itemId: string, i: number) {
+  const proj = await (await page.request.get(`/api/items/${itemId}/project`)).json();
+  const l = proj.layers[i < 0 ? proj.layers.length + i : i];
+  const png = Buffer.from(await (await page.request.get(`/api/items/${itemId}/project/layers/${l.id}.png?r=${l.rev}`)).body());
+  const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return { layer: l, at: (x: number, y: number) => Array.from(data.subarray((Math.round(y) * info.width + Math.round(x)) * 4, (Math.round(y) * info.width + Math.round(x)) * 4 + 4)) };
+}
+const saved = (page: Page) => expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 20_000 });
+
+test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
+  let page: Page;
+  let pic: { id: string; width: number; height: number; version: number };
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
+  });
+  test.afterAll(async () => page.context().close());
+
+  const pickBrush = async (name: string) => {
+    await page.getByRole('button', { name: 'Brush', exact: true }).click();
+    await page.getByRole('option', { name, exact: true }).click();
+    await page.keyboard.press('Escape');
+  };
+  const pickColour = async (hex: string) => {
+    await page.getByRole('button', { name: /^Colour/ }).click();
+    await page.getByLabel('Hex colour').fill(hex);
+    await page.keyboard.press('Escape');
+  };
+
+  test('Brushes keep their own settings; the colour picker takes a hex colour', async () => {
+    pic = await pickPicture(page);
+    const { width: W, height: H } = pic;
+    await page.goto(`/#/edit/${pic.id}`);
+    await expect(page.getByAltText('Picture being edited')).toBeVisible();
+    await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
+    await page.getByRole('button', { name: 'New layer' }).click();
+    await pickBrush('Ink pen');
+    await page.getByLabel('Brush size').fill('14');
+    await pickBrush('Marker');
+    await expect(page.getByLabel('Brush size')).toHaveValue('28');
+    await pickBrush('Ink pen');
+    await expect(page.getByLabel('Brush size')).toHaveValue('14');
+    await pickColour('#2050d0');
+    await stroke(page, [[W * 0.3, H * 0.3], [W * 0.7, H * 0.3]], W, H);
+    await saved(page);
+    const px = (await layerPixels(page, pic.id, -1)).at(W * 0.5, H * 0.3);
+    expect(px[2]).toBeGreaterThan(150);
+    expect(px[0]).toBeLessThan(80);
+    expect(px[3]).toBeGreaterThan(200);
+    await shot(page, 'brush-ink-blue');
+  });
+
+  test('Shapes draw an outline; the fill bucket fills inside it and nowhere else', async () => {
+    const { width: W, height: H } = pic;
+    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'Shapes (U)' }).click();
+    await page.getByRole('button', { name: 'Rectangle' }).click();
+    await page.getByRole('button', { name: 'Outline' }).click();
+    await page.getByLabel('Line width').fill('10');
+    await stroke(page, [[W * 0.2, H * 0.45], [W * 0.5, H * 0.85]], W, H);
+    await page.getByRole('button', { name: 'Fill bucket (G)' }).click();
+    await pickColour('#d02020');
+    const inside = await at(page, W * 0.35, H * 0.65, W, H);
+    await page.mouse.click(inside.x, inside.y);
+    await saved(page);
+    const l = await layerPixels(page, pic.id, -1);
+    expect(l.at(W * 0.35, H * 0.65)).toEqual([208, 32, 32, 255]); // filled
+    expect(l.at(W * 0.2, H * 0.6)[2]).toBeGreaterThan(150); // the blue outline stays
+    expect(l.at(W * 0.7, H * 0.65)[3]).toBe(0); // outside: untouched
+    await shot(page, 'shape-fill');
+  });
+
+  test('Symmetry mirrors a stroke across the middle', async () => {
+    const { width: W, height: H } = pic;
+    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
+    await page.getByRole('button', { name: 'Mirror left and right' }).click();
+    await stroke(page, [[W * 0.1, H * 0.15], [W * 0.2, H * 0.15]], W, H);
+    await saved(page);
+    const l = await layerPixels(page, pic.id, -1);
+    expect(l.at(W * 0.15, H * 0.15)[3]).toBeGreaterThan(200);
+    expect(l.at(W * 0.85, H * 0.15)[3]).toBeGreaterThan(200);
+    await page.getByRole('button', { name: 'Mirror left and right' }).click();
+  });
+
+  test('Dodge lightens the picture layer where you paint; smudge is one undo step', async () => {
+    const { width: W, height: H } = pic;
+    await page.locator('.layer-row', { hasText: 'Picture' }).click();
+    await pickBrush('Dodge');
+    await page.getByLabel('Brush opacity').fill('100');
+    await stroke(page, [[W * 0.6, H * 0.6], [W * 0.9, H * 0.6]], W, H);
+    await saved(page);
+    const orig = await sharp(Buffer.from(await (await page.request.get(`/api/items/${pic.id}/file`)).body())).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const o = (x: number, y: number) => Array.from(orig.data.subarray((Math.round(y) * orig.info.width + Math.round(x)) * 4, (Math.round(y) * orig.info.width + Math.round(x)) * 4 + 3));
+    const base = await layerPixels(page, pic.id, 0);
+    const sum = (a: number[]) => a[0] + a[1] + a[2];
+    expect(base.layer.painted).toBe(true);
+    expect(sum(base.at(W * 0.75, H * 0.6))).toBeGreaterThan(sum(o(W * 0.75, H * 0.6)) + 20);
+    expect(Math.abs(sum(base.at(W * 0.75, H * 0.1)) - sum(o(W * 0.75, H * 0.1)))).toBeLessThan(6); // untouched elsewhere
+    await pickBrush('Smudge');
+    await stroke(page, [[W * 0.4, H * 0.3], [W * 0.6, H * 0.35]], W, H);
+    await page.locator('details.layer-history summary').click();
+    await expect(page.locator('.history-list li').last()).toContainText('Smudge');
+    await shot(page, 'dodge-smudge');
+  });
+
+  test('The view turns and mirrors, and painting still lands under the pen; Ctrl-click picks a layer', async () => {
+    const { width: W, height: H } = pic;
+    await page.locator('.layer-row', { hasText: 'Layer 1' }).click();
+    await pickBrush('Round');
+    for (let i = 0; i < 6; i++) await page.keyboard.press('6'); // 90°
+    await page.keyboard.press('h');
+    await expect(page.getByRole('button', { name: 'Straighten' })).toBeVisible();
+    // where image point (x, y) is on screen now: mirrored, then turned 90°, about the picture's centre
+    const b = (await page.getByAltText('Picture being edited').boundingBox())!;
+    const s = b.width / H;
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+    const screen = (x: number, y: number) => {
+      const fx = -(x - W / 2) * s;
+      const fy = (y - H / 2) * s;
+      return { x: cx - fy, y: cy + fx };
+    };
+    const p = screen(W * 0.65, H * 0.6);
+    await page.mouse.click(p.x, p.y);
+    await saved(page);
+    const l1 = await layerPixels(page, pic.id, 1);
+    expect(l1.at(W * 0.65, H * 0.6)[3]).toBeGreaterThan(200);
+    expect(l1.at(W * 0.35, H * 0.6)[3]).toBe(0); // not where an unmirrored view would put it
+    await shot(page, 'view-turned');
+    await page.keyboard.press('5');
+    await expect(page.getByRole('button', { name: 'Straighten' })).toHaveCount(0);
+    // Ctrl-click the blue ink line picks its layer
+    await page.locator('.layer-row', { hasText: 'Picture' }).click();
+    const q = await at(page, W * 0.5, H * 0.3, W, H);
+    await page.keyboard.down('Control');
+    await page.mouse.click(q.x, q.y);
+    await page.keyboard.up('Control');
+    await expect(page.locator('.layer-row.on')).toContainText('Layer 1');
+  });
+});

@@ -6,7 +6,10 @@
  */
 import { blendOp, moveLayer, nextLayerName, placeOnCanvas, type Blend, type DocJson, type LayerKind } from '../../shared/doc';
 import { fileUrl } from '../api';
-import { Stroke, type Box, type BrushSettings } from './brush';
+import { clampBox, makeStamp, paperTile, Stroke, type Box, type BrushSettings, type StrokeOptions } from './brush';
+import { brushFilterCss, type BrushEngine } from '../../shared/brushes';
+import { floodMask, growMask } from '../../shared/flood';
+import { hexToRgb } from '../../shared/colour';
 
 export interface Layer {
   id: string;
@@ -34,6 +37,23 @@ interface Entry {
   redo: () => void;
   key?: string;
   at: number;
+}
+/** A stroke (or shape) in progress. */
+interface StrokeState {
+  /** the dabs; null for a shape */
+  s: Stroke | null;
+  engine: BrushEngine;
+  erase: boolean;
+  opacity: number;
+  texture: boolean;
+  layerId: string;
+  target: PaintTarget;
+  /** filter brushes: the filtered copy that shows through */
+  src: HTMLCanvasElement | null;
+  /** smudge: the layer before the stroke (for Undo) */
+  backup: HTMLCanvasElement | null;
+  /** shapes: where the preview is */
+  box?: Box;
 }
 interface Snap {
   layers: Layer[];
@@ -75,8 +95,8 @@ export class CanvasDoc {
   private counter = 1;
   private scratch: HTMLCanvasElement;
   private sg: CanvasRenderingContext2D;
-  private stroke: { s: Stroke; erase: boolean; opacity: number; layerId: string; target: PaintTarget } | null = null;
-  private tmp: Record<'a' | 'b' | 'm', HTMLCanvasElement | null> = { a: null, b: null, m: null };
+  private stroke: StrokeState | null = null;
+  private tmp: Record<'a' | 'b' | 'm' | 'f' | 's', HTMLCanvasElement | null> = { a: null, b: null, m: null, f: null, s: null };
   /** what the server has: `${id}:pixels|mask` → rev */
   private saved = new Map<string, number>();
   private everSaved = false;
@@ -347,22 +367,70 @@ export class CanvasDoc {
     return null;
   }
 
-  /** `erase`: on pixels it erases, on a mask it shows the layer again (the brush hides it). */
-  beginStroke(s: BrushSettings, erase: boolean, x: number, y: number, p: number): boolean {
+  /**
+   * Start a stroke. `erase`: on pixels it erases, on a mask it shows the layer again (the brush hides it).
+   * Smudge and the filter brushes work on the layer's pixels; on a mask they paint like the brush.
+   */
+  beginStroke(s: BrushSettings, erase: boolean, x: number, y: number, p: number, o: Omit<StrokeOptions, 'onDab'> = {}): boolean {
     const l = this.activeLayer;
     if (!l || this.paintBlocker()) return false;
     const target: PaintTarget = this.target === 'mask' && l.maskCanvas ? 'mask' : 'pixels';
+    const engine = erase || target === 'mask' ? 'paint' : s.engine;
     this.sg.clearRect(0, 0, this.width, this.height);
-    const colour = target === 'mask' || erase ? '#ffffff' : s.color;
-    this.stroke = { s: new Stroke(this.sg, s, colour), erase, opacity: s.opacity, layerId: l.id, target };
-    this.stroke.s.add(x, y, p);
-    this.markDirty(this.stroke.s.takeDirty(this.width, this.height));
+    const st: StrokeState = { s: null, engine, erase, opacity: s.opacity, texture: s.texture && engine === 'paint', layerId: l.id, target, src: null, backup: null };
+    if (engine === 'filter') {
+      // the filtered copy shows through where you paint
+      st.src = newCanvas(this.width, this.height);
+      const g = st.src.getContext('2d')!;
+      g.filter = brushFilterCss(s.filter ?? 'blur', s.size);
+      g.drawImage(l.canvas, 0, 0);
+    }
+    if (engine === 'smudge') {
+      st.backup = newCanvas(this.width, this.height);
+      st.backup.getContext('2d')!.drawImage(l.canvas, 0, 0);
+      st.s = new Stroke(this.sg, s, '#ffffff', { ...o, mirrorX: undefined, mirrorY: undefined, onDab: this.smudger(l, s) });
+    } else st.s = new Stroke(this.sg, s, target === 'mask' || erase || engine === 'filter' ? '#ffffff' : s.color, o);
+    this.stroke = st;
+    st.s.add(x, y, p);
+    this.markDirty(st.s.takeDirty(this.width, this.height));
     this.repaint();
     return true;
   }
 
+  /** Smudge: each dab lays down the paint picked up so far and picks up some of what is under it. */
+  private smudger(l: Layer, s: BrushSettings): (x: number, y: number, d: number, alpha: number) => void {
+    const n = Math.max(2, Math.ceil(s.size));
+    const stamp = makeStamp(n, s.hardness, '#ffffff');
+    const carry = newCanvas(n, n);
+    const cg = carry.getContext('2d')!;
+    const tip = newCanvas(n, n);
+    const tg = tip.getContext('2d')!;
+    const lg = l.canvas.getContext('2d')!;
+    let started = false;
+    return (x, y, d, alpha) => {
+      const r = d / 2;
+      if (started) {
+        tg.globalCompositeOperation = 'copy';
+        tg.drawImage(carry, 0, 0);
+        tg.globalCompositeOperation = 'destination-in';
+        tg.drawImage(stamp, 0, 0);
+        lg.save();
+        lg.globalAlpha = alpha * s.opacity;
+        lg.globalCompositeOperation = l.alphaLock ? 'source-atop' : 'source-over';
+        lg.drawImage(tip, x - r, y - r, d, d);
+        lg.restore();
+      }
+      // pick up what is under the tip now: all of it at first, then a little each dab
+      cg.globalAlpha = started ? 0.22 : 1;
+      cg.globalCompositeOperation = started ? 'source-over' : 'copy';
+      cg.drawImage(l.canvas, x - r, y - r, d, d, 0, 0, n, n);
+      cg.globalAlpha = 1;
+      started = true;
+    };
+  }
+
   strokeTo(x: number, y: number, p: number): void {
-    if (!this.stroke) return;
+    if (!this.stroke?.s) return;
     this.stroke.s.add(x, y, p);
     this.markDirty(this.stroke.s.takeDirty(this.width, this.height));
     this.repaint();
@@ -390,43 +458,200 @@ export class CanvasDoc {
     return !!this.stroke;
   }
 
-  /** The op a finished stroke is laid down with. */
-  private strokeOp(st: NonNullable<CanvasDoc['stroke']>, l: Layer): GlobalCompositeOperation {
+  /** The op a finished paint stroke is laid down with. */
+  private strokeOp(st: StrokeState, l: Layer): GlobalCompositeOperation {
     if (st.target === 'mask') return st.erase ? 'source-over' : 'destination-out';
     if (st.erase) return 'destination-out';
+    if (st.engine === 'filter') return 'source-atop';
     return l.alphaLock ? 'source-atop' : 'source-over';
+  }
+
+  /** The stroke's shape within `r`: the scratch, seen through the paper grain for a textured brush. */
+  private strokeShape(st: StrokeState, r: Box): HTMLCanvasElement {
+    if (!st.texture) return this.scratch;
+    const t = this.temp('s');
+    const g = t.getContext('2d')!;
+    g.clearRect(r.x, r.y, r.w, r.h);
+    this.blit(g, this.scratch, r);
+    g.globalCompositeOperation = 'destination-in';
+    g.fillStyle = g.createPattern(paperTile(), 'repeat')!;
+    g.fillRect(r.x, r.y, r.w, r.h);
+    g.globalCompositeOperation = 'source-over';
+    return t;
+  }
+
+  /** Lay the stroke onto `g` (a layer, its mask, or a copy of either) within `r`. */
+  private layDown(g: CanvasRenderingContext2D, st: StrokeState, l: Layer, r: Box): void {
+    if (st.engine === 'smudge') return; // already on the layer
+    let src = this.strokeShape(st, r);
+    if (st.engine === 'filter' && st.src) {
+      const t = this.temp('f');
+      const tg = t.getContext('2d')!;
+      tg.clearRect(r.x, r.y, r.w, r.h);
+      this.blit(tg, st.src, r);
+      tg.globalCompositeOperation = 'destination-in';
+      this.blit(tg, src, r);
+      tg.globalCompositeOperation = 'source-over';
+      src = t;
+    }
+    g.save();
+    g.globalAlpha = st.opacity;
+    g.globalCompositeOperation = this.strokeOp(st, l);
+    this.blit(g, src, r);
+    g.restore();
+  }
+
+  /** One undoable pixel change of `l` (or its mask) in `box`, from `before`. */
+  private pixelStep(l: Layer, target: PaintTarget, box: Box, before: ImageData, label: string): void {
+    const tc = target === 'mask' ? l.maskCanvas! : l.canvas;
+    const g = tc.getContext('2d', { willReadFrequently: true })!;
+    const after = g.getImageData(box.x, box.y, box.w, box.h);
+    const put = (d: ImageData) => {
+      g.putImageData(d, box.x, box.y);
+      this.layers = this.layers.map((q) => (q.id !== l.id ? q : target === 'mask' ? { ...q, maskRev: this.counter++ } : { ...q, rev: this.counter++, painted: true }));
+    };
+    put(after);
+    this.push({ label, undo: () => put(before), redo: () => put(after) });
+    this.emit();
   }
 
   endStroke(x: number | null, y: number | null): void {
     const st = this.stroke;
     if (!st) return;
-    const box = st.s.end(x, y, this.width, this.height);
-    this.markDirty(st.s.takeDirty(this.width, this.height));
+    const box = st.s ? st.s.end(x, y, this.width, this.height) : st.box ?? null;
+    if (st.s) this.markDirty(st.s.takeDirty(this.width, this.height));
+    if (st.box) this.markDirty(st.box);
     this.stroke = null;
     const l = this.layers.find((q) => q.id === st.layerId);
     const tc = l && (st.target === 'mask' ? l.maskCanvas : l.canvas);
     if (!box || !l || !tc) return this.repaint();
     const g = tc.getContext('2d', { willReadFrequently: true })!;
-    const before = g.getImageData(box.x, box.y, box.w, box.h);
-    g.save();
-    g.globalAlpha = st.opacity;
-    g.globalCompositeOperation = this.strokeOp(st, l);
-    g.drawImage(this.scratch, box.x, box.y, box.w, box.h, box.x, box.y, box.w, box.h);
-    g.restore();
-    const after = g.getImageData(box.x, box.y, box.w, box.h);
+    const before = st.backup ? st.backup.getContext('2d', { willReadFrequently: true })!.getImageData(box.x, box.y, box.w, box.h) : g.getImageData(box.x, box.y, box.w, box.h);
+    this.layDown(g, st, l, box);
     this.sg.clearRect(box.x, box.y, box.w, box.h);
-    const put = (d: ImageData, b: Box) => {
-      g.putImageData(d, b.x, b.y);
-      this.layers = this.layers.map((q) => (q.id !== l.id ? q : st.target === 'mask' ? { ...q, maskRev: this.counter++ } : { ...q, rev: this.counter++, painted: true }));
-    };
-    put(after, box);
-    const label = st.target === 'mask' ? (st.erase ? 'Show on mask' : 'Hide on mask') : st.erase ? 'Erase' : 'Paint';
-    this.push({ label, undo: () => put(before, box), redo: () => put(after, box) });
-    this.emit();
+    const label =
+      st.target === 'mask'
+        ? st.erase
+          ? 'Show on mask'
+          : 'Hide on mask'
+        : st.erase
+          ? 'Erase'
+          : st.box
+            ? 'Shape'
+            : st.engine === 'smudge'
+              ? 'Smudge'
+              : st.engine === 'filter'
+                ? 'Brush effect'
+                : 'Paint';
+    this.pixelStep(l, st.target, box, before, label);
+  }
+
+  /**
+   * Shapes: draw a line, rectangle or ellipse from `a` to `b` as a live preview (call again as the pointer moves);
+   * endStroke() lays it down. Shift-style constraint (square, circle, 45° lines) with `square`.
+   */
+  previewShape(kind: 'line' | 'rect' | 'ellipse', a: { x: number; y: number }, b: { x: number; y: number }, s: BrushSettings, fill: boolean, square: boolean): boolean {
+    const l = this.activeLayer;
+    if (!l || this.paintBlocker()) return false;
+    let { x: bx, y: by } = b;
+    if (square) {
+      const dx = bx - a.x;
+      const dy = by - a.y;
+      if (kind === 'line') {
+        const ang = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+        const len = Math.hypot(dx, dy);
+        bx = a.x + Math.cos(ang) * len;
+        by = a.y + Math.sin(ang) * len;
+      } else {
+        const m = Math.max(Math.abs(dx), Math.abs(dy));
+        bx = a.x + Math.sign(dx || 1) * m;
+        by = a.y + Math.sign(dy || 1) * m;
+      }
+    }
+    const target: PaintTarget = this.target === 'mask' && l.maskCanvas ? 'mask' : 'pixels';
+    if (this.stroke?.box) {
+      this.sg.clearRect(this.stroke.box.x, this.stroke.box.y, this.stroke.box.w, this.stroke.box.h);
+      this.markDirty(this.stroke.box);
+    }
+    const g = this.sg;
+    const w = Math.max(1, s.size);
+    g.save();
+    g.strokeStyle = g.fillStyle = target === 'mask' ? '#ffffff' : s.color;
+    g.lineWidth = w;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    g.beginPath();
+    if (kind === 'line') {
+      g.moveTo(a.x, a.y);
+      g.lineTo(bx, by);
+    } else if (kind === 'rect') g.rect(Math.min(a.x, bx), Math.min(a.y, by), Math.abs(bx - a.x), Math.abs(by - a.y));
+    else g.ellipse((a.x + bx) / 2, (a.y + by) / 2, Math.abs(bx - a.x) / 2, Math.abs(by - a.y) / 2, 0, 0, Math.PI * 2);
+    if (fill && kind !== 'line') g.fill();
+    else g.stroke();
+    g.restore();
+    const pad = w / 2 + 2;
+    const box = clampBox(Math.min(a.x, bx) - pad, Math.min(a.y, by) - pad, Math.max(a.x, bx) + pad, Math.max(a.y, by) + pad, this.width, this.height);
+    this.stroke = { s: null, engine: 'paint', erase: false, opacity: s.opacity, texture: false, layerId: l.id, target, src: null, backup: null, box: box ?? undefined };
+    if (box) this.markDirty(box);
+    this.repaint();
+    return true;
+  }
+
+  /** Fill bucket on the active layer: the area around (x, y) of similar colour, in the active layer or the merged picture. */
+  fill(x: number, y: number, colour: string, o: { tolerance: number; contiguous: boolean; merged: boolean; opacity: number }): string | null {
+    const l = this.activeLayer;
+    const why = this.paintBlocker();
+    if (why || !l) return why ?? 'Pick a layer first.';
+    const target: PaintTarget = this.target === 'mask' && l.maskCanvas ? 'mask' : 'pixels';
+    const src = o.merged && target === 'pixels' ? this.flatten() : target === 'mask' ? l.maskCanvas! : l.canvas;
+    const data = src.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, this.width, this.height).data;
+    const res = floodMask(data, this.width, this.height, x, y, o.tolerance, o.contiguous);
+    if (!res) return 'Click on the picture to fill.';
+    // one pixel more, so the fill tucks under an anti-aliased outline
+    const bx = clampBox(res.box.x - 1, res.box.y - 1, res.box.x + res.box.w + 1, res.box.y + res.box.h + 1, this.width, this.height)!;
+    const full = growMask(res.mask, this.width, this.height, 1);
+    const rgb = target === 'mask' ? [255, 255, 255] : (hexToRgb(colour) ?? [0, 0, 0]);
+    const patch = new ImageData(bx.w, bx.h);
+    for (let yy = 0; yy < bx.h; yy++)
+      for (let xx = 0; xx < bx.w; xx++) {
+        if (!full[(bx.y + yy) * this.width + bx.x + xx]) continue;
+        const i = (yy * bx.w + xx) * 4;
+        patch.data[i] = rgb[0];
+        patch.data[i + 1] = rgb[1];
+        patch.data[i + 2] = rgb[2];
+        patch.data[i + 3] = 255;
+      }
+    const pc = newCanvas(bx.w, bx.h);
+    pc.getContext('2d')!.putImageData(patch, 0, 0);
+    const tc = target === 'mask' ? l.maskCanvas! : l.canvas;
+    const g = tc.getContext('2d', { willReadFrequently: true })!;
+    const before = g.getImageData(bx.x, bx.y, bx.w, bx.h);
+    g.save();
+    g.globalAlpha = o.opacity;
+    g.globalCompositeOperation = target === 'pixels' && l.alphaLock ? 'source-atop' : 'source-over';
+    g.drawImage(pc, bx.x, bx.y);
+    g.restore();
+    this.pixelStep(l, target, bx, before, 'Fill');
+    return null;
+  }
+
+  /** The top visible layer with paint at (x, y) — Ctrl-click picks it. */
+  layerAt(x: number, y: number): string | null {
+    const px = Math.floor(x);
+    const py = Math.floor(y);
+    if (px < 0 || py < 0 || px >= this.width || py >= this.height) return null;
+    for (let i = this.layers.length - 1; i >= 0; i--) {
+      const l = this.layers[i];
+      if (!l.visible || l.opacity < 0.05) continue;
+      const a = l.canvas.getContext('2d', { willReadFrequently: true })!.getImageData(px, py, 1, 1).data[3];
+      const m = l.maskCanvas && l.maskOn ? l.maskCanvas.getContext('2d', { willReadFrequently: true })!.getImageData(px, py, 1, 1).data[3] : 255;
+      if (a > 24 && m > 24) return l.id;
+    }
+    return null;
   }
 
   // ------------------------------------------------------------ rendering --
-  private temp(k: 'a' | 'b' | 'm'): HTMLCanvasElement {
+  private temp(k: 'a' | 'b' | 'm' | 'f' | 's'): HTMLCanvasElement {
     if (!this.tmp[k]) this.tmp[k] = newCanvas(this.width, this.height);
     return this.tmp[k]!;
   }
@@ -452,15 +677,12 @@ export class CanvasDoc {
   /** `base` with the stroke in progress laid on it, in temp `k`. */
   private withStroke(base: HTMLCanvasElement, l: Layer, k: 'a' | 'm', r: Box): HTMLCanvasElement {
     const st = this.stroke!;
+    if (st.engine === 'smudge') return base;
     const t = this.temp(k);
     const g = t.getContext('2d')!;
     g.clearRect(r.x, r.y, r.w, r.h);
     this.blit(g, base, r);
-    g.globalAlpha = st.opacity;
-    g.globalCompositeOperation = this.strokeOp(st, l);
-    this.blit(g, this.scratch, r);
-    g.globalAlpha = 1;
-    g.globalCompositeOperation = 'source-over';
+    this.layDown(g, st, l, r);
     return t;
   }
 

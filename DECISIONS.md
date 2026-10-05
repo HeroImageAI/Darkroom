@@ -856,3 +856,18 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     masked to the selection it used (which then clears) — it is still saved as a version; anything else (a new shape,
     upscale, outpaint) opens as a version as before. Separated layers (Layers mode) can be opened as canvas layers.
     No tiling yet: very large photos use more memory per layer (a 24 MP picture is ~96 MB a layer).
+123. **Edit suite v3.26: sketch and paint.** Twelve brushes in three engines (`src/shared/brushes.ts`): paint (Pencil,
+    Ink pen, Marker, Airbrush, Chalk, Round), Smudge (each dab lays down the paint picked up so far and picks up a
+    little of what is under it, on the layer itself; Undo restores from a copy taken at pen-down) and filter brushes
+    (Blur, Dodge, Burn, Sponge, Saturate: a filtered copy of the layer shows through the stroke, laid with source-atop
+    so it never paints outside the layer). Each brush keeps its own size, opacity, hardness, spacing and pen settings as
+    you leave them; the colour is shared. Paper grain (Pencil, Chalk) is a fixed noise tile the stroke is seen through,
+    so it reads as tooth, not per-dab noise. Pen feel (soft / even / firm) bends the pressure curve for every brush.
+    A colour picker (saturation/brightness square, hue strip, hex, saved swatches, recent colours) replaces the system
+    one. **Fill bucket** (G): scanline flood fill with tolerance, connected-only or everywhere, on the layer or using
+    all layers' edges (fill line art drawn on another layer), grown by a pixel to tuck under anti-aliased outlines.
+    **Shapes** (U): line, rectangle, ellipse, outline or filled, Shift for square / circle / 45°. **Symmetry** mirrors
+    strokes left-right and/or top-bottom about the middle. **View**: turn 15° steps (4 / 6, 5 straightens) and mirror
+    (H) the canvas to draw at a comfortable angle — only the view; pointer maths goes through the inverse transform.
+    Ctrl-click with a canvas tool picks the layer under the pen. The tool options moved out of the canvas into their
+    own row above the versions, so they never cover the picture.
