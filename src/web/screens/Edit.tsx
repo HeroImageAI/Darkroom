@@ -568,18 +568,31 @@ function Editor({ item }: { item: Item }) {
       if (!raf) raf = requestAnimationFrame(draw);
     });
     let timer: number | undefined;
+    let warned = false;
+    // a save that fails (the server restarting, a network blip) is tried again, 3 s, 6 s, 12 s … up to a minute apart
+    const run = (attempt: number) => {
+      setSaveState('saving');
+      doc
+        .save()
+        .then(() => {
+          setSaveState('saved');
+          if (warned) toast('Your layers are saved again.', 'ok');
+          warned = false;
+        })
+        .catch(() => {
+          setSaveState('error');
+          if (!warned) toast("Your layers couldn't be saved just now. Darkroom keeps trying; leave this page open.", 'error', 9000);
+          warned = true;
+          clearTimeout(timer);
+          timer = window.setTimeout(() => run(attempt + 1), Math.min(60_000, 3000 * 2 ** attempt));
+        });
+    };
     const offChange = doc.subscribe(() => {
       setDocVer(doc.version);
       if (!doc.isProject) return;
       setSaveState('unsaved');
       clearTimeout(timer);
-      timer = window.setTimeout(() => {
-        setSaveState('saving');
-        doc
-          .save()
-          .then(() => setSaveState('saved'))
-          .catch(() => setSaveState('error'));
-      }, 1200);
+      timer = window.setTimeout(() => run(0), 1200);
     });
     draw();
     return () => {
@@ -2168,7 +2181,7 @@ function Editor({ item }: { item: Item }) {
                       {adjLayer.name} <span className="mono">adjustment</span>
                     </p>
                     <span className={`save-state ${saveState}`} role="status" aria-label="Layers saved">
-                      {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : saveState === 'unsaved' ? 'Unsaved' : ''}
+                      {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved, retrying…' : saveState === 'unsaved' ? 'Unsaved' : ''}
                     </span>
                   </div>
                   <AdjustPanel adjust={adjLayer.adjust ?? {}} hist={hist ?? undefined} onChange={(p, label, key) => doc.setAdjust(adjLayer.id, p, label, key)} />

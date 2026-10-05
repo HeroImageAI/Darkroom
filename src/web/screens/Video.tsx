@@ -776,12 +776,12 @@ export function Video({ query }: { query: URLSearchParams }) {
               <div className="video-ready">
                 <div className="video-ready-frames">
                   <figure>
-                    <img src={inputUrl(s.start.name)} alt="Start frame" />
+                    <img src={inputUrl(s.start.name)} alt="The shot to animate" />
                     {s.end && <figcaption>Start</figcaption>}
                   </figure>
                   {s.end && (
                     <figure>
-                      <img src={inputUrl(s.end.name)} alt="End frame" />
+                      <img src={inputUrl(s.end.name)} alt="Where the shot ends" />
                       <figcaption>End</figcaption>
                     </figure>
                   )}

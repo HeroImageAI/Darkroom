@@ -98,7 +98,7 @@ export function CanvasLayers({
           Layers <span className="mono">{doc.layers.length}</span>
         </p>
         <span className={`save-state ${saveState}`} role="status" aria-label="Layers saved">
-          {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : saveState === 'unsaved' ? 'Unsaved' : ''}
+          {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved, retrying…' : saveState === 'unsaved' ? 'Unsaved' : ''}
         </span>
       </div>
       <div className="field-row" style={{ gap: 6 }}>

@@ -812,8 +812,8 @@ export function Generate({ query }: { query: URLSearchParams }) {
               <a className="btn sm" href={downloadUrl(selectedItem.id)} download>
                 <Download size={15} /> Download
               </a>
-              <button className={`btn sm ${selectedItem.favourite ? 'on' : ''}`} aria-pressed={selectedItem.favourite} onClick={toggleFav}>
-                <Heart size={15} fill={selectedItem.favourite ? 'currentColor' : 'none'} /> Favourite
+              <button className={`btn sm icon ${selectedItem.favourite ? 'on' : ''}`} aria-pressed={selectedItem.favourite} onClick={toggleFav} aria-label="Favourite" title={selectedItem.favourite ? 'A favourite (click to undo)' : 'Favourite'}>
+                <Heart size={15} fill={selectedItem.favourite ? 'currentColor' : 'none'} />
               </button>
               <button className="btn sm" onClick={() => applyReuse(selectedItem)}>
                 <Copy size={15} /> Reuse settings

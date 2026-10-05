@@ -162,8 +162,8 @@ test.describe.serial('Darkroom v2 features', () => {
       await page.getByLabel('What should fill the selection?').fill('a lighthouse keeper in a bright red raincoat');
       const before = page.url();
       await page.getByRole('button', { name: /Fill the selection/ }).click();
-      await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
-      expect(page.url()).not.toBe(before);
+      // the new version opens (a message from an earlier step may still be showing)
+      await expect(page).not.toHaveURL(before, { timeout: 300_000 });
       await shot(page, `edit-inpaint-cs-${model.startsWith('Klein') ? 'klein' : 'qwen'}`);
     });
   }
@@ -196,8 +196,8 @@ test.describe.serial('Darkroom v2 features', () => {
     expect(body.params.image_1).toMatch(/(^|\/)dr_/); // the circled upload, not the library picture (lib_<id>_main)
     expect(body.params.mask).toBeUndefined();
     expect(body.params.prompt).toMatch(/circled in red.*Remove the red circle/);
-    await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
-    expect(page.url()).not.toBe(before);
+    // the new version opens (a message from an earlier step may still be showing)
+    await expect(page).not.toHaveURL(before, { timeout: 300_000 });
     await shot(page, 'edit-circle-qwen');
   });
 
@@ -213,8 +213,8 @@ test.describe.serial('Darkroom v2 features', () => {
       await expect(page.getByText('Seam feather')).toHaveCount(model.startsWith('Klein') ? 1 : 0);
       const before = page.url();
       await page.getByRole('button', { name: /Extend canvas/ }).click();
-      await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
-      expect(page.url()).not.toBe(before);
+      // the new version opens (a message from an earlier step may still be showing)
+      await expect(page).not.toHaveURL(before, { timeout: 300_000 });
       const next = await page.request.get(`/api/items/${page.url().split('/').pop()}`);
       const { item } = await next.json();
       expect(item.width / item.height).toBeGreaterThan(1.6); // the canvas really grew to ~16:9
@@ -230,8 +230,8 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.getByRole('group', { name: 'Background removal method' }).getByRole('button', { name: /Best quality/ }).click();
     const before = page.url();
     await page.getByRole('button', { name: /Remove background/ }).click();
-    await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
-    expect(page.url()).not.toBe(before);
+    // the new version opens (a message from an earlier step may still be showing)
+    await expect(page).not.toHaveURL(before, { timeout: 300_000 });
     const id = page.url().split('/').pop()!;
     const png = Buffer.from(await (await page.request.get(`/api/items/${id}/file`)).body());
     expect(png.readUInt8(25)).toBe(6); // PNG colour type 6 = RGBA
@@ -263,8 +263,8 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.getByLabel(/Tile size/).selectOption('256');
     const before = page.url();
     await page.getByRole('button', { name: /Upscale/ }).last().click();
-    await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
-    expect(page.url()).not.toBe(before);
+    // the new version opens (a message from an earlier step may still be showing)
+    await expect(page).not.toHaveURL(before, { timeout: 300_000 });
     const { item } = await (await page.request.get(`/api/items/${page.url().split('/').pop()}`)).json();
     expect(item.width).toBe(it.width * 2);
   });
