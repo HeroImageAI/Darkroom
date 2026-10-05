@@ -712,3 +712,23 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 .colour-dot { box-shadow: inset 0 0 0 2px rgba(255,255,255,.18); }
 /* Try both's progress sits below the buttons over the canvas (Undo / Redo moved up there, DECISIONS 127) */
 .both-strip { top: 62px; }
+/* polish-1: a calmer Edit panel — smaller mode chips and model cards, so what you type sits above the fold */
+.mode-groups .pill { min-height: 30px; padding: 0 11px; font-size: 12.5px; }
+.mode-groups .pills { gap: 6px; }
+.cards[aria-label='Edit model'] .card { min-height: 0; padding: 8px 12px; }
+.tile-skeleton { aspect-ratio: 1; border-radius: var(--r); background: linear-gradient(100deg, var(--panel) 30%, var(--raised) 50%, var(--panel) 70%); background-size: 300% 100%; animation: skeleton 1.4s ease-in-out infinite; }
+@keyframes skeleton { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .tile-skeleton { animation: none; } }
+/* polish-1: films listed with a poster, clips and length */
+.tl-film { flex: 1; justify-content: flex-start; gap: 12px; padding: 4px 8px 4px 4px; min-height: 0; text-align: left; }
+.tl-poster { width: 72px; height: 40px; border-radius: 6px; background: var(--bg); display: grid; place-items: center; overflow: hidden; flex: none; color: var(--muted); }
+.tl-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tl-film-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tl-film-text strong { font-weight: 500; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-film-text small { margin: 0; }
+/* polish-1: Video shows the shot about to be animated */
+.video-ready { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; width: 100%; }
+.video-ready-frames { flex: 1; min-height: 0; width: 100%; display: flex; gap: 16px; justify-content: center; }
+.video-ready figure { margin: 0; flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; }
+.video-ready img { max-width: 100%; max-height: 100%; min-height: 0; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+.video-ready figcaption { font-size: 12px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }

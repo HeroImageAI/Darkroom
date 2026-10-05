@@ -41,8 +41,14 @@ interface Saved {
   name: string;
   created_at: number;
   updated_at: number;
+  /** the list's summary (absent on a single film) */
+  clips?: number;
+  seconds?: number;
+  poster?: string | null;
 }
-const uid = () => crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+/** 75 s → "1:15". */
+const fmtLength = (s = 0) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+const uid =() => crypto.randomUUID().replace(/-/g, '').slice(0, 12);
 const SIZES: { value: TimelineSize; label: string }[] = [
   { value: 'auto', label: 'Like the first clip' },
   { value: '1280x720', label: '1280×720 (16:9)' },
@@ -93,7 +99,7 @@ function TimelineStart() {
         <button className="btn primary" style={{ alignSelf: 'flex-start' }} onClick={() => void createTimeline().catch((e) => toast((e as Error).message, 'error'))}>
           <Plus size={16} /> New film
         </button>
-        <h2 className="section-label" style={{ marginTop: 28 }}>
+        <h2 className="section-label" style={{ marginTop: 28, maxWidth: 720 }}>
           Your films {list && <span className="mono">{list.length}</span>}
         </h2>
         {list === null ? (
@@ -104,11 +110,14 @@ function TimelineStart() {
           <div className="tl-list" role="list">
             {list.map((t) => (
               <div key={t.id} className="tl-list-item" role="listitem">
-                <button className="btn ghost" style={{ flex: 1, justifyContent: 'flex-start' }} onClick={() => go('timeline', t.id)} aria-label={`Open ${t.name}`}>
-                  <Film size={16} /> {t.name}
-                  <small className="note" style={{ marginLeft: 8 }}>
-                    {new Date(t.updated_at).toLocaleString()}
-                  </small>
+                <button className="btn ghost tl-film" onClick={() => go('timeline', t.id)} aria-label={`Open ${t.name}`}>
+                  <span className="tl-poster">{t.poster ? <img src={thumbUrl(t.poster)} alt="" loading="lazy" onError={(e) => (e.currentTarget.style.visibility = 'hidden')} /> : <Film size={18} />}</span>
+                  <span className="tl-film-text">
+                    <strong>{t.name}</strong>
+                    <small className="note">
+                      {t.clips ? `${t.clips} ${t.clips === 1 ? 'clip' : 'clips'} · ${fmtLength(t.seconds)}` : 'Empty'} · {new Date(t.updated_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                    </small>
+                  </span>
                 </button>
                 <button className="btn ghost sm icon" onClick={() => void remove(t)} aria-label={`Delete ${t.name}`} title="Delete film (your clips stay in the Library)">
                   <Trash2 size={15} />
@@ -151,6 +160,8 @@ function TimelineEditor({ id }: { id: string }) {
     api
       .get<Saved & { doc: TimelineDoc }>(`/api/timelines/${id}`)
       .then((r) => {
+        // what was loaded counts as saved: opening a film must not re-save it (and move it to the top of the list)
+        saved.current = JSON.stringify({ name: r.name, doc: r.doc });
         setName(r.name);
         setDocState(r.doc);
       })

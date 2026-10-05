@@ -68,7 +68,7 @@ import { floodMask } from '../../shared/flood';
 import { brushById, penGamma } from '../../shared/brushes';
 import { FillBar, NewCanvasButton, PaintBar, SelectBar, ShapeBar, type ColourState, type SelOpUi, type ShapeKind, type Symmetry } from '../components/CanvasTools';
 import { border as selBorder, combine as selCombine, growShrink } from '../../shared/selection';
-import { drawTransform, startTransform, TransformBar, TransformOverlay, type TransformState } from '../components/TransformTool';
+import { drawTransform, startTransform, TransformBar, TransformOverlay, untouched, type TransformState } from '../components/TransformTool';
 import { CanvasLayers } from '../components/CanvasLayers';
 import { AdjustPanel } from '../components/AdjustPanel';
 import { LOOKS } from '../../shared/adjust';
@@ -640,6 +640,7 @@ function Editor({ item }: { item: Item }) {
     const d = docRef.current;
     const s = tfRef.current;
     if (!d || !s) return;
+    if (untouched(s)) return cancelTf(); // only looked: the layer stays as it was, not a "Transform" step
     d.commitTransform(s.mode === 'free' ? 'Transform' : s.mode === 'perspective' ? 'Perspective' : 'Warp');
     setTf(null);
     // the selected part has moved: its old outline no longer fits

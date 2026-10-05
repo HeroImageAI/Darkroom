@@ -777,8 +777,11 @@ export function Generate({ query }: { query: URLSearchParams }) {
             </div>
           ) : (
             <div className="empty">
-              <h2>Nothing developed yet</h2>
-              <p>Write a prompt on the left and press Generate (Ctrl+Enter). Drop or paste up to three pictures to use as references.</p>
+              <h2>{history.length ? 'Ready for a new picture' : 'Nothing developed yet'}</h2>
+              <p>
+                Write a prompt on the left and press Generate (Ctrl+Enter). Drop or paste up to three pictures to use as references.
+                {history.length > 0 && ' Your earlier pictures are in History on the right: click one to see it again.'}
+              </p>
             </div>
           )}
         </div>

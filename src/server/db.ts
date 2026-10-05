@@ -227,8 +227,19 @@ export class Store {
   }
 
   /** Saved timelines, newest first, without their documents. */
-  timelines(): { id: string; name: string; created_at: number; updated_at: number }[] {
-    return (this.db.prepare('SELECT id, name, created_at, updated_at FROM timelines WHERE deleted_at IS NULL ORDER BY updated_at DESC').all() as any[]).map((r) => ({ ...r }));
+  /** Saved films, newest first, each with a summary for the list: clips, length and the first clip as a poster. */
+  timelines(): { id: string; name: string; created_at: number; updated_at: number; clips: number; seconds: number; poster: string | null }[] {
+    return (this.db.prepare('SELECT id, name, created_at, updated_at, doc FROM timelines WHERE deleted_at IS NULL ORDER BY updated_at DESC').all() as any[]).map((r) => {
+      let clips: TimelineDoc['clips'] = [];
+      try {
+        clips = (JSON.parse(r.doc) as TimelineDoc).clips ?? [];
+      } catch {
+        /* an unreadable film still lists */
+      }
+      const first = [...clips].sort((a, b) => a.start - b.start)[0];
+      const seconds = clips.reduce((m, c) => Math.max(m, c.start + (c.out - c.in)), 0);
+      return { id: r.id, name: r.name, created_at: r.created_at, updated_at: r.updated_at, clips: clips.length, seconds: Math.round(seconds * 10) / 10, poster: first?.itemId ?? null };
+    });
   }
 
   timeline(id: string): { id: string; name: string; created_at: number; updated_at: number; doc: TimelineDoc } | null {
