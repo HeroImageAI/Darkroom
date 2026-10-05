@@ -533,13 +533,13 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     expect(l.at(W * 0.55, H * 0.2)[3]).toBe(255);
     await shot(page, 'transform-moved');
     // Esc puts it back as it was
-    await page.mouse.click(b.x + 5, b.y + 5);
+    await page.mouse.click(b.x + b.width * 0.5, b.y + b.height * 0.92);
     await dragBy(page.getByRole('img', { name: 'Transform handles' }).locator('polygon'), 0, H * 0.3 * k);
     await page.keyboard.press('Escape');
     await saved(page);
     expect((await layerPixels(page, pic.id, -1)).at(W * 0.55, H * 0.2)[3]).toBe(255);
     // scale from the bottom right: the top left stays, the square grows
-    await page.mouse.click(b.x + 5, b.y + 5);
+    await page.mouse.click(b.x + b.width * 0.5, b.y + b.height * 0.92);
     await dragBy(page.getByLabel('Scale from the bottom right'), W * 0.1 * k, H * 0.1 * k);
     await page.getByRole('button', { name: 'Apply' }).click();
     await saved(page);
@@ -547,12 +547,12 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     expect(l.at(W * 0.47, H * 0.12)[3]).toBe(255); // top left corner area kept
     expect(l.at(W * 0.72, H * 0.36)[3]).toBe(255); // grown past the old bottom right (0.65, 0.3)
     // perspective: pull one corner out
-    await page.mouse.click(b.x + 5, b.y + 5);
+    await page.mouse.click(b.x + b.width * 0.5, b.y + b.height * 0.92);
     await page.getByRole('group', { name: 'Transform mode' }).getByRole('button', { name: 'Perspective' }).click();
     await dragBy(page.getByLabel('Corner 3'), W * 0.1 * k, H * 0.15 * k);
     await page.getByRole('button', { name: 'Apply' }).click();
     // warp: bend one inner point
-    await page.mouse.click(b.x + 5, b.y + 5);
+    await page.mouse.click(b.x + b.width * 0.5, b.y + b.height * 0.92);
     await page.getByRole('group', { name: 'Transform mode' }).getByRole('button', { name: 'Warp' }).click();
     await dragBy(page.getByLabel('Warp point 6'), W * 0.05 * k, H * 0.05 * k);
     await page.getByRole('button', { name: 'Apply' }).click();
