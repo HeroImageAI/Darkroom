@@ -875,6 +875,29 @@ test.describe.serial('Edit suite · sketch to render (v3.29)', () => {
     await shot(page, 'sketch-render');
   });
 
+  test('Enhance instruction reads the drawing (the merged layers), and never fills the box with filler', async () => {
+    // JP's report: a coloured sneaker on a blank canvas + Qwen + Enhance gave "a the \" a \" the …" (DECISIONS 129)
+    await page.getByRole('tab', { name: /AI/ }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct', exact: true }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Qwen-Image 2\.1/ }).click();
+    const box = page.getByRole('textbox', { name: 'Instruction', exact: true });
+    await box.fill('Product photo of this apple');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
+    await page.getByRole('button', { name: 'Enhance instruction' }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.task).toBe('edit_enhance');
+    expect(body.input).toMatch(/\.png$/); // the merged canvas, not the blank page underneath
+    expect(body.itemId).toBeUndefined();
+    await expect(page.getByText(/Instruction rewritten by/)).toBeVisible({ timeout: 300_000 });
+    const text = await box.inputValue();
+    const words = text.toLowerCase().match(/[a-z]+/g) ?? [];
+    expect(words.length).toBeGreaterThan(8);
+    expect(new Set(words).size / words.length).toBeGreaterThan(0.3);
+    expect(text).not.toMatch(/^[{[]/);
+    expect(text).toMatch(/apple/i);
+    await shot(page, 'enhance-on-drawing');
+  });
+
   test('Line art: a picture layer gives its outlines as a drawing on a new layer', async () => {
     const pic = await pickPicture(page);
     await page.goto(`/#/edit/${pic.id}`);

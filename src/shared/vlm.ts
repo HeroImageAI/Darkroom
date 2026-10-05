@@ -153,7 +153,23 @@ export function parsePeJson(raw: string): { text: string; ratio: string | null }
   return { text: cleanVlmOutput(s), ratio: null };
 }
 
-const FINAL_MARKER = /(?:^|\n)\s*\**(?:final (?:version|answer|instruction|rewrite|prompt)|rewritten (?:instruction|prompt))\**\s*:\**\s*/gi;
+/**
+ * A written answer that is no use as a prompt: the PE models sometimes collapse into repeated filler
+ * ("a the \" a \" the the …") or a JSON object, and the enhancer cut off after a few words — seen on a plain
+ * one-colour picture (DECISIONS 129). Prose tasks only; PE-T2I's JSON is parsed before this.
+ */
+export function unusableAnswer(text: string, task: Vlm2Task): boolean {
+  const s = text.trim();
+  if (!s) return true;
+  const words = s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  if (words.length >= 24 && new Set(words).size / words.length < 0.3) return true; // repeated filler
+  if ((s.match(/"/g) ?? []).length > s.length * 0.08) return true; // mostly quote marks
+  if ((task === 'edit_enhance' || task === 'enhance') && /^[{[]/.test(s)) return true; // JSON, not an instruction
+  if (task === 'edit_enhance' && words.length < 6) return true; // cut off
+  return false;
+}
+
+const FINAL_MARKER =/(?:^|\n)\s*\**(?:final (?:version|answer|instruction|rewrite|prompt)|rewritten (?:instruction|prompt))\**\s*:\**\s*/gi;
 const REASONING_START = /^(?:the user'?s? (?:instruction|request|prompt)|intent\s*:|step 1|let me|okay[,.]|we need|first,|i need|analy[sz]ing)/i;
 
 /**
