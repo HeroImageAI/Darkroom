@@ -1015,3 +1015,56 @@ test.describe.serial('Edit suite · regions (DECISIONS 133)', () => {
     await shot(page, 'regions-done');
   });
 });
+
+test.describe.serial('Edit suite · depth and pose (DECISIONS 134)', () => {
+  let page: Page;
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
+  });
+  test.afterAll(async () => page.context().close());
+
+  test('Sketch › Depth: the depth of a car photo becomes a new car in the same layout, as a layer; the map stays hidden', async () => {
+    const pic = await pickPicture(page, (i) => i.mode === 'generate' && /car/i.test(i.prompt ?? '') && i.width <= 1600);
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Sketch', exact: true }).click();
+    await page.getByRole('group', { name: 'Follow' }).getByRole('button', { name: 'Depth' }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByLabel('What should the drawing become?').fill('a red sports car in a white studio');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && r.postDataJSON().meta.mode === 'edit:sketch');
+    await page.locator('.panel-foot').getByRole('button', { name: /Render from the depth/ }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.workflow).toBe('klein_edit');
+    expect(body.params.image_1).toMatch(/^darkroom\/depth_/);
+    expect(body.params.prompt).toMatch(/Turn this depth map into a red sports car/);
+    await expect(page.getByText(/The result is on a new layer at the top/)).toBeVisible({ timeout: 300_000 });
+    await page.getByRole('tab', { name: /Layers/ }).click();
+    await saved(page);
+    const proj = await (await page.request.get(`/api/items/${pic.id}/project`)).json();
+    const names = proj.layers.map((l: any) => l.name);
+    expect(names).toContain('Depth map');
+    expect(proj.layers.find((l: any) => l.name === 'Depth map').visible).toBe(false);
+    expect(proj.layers[proj.layers.length - 1].name).toBe('Depth · a red sports car in a white studio');
+    await shot(page, 'control-depth');
+  });
+
+  test('Sketch › Pose: the pose of a walking figure, drawn as someone else', async () => {
+    const pic = await pickPicture(page, (i) => i.mode === 'generate' && /walking|full body|standing/i.test(i.prompt ?? '') && i.width <= 1600);
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('tab', { name: /AI/ }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Sketch', exact: true }).click();
+    await page.getByRole('group', { name: 'Follow' }).getByRole('button', { name: 'Pose' }).click();
+    await page.getByLabel('What should the drawing become?').fill('a knight in silver armour in a castle courtyard');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && /edit:(sketch|control)/.test(r.postDataJSON().meta.mode));
+    await page.locator('.panel-foot').getByRole('button', { name: /Render in the pose/ }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.params.image_1).toMatch(/^darkroom\/pose_/);
+    expect(body.params.prompt).toMatch(/pose diagram.*a knight in silver armour/);
+    // the layer itself (a message from the step before may still be showing)
+    await expect
+      .poll(async () => ((await (await page.request.get(`/api/items/${pic.id}/project`)).json()).layers ?? []).some((l: any) => l.name.startsWith('Pose · a knight in silver armour')), { timeout: 300_000 })
+      .toBe(true);
+    await page.waitForTimeout(1500);
+    await shot(page, 'control-pose');
+  });
+});

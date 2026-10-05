@@ -1,0 +1,116 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "example.png"
+    },
+    "_meta": {
+      "title": "DR_IMAGE_1"
+    }
+  },
+  "2": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1,
+      "resolution_steps": 8
+    },
+    "_meta": {
+      "title": "Work size"
+    }
+  },
+  "3": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "rt_detr_v4-x-hgnet_fp16.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "Person detector"
+    }
+  },
+  "4": {
+    "class_type": "RTDETR_detect",
+    "inputs": {
+      "model": [
+        "3",
+        0
+      ],
+      "image": [
+        "2",
+        0
+      ],
+      "threshold": 0.5,
+      "class_name": "person",
+      "max_detections": 4
+    },
+    "_meta": {
+      "title": "DR_PEOPLE"
+    }
+  },
+  "5": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sdpose_wholebody_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "SDPose"
+    }
+  },
+  "6": {
+    "class_type": "SDPoseKeypointExtractor",
+    "inputs": {
+      "model": [
+        "5",
+        0
+      ],
+      "vae": [
+        "5",
+        2
+      ],
+      "image": [
+        "2",
+        0
+      ],
+      "batch_size": 16,
+      "bboxes": [
+        "4",
+        0
+      ]
+    }
+  },
+  "7": {
+    "class_type": "SDPoseDrawKeypoints",
+    "inputs": {
+      "keypoints": [
+        "6",
+        0
+      ],
+      "draw_body": true,
+      "draw_hands": true,
+      "draw_face": true,
+      "draw_feet": true,
+      "stick_width": 4,
+      "face_point_size": 2,
+      "score_threshold": 0.4,
+      "draw_head": true
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "7",
+        0
+      ],
+      "filename_prefix": "darkroom/control/pose"
+    },
+    "_meta": {
+      "title": "DR_OUTPUT"
+    }
+  }
+}

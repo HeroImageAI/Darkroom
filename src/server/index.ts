@@ -463,6 +463,30 @@ app.post('/api/items/:id/as-input', async (req, reply) => {
 });
 
 /**
+ * Control maps (Edit › Sketch › Follow, DECISIONS 134): a depth map (Lotus) or the people's pose (SDPose) of a picture,
+ * put in ComfyUI's input folder for the render that follows it. Never a Library item.
+ * body: { kind: 'depth' | 'pose', input } -> { name, url, seconds }
+ */
+app.post('/api/control', async (req, reply) => {
+  const b = (req.body ?? {}) as { kind?: string; input?: string };
+  if (b.kind !== 'depth' && b.kind !== 'pose') return reply.code(400).send({ error: 'Pick depth or pose.' });
+  if (!b.input) return reply.code(400).send({ error: 'This needs a picture.' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
+  const t0 = Date.now();
+  try {
+    const job = await jobs.submit({ workflow: b.kind === 'depth' ? 'control_depth' : 'control_pose', params: { image_1: b.input }, meta: { mode: `control:${b.kind}`, model: b.kind === 'depth' ? 'Lotus depth' : 'SDPose', preview: true } });
+    const done = await jobs.waitFor(job.id);
+    const f = ((done.meta as Record<string, unknown>).files as FileRef[] | undefined)?.[0];
+    if (done.status !== 'done' || !f) return reply.code(500).send({ error: done.error ?? `The ${b.kind} map did not come out.` });
+    const bytes = await jobs.comfy.view(f);
+    const up = await jobs.comfy.upload('image', new Blob([new Uint8Array(bytes)]), `${b.kind}_${Date.now().toString(36)}.png`, { subfolder: 'darkroom' });
+    return { name: inputName(up), url: outputUrl(f), seconds: Math.round((Date.now() - t0) / 100) / 10 };
+  } catch (e) {
+    return reply.code(500).send({ error: (e as Error).message });
+  }
+});
+
+/**
  * Local VLM (Qwen3-VL 8B): caption | reverse | enhance | motion.
  * body: { task, variant, text?, itemId?, input?, which? }  -> { text, seconds }
  */
