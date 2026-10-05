@@ -232,7 +232,9 @@ function Editor({ item }: { item: Item }) {
       const em = editModel as ImageModelKey;
       const prompts = sheetValues.map((v) => composeImagePrompt(T, { model: em, mode: 'instruct', text: prompt.split(slotMatch[0]).join(v) }));
       const extra: Record<string, string | number> = { ...weightsNow(), ...(lorasNow().length ? { loras: JSON.stringify(lorasNow()) } : {}), ...(shape !== 'keep' ? { shape } : {}), ...qwenExtras(em) };
-      const r = await api.post<{ jobs: Job[] }>(`/api/items/${item.id}/sheet`, { workflow: wfFor('instruct'), model: em, prompts, labels: sheetValues, seed: nextSeed(), name: `${slotMatch[1].toLowerCase()} sheet`, extra });
+      const sid = await savedPictureId('the sheet');
+      if (!sid) return;
+      const r = await api.post<{ jobs: Job[] }>(`/api/items/${sid}/sheet`, { workflow: wfFor('instruct'), model: em, prompts, labels: sheetValues, seed: nextSeed(), name: `${slotMatch[1].toLowerCase()} sheet`, extra });
       toast(`Making ${r.jobs.length} pictures for the sheet (about ${Math.round((r.jobs.length * (em === 'klein' ? 15 : 25)) / 60) || 1} min). Each one lands as a version; the labelled sheet goes to the Library when the last is in.`, 'info', 9000);
     } catch (e) {
       toast((e as Error).message, 'error');
@@ -308,7 +310,9 @@ function Editor({ item }: { item: Item }) {
   };
   const turnaround = async () => {
     try {
-      const r = await api.post<{ jobs: Job[] }>(`/api/items/${item.id}/turnaround`);
+      const sid = await savedPictureId('the turnaround');
+      if (!sid) return;
+      const r = await api.post<{ jobs: Job[] }>(`/api/items/${sid}/turnaround`);
       if (r.jobs[0]) setJobId(r.jobs[0].id);
       toast('Turnaround: three new views are on their way; the sheet of all four sides lands in the Library when they are done.', 'info', 9000);
     } catch (e) {
@@ -670,7 +674,8 @@ function Editor({ item }: { item: Item }) {
     const t = setTimeout(() => setCStats(doc.composeStats()), 300);
     return () => clearTimeout(t);
   }, [mode, doc, docVer]);
-  const composeAuto = autoMode(cStats.paintCoverage, cStats.pictures);
+  // one picture with nothing placed on it yet: Harmonise is the sensible render (it is not "only paint")
+  const composeAuto = !doc || (cStats.pictures === 0 && cStats.paintCoverage === 0) ? { mode: 'harmonise' as RenderMode, why: 'one picture' } : autoMode(cStats.paintCoverage, cStats.pictures);
   const renderMode: RenderMode = composeMode === 'auto' ? composeAuto.mode : composeMode;
   /** The local vision model reads the canvas as a plan for a real photo and writes the scene. */
   const describeScene = async (): Promise<string | null> => {
@@ -687,6 +692,16 @@ function Editor({ item }: { item: Item }) {
       setDescribing(false);
     }
   };
+  // Library "Use as… › Layer in Edit"
+  useEffect(() => {
+    const add = sessionStorage.getItem('dr.edit.addLayer');
+    if (!add) return;
+    sessionStorage.removeItem('dr.edit.addLayer');
+    void api
+      .item(add)
+      .then((r) => addItemLayer(r.item))
+      .catch(() => toast('Could not add that picture as a layer.', 'error'));
+  }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (sessionStorage.getItem('dr.edit.startLayers') !== item.id) return;
     sessionStorage.removeItem('dr.edit.startLayers');
@@ -736,12 +751,33 @@ function Editor({ item }: { item: Item }) {
       toast('Could not add that picture as a layer.', 'error');
     }
   };
+  /** Pictures from your computer (pasted or dropped) as layers, placed for a scene. */
+  const addFileLayers = async (files: File[]) => {
+    const d = await ensureDoc();
+    if (!d) return;
+    for (const file of files.filter((x) => x.type.startsWith('image/'))) {
+      const url = URL.createObjectURL(file);
+      try {
+        const img = await loadImage(url);
+        d.addImageLayer(img, { name: file.name.replace(/\.[a-z0-9]+$/i, '') || 'Pasted', kind: 'picture', fit: 0.6 });
+      } catch {
+        toast(`Could not read ${file.name}.`, 'error');
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    }
+    setPanel('layers');
+  };
   /** A finished AI result on top of the canvas, masked to the selection it used; anything that doesn't fit opens as a version. */
   const addResultLayer = async (d: CanvasDoc, id: string, mode: string, model: string) => {
     try {
       const { item: r } = await api.item(id);
       const fits = !!r.width && !!r.height && placeOnCanvas(r.width, r.height, d.width, d.height).exact && r.width <= d.width * 1.05;
-      if (!fits) return go('edit', id);
+      if (!fits) {
+        const back = item.id;
+        toast(`This result has another size, so it is a new version. Your layers stay with v${item.version}.`, 'info', 10000, { label: 'Back to the layers', run: () => go('edit', back) });
+        return go('edit', id);
+      }
       const img = await loadImage(fileUrl(id));
       const mask = jobMask.current;
       jobMask.current = null;
@@ -757,21 +793,41 @@ function Editor({ item }: { item: Item }) {
       go('edit', id);
     }
   };
+  /** The merged layers as the next version of the picture (the layers stay with this one). */
+  const flattenNow = async (): Promise<Item> => {
+    const d = docRef.current!;
+    await d.save().catch(() => undefined);
+    const r = await fetch(`/api/items/${item.id}/flatten?layers=${d.layers.length}`, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: await d.flattenBlob() });
+    const j = (await r.json()) as Item & { error?: string };
+    if (!r.ok) throw new Error(j.error ?? 'Could not save the version.');
+    return j;
+  };
   const flattenToVersion = async () => {
-    const d = docRef.current;
-    if (!d) return;
+    if (!docRef.current) return;
     setFlattening(true);
     try {
-      await d.save().catch(() => undefined);
-      const r = await fetch(`/api/items/${item.id}/flatten?layers=${d.layers.length}`, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: await d.flattenBlob() });
-      const j = (await r.json()) as Item & { error?: string };
-      if (!r.ok) throw new Error(j.error ?? 'Could not save the version.');
+      const j = await flattenNow();
       toast(`Saved as v${j.version}. Your layers stay with v${item.version}.`, 'ok', 9000, { label: `Back to the layers`, run: () => go('edit', item.id) });
       go('edit', j.id);
     } catch (e) {
       toast((e as Error).message, 'error');
     } finally {
       setFlattening(false);
+    }
+  };
+  /**
+   * Steps that read the saved picture on the server (Turn it, Turnaround, the Sheet maker, a video, a download): with
+   * layers on, the merged layers become a new version first, so they see what you see.
+   */
+  const savedPictureId = async (what: string): Promise<string | null> => {
+    if (!docRef.current?.isProject) return item.id;
+    try {
+      const j = await flattenNow();
+      toast(`Your layers were saved as v${j.version} first, so ${what} uses them. The layers stay with v${item.version}.`, 'info', 9000);
+      return j.id;
+    } catch (e) {
+      toast((e as Error).message, 'error');
+      return null;
     }
   };
   const exportPng = async () => {
@@ -799,7 +855,10 @@ function Editor({ item }: { item: Item }) {
   const chooseCanvasTool = (t: CanvasTool) => {
     setTool(t);
     setPanel('layers');
-    void ensureDoc();
+    // painting or drawing shapes on a plain picture goes on a layer of its own, so the photo stays as it is
+    void ensureDoc().then((d) => {
+      if (d && (t === 'paint' || t === 'shape') && d.layers.length === 1 && !d.layers[0].painted) d.addPaintLayer();
+    });
   };
   const chooseTransform = () => {
     setTool('transform');
@@ -812,8 +871,10 @@ function Editor({ item }: { item: Item }) {
     if (!el) return;
     const tw = W + pad.left + pad.right;
     const th = H + pad.top + pad.bottom;
-    const s = Math.min((el.clientWidth - 64) / tw, (el.clientHeight - 64) / th, 2);
-    setView({ scale: s, x: (el.clientWidth - tw * s) / 2 + pad.left * s, y: (el.clientHeight - th * s) / 2 + pad.top * s });
+    // room at the top for the Upload / view buttons that float over the canvas
+    const top = 56;
+    const s = Math.min((el.clientWidth - 64) / tw, (el.clientHeight - top - 32) / th, 2);
+    setView({ scale: s, x: (el.clientWidth - tw * s) / 2 + pad.left * s, y: top + (el.clientHeight - top - th * s) / 2 + pad.top * s });
   }, [W, H, pad]);
 
   useEffect(() => {
@@ -843,6 +904,10 @@ function Editor({ item }: { item: Item }) {
           const d = docRef.current;
           const jm = j.meta as any;
           if (d?.isProject && LAYERABLE[jm.mode] && !jm.copied) return void addResultLayer(d, j.result_ids[0], jm.mode, String(jm.model ?? ''));
+          if (d?.isProject) {
+            const back = item.id;
+            toast(`This result has another size, so it is a new version. Your layers stay with v${item.version}.`, 'info', 10000, { label: 'Back to the layers', run: () => go('edit', back) });
+          }
           go('edit', j.result_ids[0]);
           const parentId = (j.meta as any).parentId as string | undefined;
           // Qwen sometimes returns the picture almost unchanged for a given seed (DECISIONS 107)
@@ -1069,7 +1134,7 @@ function Editor({ item }: { item: Item }) {
       setMaskEmpty(!!layer.current?.isEmpty());
       setSamPts([]);
       setSamBox(null);
-      toast(`Selection ${samOp === 'subtract' ? 'removed from' : 'added to'} the mask (${r.seconds}s). Use it with Instruct, Inpaint or Remove BG.`, 'ok');
+      toast(`${samOp === 'subtract' ? 'Taken away from' : 'Added to'} the selection (${r.seconds}s). Use it with Instruct, Fill, Refine or Cut-out, or to paint inside.`, 'ok');
     } catch (err) {
       toast((err as Error).message, 'error');
     } finally {
@@ -1201,16 +1266,25 @@ function Editor({ item }: { item: Item }) {
     return (await api.upload(blob, 'circled.png')).name;
   };
 
-  const submit = async (workflow: string, params: Record<string, string | number>, modeKey: string, model: string, promptText = '') => {
+  /**
+   * `layerMask`: what masks the result when it comes back as a layer — the selection the edit changed, the outside of
+   * it (a new background), or nothing (a whole-picture render such as Compose, whose mask is its own seams).
+   */
+  const submit = async (workflow: string, params: Record<string, string | number>, modeKey: string, model: string, promptText = '', layerMask?: 'selection' | 'inverse' | 'none') => {
     try {
       const inp = await inputFor();
-      // a result layer gets the selection this edit used as its mask
       const mc = layer.current?.mask;
-      if (params.mask && mc) {
+      const lm = layerMask ?? (params.mask ? 'selection' : 'none');
+      if (lm !== 'none' && mc && !layer.current!.isEmpty()) {
         const c = document.createElement('canvas');
         c.width = mc.width;
         c.height = mc.height;
         const g = c.getContext('2d')!;
+        if (lm === 'inverse') {
+          g.fillStyle = '#fff';
+          g.fillRect(0, 0, c.width, c.height);
+          g.globalCompositeOperation = 'destination-out';
+        }
         g.filter = 'blur(3px)';
         g.drawImage(mc, 0, 0);
         jobMask.current = c;
@@ -1230,7 +1304,9 @@ function Editor({ item }: { item: Item }) {
     if (running) return;
     if (mode === 'turn' && tool !== 'crop') {
       try {
-        const j = await api.post<Job>(`/api/items/${item.id}/turn`, turnMove);
+        const sid = await savedPictureId('Turn it');
+        if (!sid) return;
+        const j = await api.post<Job>(`/api/items/${sid}/turn`, turnMove);
         setJobId(j.id);
       } catch (e) {
         toast((e as Error).message, 'error');
@@ -1274,7 +1350,7 @@ function Editor({ item }: { item: Item }) {
       if (shape !== 'keep' && !masked && !circle) params.shape = shape;
       if (circle) {
         const name = await uploadCircled();
-        if (!name) return toast('Paint over the object to circle first (B for brush).', 'info');
+        if (!name) return toast('Select the object to circle first (B to paint a selection, or M, L, W, S).', 'info');
         params.image_1 = name;
       }
       return submit(wfFor('instruct'), params, 'edit:instruct', `${modelLabel} edit`, prompt.trim());
@@ -1329,7 +1405,7 @@ function Editor({ item }: { item: Item }) {
         target_h: plan.target.h,
       };
       if (ref) params.image_2 = ref.name;
-      return submit(wfFor('inpaint'), params, 'edit:inpaint', `${modelLabel} ${o.label}`, o.text.trim() || o.label);
+      return submit(wfFor('inpaint'), params, 'edit:inpaint', `${modelLabel} ${o.label}`, o.text.trim() || o.label, o.invert ? 'inverse' : 'selection');
     };
     if (mode === 'refine') {
       // a selection: redraw it at the strength; none: the whole picture, with the low-strength touch-up graph
@@ -1359,7 +1435,7 @@ function Editor({ item }: { item: Item }) {
         if (plan.feather) params.feather = plan.feather;
       }
       const label = RENDERS.find((x) => x.id === renderMode)!.label;
-      return submit(plan.workflow, params, 'compose', `${plan.model} · ${label}`, scene || label);
+      return submit(plan.workflow, params, 'compose', `${plan.model} · ${label}`, scene || label, 'none');
     }
     if (mode === 'inpaint') {
       if (fillKind === 'background') {
@@ -1607,6 +1683,8 @@ function Editor({ item }: { item: Item }) {
       if (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT') return;
       const f = [...(e.clipboardData?.files ?? [])].find((x) => x.type.startsWith('image/'));
       if (!f) return;
+      // with layers on (and not in the AI panel), a pasted picture is a new layer
+      if (docRef.current?.isProject && panel !== 'ai') return void addFileLayers([f]);
       if (ref) return toast('The Reference slot is already filled. Clear it first to paste a new one.', 'info');
       void addRef(f).then(() => toast('Pasted into the Reference slot.', 'ok'));
     };
@@ -1648,7 +1726,7 @@ function Editor({ item }: { item: Item }) {
 
   return (
     <div className="screen" style={{ gridTemplateColumns: '68px 1fr 392px' }}>
-      <nav className="panel" aria-label="Tools" style={{ alignItems: 'center', padding: '12px 0', gap: 6 }}>
+      <nav className="panel edit-tools" aria-label="Tools">
         {TOOLS.map((t) => (
           <button
             key={t.id}
@@ -1672,13 +1750,6 @@ function Editor({ item }: { item: Item }) {
             </span>
           </button>
         ))}
-        <div style={{ flex: 1 }} />
-        <button className="btn icon ghost" onClick={undo} title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)">
-          <Undo2 size={18} />
-        </button>
-        <button className="btn icon ghost" onClick={redo} title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)">
-          <Redo2 size={18} />
-        </button>
       </nav>
 
       <section
@@ -1686,15 +1757,26 @@ function Editor({ item }: { item: Item }) {
         aria-label="Canvas"
         // dropping a picture file from your computer opens it (library drags keep their own targets)
         onDragOver={(e) => {
-          if (![...e.dataTransfer.types].includes('Files')) return;
+          const types = [...e.dataTransfer.types];
+          if (!types.includes('Files') && !types.includes('application/x-darkroom-item')) return;
           e.preventDefault();
           setFileOver(true);
         }}
         onDragLeave={(e) => e.currentTarget === e.target && setFileOver(false)}
         onDrop={(e) => {
+          // a Library picture dragged in becomes a layer (DECISIONS 127)
+          const libId = e.dataTransfer.getData('application/x-darkroom-item');
+          if (libId) {
+            e.preventDefault();
+            setFileOver(false);
+            void api.item(libId).then((r) => addItemLayer(r.item)).catch(() => toast('Could not add that picture.', 'error'));
+            return;
+          }
           if (!e.dataTransfer.files.length) return;
           e.preventDefault();
           setFileOver(false);
+          // with layers on, your own files become layers; otherwise they open (as before)
+          if (docRef.current?.isProject) return void addFileLayers([...e.dataTransfer.files]);
           void openOwnPictures([...e.dataTransfer.files], comfyOnline, setImporting);
         }}
       >
@@ -1883,6 +1965,14 @@ function Editor({ item }: { item: Item }) {
             />
           </div>
           <div style={{ position: 'absolute', right: 12, top: 12, display: 'flex', gap: 6 }} onPointerDown={(e) => e.stopPropagation()}>
+            {/* Undo / Redo up here: the tool column is full (14 tools) */}
+            <button className="btn sm" onClick={undo} title="Undo (Ctrl+Z)" aria-label="Undo (Ctrl+Z)">
+              <Undo2 size={14} />
+            </button>
+            <button className="btn sm" onClick={redo} title="Redo (Ctrl+Y)" aria-label="Redo (Ctrl+Y)">
+              <Redo2 size={14} />
+            </button>
+            <span className="view-sep" aria-hidden="true" />
             <button className="btn sm" onClick={() => setRot((r) => r - 15)} title="Turn the view left (4)" aria-label="Turn view left">
               <RotateCcw size={14} />
             </button>
@@ -2245,6 +2335,11 @@ function Editor({ item }: { item: Item }) {
               <p className="note">
                 {maskEmpty ? 'The whole picture is redrawn at this strength.' : 'Only the selection is redrawn at this strength.'} About 25–40% keeps the shapes and colours of a paintover and makes them real; 60% and up reinterprets them.
               </p>
+              {maskEmpty && isBig(W, H) && (
+                <p className="note warn">
+                  Large picture ({W}×{H}): the whole-picture Refine works at about 2 MP, so its layer is enlarged back and fine detail softens. Select the part to refine to keep full detail, or Upscale afterwards.
+                </p>
+              )}
             </div>
           )}
           {mode === 'compose' && (
@@ -2322,7 +2417,7 @@ function Editor({ item }: { item: Item }) {
               {shape !== 'keep' && (
                 <p className="note" style={{ marginTop: 6 }}>
                   The picture is redrawn to fill a {shape} frame: the model may add to the sides or the top and bottom to make it fit.
-                  {!maskEmpty && onlyMasked ? ' Not with “Only change the masked area”.' : ''}
+                  {!maskEmpty && onlyMasked ? ' Not with “Only change the selection”.' : ''}
                 </p>
               )}
             </div>
@@ -2330,13 +2425,13 @@ function Editor({ item }: { item: Item }) {
           {/* Instruct changes the whole picture until you paint: the mask settings appear with the first stroke (audit #2) */}
           {mode === 'instruct' && maskEmpty && (
             <p className="note mask-hint">
-              To change only part of the picture, paint over it (B) or use Smart select (S).
+              To change only part of the picture, select it first: paint it (B), or use the marquee (M), lasso (L), wand (W) or Smart select (S).
             </p>
           )}
           {((mode === 'inpaint' && fillKind !== 'background') || (mode === 'instruct' && !maskEmpty) || (mode === 'refine' && !maskEmpty)) && (
             <div>
               <p className="section-label">
-                Mask <span className="mono">{maskEmpty ? 'empty' : 'painted'}</span>
+                Selection <span className="mono">{maskEmpty ? 'none' : 'made'}</span>
               </p>
               <label className="field">
                 <span>
@@ -2359,7 +2454,7 @@ function Editor({ item }: { item: Item }) {
                   <input type="range" min={0} max={64} value={feather} onChange={(e) => setFeather(Number(e.target.value))} />
                 </label>
               )}
-              {mode === 'inpaint' && (
+              {mode === 'inpaint' && fillKind === 'replace' && (
                 <label className="field" title="100% repaints the masked area completely. Lower keeps more of what is there; below about 80% colour and shape changes may not take.">
                   <span>
                     Change strength <b className="mono">{Math.round(strength * 100)}%</b>
@@ -2376,13 +2471,13 @@ function Editor({ item }: { item: Item }) {
                 </button>
               </div>
               <p className="note" style={{ marginTop: 6 }}>
-                B brush · E eraser · L lasso (hold Shift on release to subtract) · [ ] size · V or Alt-drag pans · wheel zooms
+                B paints the selection · E erases it · M marquee · L lasso · W wand · S smart select · Shift adds, Alt takes away · [ ] size · V or the middle button pans · wheel zooms
               </p>
               {mode === 'instruct' && (
                 <>
                   <label className="check">
                     <input type="checkbox" checked={onlyMasked && !(circled && editModel === 'qwen')} onChange={(e) => setOnlyMasked(e.target.checked)} disabled={maskEmpty || (circled && editModel === 'qwen')} />
-                    Only change the masked area {maskEmpty && <span className="muted">(paint a mask first)</span>}
+                    Only change the selection {maskEmpty && <span className="muted">(select an area first)</span>}
                   </label>
                   <label
                     className="check"
@@ -2798,10 +2893,23 @@ function Editor({ item }: { item: Item }) {
             </button>
           )}
           <div className="field-row">
-            <a className="btn sm" href={downloadUrl(item.id)} download style={{ flex: 1 }}>
-              <Download size={14} /> Download
-            </a>
-            <button className="btn sm" style={{ flex: 1 }} onClick={() => go('video', undefined, { start: item.id })}>
+            {doc?.isProject ? (
+              <button className="btn sm" style={{ flex: 1 }} onClick={() => void exportPng()} title="The merged layers as a PNG">
+                <Download size={14} /> Download
+              </button>
+            ) : (
+              <a className="btn sm" href={downloadUrl(item.id)} download style={{ flex: 1 }}>
+                <Download size={14} /> Download
+              </a>
+            )}
+            <button
+              className="btn sm"
+              style={{ flex: 1 }}
+              onClick={async () => {
+                const sid = await savedPictureId('the video');
+                if (sid) go('video', undefined, { start: sid });
+              }}
+            >
               <Film size={14} /> Animate
             </button>
           </div>
