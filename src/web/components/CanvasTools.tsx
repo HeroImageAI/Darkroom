@@ -385,3 +385,58 @@ export function SelectBar({
     </div>
   );
 }
+
+const PAPERS: { id: string; label: string; css: string }[] = [
+  { id: 'paper', label: 'Paper', css: '#f2f0ea' },
+  { id: 'white', label: 'White', css: '#ffffff' },
+  { id: 'grey', label: 'Grey', css: '#808080' },
+  { id: 'black', label: 'Black', css: '#000000' },
+  { id: 'transparent', label: 'Clear', css: 'repeating-conic-gradient(#555 0 25%, #333 0 50%) 0 0 / 10px 10px' },
+];
+
+/**
+ * New canvas (DECISIONS 125): a blank picture to build a scene on — what Compose's blank canvas was. The sizes are about
+ * 1 MP (what both edit models work at); "Large" doubles them for paintings you will upscale anyway.
+ */
+export function NewCanvasButton({ onCreate, label = 'New canvas', up = false }: { onCreate: (w: number, h: number, background: string) => void; label?: string; up?: boolean }) {
+  const [paper, setPaper] = useState('paper');
+  const [large, setLarge] = useState(false);
+  const sizes: { label: string; w: number; h: number }[] = [
+    { label: '1:1', w: 1024, h: 1024 },
+    { label: '4:5', w: 896, h: 1120 },
+    { label: '3:2', w: 1216, h: 832 },
+    { label: '2:3', w: 832, h: 1216 },
+    { label: '16:9', w: 1344, h: 768 },
+    { label: '9:16', w: 768, h: 1344 },
+  ];
+  return (
+    <Pop className={`new-canvas ${up ? '' : 'down'}`} title={label} label={<>+ {label}</>}>
+      <p className="section-label" style={{ margin: '0 0 6px' }}>
+        Size
+      </p>
+      <div className="canvas-sizes" role="group" aria-label="Canvas size">
+        {sizes.map((s) => {
+          const w = large ? s.w * 2 : s.w;
+          const h = large ? s.h * 2 : s.h;
+          return (
+            <button key={s.label} type="button" className="btn sm" onClick={() => onCreate(w, h, paper)} title={`${w} × ${h}`} aria-label={`Canvas ${s.label}`}>
+              <span className="size-shape" style={{ aspectRatio: `${s.w} / ${s.h}` }} />
+              {s.label}
+            </button>
+          );
+        })}
+      </div>
+      <label className="check" style={{ margin: '6px 0' }} title="Twice the size each way (about 4 MP): for paintings and print">
+        <input type="checkbox" checked={large} onChange={(e) => setLarge(e.target.checked)} /> Large
+      </label>
+      <p className="section-label" style={{ margin: '6px 0' }}>
+        Paper
+      </p>
+      <div className="papers" role="group" aria-label="Paper">
+        {PAPERS.map((p) => (
+          <button key={p.id} type="button" className={`paper ${paper === p.id ? 'on' : ''}`} style={{ background: p.css }} title={p.label} aria-label={`Paper ${p.label}`} aria-pressed={paper === p.id} onClick={() => setPaper(p.id)} />
+        ))}
+      </div>
+    </Pop>
+  );
+}

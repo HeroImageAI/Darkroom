@@ -135,7 +135,7 @@ test.describe.serial('Darkroom v2 features', () => {
   test('Edit: smart select by text adds a mask', async () => {
     const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && /fisherman|lighthouse|watch/i.test(i.prompt));
     await page.goto(`/#/edit/${it.id}`);
-    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Inpaint' }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Fill', exact: true }).click();
     await page.keyboard.press('s');
     await page.getByLabel('Select by text').fill('person');
     await page.getByRole('button', { name: 'Find' }).click();
@@ -152,16 +152,16 @@ test.describe.serial('Darkroom v2 features', () => {
     test(`Edit: inpaint with crop and stitch (${model})`, async () => {
       const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && /lighthouse/i.test(i.prompt));
       await page.goto(`/#/edit/${it.id}`);
-      await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Inpaint' }).click();
+      await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Fill', exact: true }).click();
       await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: new RegExp(`^${model}`) }).click();
       await page.keyboard.press('s');
       await page.getByLabel('Select by text').fill('person');
       await page.getByRole('button', { name: 'Find' }).click();
       await expect(page.getByText(/Selection added to the mask/).last()).toBeVisible({ timeout: 240_000 });
       await expect(page.getByText('Change strength')).toBeVisible();
-      await page.getByLabel('What should fill the masked area?').fill('a lighthouse keeper in a bright red raincoat');
+      await page.getByLabel('What should fill the selection?').fill('a lighthouse keeper in a bright red raincoat');
       const before = page.url();
-      await page.getByRole('button', { name: /Fill masked area/ }).click();
+      await page.getByRole('button', { name: /Fill the selection/ }).click();
       await expect(page.getByText('New version saved')).toBeVisible({ timeout: 300_000 });
       expect(page.url()).not.toBe(before);
       await shot(page, `edit-inpaint-cs-${model.startsWith('Klein') ? 'klein' : 'qwen'}`);
@@ -207,7 +207,7 @@ test.describe.serial('Darkroom v2 features', () => {
       const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && (i.height ?? 0) >= (i.width ?? 1));
       test.skip(!it, 'needs a portrait or square picture in the library');
       await page.goto(`/#/edit/${it.id}`);
-      await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Outpaint' }).click();
+      await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Expand', exact: true }).click();
       await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: new RegExp(`^${model}`) }).click();
       await page.getByRole('button', { name: 'To 16:9' }).click();
       await expect(page.getByText('Seam feather')).toHaveCount(model.startsWith('Klein') ? 1 : 0);
@@ -226,7 +226,7 @@ test.describe.serial('Darkroom v2 features', () => {
   test('Edit: remove background with Qwen (best quality) keeps real transparency', async () => {
     const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && /lighthouse/i.test(i.prompt));
     await page.goto(`/#/edit/${it.id}`);
-    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Remove BG' }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Cut-out', exact: true }).click();
     await page.getByRole('group', { name: 'Background removal method' }).getByRole('button', { name: /Best quality/ }).click();
     const before = page.url();
     await page.getByRole('button', { name: /Remove background/ }).click();
@@ -241,7 +241,7 @@ test.describe.serial('Darkroom v2 features', () => {
   test('Edit: layers per object with Qwen 2.1', async () => {
     const it = await firstItem(page, (i) => i.kind === 'image' && i.mode === 'generate' && /lighthouse/i.test(i.prompt));
     await page.goto(`/#/edit/${it.id}`);
-    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Layers' }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Separate', exact: true }).click();
     await page.getByRole('group', { name: 'Layer method' }).getByRole('button', { name: 'Objects (Qwen 2.1)' }).click();
     await page.getByPlaceholder(/the red car, the potted palm/).fill('the person');
     await page.getByRole('button', { name: /Make layers/ }).click();
@@ -954,223 +954,7 @@ test.describe.serial('Darkroom v2 features', () => {
     }
   });
 
-  // Compose (DECISIONS 87)
-  let compositionUrl = '';
-  test('Compose: start from a picture, cut out a piece, move and scale it on the ground line, undo, Harmonise into the Library', async () => {
-    await page.goto('/#/compose');
-    await page.getByLabel('Upload a background picture').setInputFiles('tests/golden/08_lowres_src.png');
-    await expect(page).toHaveURL(/#\/compose\/[0-9a-f-]+$/, { timeout: 60_000 });
-    compositionUrl = page.url();
-    await expect(page.getByRole('button', { name: 'Select Background' })).toBeVisible();
-    await expect(page.getByLabel('Composition name')).toHaveValue(/^Composition \d+$/);
-    // the canvas takes the background's shape at about 1 MP
-    await expect(page.getByText('1248 × 832')).toBeVisible();
-
-    await page.getByLabel('Upload pictures to the canvas').setInputFiles('tests/golden/09_car.png');
-    await expect(page.getByRole('button', { name: /^Select 09_car/ })).toBeVisible({ timeout: 60_000 });
-    const sel = page.locator('.compose-select');
-    const boxed = (await sel.boundingBox())!;
-    await page.getByRole('button', { name: 'Cut out' }).click();
-    await expect(page.getByText('cut-out', { exact: true })).toBeVisible({ timeout: 90_000 });
-    // trimmed to the car: a smaller box than the whole photo, and the cut-out is in the Library
-    const trimmed = (await sel.boundingBox())!;
-    expect(trimmed.height).toBeLessThan(boxed.height);
-    expect((await firstItem(page, (i) => i.mode === 'edit:remove_bg' && i.prompt === '09_car'))?.id).toBeTruthy();
-
-    // drag: the ground line shows where it stands
-    const canvas = (await page.getByRole('application', { name: 'Canvas' }).boundingBox())!;
-    await page.mouse.move(trimmed.x + trimmed.width / 2, trimmed.y + trimmed.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(canvas.x + canvas.width * 0.75, canvas.y + canvas.height * 0.78, { steps: 6 });
-    await expect(page.locator('.compose-ground')).toBeVisible();
-    await page.mouse.up();
-    await expect(page.locator('.compose-ground')).toHaveCount(0);
-    // scale from the top-left corner, keeping the shape
-    const before = (await sel.boundingBox())!;
-    const nw = (await page.locator('.compose-handle.nw').boundingBox())!;
-    await page.mouse.move(nw.x + 7, nw.y + 7);
-    await page.mouse.down();
-    await page.mouse.move(nw.x + 7 + before.width * 0.3, nw.y + 7 + before.height * 0.3, { steps: 5 });
-    await page.mouse.up();
-    const after = (await sel.boundingBox())!;
-    expect(after.width).toBeLessThan(before.width * 0.8);
-    expect(after.width / after.height).toBeCloseTo(before.width / before.height, 1);
-    await page.keyboard.press('Control+z');
-    expect(Math.round((await sel.boundingBox())!.width)).toBe(Math.round(before.width));
-    await page.keyboard.press('Control+y');
-    expect(Math.round((await sel.boundingBox())!.width)).toBe(Math.round(after.width));
-    await shot(page, 'compose-placed');
-
-    // erase part of the cut-out: a new picture file with more transparency; Ctrl+Z brings the old one back
-    const srcOf = async () => {
-      const r = await (await page.request.get(`/api/compositions/${compositionUrl.split('/').pop()}`)).json();
-      return r.doc.layers.find((l: any) => l.name === '09_car').src as string;
-    };
-    const transparent = async (src: string) => {
-      const { data, info } = await sharp(Buffer.from(await (await page.request.get(`/api/input?name=${encodeURIComponent(src)}`)).body())).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-      let n = 0;
-      for (let i = 3; i < data.length; i += 4) if (data[i] < 16) n++;
-      return n / (info.width * info.height);
-    };
-    await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 10_000 });
-    const src0 = await srcOf();
-    await page.keyboard.press('e');
-    await page.getByLabel('Brush size').fill('40');
-    const car = (await page.locator('.compose-piece').last().boundingBox())!;
-    await page.mouse.move(car.x + car.width * 0.1, car.y + car.height * 0.5);
-    await page.mouse.down();
-    await page.mouse.move(car.x + car.width * 0.4, car.y + car.height * 0.5, { steps: 6 });
-    await page.mouse.up();
-    await expect.poll(srcOf, { timeout: 20_000 }).not.toBe(src0);
-    const src1 = await srcOf();
-    expect(await transparent(src1)).toBeGreaterThan((await transparent(src0)) + 0.02);
-    await shot(page, 'compose-erased');
-    await page.keyboard.press('Control+z');
-    await expect.poll(srcOf, { timeout: 10_000 }).toBe(src0);
-    await page.keyboard.press('v');
-
-    // photo pieces → Harmonise is suggested (Qwen)
-    const modes = page.getByRole('group', { name: 'Render mode' });
-    await expect(modes.getByRole('button', { name: /Harmonise/ })).toHaveAttribute('aria-pressed', 'true');
-    await expect(modes.getByRole('button', { name: /Harmonise/ })).toContainText('Suggested');
-    await page.getByLabel('Scene description').fill('a red classic car parked on the stone quay of a fishing harbour, overcast day');
-    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && r.postDataJSON().meta?.mode === 'compose');
-    await page.getByRole('button', { name: /^Render/ }).click();
-    const body = (await sent).postDataJSON();
-    expect(body.workflow).toBe('qwen_edit');
-    expect(body.params.mask).toBeUndefined();
-    expect(body.params.prompt).toMatch(/The scene: a red classic car parked on the stone quay/);
-    await expect(page.locator('.compose-view img')).toBeVisible({ timeout: 180_000 });
-    await expect(page.getByRole('list', { name: 'Renders' }).getByRole('listitem')).toHaveCount(1);
-    const it = await firstItem(page, (i) => i.mode === 'compose');
-    expect(it.ui.compositionId).toBe(compositionUrl.split('/').pop());
-    expect(it.model).toMatch(/Qwen-Image 2.1 · Harmonise/);
-    await shot(page, 'compose-harmonised');
-  });
-
-  test('Compose: Blend edges sends a seam mask; paint suggests Reimagine; saved, reopened, deleted with Undo', async () => {
-    // Blend edges on the same canvas: a white band round the car on black
-    await page.getByRole('button', { name: 'Back to canvas' }).click();
-    await page.getByRole('group', { name: 'Render mode' }).getByRole('button', { name: /Blend edges/ }).click();
-    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && r.postDataJSON().meta?.mode === 'compose');
-    await page.getByRole('button', { name: /^Render/ }).click();
-    const body = (await sent).postDataJSON();
-    expect(body.params.mask).toBeTruthy();
-    expect(body.params.feather).toBe(12);
-    const mask = await sharp(Buffer.from(await (await page.request.get(`/api/input?name=${encodeURIComponent(body.params.mask)}`)).body())).greyscale().raw().toBuffer({ resolveWithObject: true });
-    const white = [...mask.data].filter((v) => v > 127).length / mask.data.length;
-    expect(white).toBeGreaterThan(0.005);
-    expect(white).toBeLessThan(0.1); // only the seams, never the whole picture
-    await expect(page.getByRole('list', { name: 'Renders' }).getByRole('listitem')).toHaveCount(2, { timeout: 180_000 });
-
-    // continue from a render: it becomes the background, the old layers are hidden (not removed)
-    await page.getByRole('list', { name: 'Renders' }).getByRole('listitem').first().click();
-    await page.getByRole('button', { name: 'Continue from this' }).click();
-    await expect(page.getByRole('button', { name: 'Select Render' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Show 09_car' })).toBeVisible();
-    await expect(page.locator('.compose-layers li')).toHaveCount(3);
-
-    // saved: reopening brings the layers and renders back
-    await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 10_000 });
-    await page.reload();
-    await expect(page.locator('.compose-layers li')).toHaveCount(3);
-    await expect(page.getByRole('list', { name: 'Renders' }).getByRole('listitem')).toHaveCount(2);
-
-    // a paint-only canvas → Reimagine is suggested
-    await page.goto('/#/compose');
-    await page.getByRole('button', { name: 'New composition' }).click();
-    await expect(page).toHaveURL(/#\/compose\/[0-9a-f-]+$/);
-    await page.getByRole('button', { name: 'Paint (B)' }).click();
-    const c = (await page.getByRole('application', { name: 'Canvas' }).boundingBox())!;
-    await page.getByLabel('Brush size').fill('300');
-    for (const y of [0.15, 0.4, 0.65, 0.9]) {
-      await page.mouse.move(c.x + 5, c.y + c.height * y);
-      await page.mouse.down();
-      await page.mouse.move(c.x + c.width - 5, c.y + c.height * y, { steps: 5 });
-      await page.mouse.up();
-    }
-    await expect(page.locator('.compose-layers li')).toHaveCount(1);
-    await expect(page.getByRole('group', { name: 'Render mode' }).getByRole('button', { name: /Reimagine/ })).toContainText('Suggested', { timeout: 5_000 });
-    await page.getByRole('button', { name: 'Erase (E)' }).click();
-    await page.mouse.move(c.x + c.width / 2, c.y + 10);
-    await page.mouse.down();
-    await page.mouse.move(c.x + c.width / 2, c.y + c.height - 10, { steps: 5 });
-    await page.mouse.up();
-    await page.keyboard.press('Control+z');
-    await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 10_000 });
-    const name = await page.getByLabel('Composition name').inputValue();
-
-    // the start page lists it with a thumbnail; delete with Undo
-    await page.getByRole('button', { name: '← All compositions' }).click();
-    const item = page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) });
-    await expect(item.locator('img')).toBeVisible();
-    await shot(page, 'compose-list');
-    await item.getByRole('button', { name: `Delete ${name}` }).click();
-    await expect(page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Undo' }).last().click();
-    await expect(page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Open ${name}`, exact: true }) })).toHaveCount(1);
-  });
-
-  test('Compose: Describe reads the canvas again after you change the sketch (its own old text is not your idea)', async () => {
-    await page.goto('/#/compose');
-    await page.getByRole('button', { name: 'New composition' }).click();
-    await expect(page).toHaveURL(/#\/compose\/[0-9a-f-]+$/);
-    await page.getByRole('button', { name: 'Paint (B)' }).click();
-    const c = (await page.getByRole('application', { name: 'Canvas' }).boundingBox())!;
-    const band = async (colour: string, y0: number, y1: number, size = 200) => {
-      await page.getByLabel(`Colour ${colour}`).click();
-      await page.getByLabel('Brush size').fill(String(size));
-      for (let y = y0; y <= y1; y += 0.12) {
-        await page.mouse.move(c.x + 2, c.y + c.height * y);
-        await page.mouse.down();
-        await page.mouse.move(c.x + c.width - 2, c.y + c.height * y, { steps: 4 });
-        await page.mouse.up();
-      }
-    };
-    const blob = async (colour: string, pts: number[][], size: number) => {
-      await page.getByLabel(`Colour ${colour}`).click();
-      await page.getByLabel('Brush size').fill(String(size));
-      await page.mouse.move(c.x + pts[0][0] * c.width, c.y + pts[0][1] * c.height);
-      await page.mouse.down();
-      for (const [x, y] of pts.slice(1)) await page.mouse.move(c.x + x * c.width, c.y + y * c.height, { steps: 4 });
-      await page.mouse.up();
-    };
-    // 1: a house on a green hill
-    await band('#7fb8e8', 0.05, 0.5);
-    await band('#5fae4f', 0.6, 1.0);
-    await blob('#b8352b', [[0.4, 0.45], [0.5, 0.33], [0.6, 0.45]], 50);
-    await blob('#8a5a3b', [[0.42, 0.5], [0.58, 0.5], [0.58, 0.62], [0.42, 0.62], [0.42, 0.5]], 60);
-    const scene = page.getByLabel('Scene description');
-    await page.getByRole('button', { name: 'Describe' }).click();
-    await expect(scene).not.toHaveValue('', { timeout: 120_000 });
-    const first = await scene.inputValue();
-    expect(first).toMatch(/house|cottage|home|cabin/i);
-
-    // 2: hide that sketch and paint a sea with a sailing boat instead
-    await page.getByRole('button', { name: 'Hide Paint 1' }).click();
-    await page.getByRole('button', { name: 'Paint (B)' }).click();
-    await band('#7fb8e8', 0.05, 0.45);
-    await band('#2b5aa8', 0.55, 1.0);
-    await blob('#ffffff', [[0.45, 0.58], [0.5, 0.3], [0.55, 0.58], [0.45, 0.58]], 30);
-    await blob('#8a5a3b', [[0.38, 0.62], [0.62, 0.62], [0.58, 0.68], [0.42, 0.68], [0.38, 0.62]], 30);
-    await expect(page.getByText(/The canvas changed since this was described/)).toBeVisible();
-    const sent = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
-    await page.getByRole('button', { name: 'Describe' }).click();
-    expect((await sent).postDataJSON().text).toBe(''); // its own earlier text is not passed as your idea
-    await expect.poll(() => scene.inputValue(), { timeout: 120_000 }).not.toBe(first);
-    const second = await scene.inputValue();
-    expect(second).toMatch(/sea|ocean|boat|sail|water/i);
-    await expect(page.getByText(/The canvas changed since this was described/)).toHaveCount(0);
-
-    // your own words are kept as the idea
-    await scene.fill('a stormy evening');
-    const sent2 = page.waitForRequest((r) => r.url().endsWith('/api/vlm') && r.method() === 'POST');
-    await page.getByRole('button', { name: 'Describe' }).click();
-    expect((await sent2).postDataJSON().text).toBe('a stormy evening');
-    await expect(scene).not.toHaveValue('a stormy evening', { timeout: 120_000 });
-    await shot(page, 'compose-describe');
-  });
-
+  // Compose (DECISIONS 87) moved into Edit in v3.28 (DECISIONS 125): see e2e/edit-suite.spec.ts
   test('Library: version stacks — one tile per picture, every version in Details, Delete all versions with Undo', async () => {
     await page.goto('/#/library');
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All', exact: true }).click();

@@ -80,7 +80,7 @@ test.describe.serial('Darkroom end to end', () => {
     await page.goto('/#/generate');
     await page.getByRole('toolbar', { name: 'Result actions' }).getByRole('button', { name: 'Edit' }).click();
     const firstUrl = page.url();
-    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Remove BG' }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Cut-out', exact: true }).click();
     await page.getByRole('button', { name: /Remove background/ }).click();
     await page.waitForURL((u) => u.toString() !== firstUrl, { timeout: 180_000 });
     await page.waitForTimeout(1500);

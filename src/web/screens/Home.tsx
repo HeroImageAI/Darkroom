@@ -8,7 +8,7 @@ import { toast, useApp } from '../store';
 const CARDS: { screen: Screen; title: string; text: string; icon: typeof Wand2 }[] = [
   { screen: 'generate', title: 'Generate', text: 'Create a new picture from a prompt with Klein 9B or Qwen-Image 2.1.', icon: Wand2 },
   { screen: 'edit', title: 'Edit', text: 'Change, fix, extend or upscale a picture — one of yours or one you made.', icon: Layers },
-  { screen: 'compose', title: 'Compose', text: 'Arrange pictures, cut-outs and rough paint, then render them into one picture.', icon: Shapes },
+  { screen: 'compose', title: 'Compose', text: 'Build a scene on a canvas in Edit: pictures, cut-outs and paint, rendered into one picture.', icon: Shapes },
   { screen: 'video', title: 'Video', text: 'Bring a picture to life as a clip with LTX 2.5, with sound.', icon: Film },
   { screen: 'timeline', title: 'Timeline', text: 'Put your clips, your own videos and your own sound together into one film.', icon: Clapperboard },
   { screen: 'library', title: 'Library', text: 'Everything you have made or brought in, with its settings.', icon: LibraryIcon },

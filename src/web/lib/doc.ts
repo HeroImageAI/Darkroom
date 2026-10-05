@@ -12,6 +12,8 @@ import { floodMask, growMask } from '../../shared/flood';
 import { hexToRgb } from '../../shared/colour';
 import { histogram, mergeAdjust, NEUTRAL, type Adjust } from '../../shared/adjust';
 import { adjustGL } from './adjustgl';
+import { growShrink } from '../../shared/selection';
+import { seamWidths } from '../../shared/compose';
 
 export interface Layer {
   id: string;
@@ -121,11 +123,11 @@ export class CanvasDoc {
   }
 
   // ------------------------------------------------------------------ loading --
-  static async fromItem(itemId: string, width: number, height: number): Promise<CanvasDoc> {
+  static async fromItem(itemId: string, width: number, height: number, name = 'Picture'): Promise<CanvasDoc> {
     const d = new CanvasDoc(itemId, width, height);
     const c = newCanvas(width, height);
     c.getContext('2d')!.drawImage(await loadImage(fileUrl(itemId)), 0, 0, width, height);
-    d.layers = [d.make({ name: 'Picture', kind: 'picture', source: itemId, painted: false, canvas: c })];
+    d.layers = [d.make({ name, kind: 'picture', source: itemId, painted: false, canvas: c })];
     d.active = d.layers[0].id;
     return d;
   }
@@ -270,10 +272,17 @@ export class CanvasDoc {
   }
 
   /** A picture as a layer: a Library picture (above the active layer) or an AI result (on top), fitted to the canvas. */
-  addImageLayer(img: CanvasImageSource & { naturalWidth?: number; naturalHeight?: number; width: number; height: number }, o: { name: string; kind: LayerKind; source?: string; mask?: HTMLCanvasElement | null; where?: 'top' | 'above' }): Layer {
+  addImageLayer(img: CanvasImageSource & { naturalWidth?: number; naturalHeight?: number; width: number; height: number }, o: { name: string; kind: LayerKind; source?: string; mask?: HTMLCanvasElement | null; where?: 'top' | 'above'; fit?: number }): Layer {
     const w = img.naturalWidth || img.width;
     const h = img.naturalHeight || img.height;
-    const p = placeOnCanvas(w, h, this.width, this.height);
+    let p = placeOnCanvas(w, h, this.width, this.height);
+    // a piece for a scene (another shape than the canvas) lands smaller and centred, ready to place with Transform
+    if (!p.exact && o.fit && o.fit < 1) {
+      const s = Math.min((this.width * o.fit) / w, (this.height * o.fit) / h);
+      const dw = Math.round(w * s);
+      const dh = Math.round(h * s);
+      p = { x: Math.round((this.width - dw) / 2), y: Math.round((this.height - dh) / 2), w: dw, h: dh, exact: false };
+    }
     const c = newCanvas(this.width, this.height);
     c.getContext('2d')!.drawImage(img, p.x, p.y, p.w, p.h);
     const l = this.make({ name: o.name, kind: o.kind, source: o.source, painted: !o.source || !p.exact, canvas: c, maskCanvas: o.mask ?? null, maskRev: o.mask ? this.counter++ : 0 });
@@ -786,6 +795,103 @@ export class CanvasDoc {
     this.floating = null;
     this.dirty = 'all';
     this.repaint();
+  }
+
+  // -------------------------------------------------- Compose on the canvas --
+  /** Visible pixel layers above the bottom one: the pieces placed on a background (DECISIONS 125). */
+  private pieces(): Layer[] {
+    const vis = this.layers.filter((l) => l.visible && l.kind !== 'adjust');
+    return vis.slice(1);
+  }
+
+  /** What Auto suggests: share of the canvas covered by paint, and how many picture pieces sit on the background. */
+  composeStats(): { paintCoverage: number; pictures: number } {
+    const paint = this.pieces().filter((l) => l.kind === 'paint');
+    const s = Math.min(1, 96 / Math.max(this.width, this.height));
+    const c = newCanvas(Math.max(1, Math.round(this.width * s)), Math.max(1, Math.round(this.height * s)));
+    const g = c.getContext('2d', { willReadFrequently: true })!;
+    for (const l of paint) g.drawImage(this.masked(l.canvas, l.maskOn ? l.maskCanvas : null, 'b'), 0, 0, c.width, c.height);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let on = 0;
+    for (let i = 3; i < d.length; i += 4) if (d[i] > 32) on++;
+    return { paintCoverage: paint.length ? on / (c.width * c.height) : 0, pictures: this.pieces().filter((l) => l.kind !== 'paint').length };
+  }
+
+  /**
+   * Blend edges' mask: a band round every piece's edge (more outside than inside) plus a strip under each picture piece
+   * for its contact shadow; white = redraw. Null when there is no background with pieces on it.
+   */
+  seamMask(): HTMLCanvasElement | null {
+    const pieces = this.pieces();
+    if (!pieces.length) return null;
+    const W = this.width;
+    const H = this.height;
+    const sil = newCanvas(W, H);
+    this.render(sil, undefined, this.full(), pieces.map((l) => ({ ...l, blend: 'normal', opacity: 1 })));
+    const d = sil.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, W, H).data;
+    const a = new Uint8Array(W * H);
+    for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3] >= 128 ? 255 : 0;
+    const { outside, inside } = seamWidths(W, H);
+    const outer = growShrink(a, W, H, Math.max(1, Math.round(outside / 2)));
+    const inner = growShrink(a, W, H, -Math.max(1, Math.round(inside / 2)));
+    const m = newCanvas(W, H);
+    const g = m.getContext('2d')!;
+    const img = g.createImageData(W, H);
+    let any = false;
+    for (let i = 0; i < a.length; i++) {
+      const on = outer[i] >= 128 && inner[i] < 128;
+      const v = on ? 255 : 0;
+      any ||= on;
+      img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
+      img.data[i * 4 + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    // contact shadows: under the bottom edge of each picture piece
+    g.fillStyle = '#fff';
+    for (const l of pieces) {
+      if (l.kind === 'paint') continue;
+      const al = this.layerAlpha(l.id);
+      if (!al) continue;
+      let x0 = W;
+      let x1 = -1;
+      let y0 = H;
+      let y1 = -1;
+      for (let y = 0; y < H; y++)
+        for (let x = 0; x < W; x++)
+          if (al[y * W + x] > 128) {
+            if (x < x0) x0 = x;
+            if (x > x1) x1 = x;
+            if (y < y0) y0 = y;
+            if (y > y1) y1 = y;
+          }
+      if (x1 < 0) continue;
+      const h = y1 - y0 + 1;
+      g.fillRect(x0, y0 + h * 0.88, x1 - x0 + 1, h * 0.2);
+      any = true;
+    }
+    return any ? m : null;
+  }
+
+  /** Replace a layer's pixels with a picture (a cut-out that came back), fitted to the canvas; one undo step. */
+  replacePixels(id: string, img: CanvasImageSource & { naturalWidth?: number; naturalHeight?: number; width: number; height: number }, label: string): void {
+    const l = this.layers.find((x) => x.id === id);
+    if (!l || l.kind === 'adjust') return;
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+    const p = placeOnCanvas(w, h, this.width, this.height);
+    const c = newCanvas(this.width, this.height);
+    c.getContext('2d')!.drawImage(img, p.x, p.y, p.w, p.h);
+    const rev = this.counter++;
+    this.change(label, () => (this.layers = this.layers.map((x) => (x.id === id ? { ...x, canvas: c, painted: true, rev } : x))));
+  }
+
+  /** One layer's pixels (mask applied) as a PNG, for sending it to the AI on its own. */
+  layerBlob(id: string): Promise<Blob> {
+    const l = this.layers.find((x) => x.id === id)!;
+    const c = this.masked(l.canvas, l.maskOn ? l.maskCanvas : null, 'b');
+    const out = newCanvas(this.width, this.height);
+    out.getContext('2d')!.drawImage(c, 0, 0);
+    return new Promise((res, rej) => out.toBlob((b) => (b ? res(b) : rej(new Error('Could not read the layer'))), 'image/png'));
   }
 
   /** The selected layer's own pixels as a selection mask (0..255), mask applied. */
