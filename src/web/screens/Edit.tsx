@@ -34,6 +34,7 @@ import {
   RotateCcw,
   SquareDashed,
   Wand,
+  Move,
   Layers as LayersIcon,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -67,6 +68,7 @@ import { floodMask } from '../../shared/flood';
 import { brushById, penGamma } from '../../shared/brushes';
 import { FillBar, PaintBar, SelectBar, ShapeBar, type ColourState, type SelOpUi, type ShapeKind, type Symmetry } from '../components/CanvasTools';
 import { border as selBorder, combine as selCombine, growShrink } from '../../shared/selection';
+import { drawTransform, startTransform, TransformBar, TransformOverlay, type TransformState } from '../components/TransformTool';
 import { CanvasLayers } from '../components/CanvasLayers';
 import { AdjustPanel } from '../components/AdjustPanel';
 import { LOOKS } from '../../shared/adjust';
@@ -76,7 +78,7 @@ const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
-type Tool = 'move' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'marquee' | 'lasso' | 'wand' | 'smart' | 'frame' | 'crop';
+type Tool = 'move' | 'transform' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'marquee' | 'lasso' | 'wand' | 'smart' | 'frame' | 'crop';
 /** tools that make a selection with Shift = add, Alt = subtract (DECISIONS 124) */
 const SEL_TOOLS = new Set<Tool>(['marquee', 'lasso', 'wand']);
 /** tools that work on the canvas layers (DECISIONS 122, 123) */
@@ -101,6 +103,7 @@ interface Rect {
 
 const TOOLS: { id: Tool; label: string; key: string; icon: typeof Brush; disabled?: string }[] = [
   { id: 'move', label: 'Move', key: 'V', icon: Hand },
+  { id: 'transform', label: 'Transform the layer', key: 'T', icon: Move },
   { id: 'paint', label: 'Paint on a layer', key: 'P', icon: Paintbrush },
   { id: 'fill', label: 'Fill bucket', key: 'G', icon: PaintBucket },
   { id: 'shape', label: 'Shapes', key: 'U', icon: Shapes },
@@ -418,6 +421,14 @@ function Editor({ item }: { item: Item }) {
   const [wandOpts, setWandOpts] = usePersistent('edit.wand', { tolerance: 32, contiguous: true, merged: true });
   const [selPx, setSelPx] = usePersistent('edit.selPx', 8);
   const [marq, setMarq] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  // Clone brush: where it copies from (Alt-click), and the offset it keeps once you start painting
+  const [cloneSrc, setCloneSrc] = useState<{ x: number; y: number } | null>(null);
+  const [cloneOff, setCloneOff] = useState<{ dx: number; dy: number } | null>(null);
+  const [cloneMerged, setCloneMerged] = usePersistent('edit.cloneMerged', true);
+  // Transform (DECISIONS 124): the lifted pixels and where the handles put them
+  const [tf, setTf] = useState<TransformState | null>(null);
+  const tfRef = useRef<TransformState | null>(null);
+  tfRef.current = tf;
   /** the op for this click: Shift adds, Alt subtracts, both keep the overlap, else the chosen mode */
   const opFor = (e: { shiftKey: boolean; altKey: boolean }): SelOpUi => (e.shiftKey && e.altKey ? 'intersect' : e.shiftKey ? 'add' : e.altKey ? 'subtract' : selOp);
   const compCanvas = useRef<HTMLCanvasElement>(null);
@@ -532,6 +543,14 @@ function Editor({ item }: { item: Item }) {
     const t = setTimeout(() => setHist(doc.histogramBelow(adjLayer.id)), 50);
     return () => clearTimeout(t);
   }, [panel, adjLayer?.id, doc]); // eslint-disable-line react-hooks/exhaustive-deps
+  // the transform preview follows the handles; leaving the tool puts the pixels down
+  useEffect(() => {
+    if (tf) docRef.current?.updateTransform((g) => drawTransform(g, tf));
+  }, [tf]);
+  useEffect(() => {
+    if (tool !== 'transform' && tfRef.current) applyTf();
+  }, [tool]); // eslint-disable-line react-hooks/exhaustive-deps
+  useHotkey((e) => !!tfRef.current && (e.key === 'Enter' || e.key === 'Escape') && !e.ctrlKey && !e.metaKey, (e) => (e.key === 'Enter' ? applyTf() : cancelTf()), [maskEmpty]);
   // paint, fill and shapes stay inside the selection (DECISIONS 124)
   useEffect(() => {
     if (doc) doc.clip = !maskEmpty && layer.current ? layer.current.mask : null;
@@ -553,6 +572,31 @@ function Editor({ item }: { item: Item }) {
       m.setAlpha(selCombine(m.alpha(), al, selOp));
     }
     setMaskEmpty(m.isEmpty());
+  };
+  /** Lift the selected layer (or its selected part) for the Transform tool. */
+  const startTf = async () => {
+    const d = await ensureDoc();
+    if (!d || d.transforming) return;
+    // read the selection now (this can run from a hotkey bound at first render)
+    const r = d.beginTransform(layer.current && !layer.current.isEmpty() ? layer.current.mask : null);
+    if (typeof r === 'string') return toast(r, 'info');
+    setTf(startTransform(r.src, r.box));
+  };
+  const applyTf = () => {
+    const d = docRef.current;
+    const s = tfRef.current;
+    if (!d || !s) return;
+    d.commitTransform(s.mode === 'free' ? 'Transform' : s.mode === 'perspective' ? 'Perspective' : 'Warp');
+    setTf(null);
+    // the selected part has moved: its old outline no longer fits
+    if (layer.current && !layer.current.isEmpty()) {
+      layer.current.clear();
+      setMaskEmpty(true);
+    }
+  };
+  const cancelTf = () => {
+    docRef.current?.cancelTransform();
+    setTf(null);
   };
   /** Magic wand at a picture point: the area of similar colour, combined into the selection. */
   const wandAt = (p: { x: number; y: number }, op: SelOpUi) => {
@@ -681,6 +725,11 @@ function Editor({ item }: { item: Item }) {
     setPanel('layers');
     void ensureDoc();
   };
+  const chooseTransform = () => {
+    setTool('transform');
+    setPanel('layers');
+    void startTf();
+  };
 
   const fit = useCallback(() => {
     const el = stageRef.current;
@@ -760,12 +809,24 @@ function Editor({ item }: { item: Item }) {
       /* a pointer the browser no longer tracks */
     }
     const base = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
-    if (isCanvasTool(tool) && e.button === 0 && e.altKey) return pickColour(e);
+    if (isCanvasTool(tool) && e.button === 0 && e.altKey) {
+      if (tool === 'paint' && paint.engine === 'clone') {
+        setCloneSrc(toImage(e));
+        setCloneOff(null);
+        return;
+      }
+      return pickColour(e);
+    }
     if (tool === 'move' || e.button === 1 || (e.altKey && !SEL_TOOLS.has(tool))) {
       drag.current = { kind: 'pan', ...base };
       return;
     }
     const p = toImage(e);
+    // Transform: the handles take the pointer; a click elsewhere lifts the layer again after an Apply
+    if (tool === 'transform') {
+      if (!tfRef.current) void startTf();
+      return;
+    }
     if (tool === 'marquee') {
       drag.current = { kind: 'marquee', ...base, origin: p, op: opFor(e) };
       setMarq({ x: p.x, y: p.y, w: 0, h: 0 });
@@ -799,7 +860,15 @@ function Editor({ item }: { item: Item }) {
       // the pen's eraser end erases
       const erase = paintErase || (e.pointerType === 'pen' && (e.buttons & 32) !== 0);
       const mirror = { mirrorX: symmetry === 'v' || symmetry === 'both' ? W / 2 : undefined, mirrorY: symmetry === 'h' || symmetry === 'both' ? H / 2 : undefined };
-      if (d.beginStroke(paint, erase, p.x, p.y, pressureOf(e), { ...mirror, gamma: penGamma(penFeel) })) {
+      let clone: { dx: number; dy: number; merged: boolean } | undefined;
+      if (paint.engine === 'clone' && !erase) {
+        if (!cloneSrc) return toast('Alt-click where to copy from first, then paint where it should go.', 'info');
+        // aligned: the first stroke fixes the offset; later strokes keep it until you Alt-click again
+        const off = cloneOff ?? { dx: cloneSrc.x - p.x, dy: cloneSrc.y - p.y };
+        setCloneOff(off);
+        clone = { ...off, merged: cloneMerged };
+      }
+      if (d.beginStroke(paint, erase, p.x, p.y, pressureOf(e), { ...mirror, gamma: penGamma(penFeel), clone })) {
         strokePt.current = p;
         drag.current = { kind: 'stroke', ...base };
       }
@@ -948,6 +1017,7 @@ function Editor({ item }: { item: Item }) {
   const versionIndex = lineage.findIndex((v) => v.id === item.id);
   // With layers on, Undo walks the mask and layer steps in the order you made them and never leaves the picture.
   const undo = () => {
+    if (tfRef.current) return cancelTf();
     const o = order.current;
     for (let k = o.undo.pop(); k; k = o.undo.pop()) {
       if (k === 'mask' && layer.current?.undo()) {
@@ -988,6 +1058,7 @@ function Editor({ item }: { item: Item }) {
     (e) => {
       const t = TOOLS.find((x) => x.key.toLowerCase() === e.key.toLowerCase())!.id;
       if (isCanvasTool(t)) return chooseCanvasTool(t);
+      if (t === 'transform') return chooseTransform();
       setTool(t);
       if (t === 'frame') setMode('outpaint');
     },
@@ -1432,6 +1503,7 @@ function Editor({ item }: { item: Item }) {
             disabled={!!t.disabled}
             onClick={() => {
               if (isCanvasTool(t.id)) return chooseCanvasTool(t.id);
+              if (t.id === 'transform') return chooseTransform();
               setTool(t.id);
               if (t.id === 'frame') setMode('outpaint');
             }}
@@ -1564,6 +1636,17 @@ function Editor({ item }: { item: Item }) {
               data-testid="mask-overlay"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', display: compare ? 'none' : 'block', filter: MASK_OUTLINE_FILTER }}
             />
+            {tool === 'paint' && paint.engine === 'clone' && cloneSrc && !compare && (() => {
+              // where the clone copies from: the spot you chose, then following the brush at the same distance
+              let at = cloneSrc;
+              if (cloneOff && cursor && stageRef.current) {
+                const r = stageRef.current.getBoundingClientRect();
+                const q = toImage({ clientX: r.left + cursor.x, clientY: r.top + cursor.y });
+                at = { x: q.x + cloneOff.dx, y: q.y + cloneOff.dy };
+              }
+              return <div className="clone-src" aria-hidden="true" style={{ left: at.x * view.scale - 9, top: at.y * view.scale - 9 }} />;
+            })()}
+            {tf && tool === 'transform' && !compare && <TransformOverlay s={tf} set={setTf} W={W} H={H} scale={view.scale} toImage={toImage} />}
             {marq && tool === 'marquee' && (
               <div className={`marquee-box ${marqueeKind === 'ellipse' ? 'ellipse' : ''}`} style={{ left: marq.x * view.scale, top: marq.y * view.scale, width: marq.w * view.scale, height: marq.h * view.scale }} />
             )}
@@ -1668,6 +1751,12 @@ function Editor({ item }: { item: Item }) {
         </div>
 
         {/* the canvas tools' options: a row of their own, so they never cover the picture */}
+        {tool === 'transform' && tf && !compare && <TransformBar s={tf} set={setTf} onApply={applyTf} onCancel={cancelTf} />}
+        {tool === 'transform' && !tf && !compare && (
+          <div className="paint-bar" role="toolbar" aria-label="Transform">
+            <span className="note">Click the picture to transform the selected layer{!maskEmpty ? ' (the part inside the selection)' : ''}.</span>
+          </div>
+        )}
         {SEL_TOOLS.has(tool) && !compare && (
           <SelectBar
             tool={tool as 'marquee' | 'wand' | 'lasso'}
@@ -1700,6 +1789,7 @@ function Editor({ item }: { item: Item }) {
               target={doc?.activeLayer ? { layer: doc.activeLayer.name, mask: doc.target === 'mask' } : null}
               clipped={!maskEmpty}
               onDeselect={() => selAction('none')}
+              clone={{ set: !!cloneSrc, merged: cloneMerged, setMerged: setCloneMerged }}
             />
           )}
           {tool === 'fill' && !compare && (

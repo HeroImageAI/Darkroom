@@ -671,3 +671,9 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 .marquee-box { position: absolute; border: 1.5px dashed #F0B44C; background: rgba(240,180,76,.08); pointer-events: none; }
 .marquee-box.ellipse { border-radius: 50%; }
 .clip-note { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); }
+/* Transform (DECISIONS 124) */
+.tf-overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 2; }
+.tf-body { fill: rgba(240,180,76,.05); stroke: #F0B44C; stroke-width: 1.5; vector-effect: non-scaling-stroke; pointer-events: all; cursor: move; }
+.tf-handle { fill: #121210; stroke: #F0B44C; stroke-width: 1.5; vector-effect: non-scaling-stroke; pointer-events: all; cursor: pointer; }
+.tf-line { fill: none; stroke: rgba(240,180,76,.7); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
+.clone-src { position: absolute; width: 18px; height: 18px; border-radius: 50%; border: 1.5px dashed #F0B44C; box-shadow: 0 0 0 1px rgba(0,0,0,.6); pointer-events: none; }

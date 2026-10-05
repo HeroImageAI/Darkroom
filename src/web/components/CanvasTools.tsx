@@ -80,7 +80,10 @@ export function PaintBar({
   target,
   clipped,
   onDeselect,
+  clone,
 }: {
+  /** the Clone brush: is a source set, and does it copy from all layers */
+  clone?: { set: boolean; merged: boolean; setMerged: (v: boolean) => void };
   clipped?: boolean;
   onDeselect?: () => void;
   brushId: string;
@@ -118,7 +121,7 @@ export function PaintBar({
         </div>
         <p className="note" style={{ margin: '6px 0' }}>
           {preset.tip}
-          {preset.engine !== 'paint' ? ' Works on the selected layer’s own pixels.' : ''}
+          {preset.engine === 'smudge' || preset.engine === 'filter' ? ' Works on the selected layer’s own pixels.' : ''}
         </p>
         <div className="brush-more">
           <Mini label="Hardness" value={Math.round(s.hardness * 100)} min={0} max={100} onChange={(v) => set({ hardness: v / 100 })} aria="Brush hardness" />
@@ -155,6 +158,14 @@ export function PaintBar({
         <span className="note" title="Alt-click the picture to pick a colour">
           <Pipette size={13} /> Alt
         </span>
+      )}
+      {s.engine === 'clone' && clone && (
+        <>
+          <span className={`note ${clone.set ? '' : 'clip-note'}`}>{clone.set ? 'Alt-click to copy from somewhere else' : 'Alt-click where to copy from'}</span>
+          <label className="check" style={{ margin: 0 }} title="Copy what you see (all layers); off copies only the selected layer">
+            <input type="checkbox" checked={clone.merged} onChange={(e) => clone.setMerged(e.target.checked)} /> All layers
+          </label>
+        </>
       )}
       <Mini label="Size" value={s.size} min={1} max={500} onChange={(v) => set({ size: v })} aria="Brush size" title="Brush size ([ and ])" />
       <Mini label={s.engine === 'paint' ? 'Opacity' : 'Strength'} value={Math.round(s.opacity * 100)} min={1} max={100} onChange={(v) => set({ opacity: v / 100 })} aria="Brush opacity" />
@@ -206,6 +217,14 @@ function BrushIcon({ id }: { id: string }) {
       </svg>
     );
   }
+  if (id === 'clone')
+    return (
+      <svg width="34" height="22" viewBox="0 0 34 22" aria-hidden="true">
+        <circle cx="10" cy="11" r="6" fill="none" stroke={stroke} strokeDasharray="2 2" />
+        <circle cx="24" cy="11" r="6" fill={stroke} opacity=".7" />
+        <path d="M15 11 h4" stroke={stroke} />
+      </svg>
+    );
   const w = { pencil: 1.2, ink: 2.4, marker: 6, airbrush: 9, chalk: 5, round: 4, smudge: 5 }[id] ?? 3;
   return (
     <svg width="34" height="22" viewBox="0 0 34 22" aria-hidden="true">

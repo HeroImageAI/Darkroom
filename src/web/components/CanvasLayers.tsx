@@ -277,7 +277,7 @@ export function CanvasLayers({
           {doc.history.length === 0 && <li className="muted">Nothing yet</li>}
           {doc.history.map((h, i) => (
             <li key={i}>
-              <button className="btn xs ghost" title="Undo back to here" onClick={() => onUndoTo(doc.history.length - 1 - i)}>
+              <button className="btn xs ghost" title="Undo back to here" aria-label={`Undo back to: ${h}`} onClick={() => onUndoTo(doc.history.length - 1 - i)}>
                 {h}
               </button>
             </li>

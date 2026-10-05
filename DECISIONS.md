@@ -871,3 +871,23 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     (H) the canvas to draw at a comfortable angle — only the view; pointer maths goes through the inverse transform.
     Ctrl-click with a canvas tool picks the layer under the pen. The tool options moved out of the canvas into their
     own row above the versions, so they never cover the picture.
+124. **Edit suite v3.27: photo — adjustment layers, selections, transform, clone.** **Adjustment layers** (Adjust tab):
+    exposure, brightness, contrast, levels (with histogram and Auto), curves (RGB and per channel, monotone so they never
+    overshoot), temperature, tint, hue, saturation, vibrance, lightness, black & white, split tone and grain, plus six
+    looks (Punch, Faded film, Golden hour, Blue hour, Silver gelatin, Teal & orange). They change everything below them
+    and keep no pixels: the tone settings fold into four 256-entry tables and one WebGL pass applies tables and colour to
+    only the region that changed (so painting under one stays quick); grain is keyed to picture pixels so it never
+    crawls. A mask limits where it applies; opacity and blend work as on any layer; it merges down onto a picture or paint
+    layer. **Selections**: the AI mask is the selection. Marquee (M, rectangle or ellipse), Lasso, Magic wand (W:
+    tolerance, connected only, all layers or the selected one) and Smart select; Shift adds, Alt subtracts, Shift+Alt
+    keeps the overlap, else the bar's mode (default Add, so the mask brush and lasso behave as before). All / None /
+    Invert (Ctrl+A, Ctrl+D, Ctrl+Shift+I), Grow and Shrink by a chamfer distance transform (40 px costs what 1 px does),
+    Feather, Border, From layer. Painting, fills and shapes stay inside the selection (the paint bar says so, with
+    Deselect). **Transform** (T): the selected layer, or its part inside the selection, is lifted; Free moves, scales
+    from the opposite corner or side (Shift keeps the shape) and turns (Shift snaps 15°) with one exact transformed draw;
+    Perspective drags four corners (kept convex); Warp drags a 4 × 4 grid, refined bilinearly to 24 × 24. Perspective and
+    warp are drawn as textured triangles on the GPU — the 2D canvas clipped each triangle with anti-aliasing and left
+    hairline seams. Enter applies (one undo step, a new canvas swapped in), Esc or Ctrl+Z cancels, leaving the tool
+    applies. **Clone** brush: Alt-click the source, then paint; the first stroke fixes the offset (aligned), copying
+    what you see or only the selected layer. e2e: each run imports a fresh copy of a picture (the suite no longer runs
+    out of unlayered ones); a 60 s action timeout so a missing control fails instead of hanging.

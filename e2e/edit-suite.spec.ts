@@ -8,10 +8,16 @@ import { expect, test, type Page } from '@playwright/test';
 
 const shot = (page: Page, name: string) => page.screenshot({ path: `proof/es-${name}.png` });
 
-async function pickPicture(page: Page): Promise<{ id: string; width: number; height: number; version: number }> {
-  const r = await page.request.get('/api/items?limit=300');
-  const it = ((await r.json()).items as any[]).find((i) => i.kind === 'image' && !i.layered && i.mode === 'generate' && i.width <= 1600 && i.height <= 1600 && !i.deleted_at);
-  expect(it, 'a generated picture without layers').toBeTruthy();
+/** A fresh copy of a picture (imported, so each run starts without layers): a generated one, or one `pick` finds. */
+async function pickPicture(page: Page, pick?: (i: any) => boolean): Promise<{ id: string; width: number; height: number; version: number }> {
+  const r = await page.request.get('/api/items?limit=2000');
+  const src = ((await r.json()).items as any[]).find((i) => i.kind === 'image' && !i.deleted_at && (pick ? pick(i) : i.mode === 'generate' && i.width <= 1600 && i.height <= 1600));
+  expect(src, 'a picture to copy').toBeTruthy();
+  const buffer = Buffer.from(await (await page.request.get(`/api/items/${src.id}/file`)).body());
+  const up = await (await page.request.post('/api/upload', { multipart: { file: { name: 'edit-suite.png', mimeType: 'image/png', buffer } } })).json();
+  const job = await (await page.request.post('/api/jobs', { data: { workflow: 'import', params: { image_1: up.name }, meta: { mode: 'import', model: 'Imported', prompt: 'edit suite e2e' } } })).json();
+  let it: any;
+  await expect.poll(async () => (it = ((await (await page.request.get(`/api/jobs/${job.id}/items`)).json()) as any[])[0]) && it.width, { timeout: 60_000 }).toBeTruthy();
   return it;
 }
 
@@ -73,7 +79,7 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
     await page.getByRole('tab', { name: /Layers/ }).click();
     await page.getByRole('button', { name: 'Start layers' }).click();
     await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(1);
-    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
     await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(2);
     await page.keyboard.press('p');
     await expect(page.getByRole('toolbar', { name: 'Paint' })).toBeVisible();
@@ -82,7 +88,7 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
     await page.keyboard.press('Escape');
     await page.getByLabel('Brush size').fill('40');
     await stroke(page, [[W * 0.2, H * 0.5], [W * 0.8, H * 0.5]], W, H);
-    await expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 15_000 });
+    await saved(page);
     await shot(page, 'paint-stroke');
 
     // blend + opacity on the paint layer
@@ -103,7 +109,7 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
     await expect(page.locator('.history-list li.future')).toContainText('Hide on mask');
     await page.keyboard.press('Control+y');
     await expect(page.locator('.history-list li.future')).toHaveCount(0);
-    await expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 15_000 });
+    await saved(page);
     await shot(page, 'mask-blend');
 
     // the project is on disk: reload and it comes back
@@ -121,13 +127,13 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
 
   test('Pen pressure: a light touch paints a thinner line than a firm one (Wacom)', async () => {
     const { width: W, height: H } = pic;
-    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
     await page.keyboard.press('p');
     await page.getByLabel('Brush size').fill('60');
     await page.getByLabel('Stabiliser').fill('0');
     await penStroke(page, [W * 0.2, H * 0.25], [W * 0.8, H * 0.25], 0.15, W, H);
     await penStroke(page, [W * 0.2, H * 0.75], [W * 0.8, H * 0.75], 1, W, H);
-    await expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 15_000 });
+    await saved(page);
     const proj = await (await page.request.get(`/api/items/${pic.id}/project`)).json();
     const top = proj.layers[proj.layers.length - 1];
     const png = Buffer.from(await (await page.request.get(`/api/items/${pic.id}/project/layers/${top.id}.png?r=${top.rev}`)).body());
@@ -173,7 +179,7 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
     await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(before + 1);
     await expect(page.locator('.layer-row.on')).toContainText('Instruct');
     await expect(page.locator('.layer-row.on .thumb-wrap.mask')).toBeVisible();
-    await expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 15_000 });
+    await saved(page);
     const proj = await (await page.request.get(`/api/items/${pic.id}/project`)).json();
     const top = proj.layers[proj.layers.length - 1];
     expect(top).toMatchObject({ kind: 'result', mask: true, painted: false });
@@ -199,14 +205,14 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
 test.describe.serial('Edit suite · large photos', () => {
   test('A 9 MP photo paints smoothly on a layer (frame time while drawing)', async ({ page }) => {
     const r = await page.request.get('/api/items?limit=2000');
-    const it = ((await r.json()).items as any[]).find((i) => i.kind === 'image' && !i.layered && i.width * i.height > 8e6 && i.width * i.height < 16e6);
-    test.skip(!it, 'no large photo in this library');
+    test.skip(!((await r.json()).items as any[]).some((i) => i.kind === 'image' && i.width * i.height > 8e6 && i.width * i.height < 16e6), 'no large photo in this library');
+    const it = await pickPicture(page, (i) => i.width * i.height > 8e6 && i.width * i.height < 16e6);
     const { width: W, height: H } = it;
     await page.goto(`/#/edit/${it.id}`);
     await expect(page.getByAltText('Picture being edited')).toBeVisible();
     await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
     await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(1, { timeout: 60_000 });
-    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
     await page.getByLabel('Brush size').fill('80');
     const b = (await page.getByAltText('Picture being edited').boundingBox())!;
     const ms = await page.evaluate(
@@ -232,7 +238,7 @@ test.describe.serial('Edit suite · large photos', () => {
     );
     console.log(`9 MP (${W}x${H}) paint frame p90: ${ms.toFixed(1)} ms`);
     expect(ms).toBeLessThan(60);
-    await expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 30_000 });
+    await saved(page);
     await page.screenshot({ path: 'proof/es-large-photo.png' });
   });
 });
@@ -245,7 +251,11 @@ async function layerPixels(page: Page, itemId: string, i: number) {
   const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   return { layer: l, at: (x: number, y: number) => Array.from(data.subarray((Math.round(y) * info.width + Math.round(x)) * 4, (Math.round(y) * info.width + Math.round(x)) * 4 + 4)) };
 }
-const saved = (page: Page) => expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 20_000 });
+/** Wait for the change just made to be saved: let the status leave "Saved" first, then wait for it to return. */
+const saved = async (page: Page) => {
+  await page.waitForTimeout(250);
+  await expect(page.getByRole('status', { name: 'Layers saved' })).toHaveText('Saved', { timeout: 20_000 });
+};
 
 test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
   let page: Page;
@@ -273,7 +283,7 @@ test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
     await page.goto(`/#/edit/${pic.id}`);
     await expect(page.getByAltText('Picture being edited')).toBeVisible();
     await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
-    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
     await pickBrush('Ink pen');
     await page.getByLabel('Brush size').fill('14');
     await pickBrush('Marker');
@@ -292,7 +302,7 @@ test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
 
   test('Shapes draw an outline; the fill bucket fills inside it and nowhere else', async () => {
     const { width: W, height: H } = pic;
-    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
     await page.getByRole('button', { name: 'Shapes (U)' }).click();
     await page.getByRole('button', { name: 'Rectangle' }).click();
     await page.getByRole('button', { name: 'Outline' }).click();
@@ -312,7 +322,7 @@ test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
 
   test('Symmetry mirrors a stroke across the middle', async () => {
     const { width: W, height: H } = pic;
-    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
     await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
     await page.getByRole('button', { name: 'Mirror left and right' }).click();
     await stroke(page, [[W * 0.1, H * 0.15], [W * 0.2, H * 0.15]], W, H);
@@ -444,7 +454,7 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     expect(await sel(W * 0.7, H * 0.4)).toBe(0);
     // paint a stroke right across it: only the part inside lands
     await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
-    await page.getByRole('button', { name: 'New layer' }).click();
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
     await expect(page.locator('.clip-note')).toBeVisible();
     await page.getByLabel('Brush size').fill('30');
     await stroke(page, [[W * 0.1, H * 0.4], [W * 0.8, H * 0.4]], W, H);
@@ -478,5 +488,109 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     await page.mouse.click(p.x, p.y);
     await page.keyboard.up('Alt');
     await expect.poll(() => sel(W * 0.35, H * 0.4)).toBe(0);
+  });
+
+  /** Drag an element of the page by (dx, dy) screen pixels. */
+  const dragBy = async (el: ReturnType<Page['locator']>, dx: number, dy: number) => {
+    const b = (await el.boundingBox())!;
+    const x = b.x + b.width / 2;
+    const y = b.y + b.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y + dy, { steps: 10 });
+    await page.mouse.up();
+  };
+
+  test('Transform moves and scales a layer; Esc cancels; perspective and warp bend it (one undo step each)', async () => {
+    const { width: W, height: H } = pic;
+    // a filled square on a new layer
+    await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
+    await page.getByRole('button', { name: 'Shapes (U)' }).click();
+    await page.getByRole('button', { name: 'Rectangle' }).click();
+    await page.getByRole('button', { name: 'Filled' }).click();
+    await stroke(page, [[W * 0.1, H * 0.1], [W * 0.3, H * 0.3]], W, H);
+    await saved(page);
+    let l = await layerPixels(page, pic.id, -1);
+    expect(l.at(W * 0.2, H * 0.2)[3]).toBe(255);
+    // move it right by about a third of the picture
+    await page.keyboard.press('t');
+    const body = page.getByRole('img', { name: 'Transform handles' }).locator('polygon');
+    await expect(body).toBeVisible();
+    const b = (await page.getByAltText('Picture being edited').boundingBox())!;
+    const k = b.width / W;
+    await dragBy(body, W * 0.35 * k, 0);
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await saved(page);
+    l = await layerPixels(page, pic.id, -1);
+    expect(l.at(W * 0.2, H * 0.2)[3]).toBe(0);
+    expect(l.at(W * 0.55, H * 0.2)[3]).toBe(255);
+    await shot(page, 'transform-moved');
+    // Esc puts it back as it was
+    await page.mouse.click(b.x + 5, b.y + 5);
+    await dragBy(page.getByRole('img', { name: 'Transform handles' }).locator('polygon'), 0, H * 0.3 * k);
+    await page.keyboard.press('Escape');
+    await saved(page);
+    expect((await layerPixels(page, pic.id, -1)).at(W * 0.55, H * 0.2)[3]).toBe(255);
+    // scale from the bottom right: the top left stays, the square grows
+    await page.mouse.click(b.x + 5, b.y + 5);
+    await dragBy(page.getByLabel('Scale from the bottom right'), W * 0.1 * k, H * 0.1 * k);
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await saved(page);
+    l = await layerPixels(page, pic.id, -1);
+    expect(l.at(W * 0.47, H * 0.12)[3]).toBe(255); // top left corner area kept
+    expect(l.at(W * 0.72, H * 0.36)[3]).toBe(255); // grown past the old bottom right (0.65, 0.3)
+    // perspective: pull one corner out
+    await page.mouse.click(b.x + 5, b.y + 5);
+    await page.getByRole('group', { name: 'Transform mode' }).getByRole('button', { name: 'Perspective' }).click();
+    await dragBy(page.getByLabel('Corner 3'), W * 0.1 * k, H * 0.15 * k);
+    await page.getByRole('button', { name: 'Apply' }).click();
+    // warp: bend one inner point
+    await page.mouse.click(b.x + 5, b.y + 5);
+    await page.getByRole('group', { name: 'Transform mode' }).getByRole('button', { name: 'Warp' }).click();
+    await dragBy(page.getByLabel('Warp point 6'), W * 0.05 * k, H * 0.05 * k);
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await saved(page);
+    await shot(page, 'transform-warped');
+    await page.locator('details.layer-history summary').click();
+    const hist = await page.locator('.history-list').innerText();
+    expect(hist).toContain('Perspective');
+    expect(hist).toContain('Warp');
+    // one Ctrl+Z takes the warp away
+    const before = (await layerPixels(page, pic.id, -1)).layer.rev;
+    await page.keyboard.press('Control+z');
+    await saved(page);
+    expect((await layerPixels(page, pic.id, -1)).layer.rev).not.toBe(before);
+  });
+
+  test('Clone copies one part of the picture onto another (Alt-click the source, then paint)', async () => {
+    const { width: W, height: H } = pic;
+    await page.keyboard.press('p');
+    await page.getByRole('button', { name: 'New layer', exact: true }).click();
+    await page.getByRole('button', { name: 'Brush', exact: true }).click();
+    await page.getByRole('option', { name: 'Clone', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await expect(page.getByText('Alt-click where to copy from')).toBeVisible();
+    // the average of a small patch: a single pixel of a detailed picture moves too much with sub-pixel offsets
+    const patch = async (get: (x: number, y: number) => Promise<number[]> | number[], cx: number, cy: number) => {
+      const s = [0, 0, 0];
+      for (let dy = -4; dy <= 4; dy += 2) for (let dx = -4; dx <= 4; dx += 2) (await get(cx + dx, cy + dy)).slice(0, 3).forEach((v, k) => (s[k] += v / 25));
+      return s;
+    };
+    const want = await patch((x, y) => shownPixel(page, x, y), W * 0.8, H * 0.85);
+    const src = await at(page, W * 0.8, H * 0.85, W, H);
+    await page.keyboard.down('Alt');
+    await page.mouse.click(src.x, src.y);
+    await page.keyboard.up('Alt');
+    await expect(page.getByText('Alt-click to copy from somewhere else')).toBeVisible();
+    // paint a dab at (0.2, 0.85): it should show what is at (0.8, 0.85)
+    const dst = await at(page, W * 0.2, H * 0.85, W, H);
+    await page.mouse.click(dst.x, dst.y);
+    await saved(page);
+    const lp = await layerPixels(page, pic.id, -1);
+    expect(lp.at(W * 0.2, H * 0.85)[3]).toBe(255);
+    const got = await patch((x, y) => lp.at(x, y), W * 0.2, H * 0.85);
+    for (let k = 0; k < 3; k++) expect(Math.abs(got[k] - want[k])).toBeLessThan(14);
+    await shot(page, 'clone');
   });
 });
