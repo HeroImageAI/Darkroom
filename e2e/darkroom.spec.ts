@@ -124,7 +124,7 @@ test.describe.serial('Darkroom end to end', () => {
     await expect(page.getByLabel('Details').getByText('Length')).toBeVisible();
     await shot(page, 'E10-library-video');
     await page.getByRole('button', { name: 'All', exact: true }).click();
-    await page.getByPlaceholder(/Search prompt/).fill('lighthouse');
+    await page.getByPlaceholder(/^Search/).fill('lighthouse');
     await expect(page.getByRole('listitem').first()).toBeVisible();
     await page.getByRole('listitem').first().click();
     await expect(page.getByRole('button', { name: /Reuse settings/ })).toBeVisible();

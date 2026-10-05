@@ -791,22 +791,22 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.getByRole('button', { name: /^Klein 9B/ }).click();
     await page.getByLabel('Prompt').fill('a ceramic teapot on linen, morning light');
     await page.getByRole('complementary', { name: 'History' }).locator('.rail-item').first().getByRole('button').first().click();
-    await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+    await expect(page.getByText(/Nothing developed yet|Ready for a new picture/)).toHaveCount(0);
 
     // a new tab = a fresh launch (sessionStorage is per tab, localStorage is shared)
     const fresh = await page.context().newPage();
     await fresh.goto('/#/generate');
     await expect(fresh.getByLabel('Prompt')).toHaveValue('');
-    await expect(fresh.getByText('Nothing developed yet')).toBeVisible();
+    await expect(fresh.getByText(/Nothing developed yet|Ready for a new picture/)).toBeVisible();
     await expect(fresh.getByRole('button', { name: /^Klein 9B/ })).toHaveAttribute('aria-pressed', 'true');
     await fresh.close();
 
     await page.getByRole('button', { name: 'New', exact: true }).click();
     await expect(page.getByLabel('Prompt')).toHaveValue('');
-    await expect(page.getByText('Nothing developed yet')).toBeVisible();
+    await expect(page.getByText(/Nothing developed yet|Ready for a new picture/)).toBeVisible();
     await page.getByRole('button', { name: 'Undo' }).last().click();
     await expect(page.getByLabel('Prompt')).toHaveValue('a ceramic teapot on linen, morning light');
-    await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+    await expect(page.getByText(/Nothing developed yet|Ready for a new picture/)).toHaveCount(0);
   });
 
   test('Generate and Video: deleted work leaves the screen', async () => {
@@ -817,9 +817,9 @@ test.describe.serial('Darkroom v2 features', () => {
       await page.goto('/#/generate');
       // History lists the same pictures in the same order (many test pictures share a prompt, so pick by position)
       await page.getByRole('complementary', { name: 'History' }).locator('.rail-item').nth(3).getByRole('button').first().click();
-      await expect(page.getByText('Nothing developed yet')).toHaveCount(0);
+      await expect(page.getByText(/Nothing developed yet|Ready for a new picture/)).toHaveCount(0);
       await page.request.post('/api/items/delete', { data: { ids: [victim.id] } });
-      await expect(page.getByText('Nothing developed yet')).toBeVisible();
+      await expect(page.getByText(/Nothing developed yet|Ready for a new picture/)).toBeVisible();
       // Video: a start frame picked from that picture goes too
       await page.request.post('/api/items/restore', { data: { ids: [victim.id] } });
       await page.goto(`/#/video?start=${victim.id}`);
@@ -1167,10 +1167,10 @@ test.describe.serial('Darkroom v2 features', () => {
     await details.getByLabel('Title').click(); // leaving the notes saves them
     const id = await tiles.first().getAttribute('data-id');
     await expect.poll(async () => (await (await page.request.get(`/api/items/${id}`)).json()).item).toMatchObject({ title, notes: 'Resolved prompt: … | enhance off' });
-    await page.getByPlaceholder(/Search prompt/).fill(title.slice(0, 24));
+    await page.getByPlaceholder(/^Search/).fill(title.slice(0, 24));
     await expect(tiles.first()).toHaveAttribute('data-id', id!);
     await expect(tiles.first()).toContainText('APP-IMG-01');
-    await page.getByPlaceholder(/Search prompt/).fill('');
+    await page.getByPlaceholder(/^Search/).fill('');
   });
 
   test('Library: compare two pictures side by side and on a slider, and save the comparison (P3)', async () => {

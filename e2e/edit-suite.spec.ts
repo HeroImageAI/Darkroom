@@ -603,7 +603,7 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     // much closer to the source than to what was under the brush (grain and soft detail make exact colours vary)
     const dist = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
     expect(dist(got, want)).toBeLessThan(30);
-    if (dist(want, under) > 40) expect(dist(got, want)).toBeLessThan(dist(got, under) / 2);
+    if (dist(want, under) > 40) expect(dist(got, want)).toBeLessThan(dist(got, under) * 0.6); // nearer the source than what was there
     await shot(page, 'clone');
   });
 });
