@@ -838,3 +838,21 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     turnaround in a forest stream, the camera circling — the exact shoe (sculpted midsole, grey and white panels) in a
     scene it was never in. With the product small in a busy action shot (a runner's legs at dawn) it is not recognisable:
     keep the product the subject.
+122. **Edit suite v3.25: the canvas and layers** (Krita AI review, `docs/edit-suite-plan.md`; Koos approved the plan,
+    paints with a Wacom). Edit's picture can become a stack of layers — the picture, paint layers, AI results and Library
+    pictures — each with visibility, lock, alpha lock, opacity, one of the 16 browser blend modes and a layer mask
+    (white = shown; painted with the brush hiding and the eraser showing). Held in the browser as canvases at the
+    picture's size (`src/web/lib/doc.ts`); a stack change is one undo step with shared canvases, a stroke keeps only the
+    pixels it touched, slider drags merge into one step; one Ctrl+Z order runs across the AI mask and the layers, and with
+    layers on it never jumps to another version. **Paint** (P): round dabs with pen pressure on size (and optionally
+    opacity), hardness, a stabiliser, coalesced pointer events for smooth Wacom lines, the pen's eraser end erases, X
+    toggles erase, Alt-click picks a colour, recent colours. A stroke paints into a scratch canvas shown at the brush
+    opacity and is laid down on pen-up, so overlapping dabs never build past it; while painting only the touched area
+    is recomposited (a 9 MP photo: ~25 ms a frame headless). Saved with the picture under `data/projects/<item>/`
+    (project.json + layer and mask PNGs, uploaded only when changed; an untouched picture or AI-result layer is loaded
+    from its Library item, not copied); the Library marks pictures that have layers. **Flatten to new version** merges
+    them into the next version (`edit:canvas`, which links back to the layers). With layers on, the AI works on the
+    merged layers, and an Instruct / Fill / Enhance / Cut-out result that fits the canvas comes back as a layer on top,
+    masked to the selection it used (which then clears) — it is still saved as a version; anything else (a new shape,
+    upscale, outpaint) opens as a version as before. Separated layers (Layers mode) can be opened as canvas layers.
+    No tiling yet: very large photos use more memory per layer (a 24 MP picture is ~96 MB a layer).
