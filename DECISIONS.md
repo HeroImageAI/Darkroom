@@ -994,3 +994,19 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     the event socket reconnects, screens re-read the Library (a change made while it was down was missed; found as a
     flaky test). Checked and fine: Qwen PE-T2I Enhance on Generate, 8/8 clean (only PE-I2I collapses, DECISIONS 129).
     The LTX Ingredients render still stalls now and then (~700 s instead of ~100 s, three times today) — environmental.
+132. **Edit suite v3.30: live painting, measured first.** The plan's bar was ≤2 s a frame. Measured on this PC, warm
+    (`scripts/try-live-speed.ts`): Klein Refine (img2img) at 0.5 MP 6.6 s, at 0.6 MP 7.8 s; Klein edit at 1 MP 13 s.
+    ComfyUI 0.38 streams Klein's weights in for each run ("prepared for dynamic VRAM loading … Staged"; 1.6 s a step at
+    0.6 MP, 2.7 s for edit) — changing that means changing how Comfy Desktop launches ComfyUI, which Darkroom leaves
+    alone. So it renders **when you pause**, not per stroke. Which render: **Refine keeps flat painted shapes flat**
+    (`scripts/try-live-strength.ts`: a red-and-green apple painted flat stayed a flat graphic at 60–70 %, became a photo
+    at 80 % on 1 of 3 seeds; a "generate"-style prompt instead of Refine's made no difference), while the Sketch wording
+    on Klein edit renders it every time. Klein edit's size does not matter — the graph works at 1 MP whatever comes in —
+    so `klein_edit_live` (a new graph: Klein edit with its work and reference size at 0.25 MP) renders a frame in
+    ~4 s (0.4 MP: 5.6 s) and the 0.25 MP frames look nearly as good as 1 MP (`scripts/try-live-edit.ts`). **Live**
+    (a button beside the view controls) turns the canvas into layers if needed, renders 0.9 s after the last change
+    with one seed while it is on, cancels a frame made stale by a newer stroke, shows the newest frame in a panel beside
+    the canvas (the canvas fits to the room left of it), takes "what it should look like" and "keep the colours I
+    paint", and **Keep as layer** adds the frame on top (paint over it and Live carries on from there). Frames are jobs
+    with `meta.preview`: the server attaches the file to the job and makes **no Library item** (like mask jobs); files
+    go to `darkroom/live`. A black disc + "a ripe red apple…" comes back as a photographed apple in ~6 s, upload and all.

@@ -487,6 +487,12 @@ export class JobManager {
     const err = historyError(h);
     if (err) return this.fail(jobId, err);
     const spec = this.manifest().workflows[job.workflow];
+    if (job.meta.preview) {
+      // a live-painting frame (v3.30): shown in Edit, never a Library item
+      const files = filesFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.image ?? 'DR_OUTPUT')).map(ref);
+      this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, files } });
+      return;
+    }
     if (spec.kind === 'mask') {
       const files = filesFromHistory(h, findByTitle(job.api_prompt as ApiPrompt, spec.outputs.mask ?? 'DR_OUTPUT')).map(ref);
       this.patch(jobId, { status: 'done', progress: 1, stage: 'Done', finished_at: Date.now(), meta: { ...job.meta, files } });

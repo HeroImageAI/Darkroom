@@ -921,3 +921,54 @@ test.describe.serial('Edit suite · sketch to render (v3.29)', () => {
     await shot(page, 'line-art');
   });
 });
+
+test.describe.serial('Edit suite · live painting (v3.30)', () => {
+  let page: Page;
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
+  });
+  test.afterAll(async () => page.context().close());
+
+  test('Live: paint, pause, and a Klein frame appears beside the canvas; a new stroke renders again; Keep makes it a layer, the Library gets nothing', async () => {
+    await page.goto('/#/edit');
+    await page.getByRole('button', { name: 'Start from a blank canvas' }).click();
+    await page.getByRole('button', { name: 'Paper White' }).click();
+    await page.getByRole('button', { name: 'Canvas 1:1' }).click();
+    await expect(page).toHaveURL(/#\/edit\/[0-9a-f-]+$/);
+    const id = page.url().split('/').pop()!;
+    const before = (await (await page.request.get('/api/items?limit=1')).json()).total;
+    const W = 1024;
+    const H = 1024;
+    await page.getByRole('button', { name: /^Live$/ }).click();
+    const panel = page.getByRole('complementary', { name: 'Live' });
+    await expect(panel).toBeVisible();
+    await panel.getByLabel('Live: what it should look like').fill('a ripe red apple on a white table, soft daylight, photo');
+    // a red apple: an ink circle filled red
+    await page.getByRole('button', { name: 'Shapes (U)' }).click();
+    await page.getByRole('button', { name: 'Ellipse' }).click();
+    await page.getByRole('button', { name: 'Filled', exact: true }).click();
+    const sent: any[] = [];
+    page.on('request', (r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && sent.push(r.postDataJSON()));
+    await stroke(page, [[W * 0.3, H * 0.3], [W * 0.7, H * 0.72]], W, H);
+    await expect(panel.getByAltText('Live frame')).toBeVisible({ timeout: 120_000 });
+    await expect(panel.getByRole('status')).toContainText('Up to date');
+    expect(sent[0]).toMatchObject({ workflow: 'klein_edit_live', meta: { mode: 'live', preview: true } });
+    expect(sent[0].params.prompt).toMatch(/Turn this drawing into a ripe red apple/);
+    const first = await panel.getByAltText('Live frame').getAttribute('src');
+    await shot(page, 'live-frame');
+    // another stroke: a new frame
+    await stroke(page, [[W * 0.45, H * 0.2], [W * 0.55, H * 0.3]], W, H);
+    await expect(panel.getByRole('status')).toContainText(/Rendering|Waiting/);
+    await expect(panel.getByRole('status')).toContainText('Up to date', { timeout: 120_000 });
+    expect(await panel.getByAltText('Live frame').getAttribute('src')).not.toBe(first);
+    // frames are not Library items
+    expect((await (await page.request.get('/api/items?limit=1')).json()).total).toBe(before);
+    await panel.getByRole('button', { name: 'Keep as layer' }).click();
+    await saved(page);
+    const proj = await (await page.request.get(`/api/items/${id}/project`)).json();
+    expect(proj.layers[proj.layers.length - 1]).toMatchObject({ kind: 'result', name: 'Live · Klein 9B' });
+    await panel.getByRole('button', { name: 'Stop live' }).click();
+    await expect(panel).toHaveCount(0);
+  });
+});
