@@ -728,13 +728,13 @@ function Tile({
           </span>
         )}
         {item.layered && (
-          <span className="mono stack-badge" title="Has layers in Edit (open it there to keep working on them)" aria-label="Has layers">
+          <span className="mono layers-badge" title="Has layers in Edit (open it there to keep working on them)" aria-label="Has layers">
             <Layers2 size={11} /> layers
           </span>
         )}
         {stacked && (item.stack_count ?? 1) > 1 && (
           <span className="mono stack-badge" title={`${item.stack_count} versions — select to see them all`} aria-label={`${item.stack_count} versions`}>
-            <Layers size={11} /> {item.stack_count}
+            <Copy size={11} /> {item.stack_count}
           </span>
         )}
       </span>

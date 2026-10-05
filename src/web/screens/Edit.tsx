@@ -194,7 +194,8 @@ function Editor({ item }: { item: Item }) {
   const [tool, setTool] = useState<Tool>('brush');
   const [mode, setMode] = useState<Mode>(() => (sessionStorage.getItem('dr.edit.mode') as Mode) || 'instruct');
   const boot = useApp((s) => s.boot);
-  const [editModel, setEditModel] = useState<string>(() => localStorage.getItem('dr.edit.model') || 'qwen');
+  // first time: Klein (faster, and it won or tied 30 of 40 edits in the 2026-10-03 suite); after that, your last choice
+  const [editModel, setEditModel] = useState<string>(() => localStorage.getItem('dr.edit.model') || 'klein');
   // your own LoRAs per model (DECISIONS 86), used by Instruct, Inpaint, Outpaint and Enhance
   const [editLoras, setEditLoras] = usePersistent<Record<string, LoraUse[]>>('edit.loras', {});
   const lorasNow = (): LoraUse[] => (editModel === 'klein' || editModel === 'qwen' ? (editLoras[editModel] ?? []) : []);
