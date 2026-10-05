@@ -13,6 +13,7 @@ import {
   Lasso,
   Maximize,
   Radio,
+  Plus,
   Monitor,
   Loader2,
   Lock,
@@ -77,7 +78,7 @@ import { LOOKS } from '../../shared/adjust';
 import { autoMode, MODES as RENDERS, renderPlan, type RenderMode } from '../../shared/compose';
 
 /** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
-const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint', 'edit:sketch']);
+const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint', 'edit:sketch', 'edit:region']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 import { createCanvas } from '../lib/canvasStart';
@@ -89,9 +90,11 @@ const SEL_TOOLS = new Set<Tool>(['marquee', 'lasso', 'wand']);
 /** tools that work on the canvas layers (DECISIONS 122, 123) */
 type CanvasTool = 'paint' | 'fill' | 'shape';
 const isCanvasTool = (t: Tool): t is CanvasTool => t === 'paint' || t === 'fill' || t === 'shape';
-type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'refine' | 'sketch' | 'compose' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
+type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'refine' | 'sketch' | 'regions' | 'compose' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
 /** Fill (DECISIONS 125): what the selection should become */
 type FillKind = 'replace' | 'add' | 'remove' | 'background';
+/** A region (DECISIONS 133): an area of the picture (the selection when it was added) and what it should be. */
+type Region = { id: string; prompt: string; alpha: Uint8Array; thumb: string };
 /** restore = edit-style (default; fixes blur and low resolution), restore_upscale = restore then SeedVR2 2x,
  *  subtle = low-denoise img2img touch-up for pictures that are already clean (Addenda Phase 2, DECISIONS 66). */
 type EnhanceKind = 'restore' | 'restore_upscale' | 'subtle';
@@ -131,6 +134,7 @@ const MODES: { id: Mode; label: string; group: 'canvas' | 'more'; tip: string }[
   { id: 'outpaint', label: 'Expand', group: 'canvas', tip: 'Add new space around the picture' },
   { id: 'refine', label: 'Refine', group: 'canvas', tip: 'Redraw what is there at a strength you choose: paintovers and sketches become finished, the layout stays' },
   { id: 'sketch', label: 'Sketch', group: 'canvas', tip: 'Turn your drawing into a finished picture: it follows your lines, and colours you fill in are kept' },
+  { id: 'regions', label: 'Regions', group: 'canvas', tip: 'A prompt for each area: select an area, add it as a region, say what it is; they are filled one by one' },
   { id: 'compose', label: 'Compose', group: 'canvas', tip: 'Turn pieces placed on a background, and paint, into one picture: Blend edges, Harmonise or Reimagine' },
   { id: 'turn', label: 'Turn it', group: 'more', tip: 'See the object from another angle' },
   { id: 'enhance', label: 'Enhance', group: 'more', tip: 'Restore blur, noise and low resolution' },
@@ -140,7 +144,7 @@ const MODES: { id: Mode; label: string; group: 'canvas' | 'more'; tip: string }[
 ];
 
 /** AI results that land on the canvas as a layer when layers are on (DECISIONS 122); others open as a version. */
-const LAYERABLE: Record<string, string> = { 'edit:sketch': 'Sketch', 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Refine', 'edit:remove_bg': 'Cut-out', compose: 'Compose' };
+const LAYERABLE: Record<string, string> = { 'edit:region': 'Region', 'edit:sketch': 'Sketch', 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Refine', 'edit:remove_bg': 'Cut-out', compose: 'Compose' };
 /** Pen pressure; a mouse or finger paints at full pressure. */
 const pressureOf = (e: { pointerType: string; pressure: number }) => (e.pointerType === 'pen' ? e.pressure : 1);
 
@@ -404,6 +408,13 @@ function Editor({ item }: { item: Item }) {
   const [docVer, setDocVer] = useState(0);
   // Live painting (v3.30): the canvas re-rendered by Klein whenever you pause
   const [live, setLive] = useState(false);
+  // Regions (Edit plan phase 7, DECISIONS 133): a prompt per area, filled one after another as masked layers
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [regionRun, setRegionRun] = useState<{ i: number; total: number } | null>(null);
+  const regionNext = useRef<(() => void) | null>(null);
+  const resultName = useRef<string | null>(null);
+  // regions belong to this picture (their areas are at its size)
+  useEffect(() => setRegions([]), [item.id]);
   const [docStarting, setDocStarting] = useState(false);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error' | 'none'>('none');
   const [flattening, setFlattening] = useState(false);
@@ -505,6 +516,14 @@ function Editor({ item }: { item: Item }) {
 
   const job: Job | undefined = jobId ? jobs[jobId] : undefined;
   const running = !!job && (job.status === 'queued' || job.status === 'running');
+  // a region run stops when a region fails or is cancelled (the regions before it stay as layers)
+  useEffect(() => {
+    if (!regionRun || !job || !['error', 'cancelled', 'lost'].includes(job.status)) return;
+    regionNext.current = null;
+    resultName.current = null;
+    setRegionRun(null);
+    toast(`Region ${regionRun.i} of ${regionRun.total} did not render, so the run stopped. The regions before it are layers.`, 'error', 10000);
+  }, [job?.status]); // eslint-disable-line react-hooks/exhaustive-deps
   const W = item.width ?? 1;
   const H = item.height ?? 1;
   /** A whole-picture result on a large photo (drawn at ~1 MP, enlarged back) that has not been sharpened yet. */
@@ -799,6 +818,8 @@ function Editor({ item }: { item: Item }) {
       const { item: r } = await api.item(id);
       const fits = !!r.width && !!r.height && placeOnCanvas(r.width, r.height, d.width, d.height).exact && r.width <= d.width * 1.05;
       if (!fits) {
+        regionNext.current = null;
+        setRegionRun(null);
         const back = item.id;
         toast(`This result has another size, so it is a new version. Your layers stay with v${item.version}.`, 'info', 10000, { label: 'Back to the layers', run: () => go('edit', back) });
         return go('edit', id);
@@ -806,12 +827,15 @@ function Editor({ item }: { item: Item }) {
       const img = await loadImage(fileUrl(id));
       const mask = jobMask.current;
       jobMask.current = null;
-      d.addImageLayer(img, { name: `${LAYERABLE[mode] ?? 'Result'} · ${model.replace(/ (edit|fill|extraction|sketch)$/, '')}`, kind: 'result', source: id, mask, where: 'top' });
+      d.addImageLayer(img, { name: resultName.current ?? `${LAYERABLE[mode] ?? 'Result'} · ${model.replace(/ (edit|fill|extraction|sketch)$/, '')}`, kind: 'result', source: id, mask, where: 'top' });
+      resultName.current = null;
       // the selection now lives on as the layer's mask
       if (mask && layer.current) {
         layer.current.clear();
         setMaskEmpty(true);
       }
+      // a region run goes on with the next region (and says so once, at the end)
+      if (regionNext.current) return regionNext.current();
       // stay in the AI panel: the next step is often another AI step
       toast(`The result is on a new layer at the top${mask ? ', masked to your selection' : ''}. It is kept as v${r.version} too.`, 'ok', 9000, { label: 'Open the version', run: () => go('edit', id) });
     } catch {
@@ -933,7 +957,8 @@ function Editor({ item }: { item: Item }) {
           // layers on: the result comes in as a layer (it is a version too)
           const d = docRef.current;
           const jm = j.meta as any;
-          if (d?.isProject && LAYERABLE[jm.mode] && !jm.copied) return void addResultLayer(d, j.result_ids[0], jm.mode, String(jm.model ?? ''));
+          // (a region run always lands as layers, even on a picture that had none yet)
+          if (d && (d.isProject || regionNext.current) && LAYERABLE[jm.mode] && !jm.copied) return void addResultLayer(d, j.result_ids[0], jm.mode, String(jm.model ?? ''));
           if (d?.isProject) {
             const back = item.id;
             toast(`This result has another size, so it is a new version. Your layers stay with v${item.version}.`, 'info', 10000, { label: 'Back to the layers', run: () => go('edit', back) });
@@ -1315,7 +1340,8 @@ function Editor({ item }: { item: Item }) {
           g.fillRect(0, 0, c.width, c.height);
           g.globalCompositeOperation = 'destination-out';
         }
-        g.filter = 'blur(3px)';
+        // a region's edge (often a hard marquee) is blended wider, so no box shows round it
+        g.filter = `blur(${regionNext.current ? Math.max(6, Math.round(Math.max(c.width, c.height) / 100)) : 3}px)`;
         g.drawImage(mc, 0, 0);
         jobMask.current = c;
       } else jobMask.current = null;
@@ -1330,7 +1356,56 @@ function Editor({ item }: { item: Item }) {
     }
   };
 
-  const apply = async () => {
+  /** The selection as a new region (it is cleared, ready for the next area). */
+  const addRegion = () => {
+    const m = layer.current;
+    if (!m || m.isEmpty()) return toast('Select an area first (M, L, W, S, or paint it with B), then add it as a region.', 'info');
+    if (regions.length >= 5) return toast('Five regions at most: more regions blur what each one says.', 'info');
+    const s = 56 / Math.max(m.width, m.height);
+    const tint = document.createElement('canvas');
+    tint.width = Math.max(1, Math.round(m.width * s));
+    tint.height = Math.max(1, Math.round(m.height * s));
+    const g = tint.getContext('2d')!;
+    g.drawImage(m.mask, 0, 0, tint.width, tint.height);
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = '#F0B44C';
+    g.fillRect(0, 0, tint.width, tint.height);
+    g.globalCompositeOperation = 'destination-over';
+    g.fillStyle = '#2a2724';
+    g.fillRect(0, 0, tint.width, tint.height);
+    // read now: the state updater runs later, after the selection below is cleared
+    const region: Region = { id: crypto.randomUUID(), prompt: '', alpha: m.alpha(), thumb: tint.toDataURL() };
+    setRegions((rs) => [...rs, region]);
+    m.clear();
+    setMaskEmpty(true);
+  };
+  /** Fill the regions one after another (the reliable way, plan phase 7): each one a layer masked to its area. */
+  const startRegions = async () => {
+    const todo = regions.filter((r) => r.prompt.trim());
+    if (!todo.length) return toast(regions.length ? 'Say what each region should be.' : 'Add a region first: select an area, press "Add the selection as a region", and say what it is.', 'info');
+    if (!(await ensureDoc())) return;
+    const root = prompt.trim().replace(/\.$/, '');
+    let i = 0;
+    const step = () => {
+      if (i >= todo.length) {
+        regionNext.current = null;
+        setRegionRun(null);
+        toast(`${todo.length === 1 ? 'The region is' : `All ${todo.length} regions are`} rendered, each on its own layer masked to its area.`, 'ok', 9000);
+        return;
+      }
+      const r = todo[i];
+      setRegionRun({ i: i + 1, total: todo.length });
+      layer.current!.setAlpha(r.alpha);
+      setMaskEmpty(false);
+      resultName.current = `Region ${i + 1} · ${r.prompt.trim().slice(0, 40)}`;
+      i++;
+      const what = r.prompt.trim().replace(/\.$/, '');
+      void apply({ regionText: root ? `${what}, as part of ${root}` : what });
+    };
+    regionNext.current = step;
+    step();
+  };
+  const apply = async (over?: { regionText: string }) => {
     if (running) return;
     if (mode === 'turn' && tool !== 'crop') {
       try {
@@ -1350,7 +1425,7 @@ function Editor({ item }: { item: Item }) {
     const T = boot!.prompts;
     const em = editModel as ImageModelKey;
     let caption = captionFromLineage(lineage as unknown as CaptionSource[], item.id);
-    if (!caption && em === 'qwen' && (mode === 'inpaint' || mode === 'outpaint')) {
+    if (!caption && em === 'qwen' && (mode === 'inpaint' || mode === 'outpaint' || over)) {
       // Qwen's official fill templates want a caption of the original; describe the picture once and remember it.
       toast('Describing the picture first (local Qwen3-VL)…', 'info');
       try {
@@ -1437,6 +1512,9 @@ function Editor({ item }: { item: Item }) {
       if (ref) params.image_2 = ref.name;
       return submit(wfFor('inpaint'), params, 'edit:inpaint', `${modelLabel} ${o.label}`, o.text.trim() || o.label, o.invert ? 'inverse' : 'selection');
     };
+    // a region of a region run: the selection is set to it; fill it like Fill › Replace
+    if (over) return fillSelection({ text: over.regionText, denoise: 1, label: 'region' });
+    if (mode === 'regions') return void startRegions();
     if (mode === 'refine') {
       // a selection: redraw it at the strength; none: the whole picture, with the low-strength touch-up graph
       if (!maskEmpty) return fillSelection({ text: prompt.trim() || caption || 'the same subject, finished and detailed', denoise: refineStrength, label: 'refine' });
@@ -1757,6 +1835,7 @@ function Editor({ item }: { item: Item }) {
           outpaint: 'Extend canvas',
           refine: `Refine at ${Math.round(refineStrength * 100)}%`,
           sketch: 'Render the sketch',
+          regions: regionRun ? `Region ${regionRun.i} of ${regionRun.total}…` : `Render ${regions.filter((r) => r.prompt.trim()).length || ''} region${regions.filter((r) => r.prompt.trim()).length === 1 ? '' : 's'}`.replace('  ', ' '),
           compose: `Render · ${RENDERS.find((x) => x.id === renderMode)!.label}`,
           turn: 'Turn it',
           enhance: 'Enhance',
@@ -2312,7 +2391,7 @@ function Editor({ item }: { item: Item }) {
             </div>
           </div>
 
-          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance' || mode === 'refine' || mode === 'sketch') && boot && (
+          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance' || mode === 'refine' || mode === 'sketch' || mode === 'regions') && boot && (
             <div>
               <p className="section-label">Model</p>
               <div className="cards" role="group" aria-label="Edit model">
@@ -2361,7 +2440,7 @@ function Editor({ item }: { item: Item }) {
               </p>
             </div>
           )}
-          {(mode === 'instruct' || (mode === 'inpaint' && fillKind !== 'remove') || mode === 'outpaint' || mode === 'refine' || mode === 'sketch' || mode === 'compose') && (
+          {(mode === 'instruct' || (mode === 'inpaint' && fillKind !== 'remove') || mode === 'outpaint' || mode === 'refine' || mode === 'sketch' || mode === 'regions' || mode === 'compose') && (
             <label className="field">
               <span>
                 {mode === 'instruct'
@@ -2372,6 +2451,8 @@ function Editor({ item }: { item: Item }) {
                       ? 'What it should look like (optional)'
                       : mode === 'sketch'
                         ? 'What should the drawing become?'
+                        : mode === 'regions'
+                          ? 'The whole picture (optional)'
                         : mode === 'compose'
                         ? 'Scene (optional)'
                         : 'Describe the surroundings (optional)'}
@@ -2391,6 +2472,8 @@ function Editor({ item }: { item: Item }) {
                         ? 'e.g. a leather sneaker, studio photo — or leave empty to keep the subject and finish it'
                         : mode === 'sketch'
                           ? 'e.g. a photorealistic product photo of this sneaker: white knit upper, grey suede overlays, volt green sole, light grey studio'
+                          : mode === 'regions'
+                            ? 'e.g. a rain-soaked night market, neon signs, cinematic'
                         : mode === 'compose'
                           ? 'e.g. a runner on a wet city street at dawn'
                           : 'e.g. a wide misty lake with pine trees'
@@ -2414,6 +2497,44 @@ function Editor({ item }: { item: Item }) {
                   Large picture ({W}×{H}): the whole-picture Refine works at about 2 MP, so its layer is enlarged back and fine detail softens. Select the part to refine to keep full detail, or Upscale afterwards.
                 </p>
               )}
+            </div>
+          )}
+          {mode === 'regions' && (
+            <div className="regions">
+              <p className="section-label">
+                Regions <span className="mono">{regions.length}/5</span>
+              </p>
+              {regions.map((r, i) => (
+                <div key={r.id} className="region-row">
+                  <button
+                    className="region-thumb"
+                    title="Show this region as the selection"
+                    aria-label={`Show region ${i + 1}`}
+                    onClick={() => {
+                      layer.current?.setAlpha(r.alpha);
+                      setMaskEmpty(false);
+                    }}
+                  >
+                    <img src={r.thumb} alt="" />
+                  </button>
+                  <input
+                    className="input"
+                    aria-label={`Region ${i + 1}: what it is`}
+                    placeholder={['e.g. a red rain jacket', 'e.g. a street food stall with steam', 'e.g. wet cobblestones', 'e.g. a neon sign', 'e.g. a stormy sky'][i]}
+                    value={r.prompt}
+                    onChange={(e) => setRegions((rs) => rs.map((x) => (x.id === r.id ? { ...x, prompt: e.target.value } : x)))}
+                  />
+                  <button className="btn ghost sm icon" aria-label={`Remove region ${i + 1}`} title="Remove this region" onClick={() => setRegions((rs) => rs.filter((x) => x.id !== r.id))}>
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+              <button className="btn sm" disabled={maskEmpty || regions.length >= 5 || !!regionRun} onClick={addRegion}>
+                <Plus size={14} /> Add the selection as a region
+              </button>
+              <p className="note">
+                Select an area (M, L, W, S, or paint it with B), add it, say what it is; up to five. Render fills them one after another, each on its own layer masked to its area, with the whole-picture words as shared context.
+              </p>
             </div>
           )}
           {mode === 'sketch' && (
@@ -2627,7 +2748,7 @@ function Editor({ item }: { item: Item }) {
             </div>
           )}
 
-          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'sketch') && (
+          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'sketch' || mode === 'regions') && (
             <div>
               <p className="section-label">Reference (optional)</p>
               <RefSlot name={ref?.name ?? null} onFile={(f) => addRef(f)} onItem={(itemId) => addRef(undefined, itemId)} onClear={() => setRef(null)} />
@@ -2635,7 +2756,7 @@ function Editor({ item }: { item: Item }) {
           )}
 
           {/* set once, not every time: Seed, LoRAs and the Klein version (audit #2) */}
-          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance') && boot && (
+          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance' || mode === 'sketch' || mode === 'regions') && boot && (
             <details className="adv edit-adv" open={advOpen} onToggle={(e) => setAdvOpen((e.currentTarget as HTMLDetailsElement).open)}>
               <summary>
                 <ChevronRight size={14} /> Advanced
