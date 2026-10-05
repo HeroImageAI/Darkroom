@@ -786,7 +786,13 @@ export function Video({ query }: { query: URLSearchParams }) {
                     </figure>
                   )}
                 </div>
-                <p className="note">{s.motion.trim() ? 'Ready: press Animate (Ctrl+Enter). Start with Draft to check the motion quickly.' : 'Now say what should move (step 2), then press Animate.'}</p>
+                <p className="note">
+                  {activeVideo.length
+                    ? `Rendering ${activeVideo.length === 1 ? 'a take' : `${activeVideo.length} takes`}: watch the progress in Takes on the right; the take opens here when it is done. You can keep working.`
+                    : s.motion.trim()
+                      ? 'Ready: press Animate (Ctrl+Enter). Start with Draft to check the motion quickly.'
+                      : 'Now say what should move (step 2), then press Animate.'}
+                </p>
               </div>
             ) : (
               <div className="empty">

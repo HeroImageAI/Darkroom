@@ -26,6 +26,11 @@ export class ProjectStore {
     }
   }
 
+  /** The project's folder when it exists (for "Delete forever", which sends it to the Recycle Bin with the picture). */
+  folder(itemId: string): string | null {
+    return ITEM_ID.test(itemId) && fs.existsSync(this.dir(itemId)) ? this.dir(itemId) : null;
+  }
+
   has(itemId: string): boolean {
     return ITEM_ID.test(itemId) && fs.existsSync(path.join(this.dir(itemId), 'project.json'));
   }

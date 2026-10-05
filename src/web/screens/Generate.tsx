@@ -767,7 +767,7 @@ export function Generate({ query }: { query: URLSearchParams }) {
                 <span className="big-status">{job!.status === 'queued' ? 'Waiting in queue' : job!.stage || 'Working'}</span>
                 <ProgressBar value={job!.progress} />
                 <span className="readout">
-                  <b>{job!.workflow}</b> {w}×{h} · seed <b>{String(s.seed)}</b>
+                  <b>{String((job!.meta as Record<string, unknown> | null)?.model ?? job!.workflow).replace(/ (text to image|t2i)$/i, '')}</b> {w}×{h} · seed <b>{String(s.seed)}</b>
                 </span>
               </div>
             </div>

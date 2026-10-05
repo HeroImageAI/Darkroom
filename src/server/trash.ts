@@ -35,7 +35,8 @@ export function recycle(files: string[]): Promise<{ recycled: string[]; failed: 
     'Add-Type -AssemblyName Microsoft.VisualBasic',
     `$files = Get-Content -Raw -LiteralPath '${list.replace(/'/g, "''")}' | ConvertFrom-Json`,
     'foreach ($f in $files) {',
-    "  try { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($f, 'OnlyErrorDialogs', 'SendToRecycleBin'); Write-Output \"OK`t$f\" }",
+    // a folder (a layered canvas's project) goes to the Recycle Bin whole
+    "  try { if (Test-Path -LiteralPath $f -PathType Container) { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($f, 'OnlyErrorDialogs', 'SendToRecycleBin') } else { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($f, 'OnlyErrorDialogs', 'SendToRecycleBin') }; Write-Output \"OK`t$f\" }",
     "  catch { Write-Output \"FAIL`t$f\" }",
     '}',
   ].join('\n');
