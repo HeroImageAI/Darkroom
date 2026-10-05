@@ -49,7 +49,7 @@ import { LayerStack, LayersPanel, useLayerGroup } from '../components/LayersPane
 import { CropDialog, grabScreenFrame } from '../lib/capture';
 import { MaskLayer, padToAspect, zoomOut } from '../lib/mask';
 import { go } from '../router';
-import { captionFromLineage, composeImagePrompt, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
+import { captionFromLineage, composeImagePrompt, refToken, type CaptionSource, type ImageModelKey } from '../../shared/prompts';
 import { planEnhance } from '../../shared/enhance';
 import { doubledTarget, isBig, planLargeRestore, sharpenPlan } from '../../shared/fullsize';
 import { maskBBox, planCrop } from '../../shared/cropstitch';
@@ -75,7 +75,7 @@ import { LOOKS } from '../../shared/adjust';
 import { autoMode, MODES as RENDERS, renderPlan, type RenderMode } from '../../shared/compose';
 
 /** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
-const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
+const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint', 'edit:sketch']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 import { createCanvas } from '../lib/canvasStart';
@@ -87,7 +87,7 @@ const SEL_TOOLS = new Set<Tool>(['marquee', 'lasso', 'wand']);
 /** tools that work on the canvas layers (DECISIONS 122, 123) */
 type CanvasTool = 'paint' | 'fill' | 'shape';
 const isCanvasTool = (t: Tool): t is CanvasTool => t === 'paint' || t === 'fill' || t === 'shape';
-type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'refine' | 'compose' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
+type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'refine' | 'sketch' | 'compose' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
 /** Fill (DECISIONS 125): what the selection should become */
 type FillKind = 'replace' | 'add' | 'remove' | 'background';
 /** restore = edit-style (default; fixes blur and low resolution), restore_upscale = restore then SeedVR2 2x,
@@ -128,6 +128,7 @@ const MODES: { id: Mode; label: string; group: 'canvas' | 'more'; tip: string }[
   { id: 'inpaint', label: 'Fill', group: 'canvas', tip: 'Replace, add to or remove what is in the selection, or replace the background' },
   { id: 'outpaint', label: 'Expand', group: 'canvas', tip: 'Add new space around the picture' },
   { id: 'refine', label: 'Refine', group: 'canvas', tip: 'Redraw what is there at a strength you choose: paintovers and sketches become finished, the layout stays' },
+  { id: 'sketch', label: 'Sketch', group: 'canvas', tip: 'Turn your drawing into a finished picture: it follows your lines, and colours you fill in are kept' },
   { id: 'compose', label: 'Compose', group: 'canvas', tip: 'Turn pieces placed on a background, and paint, into one picture: Blend edges, Harmonise or Reimagine' },
   { id: 'turn', label: 'Turn it', group: 'more', tip: 'See the object from another angle' },
   { id: 'enhance', label: 'Enhance', group: 'more', tip: 'Restore blur, noise and low resolution' },
@@ -137,7 +138,7 @@ const MODES: { id: Mode; label: string; group: 'canvas' | 'more'; tip: string }[
 ];
 
 /** AI results that land on the canvas as a layer when layers are on (DECISIONS 122); others open as a version. */
-const LAYERABLE: Record<string, string> = { 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Refine', 'edit:remove_bg': 'Cut-out', compose: 'Compose' };
+const LAYERABLE: Record<string, string> = { 'edit:sketch': 'Sketch', 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Refine', 'edit:remove_bg': 'Cut-out', compose: 'Compose' };
 /** Pen pressure; a mouse or finger paints at full pressure. */
 const pressureOf = (e: { pointerType: string; pressure: number }) => (e.pointerType === 'pen' ? e.pressure : 1);
 
@@ -438,6 +439,8 @@ function Editor({ item }: { item: Item }) {
   const [refineStrength, setRefineStrength] = useSessionState('edit.refine', 0.35);
   const [composeMode, setComposeMode] = useSessionState<'auto' | RenderMode>('edit.composeMode', 'auto');
   const [describing, setDescribing] = useState(false);
+  // Sketch (DECISIONS 128): keep the colours filled in on the drawing
+  const [keepColours, setKeepColours] = useSessionState('edit.keepColours', true);
   const [cStats, setCStats] = useState<{ paintCoverage: number; pictures: number }>({ paintCoverage: 0, pictures: 0 });
   // cut-outs of single layers on their way back (job id → layer id)
   const cutJobs = useRef(new Map<string, string>());
@@ -781,7 +784,7 @@ function Editor({ item }: { item: Item }) {
       const img = await loadImage(fileUrl(id));
       const mask = jobMask.current;
       jobMask.current = null;
-      d.addImageLayer(img, { name: `${LAYERABLE[mode] ?? 'Result'} · ${model.replace(/ (edit|fill|extraction)$/, '')}`, kind: 'result', source: id, mask, where: 'top' });
+      d.addImageLayer(img, { name: `${LAYERABLE[mode] ?? 'Result'} · ${model.replace(/ (edit|fill|extraction|sketch)$/, '')}`, kind: 'result', source: id, mask, where: 'top' });
       // the selection now lives on as the layer's mask
       if (mask && layer.current) {
         layer.current.clear();
@@ -1420,6 +1423,16 @@ function Editor({ item }: { item: Item }) {
       if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / refineStrength));
       return submit(wfFor('enhance_subtle'), params, 'edit:enhance', `${modelLabel} refine ${Math.round(refineStrength * 100)}%`, prompt.trim() || 'Refine');
     }
+    if (mode === 'sketch') {
+      // the A/B (DECISIONS 128): both models follow a clean drawing closely and keep colours filled inside its shapes
+      if (!prompt.trim()) return toast('Say what the drawing should become, e.g. “a photorealistic product photo of this sneaker: white knit upper, volt green sole”.', 'info');
+      let text = `Turn this drawing into ${prompt.trim().replace(/\.$/, '')}. Follow the drawing: the same outline, proportions, details and composition.`;
+      if (keepColours) text += ' Keep the colours as they are painted on the drawing.';
+      if (ref && !/image ?2|<image2>/i.test(prompt)) text += ` Use the materials and colours of ${refToken(T, em, 2)}.`;
+      const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: em, mode: 'instruct', text }) };
+      if (ref) params.image_2 = ref.name;
+      return submit(wfFor('instruct'), params, 'edit:sketch', `${modelLabel} sketch`, prompt.trim(), 'none');
+    }
     if (mode === 'compose') {
       let scene = prompt.trim();
       if (renderMode === 'reimagine' && !scene) {
@@ -1716,6 +1729,7 @@ function Editor({ item }: { item: Item }) {
           inpaint: { replace: 'Fill the selection', add: 'Add to the selection', remove: 'Remove the selection', background: 'Replace the background' }[fillKind],
           outpaint: 'Extend canvas',
           refine: `Refine at ${Math.round(refineStrength * 100)}%`,
+          sketch: 'Render the sketch',
           compose: `Render · ${RENDERS.find((x) => x.id === renderMode)!.label}`,
           turn: 'Turn it',
           enhance: 'Enhance',
@@ -2242,7 +2256,7 @@ function Editor({ item }: { item: Item }) {
             </div>
           </div>
 
-          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance' || mode === 'refine') && boot && (
+          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'enhance' || mode === 'refine' || mode === 'sketch') && boot && (
             <div>
               <p className="section-label">Model</p>
               <div className="cards" role="group" aria-label="Edit model">
@@ -2291,7 +2305,7 @@ function Editor({ item }: { item: Item }) {
               </p>
             </div>
           )}
-          {(mode === 'instruct' || (mode === 'inpaint' && fillKind !== 'remove') || mode === 'outpaint' || mode === 'refine' || mode === 'compose') && (
+          {(mode === 'instruct' || (mode === 'inpaint' && fillKind !== 'remove') || mode === 'outpaint' || mode === 'refine' || mode === 'sketch' || mode === 'compose') && (
             <label className="field">
               <span>
                 {mode === 'instruct'
@@ -2300,7 +2314,9 @@ function Editor({ item }: { item: Item }) {
                     ? { replace: 'What should fill the selection?', add: 'What to add?', remove: '', background: 'The new background' }[fillKind]
                     : mode === 'refine'
                       ? 'What it should look like (optional)'
-                      : mode === 'compose'
+                      : mode === 'sketch'
+                        ? 'What should the drawing become?'
+                        : mode === 'compose'
                         ? 'Scene (optional)'
                         : 'Describe the surroundings (optional)'}
               </span>
@@ -2317,6 +2333,8 @@ function Editor({ item }: { item: Item }) {
                       ? { replace: 'e.g. a stack of old books', add: 'e.g. a coffee cup', remove: '', background: 'e.g. a concrete loading dock at dusk' }[fillKind]
                       : mode === 'refine'
                         ? 'e.g. a leather sneaker, studio photo — or leave empty to keep the subject and finish it'
+                        : mode === 'sketch'
+                          ? 'e.g. a photorealistic product photo of this sneaker: white knit upper, grey suede overlays, volt green sole, light grey studio'
                         : mode === 'compose'
                           ? 'e.g. a runner on a wet city street at dawn'
                           : 'e.g. a wide misty lake with pine trees'
@@ -2340,6 +2358,16 @@ function Editor({ item }: { item: Item }) {
                   Large picture ({W}×{H}): the whole-picture Refine works at about 2 MP, so its layer is enlarged back and fine detail softens. Select the part to refine to keep full detail, or Upscale afterwards.
                 </p>
               )}
+            </div>
+          )}
+          {mode === 'sketch' && (
+            <div>
+              <label className="check" title="Areas you filled with colour (the fill bucket, G) keep that colour in the render">
+                <input type="checkbox" checked={keepColours} onChange={(e) => setKeepColours(e.target.checked)} /> Keep the colours I filled in
+              </label>
+              <p className="note">
+                Renders what you see on the canvas. Draw with the Ink pen (P) on a New canvas, fill areas with colour (G), or take Line art from a photo (Layers). Klein follows your lines and builds light and a setting (~15 s); Qwen keeps shapes very exact and tends to keep the paper as the background (~28 s). A reference picture lends its materials and colours.
+              </p>
             </div>
           )}
           {mode === 'compose' && (
@@ -2543,7 +2571,7 @@ function Editor({ item }: { item: Item }) {
             </div>
           )}
 
-          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint') && (
+          {(mode === 'instruct' || mode === 'inpaint' || mode === 'outpaint' || mode === 'sketch') && (
             <div>
               <p className="section-label">Reference (optional)</p>
               <RefSlot name={ref?.name ?? null} onFile={(f) => addRef(f)} onItem={(itemId) => addRef(undefined, itemId)} onClear={() => setRef(null)} />

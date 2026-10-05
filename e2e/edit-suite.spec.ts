@@ -353,7 +353,8 @@ test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
     const base = await layerPixels(page, pic.id, 0);
     const sum = (a: number[]) => a[0] + a[1] + a[2];
     expect(base.layer.painted).toBe(true);
-    expect(sum(base.at(W * 0.75, H * 0.6))).toBeGreaterThan(sum(o(W * 0.75, H * 0.6)) + 20);
+    const before = sum(o(W * 0.75, H * 0.6)); // the picture varies per run: a near-white spot has little room to lighten
+    expect(sum(base.at(W * 0.75, H * 0.6))).toBeGreaterThan(before + Math.min(20, (765 - before) * 0.25));
     expect(Math.abs(sum(base.at(W * 0.75, H * 0.1)) - sum(o(W * 0.75, H * 0.1)))).toBeLessThan(6); // untouched elsewhere
     await pickBrush('Smudge');
     await stroke(page, [[W * 0.4, H * 0.3], [W * 0.6, H * 0.35]], W, H);
@@ -810,5 +811,90 @@ test.describe.serial('Edit suite · review fixes (DECISIONS 127)', () => {
     const top = proj.layers[proj.layers.length - 1];
     expect(top).toMatchObject({ kind: 'result', mask: false });
     await shot(page, 'compose-result-layer');
+  });
+});
+
+test.describe.serial('Edit suite · sketch to render (v3.29)', () => {
+  let page: Page;
+  let id = '';
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
+  });
+  test.afterAll(async () => page.context().close());
+
+  test('Draw a shape, fill it with colour, and Sketch renders it with the colour kept, as a layer', async () => {
+    await page.goto('/#/edit');
+    await page.getByRole('button', { name: 'Start from a blank canvas' }).click();
+    await page.getByRole('button', { name: 'Paper White' }).click();
+    await page.getByRole('button', { name: 'Canvas 1:1' }).click();
+    await expect(page).toHaveURL(/#\/edit\/[0-9a-f-]+$/);
+    id = page.url().split('/').pop()!;
+    const W = 1024;
+    const H = 1024;
+    // an ink circle (an apple), then red filled inside it
+    await page.getByRole('button', { name: 'Shapes (U)' }).click();
+    await page.getByRole('button', { name: 'Ellipse' }).click();
+    await page.getByRole('button', { name: 'Outline' }).click();
+    await page.getByLabel('Line width').fill('8');
+    await stroke(page, [[W * 0.3, H * 0.3], [W * 0.7, H * 0.72]], W, H);
+    await page.getByRole('button', { name: 'Fill bucket (G)' }).click();
+    await page.getByRole('button', { name: /^Colour/ }).click();
+    await page.getByLabel('Hex colour').fill('#d02020');
+    await page.keyboard.press('Escape');
+    const c = await at(page, W * 0.5, H * 0.5, W, H);
+    await page.mouse.click(c.x, c.y);
+    await saved(page);
+    await page.getByRole('tab', { name: /AI/ }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Sketch', exact: true }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await expect(page.getByLabel('Keep the colours I filled in')).toBeChecked();
+    await page.getByLabel('What should the drawing become?').fill('a photorealistic photo of a shiny apple on a white table, soft daylight');
+    const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST');
+    await page.getByRole('button', { name: /Render the sketch/ }).click();
+    const body = (await sent).postDataJSON();
+    expect(body.workflow).toBe('klein_edit');
+    expect(body.meta.mode).toBe('edit:sketch');
+    expect(body.params.prompt).toMatch(/Turn this drawing into a photorealistic photo of a shiny apple.*Keep the colours as they are painted/);
+    await expect(page.getByText(/The result is on a new layer at the top/)).toBeVisible({ timeout: 300_000 });
+    await page.getByRole('tab', { name: /Layers/ }).click();
+    await saved(page);
+    const proj = await (await page.request.get(`/api/items/${id}/project`)).json();
+    const top = proj.layers[proj.layers.length - 1];
+    expect(top).toMatchObject({ kind: 'result', mask: false, name: 'Sketch · Klein 9B' });
+    // the render kept the red: the middle of the apple is red
+    const [r, g, b] = await page.evaluate(() => {
+      const cv = document.querySelector('[data-testid="layers-canvas"]') as HTMLCanvasElement;
+      const d = cv.getContext('2d')!.getImageData(cv.width / 2 - 20, cv.height / 2 - 20, 40, 40).data;
+      const s = [0, 0, 0];
+      for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) s[k] += d[i + k] / (d.length / 4);
+      return s;
+    });
+    expect(r).toBeGreaterThan(g + 40);
+    expect(r).toBeGreaterThan(b + 40);
+    await shot(page, 'sketch-render');
+  });
+
+  test('Line art: a picture layer gives its outlines as a drawing on a new layer', async () => {
+    const pic = await pickPicture(page);
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('tab', { name: /Layers/ }).click();
+    await page.getByRole('button', { name: 'Start layers' }).click();
+    await page.getByRole('button', { name: 'Line art from the layer' }).click();
+    await expect(page.locator('.layer-row.on')).toContainText('line art');
+    // it lands on white paper above the picture
+    await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option')).toHaveCount(3);
+    await expect(page.getByRole('listbox', { name: 'Layer stack' }).getByRole('option').nth(1)).toContainText('Paper');
+    await saved(page);
+    const proj = await (await page.request.get(`/api/items/${pic.id}/project`)).json();
+    const l = proj.layers[proj.layers.length - 1];
+    const png = Buffer.from(await (await page.request.get(`/api/items/${pic.id}/project/layers/${l.id}.png?r=${l.rev}`)).body());
+    const { data } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    let on = 0;
+    for (let i = 3; i < data.length; i += 4) if (data[i] > 64) on++;
+    const share = on / (data.length / 4);
+    expect(share).toBeGreaterThan(0.02);
+    expect(share).toBeLessThan(0.25);
+    await shot(page, 'line-art');
   });
 });

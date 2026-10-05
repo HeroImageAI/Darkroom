@@ -938,3 +938,18 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     controls), the colour swatch shows a dark colour, Fit keeps the picture clear of the buttons over the canvas.
     e2e: the run cancels the job it started (not "whatever is active"), waits for Edit to be free before the next
     Apply, Clone is checked against its source vs what was under it.
+128. **Edit suite v3.29: sketch to render — no ControlNet needed.** The plan expected to need ControlNets or the
+    controlnet_aux preprocessors; the A/B first (`scripts/try-sketch.ts`, scored by `scripts/sketch_score.py`: line
+    recall = share of the drawing's ink with a render edge within 5 px) showed both edit models already follow a clean
+    drawing given as the picture to edit. Klein 9B (~14 s): recall 0.91 footwear, 0.81 gaming, 0.78 apparel, 0.68 car,
+    0.48 film storyboard — it follows the lines and builds the light and setting asked for. Qwen-Image 2.1 (~28 s):
+    0.76 / 0.81 / 0.83 / 0.63, very exact shapes, but it tends to keep the paper as the background and turned the
+    storyboard very dark (0.10). "Follow the drawing exactly" vs plain wording: no difference. **Colour blocking:**
+    colour filled inside the drawn shapes (the fill bucket) is kept by both (Klein crisper); loose colour boxes across
+    the drawing are not. So: **Sketch** joins the AI panel's canvas modes: it renders what you see (the drawing over its
+    paper) by instruction — "Turn this drawing into …, follow the drawing …", + "keep the colours as they are painted"
+    (on by default), + an optional reference for materials and colours (image 2) — and the result comes back as a layer
+    ("Sketch · Klein 9B"), your LoRAs apply. **Line art** (pen icon on a layer): the layer's outlines (Sobel, the
+    strongest 5–17 % of edges, soft-edged) as a drawing on a new layer, on white paper, above the picture — hide the
+    paper to trace over the photo, change the lines, render again. Depth and pose would still need the add-on and its
+    models; not needed for this, so not downloaded.

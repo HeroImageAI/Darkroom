@@ -214,9 +214,11 @@ async function generate() {
   await page.getByRole('group', { name: 'Model' }).getByRole('button', { name: a.model === 'klein' ? /^Klein 9B/ : /^Qwen-Image 2\.1/ }).click();
   await page.getByRole('group', { name: 'Aspect ratio' }).getByRole('button', { name: a.aspect ?? '16:9', exact: true }).click();
   await page.getByRole('group', { name: 'Style preset' }).getByRole('button', { name: a.style ?? 'None', exact: true }).click();
-  const seed = page.getByLabel('Seed');
-  if (!(await seed.isVisible())) await page.getByText('Advanced').click();
-  await seed.fill(String(a.seed));
+  if (a.seed !== undefined) {
+    const seed = page.getByLabel('Seed');
+    if (!(await seed.isVisible())) await page.getByText('Advanced').click();
+    await seed.fill(String(a.seed));
+  }
   await page.getByLabel('Prompt').fill(a.prompt);
   const rail = page.getByRole('complementary', { name: 'History' }).locator('.rail-item img').first();
   const topId = async () => (/\/api\/items\/([0-9a-f-]{36})\/thumb/.exec((await rail.getAttribute('src').catch(() => null)) ?? '') ?? [])[1] ?? null;
@@ -448,6 +450,14 @@ try {
   }
   if (action === 'board') {
     await library();
+    // create it first when it does not exist yet (the walk-through starts from an empty Library)
+    const opts = await page.getByRole('combobox', { name: 'Working board' }).locator('option').allInnerTexts();
+    if (!opts.includes(a.board)) {
+      await page.getByRole('group', { name: 'Boards' }).getByRole('button', { name: 'New board' }).click();
+      await page.getByLabel('Board name').fill(a.board);
+      await page.getByRole('dialog').getByRole('button', { name: /^(Save|Create)$/ }).click();
+      await page.waitForTimeout(800);
+    }
     await setBoard(a.board);
     result = { ok: true };
   } else if (action === 'upload') result = await upload();
