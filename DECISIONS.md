@@ -1022,3 +1022,19 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     Two fixes on the way: an area must be read before React's state updater runs (it ran after the selection was
     cleared, so regions came out empty), and a region run lands as layers even on a picture without layers yet.
     The Advanced options (seed, LoRAs) now show for Sketch too, which already used your LoRAs.
+134. **Edit suite: depth and pose control, without ControlNet (JP's download OK 2026-10-05).** Downloaded (Hugging
+    Face, into the shared models folder; nothing replaced): lotus-depth-d-v1-1 (1.74 GB) + vae-ft-mse-840000 (0.33 GB),
+    sdpose_wholebody_fp16 (1.92 GB) + rt_detr_v4-x-hgnet_fp16 (0.12 GB) — the files ComfyUI's own templates use with its
+    core Lotus / SDPose / RT-DETR nodes, so no custom node. (Plain HTTP from the Xet bridge ran at ~0.4 MB/s; the
+    huggingface_hub Xet client at ~4.6 MB/s.) New graphs `control_depth` (Lotus, one step, ~5 s) and `control_pose`
+    (RT-DETR finds up to 4 people, SDPose draws their skeletons, ~4 s). A/B (`scripts/try-control.ts`), the map given
+    to the edit model as the picture: **depth** — both models redraw a car's depth as a new car in the same shape,
+    position and camera angle (Klein 21 s, Qwen 32 s); **pose** — both draw a new figure in a skeleton's pose, once the
+    prompt says it is a pose diagram and to draw a real person (worded "stick figure", Qwen drew a stick-figure
+    character); **a character into a pose** — with the character first and the skeleton as image 2 neither works (Klein
+    keeps the old pose, Qwen paints the skeleton over the character); with the **skeleton first and the character as
+    image 2, Klein works** (the character, rifle and all, walking in the astronaut's pose) and Qwen still paints the
+    lines. So Sketch has **Follow: Lines / Depth / Pose**: Depth and Pose make the map from what you see
+    (`POST /api/control`, a `preview` job: never a Library item), keep it as a hidden layer to look at, and render
+    from it as a layer ("Depth · …" / "Pose · …"); a pose with your character as the Reference always uses Klein
+    (with no LoRAs of the other model). The RTX 3090 (no native fp8) is why Klein steps are slow (DECISIONS 132).

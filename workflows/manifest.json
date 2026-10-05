@@ -5309,6 +5309,80 @@
       "outputs": {
         "image": "DR_OUTPUT"
       }
+    },
+    "control_depth": {
+      "file": "control_depth.json",
+      "family": "util",
+      "kind": "image",
+      "label": "Depth map (Lotus)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/control/depth"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
+    },
+    "control_pose": {
+      "file": "control_pose.json",
+      "family": "util",
+      "kind": "image",
+      "label": "Pose (SDPose)",
+      "params": {
+        "image_1": {
+          "type": "image",
+          "label": "Image",
+          "targets": [
+            {
+              "title": "DR_IMAGE_1",
+              "input": "image"
+            }
+          ]
+        },
+        "people": {
+          "type": "int",
+          "targets": [
+            {
+              "title": "DR_PEOPLE",
+              "input": "max_detections"
+            }
+          ],
+          "default": 4,
+          "min": 1,
+          "max": 10
+        },
+        "output": {
+          "type": "string",
+          "targets": [
+            {
+              "title": "DR_OUTPUT",
+              "input": "filename_prefix"
+            }
+          ],
+          "default": "darkroom/control/pose"
+        }
+      },
+      "outputs": {
+        "image": "DR_OUTPUT"
+      }
     }
   },
   "vramNeedGB": {

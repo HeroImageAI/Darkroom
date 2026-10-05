@@ -85,6 +85,8 @@ export const api = {
   // every new job carries the working board (a new version of a picture stays in that picture's board, server-side)
   submit: (body: SubmitBody) => api.post<Job>('/api/jobs', { ...body, meta: { boardId: getState().board, ...body.meta } }),
   cancel: (id: string) => api.post(`/api/jobs/${id}/cancel`),
+  /** A depth map or the pose of a picture, ready to render from (DECISIONS 134). */
+  control: (body: { kind: 'depth' | 'pose'; input: string }) => api.post<{ name: string; url: string; seconds: number }>('/api/control', body),
   item: (id: string) => api.get<{ item: Item; lineage: Item[] }>(`/api/items/${id}`),
   boards: () => api.get<{ boards: Board[]; none: number }>('/api/boards'),
   createBoard: (name: string) => api.post<Board>('/api/boards', { name }),

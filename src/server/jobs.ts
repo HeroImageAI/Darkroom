@@ -46,6 +46,8 @@ export interface SubmitRequest {
     followOf?: string;
     /** The new item's Library title, when Darkroom can name it (Timeline AI clips). */
     title?: string;
+    /** A live frame or a control map: the files go on the job, never a Library item (v3.30). */
+    preview?: boolean;
   };
   /** Proceed even if the VRAM check fails. */
   force?: boolean;

@@ -144,7 +144,7 @@ const MODES: { id: Mode; label: string; group: 'canvas' | 'more'; tip: string }[
 ];
 
 /** AI results that land on the canvas as a layer when layers are on (DECISIONS 122); others open as a version. */
-const LAYERABLE: Record<string, string> = { 'edit:region': 'Region', 'edit:sketch': 'Sketch', 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Refine', 'edit:remove_bg': 'Cut-out', compose: 'Compose' };
+const LAYERABLE: Record<string, string> = { 'edit:control': 'Control', 'edit:region': 'Region', 'edit:sketch': 'Sketch', 'edit:instruct': 'Instruct', 'edit:inpaint': 'Fill', 'edit:enhance': 'Refine', 'edit:remove_bg': 'Cut-out', compose: 'Compose' };
 /** Pen pressure; a mouse or finger paints at full pressure. */
 const pressureOf = (e: { pointerType: string; pressure: number }) => (e.pointerType === 'pen' ? e.pressure : 1);
 
@@ -457,6 +457,8 @@ function Editor({ item }: { item: Item }) {
   const [describing, setDescribing] = useState(false);
   // Sketch (DECISIONS 128): keep the colours filled in on the drawing
   const [keepColours, setKeepColours] = useSessionState('edit.keepColours', true);
+  // Sketch › Follow (DECISIONS 134): the drawing's lines, or the picture's depth or its people's pose
+  const [follow, setFollow] = useSessionState<'lines' | 'depth' | 'pose'>('edit.follow', 'lines');
   const [cStats, setCStats] = useState<{ paintCoverage: number; pictures: number }>({ paintCoverage: 0, pictures: 0 });
   // cut-outs of single layers on their way back (job id → layer id)
   const cutJobs = useRef(new Map<string, string>());
@@ -1528,6 +1530,41 @@ function Editor({ item }: { item: Item }) {
       if (em === 'klein') params.schedule_steps = Math.max(4, Math.round(4 / refineStrength));
       return submit(wfFor('enhance_subtle'), params, 'edit:enhance', `${modelLabel} refine ${Math.round(refineStrength * 100)}%`, prompt.trim() || 'Refine');
     }
+    if (mode === 'sketch' && follow !== 'lines') {
+      // depth / pose (DECISIONS 134): make the map from what you see, then render from it — the map is the picture
+      const kind = follow;
+      const what = prompt.trim().replace(/\.$/, '');
+      if (!what && !(kind === 'pose' && ref)) return toast(kind === 'depth' ? 'Say what the picture should become, e.g. "a red sports car in a white studio".' : 'Say who should take the pose, e.g. "a knight in silver armour", or add your character as the Reference.', 'info');
+      const d = await ensureDoc();
+      if (!d) return;
+      let map: { name: string; url: string };
+      try {
+        toast(kind === 'depth' ? 'Reading the depth of the picture…' : 'Finding the pose…', 'info', 4000);
+        map = await api.control({ kind, input: (await inputFor()).name });
+      } catch (e) {
+        return toast((e as Error).message, 'error');
+      }
+      // the map stays as a hidden layer, to look at (show it in Layers)
+      void loadImage(map.url)
+        .then((img) => {
+          const l = d.addImageLayer(img, { name: kind === 'depth' ? 'Depth map' : 'Pose', kind: 'picture', where: 'top' });
+          d.setProps(l.id, { visible: false }, 'Hide the map');
+        })
+        .catch(() => undefined);
+      // a character in a pose: only Klein draws the character (Qwen draws the diagram onto it)
+      const m: ImageModelKey = kind === 'pose' && ref ? 'klein' : em;
+      const text =
+        kind === 'depth'
+          ? `Turn this depth map into ${what}. Follow the depth map exactly: the same shapes, positions, layout and camera angle; near is light, far is dark.`
+          : ref
+            ? `${refToken(T, m, 1)} is a pose diagram (coloured lines for the limbs on black). Draw the character from ${refToken(T, m, 2)} as a full, real figure in exactly the pose of ${refToken(T, m, 1)}: the same body, arm, leg and head positions. Keep the character's look, body, clothing, props and style from ${refToken(T, m, 2)}${what ? `, ${what}` : ''}; never draw the diagram itself.`
+            : `This picture is a pose diagram (coloured lines for the limbs on black). Draw a real person, not the diagram: ${what}, in exactly this pose, with the same body, arm, leg and head positions.`;
+      const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: m, mode: 'instruct', text }), image_1: map.name };
+      if (ref) params.image_2 = ref.name;
+      resultName.current = `${kind === 'depth' ? 'Depth' : 'Pose'} · ${(what || 'your character').slice(0, 40)}`;
+      // your LoRAs go with your chosen model only
+      return submit(m === 'klein' ? 'klein_edit' : 'qwen_edit', params, m === em ? 'edit:sketch' : 'edit:control', `${m === 'klein' ? 'Klein 9B' : 'Qwen-Image 2.1'} ${kind}`, what || kind, 'none');
+    }
     if (mode === 'sketch') {
       // the A/B (DECISIONS 128): both models follow a clean drawing closely and keep colours filled inside its shapes
       if (!prompt.trim()) return toast('Say what the drawing should become, e.g. “a photorealistic product photo of this sneaker: white knit upper, volt green sole”.', 'info');
@@ -1834,7 +1871,7 @@ function Editor({ item }: { item: Item }) {
           inpaint: { replace: 'Fill the selection', add: 'Add to the selection', remove: 'Remove the selection', background: 'Replace the background' }[fillKind],
           outpaint: 'Extend canvas',
           refine: `Refine at ${Math.round(refineStrength * 100)}%`,
-          sketch: 'Render the sketch',
+          sketch: follow === 'depth' ? 'Render from the depth' : follow === 'pose' ? 'Render in the pose' : 'Render the sketch',
           regions: regionRun ? `Region ${regionRun.i} of ${regionRun.total}…` : `Render ${regions.filter((r) => r.prompt.trim()).length || ''} region${regions.filter((r) => r.prompt.trim()).length === 1 ? '' : 's'}`.replace('  ', ' '),
           compose: `Render · ${RENDERS.find((x) => x.id === renderMode)!.label}`,
           turn: 'Turn it',
@@ -2538,12 +2575,31 @@ function Editor({ item }: { item: Item }) {
             </div>
           )}
           {mode === 'sketch' && (
-            <div>
-              <label className="check" title="Areas you filled with colour (the fill bucket, G) keep that colour in the render">
-                <input type="checkbox" checked={keepColours} onChange={(e) => setKeepColours(e.target.checked)} /> Keep the colours I filled in
-              </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="segmented" role="group" aria-label="Follow">
+                {(
+                  [
+                    ['lines', 'Lines', 'Follow the drawing: its outlines, and the colours filled in'],
+                    ['depth', 'Depth', "Follow the picture's 3D layout (a depth map): change everything else"],
+                    ['pose', 'Pose', "Follow the pose of the people in the picture: draw someone else in it"],
+                  ] as const
+                ).map(([k, l, t]) => (
+                  <button key={k} type="button" aria-pressed={follow === k} title={t} onClick={() => setFollow(k)}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              {follow === 'lines' && (
+                <label className="check" title="Areas you filled with colour (the fill bucket, G) keep that colour in the render">
+                  <input type="checkbox" checked={keepColours} onChange={(e) => setKeepColours(e.target.checked)} /> Keep the colours I filled in
+                </label>
+              )}
               <p className="note">
-                Renders what you see on the canvas. Draw with the Ink pen (P) on a New canvas, fill areas with colour (G), or take Line art from a photo (Layers). Klein follows your lines and builds light and a setting (~15 s); Qwen keeps shapes very exact and tends to keep the paper as the background (~28 s). A reference picture lends its materials and colours.
+                {follow === 'lines'
+                  ? 'Renders what you see on the canvas. Draw with the Ink pen (P) on a New canvas, fill areas with colour (G), or take Line art from a photo (Layers). Klein follows your lines and builds light and a setting (~15 s); Qwen keeps shapes very exact and tends to keep the paper as the background (~28 s). A reference picture lends its materials and colours.'
+                  : follow === 'depth'
+                    ? "Reads the depth of what you see (Lotus, ~5 s) and draws something new in exactly that 3D layout: the same shapes, positions and camera angle. Say what it should become, e.g. a car photo's depth → \"a red sports car in a white studio\". Both models follow it closely. The depth map stays as a hidden layer."
+                    : 'Finds the pose of the people in what you see (SDPose, ~4 s) and draws someone else in it. Say who, e.g. "a knight in silver armour", or add your character as the Reference to put them in the pose (that uses Klein: Qwen draws the pose lines onto the character). The pose stays as a hidden layer.'}
               </p>
             </div>
           )}
