@@ -427,4 +427,56 @@ test.describe.serial('Edit suite · photo: adjustments, selections, transform (v
     await expect(page.locator('.layer-row', { hasText: 'Silver gelatin' })).toBeVisible();
     await expect(page.locator('.adj-thumb')).toBeVisible();
   });
+
+  /** Selected (alpha of the selection overlay) at a picture point. */
+  const sel = (x: number, y: number) =>
+    page.evaluate(
+      ({ x, y }) => (document.querySelector('[data-testid="mask-overlay"]') as HTMLCanvasElement).getContext('2d')!.getImageData(Math.round(x), Math.round(y), 1, 1).data[3],
+      { x, y },
+    );
+
+  test('Marquee selects a rectangle; painting stays inside it; Shrink, Invert and Deselect change it', async () => {
+    const { width: W, height: H } = pic;
+    await page.getByRole('button', { name: 'Marquee select (M)' }).click();
+    await page.getByRole('group', { name: 'Selection mode' }).getByRole('button', { name: 'New' }).click();
+    await stroke(page, [[W * 0.2, H * 0.2], [W * 0.5, H * 0.6]], W, H);
+    await expect.poll(() => sel(W * 0.35, H * 0.4)).toBeGreaterThan(0);
+    expect(await sel(W * 0.7, H * 0.4)).toBe(0);
+    // paint a stroke right across it: only the part inside lands
+    await page.getByRole('button', { name: 'Paint on a layer (P)' }).click();
+    await page.getByRole('button', { name: 'New layer' }).click();
+    await expect(page.locator('.clip-note')).toBeVisible();
+    await page.getByLabel('Brush size').fill('30');
+    await stroke(page, [[W * 0.1, H * 0.4], [W * 0.8, H * 0.4]], W, H);
+    await saved(page);
+    const l = await layerPixels(page, pic.id, -1);
+    expect(l.at(W * 0.35, H * 0.4)[3]).toBeGreaterThan(200);
+    expect(l.at(W * 0.7, H * 0.4)[3]).toBe(0);
+    expect(l.at(W * 0.12, H * 0.4)[3]).toBe(0);
+    await shot(page, 'select-paint-inside');
+    // shrink by 20 px: the edge is no longer selected, the middle still is
+    await page.getByRole('button', { name: 'Marquee select (M)' }).click();
+    await page.getByLabel('Selection pixels').fill('20');
+    await page.getByRole('button', { name: 'Shrink' }).click();
+    await expect.poll(() => sel(W * 0.2 + 8, H * 0.4)).toBe(0);
+    expect(await sel(W * 0.35, H * 0.4)).toBeGreaterThan(0);
+    await page.keyboard.press('Control+Shift+I');
+    await expect.poll(() => sel(W * 0.7, H * 0.4)).toBeGreaterThan(0);
+    await page.keyboard.press('Control+d');
+    await expect.poll(() => sel(W * 0.7, H * 0.4)).toBe(0);
+  });
+
+  test('Magic wand selects an area of similar colour; Alt-click takes it away again', async () => {
+    const { width: W, height: H } = pic;
+    // the stroke painted in the last test is one flat colour: the wand finds exactly it
+    await page.getByRole('button', { name: 'Magic wand (W)' }).click();
+    await page.getByLabel('Wand tolerance').fill('10');
+    const p = await at(page, W * 0.35, H * 0.4, W, H);
+    await page.mouse.click(p.x, p.y);
+    await expect.poll(() => sel(W * 0.35, H * 0.4)).toBeGreaterThan(0);
+    await page.keyboard.down('Alt');
+    await page.mouse.click(p.x, p.y);
+    await page.keyboard.up('Alt');
+    await expect.poll(() => sel(W * 0.35, H * 0.4)).toBe(0);
+  });
 });

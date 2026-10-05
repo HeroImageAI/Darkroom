@@ -92,6 +92,8 @@ export class CanvasDoc {
   version = 0;
   /** a new undo step was added (Edit keeps one order of mask and canvas steps) */
   onPush?: () => void;
+  /** the selection (white = inside): painting, fills and shapes stay inside it; null = everywhere (DECISIONS 124) */
+  clip: HTMLCanvasElement | null = null;
   private undoStack: Entry[] = [];
   private redoStack: Entry[] = [];
   private listeners = new Set<() => void>();
@@ -499,14 +501,18 @@ export class CanvasDoc {
 
   /** The stroke's shape within `r`: the scratch, seen through the paper grain for a textured brush. */
   private strokeShape(st: StrokeState, r: Box): HTMLCanvasElement {
-    if (!st.texture) return this.scratch;
+    if (!st.texture && !this.clip) return this.scratch;
     const t = this.temp('s');
     const g = t.getContext('2d')!;
     g.clearRect(r.x, r.y, r.w, r.h);
     this.blit(g, this.scratch, r);
     g.globalCompositeOperation = 'destination-in';
-    g.fillStyle = g.createPattern(paperTile(), 'repeat')!;
-    g.fillRect(r.x, r.y, r.w, r.h);
+    if (st.texture) {
+      g.fillStyle = g.createPattern(paperTile(), 'repeat')!;
+      g.fillRect(r.x, r.y, r.w, r.h);
+    }
+    // inside the selection only
+    if (this.clip) this.blit(g, this.clip, r);
     g.globalCompositeOperation = 'source-over';
     return t;
   }
@@ -653,7 +659,12 @@ export class CanvasDoc {
         patch.data[i + 3] = 255;
       }
     const pc = newCanvas(bx.w, bx.h);
-    pc.getContext('2d')!.putImageData(patch, 0, 0);
+    const pg = pc.getContext('2d')!;
+    pg.putImageData(patch, 0, 0);
+    if (this.clip) {
+      pg.globalCompositeOperation = 'destination-in';
+      pg.drawImage(this.clip, bx.x, bx.y, bx.w, bx.h, 0, 0, bx.w, bx.h);
+    }
     const tc = target === 'mask' ? l.maskCanvas! : l.canvas;
     const g = tc.getContext('2d', { willReadFrequently: true })!;
     const before = g.getImageData(bx.x, bx.y, bx.w, bx.h);
@@ -667,6 +678,16 @@ export class CanvasDoc {
   }
 
   /** The top visible layer with paint at (x, y) — Ctrl-click picks it. */
+  /** The selected layer's own pixels as a selection mask (0..255), mask applied. */
+  layerAlpha(id: string): Uint8Array | null {
+    const l = this.layers.find((x) => x.id === id);
+    if (!l || l.kind === 'adjust') return null;
+    const d = this.masked(l.canvas, l.maskOn ? l.maskCanvas : null, 'b').getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, this.width, this.height).data;
+    const a = new Uint8Array(this.width * this.height);
+    for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3];
+    return a;
+  }
+
   layerAt(x: number, y: number): string | null {
     const px = Math.floor(x);
     const py = Math.floor(y);

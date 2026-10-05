@@ -32,6 +32,8 @@ import {
   PaintBucket,
   Shapes,
   RotateCcw,
+  SquareDashed,
+  Wand,
   Layers as LayersIcon,
   SlidersHorizontal,
 } from 'lucide-react';
@@ -61,8 +63,10 @@ import type { LoraUse } from '../../shared/loras';
 import { placeOnCanvas, type DocJson } from '../../shared/doc';
 import { CanvasDoc, loadImage } from '../lib/doc';
 import { DEFAULT_BRUSH, settingsOf, type BrushSettings } from '../lib/brush';
+import { floodMask } from '../../shared/flood';
 import { brushById, penGamma } from '../../shared/brushes';
-import { FillBar, PaintBar, ShapeBar, type ColourState, type ShapeKind, type Symmetry } from '../components/CanvasTools';
+import { FillBar, PaintBar, SelectBar, ShapeBar, type ColourState, type SelOpUi, type ShapeKind, type Symmetry } from '../components/CanvasTools';
+import { border as selBorder, combine as selCombine, growShrink } from '../../shared/selection';
 import { CanvasLayers } from '../components/CanvasLayers';
 import { AdjustPanel } from '../components/AdjustPanel';
 import { LOOKS } from '../../shared/adjust';
@@ -72,7 +76,9 @@ const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
-type Tool = 'move' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
+type Tool = 'move' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'marquee' | 'lasso' | 'wand' | 'smart' | 'frame' | 'crop';
+/** tools that make a selection with Shift = add, Alt = subtract (DECISIONS 124) */
+const SEL_TOOLS = new Set<Tool>(['marquee', 'lasso', 'wand']);
 /** tools that work on the canvas layers (DECISIONS 122, 123) */
 type CanvasTool = 'paint' | 'fill' | 'shape';
 const isCanvasTool = (t: Tool): t is CanvasTool => t === 'paint' || t === 'fill' || t === 'shape';
@@ -100,7 +106,9 @@ const TOOLS: { id: Tool; label: string; key: string; icon: typeof Brush; disable
   { id: 'shape', label: 'Shapes', key: 'U', icon: Shapes },
   { id: 'brush', label: 'Mask brush', key: 'B', icon: Brush },
   { id: 'eraser', label: 'Eraser', key: 'E', icon: Eraser },
+  { id: 'marquee', label: 'Marquee select', key: 'M', icon: SquareDashed },
   { id: 'lasso', label: 'Lasso', key: 'L', icon: Lasso },
+  { id: 'wand', label: 'Magic wand', key: 'W', icon: Wand },
   { id: 'smart', label: 'Smart select', key: 'S', icon: ScanSearch },
   { id: 'frame', label: 'Outpaint frame', key: 'O', icon: Expand },
   { id: 'crop', label: 'Crop', key: 'C', icon: Crop },
@@ -404,6 +412,14 @@ function Editor({ item }: { item: Item }) {
   const pushRecent = (c: string) => setRecentColours((r) => [c, ...r.filter((x) => x !== c)].slice(0, 8));
   const colourState: ColourState = { colour, setColour: (c) => setColour(c), recent: recentColours, swatches, setSwatches };
   const shapeBrush = (): BrushSettings => ({ ...paint, size: shapeOpts.size, opacity: shapeOpts.opacity });
+  // selections (DECISIONS 124)
+  const [selOp, setSelOp] = useSessionState<SelOpUi>('edit.selOp', 'add');
+  const [marqueeKind, setMarqueeKind] = useSessionState<'rect' | 'ellipse'>('edit.marquee', 'rect');
+  const [wandOpts, setWandOpts] = usePersistent('edit.wand', { tolerance: 32, contiguous: true, merged: true });
+  const [selPx, setSelPx] = usePersistent('edit.selPx', 8);
+  const [marq, setMarq] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  /** the op for this click: Shift adds, Alt subtracts, both keep the overlap, else the chosen mode */
+  const opFor = (e: { shiftKey: boolean; altKey: boolean }): SelOpUi => (e.shiftKey && e.altKey ? 'intersect' : e.shiftKey ? 'add' : e.altKey ? 'subtract' : selOp);
   const compCanvas = useRef<HTMLCanvasElement>(null);
   const strokePt = useRef<{ x: number; y: number } | null>(null);
   /** the selection a running edit used, to mask its result layer */
@@ -415,7 +431,7 @@ function Editor({ item }: { item: Item }) {
     if (order.current.undo.length > 200) order.current.undo.shift();
     order.current.redo = [];
   };
-  const drag = useRef<{ kind: 'pan' | 'paint' | 'stroke' | 'shape' | 'lasso' | 'frame' | 'crop' | 'sam'; sx: number; sy: number; vx: number; vy: number; side?: keyof Pad; start?: Pad; origin?: { x: number; y: number } } | null>(null);
+  const drag = useRef<{ op?: SelOpUi; kind: 'pan' | 'paint' | 'stroke' | 'shape' | 'marquee' | 'lasso' | 'frame' | 'crop' | 'sam'; sx: number; sy: number; vx: number; vy: number; side?: keyof Pad; start?: Pad; origin?: { x: number; y: number } } | null>(null);
 
   const job: Job | undefined = jobId ? jobs[jobId] : undefined;
   const running = !!job && (job.status === 'queued' || job.status === 'running');
@@ -516,6 +532,48 @@ function Editor({ item }: { item: Item }) {
     const t = setTimeout(() => setHist(doc.histogramBelow(adjLayer.id)), 50);
     return () => clearTimeout(t);
   }, [panel, adjLayer?.id, doc]); // eslint-disable-line react-hooks/exhaustive-deps
+  // paint, fill and shapes stay inside the selection (DECISIONS 124)
+  useEffect(() => {
+    if (doc) doc.clip = !maskEmpty && layer.current ? layer.current.mask : null;
+  }, [doc, maskEmpty]);
+  /** Selection menu: all, none, invert, grow, shrink, feather, border, from the layer's pixels. */
+  const selAction = (a: 'all' | 'none' | 'invert' | 'grow' | 'shrink' | 'feather' | 'border' | 'layer') => {
+    const m = layer.current;
+    if (!m) return;
+    if (a === 'all') m.selectAll();
+    else if (a === 'none') m.clear();
+    else if (a === 'invert') m.invert();
+    else if (a === 'feather') m.feather(selPx);
+    else if (a === 'grow' || a === 'shrink') m.setAlpha(growShrink(m.alpha(), W, H, a === 'grow' ? selPx : -selPx));
+    else if (a === 'border') m.setAlpha(selBorder(m.alpha(), W, H, selPx));
+    else if (a === 'layer') {
+      const d = docRef.current;
+      const al = d?.activeLayer ? d.layerAlpha(d.activeLayer.id) : null;
+      if (!al) return toast('Pick a picture or paint layer to select what is on it.', 'info');
+      m.setAlpha(selCombine(m.alpha(), al, selOp));
+    }
+    setMaskEmpty(m.isEmpty());
+  };
+  /** Magic wand at a picture point: the area of similar colour, combined into the selection. */
+  const wandAt = (p: { x: number; y: number }, op: SelOpUi) => {
+    const m = layer.current;
+    if (!m) return;
+    const d = docRef.current;
+    let src: HTMLCanvasElement;
+    if (d && !wandOpts.merged && d.activeLayer && d.activeLayer.kind !== 'adjust') src = d.activeLayer.canvas;
+    else if (d) src = d.flatten();
+    else {
+      src = document.createElement('canvas');
+      src.width = W;
+      src.height = H;
+      src.getContext('2d')!.drawImage(imgRef.current!, 0, 0, W, H);
+    }
+    const data = src.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, W, H).data;
+    const res = floodMask(data, W, H, p.x, p.y, wandOpts.tolerance, wandOpts.contiguous);
+    if (!res) return;
+    m.setAlpha(selCombine(m.alpha(), res.mask, op));
+    setMaskEmpty(m.isEmpty());
+  };
   // a fresh on-screen canvas (back from Compare) needs the whole picture once
   useEffect(() => {
     if (doc && compCanvas.current) doc.render(compCanvas.current);
@@ -703,11 +761,17 @@ function Editor({ item }: { item: Item }) {
     }
     const base = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
     if (isCanvasTool(tool) && e.button === 0 && e.altKey) return pickColour(e);
-    if (tool === 'move' || e.button === 1 || e.altKey) {
+    if (tool === 'move' || e.button === 1 || (e.altKey && !SEL_TOOLS.has(tool))) {
       drag.current = { kind: 'pan', ...base };
       return;
     }
     const p = toImage(e);
+    if (tool === 'marquee') {
+      drag.current = { kind: 'marquee', ...base, origin: p, op: opFor(e) };
+      setMarq({ x: p.x, y: p.y, w: 0, h: 0 });
+      return;
+    }
+    if (tool === 'wand') return wandAt(p, opFor(e));
     if (isCanvasTool(tool)) {
       const d = docRef.current;
       if (!d) {
@@ -746,7 +810,7 @@ function Editor({ item }: { item: Item }) {
       drag.current = { kind: 'paint', ...base };
     } else if (tool === 'lasso') {
       setLasso([p]);
-      drag.current = { kind: 'lasso', ...base };
+      drag.current = { kind: 'lasso', ...base, op: e.shiftKey || e.altKey ? opFor(e) : undefined };
     } else if (tool === 'frame') {
       const d = { left: Math.abs(p.x), right: Math.abs(W - p.x), top: Math.abs(p.y), bottom: Math.abs(H - p.y) };
       const side = (Object.keys(d) as (keyof Pad)[]).sort((a, b) => d[a] - d[b])[0];
@@ -780,7 +844,10 @@ function Editor({ item }: { item: Item }) {
         strokePt.current = q;
       }
     } else if (d.kind === 'shape' && d.origin) docRef.current?.previewShape(shapeOpts.kind, d.origin, toImage(e), shapeBrush(), shapeOpts.filled, e.shiftKey);
-    else if (d.kind === 'lasso') setLasso((pts) => [...(pts ?? []), toImage(e)]);
+    else if (d.kind === 'marquee' && d.origin) {
+      const q = toImage(e);
+      setMarq({ x: Math.min(d.origin.x, q.x), y: Math.min(d.origin.y, q.y), w: Math.abs(q.x - d.origin.x), h: Math.abs(q.y - d.origin.y) });
+    } else if (d.kind === 'lasso') setLasso((pts) => [...(pts ?? []), toImage(e)]);
     else if (d.kind === 'frame' && d.side && d.start) {
       const dx = (e.clientX - d.sx) / view.scale;
       const dy = (e.clientY - d.sy) / view.scale;
@@ -811,8 +878,19 @@ function Editor({ item }: { item: Item }) {
     } else if (d.kind === 'shape') {
       docRef.current?.endStroke(null, null);
       pushRecent(colour);
+    } else if (d.kind === 'marquee') {
+      const m = layer.current;
+      const r = marq;
+      setMarq(null);
+      if (m && r && r.w >= 3 && r.h >= 3) m.applyShape(m.shape(marqueeKind, r.x, r.y, r.w, r.h), d.op ?? selOp);
+      // a click without a drag deselects, as in other painting apps
+      else if (m && (d.op ?? selOp) === 'replace') m.clear();
+      setMaskEmpty(!!m?.isEmpty());
     } else if (d.kind === 'lasso' && lasso) {
-      layer.current?.fillPolygon(lasso, e.shiftKey);
+      // Shift on release still takes away (as before); Shift/Alt at the start choose the mode; else the bar's mode
+      if (d.op) layer.current?.fillPolygon(lasso, false, d.op);
+      else if (e.shiftKey) layer.current?.fillPolygon(lasso, true);
+      else layer.current?.fillPolygon(lasso, false, selOp === 'add' ? undefined : selOp);
       setLasso(null);
       setMaskEmpty(!!layer.current?.isEmpty());
     } else if (d.kind === 'sam' && d.origin) {
@@ -934,6 +1012,15 @@ function Editor({ item }: { item: Item }) {
       else setFlipView((x) => !x);
     },
     [],
+  );
+  // selections: Ctrl+A all, Ctrl+D none, Ctrl+Shift+I invert
+  useHotkey(
+    (e) => (e.ctrlKey || e.metaKey) && !e.altKey && (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'd' || (e.shiftKey && e.key.toLowerCase() === 'i')),
+    (e) => {
+      e.preventDefault();
+      selAction(e.key.toLowerCase() === 'a' ? 'all' : e.key.toLowerCase() === 'd' ? 'none' : 'invert');
+    },
+    [selPx, selOp],
   );
   // X: paint / erase with the Paint tool
   useHotkey((e) => tool === 'paint' && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'x', () => setPaintErase((x) => !x), [tool]);
@@ -1477,6 +1564,9 @@ function Editor({ item }: { item: Item }) {
               data-testid="mask-overlay"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', display: compare ? 'none' : 'block', filter: MASK_OUTLINE_FILTER }}
             />
+            {marq && tool === 'marquee' && (
+              <div className={`marquee-box ${marqueeKind === 'ellipse' ? 'ellipse' : ''}`} style={{ left: marq.x * view.scale, top: marq.y * view.scale, width: marq.w * view.scale, height: marq.h * view.scale }} />
+            )}
             {lasso && (
               <svg viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                 <polyline points={lasso.map((p) => `${p.x},${p.y}`).join(' ')} fill="rgba(240,180,76,.2)" stroke="#F0B44C" strokeWidth={2 / view.scale} />
@@ -1578,6 +1668,22 @@ function Editor({ item }: { item: Item }) {
         </div>
 
         {/* the canvas tools' options: a row of their own, so they never cover the picture */}
+        {SEL_TOOLS.has(tool) && !compare && (
+          <SelectBar
+            tool={tool as 'marquee' | 'wand' | 'lasso'}
+            op={selOp}
+            setOp={setSelOp}
+            marquee={marqueeKind}
+            setMarquee={setMarqueeKind}
+            wand={wandOpts}
+            setWand={(w) => setWandOpts((o) => ({ ...o, ...w }))}
+            amount={selPx}
+            setAmount={setSelPx}
+            has={!maskEmpty}
+            hasLayers={!!doc}
+            act={selAction}
+          />
+        )}
           {tool === 'paint' && !compare && (
             <PaintBar
               brushId={brushId}
@@ -1592,6 +1698,8 @@ function Editor({ item }: { item: Item }) {
               penFeel={penFeel}
               setPenFeel={setPenFeel}
               target={doc?.activeLayer ? { layer: doc.activeLayer.name, mask: doc.target === 'mask' } : null}
+              clipped={!maskEmpty}
+              onDeselect={() => selAction('none')}
             />
           )}
           {tool === 'fill' && !compare && (

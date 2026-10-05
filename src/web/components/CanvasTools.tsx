@@ -78,7 +78,11 @@ export function PaintBar({
   penFeel,
   setPenFeel,
   target,
+  clipped,
+  onDeselect,
 }: {
+  clipped?: boolean;
+  onDeselect?: () => void;
   brushId: string;
   onBrush: (id: string) => void;
   s: BrushSettings;
@@ -172,6 +176,14 @@ export function PaintBar({
           {target.mask ? ' · mask' : ''}
         </span>
       )}
+      {clipped && (
+        <span className="clip-note" title="You paint only inside the selection">
+          inside the selection
+          <button type="button" className="btn xs ghost" onClick={onDeselect} title="Deselect (Ctrl+D)">
+            Deselect
+          </button>
+        </span>
+      )}
     </div>
   );
 }
@@ -252,6 +264,105 @@ export function ShapeBar({ c, kind, setKind, filled, setFilled, size, setSize, o
       {(!filled || kind === 'line') && <Mini label="Width" value={size} min={1} max={200} onChange={setSize} aria="Line width" />}
       <Mini label="Opacity" value={Math.round(opacity * 100)} min={1} max={100} onChange={(v) => setOpacity(v / 100)} aria="Shape opacity" />
       <span className="note">Drag to draw · Shift keeps it square / straight</span>
+    </div>
+  );
+}
+
+export type SelOpUi = 'add' | 'subtract' | 'intersect' | 'replace';
+
+/**
+ * Selection options (Edit suite v3.27): how a new selection combines with the one there is (Shift adds, Alt subtracts,
+ * Shift+Alt intersects, whatever is chosen here), the marquee's shape, the wand's tolerance, and the selection menu.
+ */
+export function SelectBar({
+  tool,
+  op,
+  setOp,
+  marquee,
+  setMarquee,
+  wand,
+  setWand,
+  amount,
+  setAmount,
+  has,
+  hasLayers,
+  act,
+}: {
+  tool: 'marquee' | 'wand' | 'lasso';
+  op: SelOpUi;
+  setOp: (o: SelOpUi) => void;
+  marquee: 'rect' | 'ellipse';
+  setMarquee: (k: 'rect' | 'ellipse') => void;
+  wand: { tolerance: number; contiguous: boolean; merged: boolean };
+  setWand: (w: Partial<{ tolerance: number; contiguous: boolean; merged: boolean }>) => void;
+  amount: number;
+  setAmount: (n: number) => void;
+  has: boolean;
+  hasLayers: boolean;
+  act: (a: 'all' | 'none' | 'invert' | 'grow' | 'shrink' | 'feather' | 'border' | 'layer') => void;
+}) {
+  return (
+    <div className="paint-bar" role="toolbar" aria-label="Selection" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="segmented sym" role="group" aria-label="Selection mode" title="Shift adds, Alt takes away, Shift+Alt keeps only the overlap">
+        {(['add', 'subtract', 'intersect', 'replace'] as SelOpUi[]).map((o) => (
+          <button key={o} type="button" aria-pressed={op === o} onClick={() => setOp(o)}>
+            {{ add: 'Add', subtract: 'Subtract', intersect: 'Overlap', replace: 'New' }[o]}
+          </button>
+        ))}
+      </div>
+      {tool === 'marquee' && (
+        <div className="segmented sym" role="group" aria-label="Marquee shape">
+          <button type="button" aria-pressed={marquee === 'rect'} aria-label="Rectangle selection" onClick={() => setMarquee('rect')}>
+            <Square size={14} />
+          </button>
+          <button type="button" aria-pressed={marquee === 'ellipse'} aria-label="Ellipse selection" onClick={() => setMarquee('ellipse')}>
+            <Circle size={14} />
+          </button>
+        </div>
+      )}
+      {tool === 'wand' && (
+        <>
+          <Mini label="Tolerance" value={wand.tolerance} min={0} max={255} onChange={(v) => setWand({ tolerance: v })} aria="Wand tolerance" title="How different a colour may be and still be selected" />
+          <label className="check" style={{ margin: 0 }} title="Only the connected area you click; off selects that colour everywhere">
+            <input type="checkbox" checked={wand.contiguous} onChange={(e) => setWand({ contiguous: e.target.checked })} /> Connected only
+          </label>
+          <label className="check" style={{ margin: 0 }} title="Look at the whole picture, not just the selected layer">
+            <input type="checkbox" checked={wand.merged} onChange={(e) => setWand({ merged: e.target.checked })} /> Use all layers
+          </label>
+        </>
+      )}
+      <span className="sel-menu" role="group" aria-label="Selection menu">
+        <button type="button" className="btn xs" onClick={() => act('all')} title="Select all (Ctrl+A)">
+          All
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('none')} title="Deselect (Ctrl+D)">
+          None
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('invert')} title="Invert (Ctrl+Shift+I)">
+          Invert
+        </button>
+        {hasLayers && (
+          <button type="button" className="btn xs" onClick={() => act('layer')} title="Select what is painted on the selected layer">
+            From layer
+          </button>
+        )}
+        <label className="px-input" title="Pixels for Grow, Shrink, Feather and Border">
+          <input className="input sm mono" type="number" min={1} max={200} value={amount} onChange={(e) => setAmount(Math.max(1, Math.min(200, Number(e.target.value) || 1)))} aria-label="Selection pixels" />
+          px
+        </label>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('grow')}>
+          Grow
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('shrink')}>
+          Shrink
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('feather')}>
+          Feather
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('border')}>
+          Border
+        </button>
+      </span>
     </div>
   );
 }
