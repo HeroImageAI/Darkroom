@@ -379,3 +379,52 @@ test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
     await expect(page.locator('.layer-row.on')).toContainText('Layer 1');
   });
 });
+
+/** A pixel of what the Edit canvas shows now (the merged layers). */
+async function shownPixel(page: Page, x: number, y: number): Promise<number[]> {
+  return page.evaluate(
+    ({ x, y }) => {
+      const c = document.querySelector('[data-testid="layers-canvas"]') as HTMLCanvasElement;
+      return Array.from(c.getContext('2d')!.getImageData(Math.round(x), Math.round(y), 1, 1).data);
+    },
+    { x, y },
+  );
+}
+const spread = (p: number[]) => Math.max(Math.abs(p[0] - p[1]), Math.abs(p[1] - p[2]), Math.abs(p[0] - p[2]));
+
+test.describe.serial('Edit suite · photo: adjustments, selections, transform (v3.27)', () => {
+  let page: Page;
+  let pic: { id: string; width: number; height: number; version: number };
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
+  });
+  test.afterAll(async () => page.context().close());
+
+  test('An adjustment layer changes everything below it, is saved, and can be changed again', async () => {
+    pic = await pickPicture(page);
+    const { width: W, height: H } = pic;
+    await page.goto(`/#/edit/${pic.id}`);
+    await expect(page.getByAltText('Picture being edited')).toBeVisible();
+    await page.getByRole('tab', { name: /Adjust/ }).click();
+    await page.getByRole('group', { name: 'Start from a look' }).getByRole('button', { name: 'Silver gelatin' }).click();
+    await expect(page.getByText('adjustment', { exact: true })).toBeVisible();
+    // black & white: what you see is grey
+    await expect.poll(async () => spread(await shownPixel(page, W * 0.5, H * 0.5))).toBeLessThan(28);
+    await page.locator('details.adj-sec', { hasText: 'Levels' }).locator('summary').click();
+    await expect(page.locator('.levels-hist')).toBeVisible();
+    await page.locator('details.adj-sec', { hasText: 'Black & white and split tone' }).locator('summary').click();
+    await page.getByLabel('Black & white', { exact: true }).fill('0');
+    await page.getByLabel('Exposure').fill('1');
+    await saved(page);
+    const proj = await (await page.request.get(`/api/items/${pic.id}/project`)).json();
+    const adj = proj.layers.find((l: any) => l.kind === 'adjust');
+    expect(adj).toMatchObject({ kind: 'adjust', painted: false, adjust: { bw: 0, exposure: 1, grain: 0.3 } });
+    await shot(page, 'adjust-layer');
+    // it survives a reload
+    await page.reload();
+    await page.getByRole('tab', { name: /Layers/ }).click();
+    await expect(page.locator('.layer-row', { hasText: 'Silver gelatin' })).toBeVisible();
+    await expect(page.locator('.adj-thumb')).toBeVisible();
+  });
+});

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, ImagePlus, Layers as LayersIcon, Lock, Merge, Plus, Save, SquareDashed, Trash2, Unlock, History, Loader2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, ImagePlus, Layers as LayersIcon, Lock, Merge, Plus, Save, SquareDashed, Trash2, Unlock, History, Loader2, SlidersHorizontal } from 'lucide-react';
 import { BLENDS, type Blend } from '../../shared/doc';
 import type { Item } from '../api';
 import type { CanvasDoc, Layer } from '../lib/doc';
+import { toast } from '../store';
 import { LibraryPicker } from './LibraryPicker';
 
 const CHECKER =
@@ -28,7 +29,7 @@ function Thumb({ src, version, mask }: { src: HTMLCanvasElement; version: number
   return <canvas ref={ref} className="layer-thumb" style={{ background: mask ? '#000' : CHECKER }} aria-hidden="true" />;
 }
 
-const KIND_LABEL: Record<Layer['kind'], string> = { picture: 'picture', paint: 'paint', result: 'AI result' };
+const KIND_LABEL: Record<Layer['kind'], string> = { picture: 'picture', paint: 'paint', result: 'AI result', adjust: 'adjustment' };
 
 export function CanvasLayers({
   doc,
@@ -45,6 +46,7 @@ export function CanvasLayers({
   onExport,
   onUndoTo,
   saveState,
+  onOpenAdjust,
 }: {
   doc: CanvasDoc | null;
   version: number;
@@ -61,6 +63,8 @@ export function CanvasLayers({
   /** undo `n` steps */
   onUndoTo: (n: number) => void;
   saveState: 'saved' | 'saving' | 'unsaved' | 'error' | 'none';
+  /** show the Adjust tab for an adjustment layer */
+  onOpenAdjust: () => void;
 }) {
   const [picker, setPicker] = useState(false);
   const [renaming, setRenaming] = useState<string | null>(null);
@@ -135,7 +139,17 @@ export function CanvasLayers({
               {l.visible ? <Eye size={14} /> : <EyeOff size={14} />}
             </button>
             <span className={`thumb-wrap ${l.id === doc.active && doc.target === 'pixels' ? 'target' : ''}`} onClick={(e) => (e.stopPropagation(), doc.select(l.id, 'pixels'))}>
-              <Thumb src={l.canvas} version={l.rev} />
+              {l.kind === 'adjust' ? (
+                <span
+                  className="layer-thumb adj-thumb"
+                  title="Adjustment layer: open it in Adjust"
+                  onDoubleClick={(e) => (e.stopPropagation(), onOpenAdjust())}
+                >
+                  <SlidersHorizontal size={16} />
+                </span>
+              ) : (
+                <Thumb src={l.canvas} version={l.rev} />
+              )}
             </span>
             {l.maskCanvas && (
               <span
@@ -243,7 +257,10 @@ export function CanvasLayers({
             <button className="btn icon sm" title="Duplicate" aria-label="Duplicate layer" onClick={() => doc.duplicate(a.id)}>
               <Copy size={14} />
             </button>
-            <button className="btn icon sm" title="Merge down" aria-label="Merge layer down" disabled={idx <= 0} onClick={() => doc.mergeDown(a.id)}>
+            <button className="btn icon sm" title="Merge down" aria-label="Merge layer down" disabled={idx <= 0} onClick={() => {
+                const why = doc.mergeDown(a.id);
+                if (why) toast(why, 'info');
+              }}>
               <Merge size={14} />
             </button>
             <button className="btn icon sm" title="Delete layer (Undo brings it back)" aria-label="Delete layer" disabled={doc.layers.length < 2} onClick={() => doc.remove(a.id)}>

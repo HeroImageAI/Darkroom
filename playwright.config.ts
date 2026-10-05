@@ -13,6 +13,8 @@ export default defineConfig({
     channel: 'msedge',
     viewport: { width: 1440, height: 900 },
     screenshot: 'only-on-failure',
+    // a control that never appears fails the test in a minute instead of hanging it (DECISIONS 124)
+    actionTimeout: 60_000,
     trace: 'retain-on-failure',
   },
   outputDir: 'proof/e2e-artifacts',

@@ -10,6 +10,8 @@ import { clampBox, makeStamp, paperTile, Stroke, type Box, type BrushSettings, t
 import { brushFilterCss, type BrushEngine } from '../../shared/brushes';
 import { floodMask, growMask } from '../../shared/flood';
 import { hexToRgb } from '../../shared/colour';
+import { histogram, mergeAdjust, NEUTRAL, type Adjust } from '../../shared/adjust';
+import { adjustGL } from './adjustgl';
 
 export interface Layer {
   id: string;
@@ -27,6 +29,8 @@ export interface Layer {
   maskCanvas: HTMLCanvasElement | null;
   rev: number;
   maskRev: number;
+  /** adjustment layers (DECISIONS 124): what they do to everything below */
+  adjust?: Adjust;
 }
 
 export type PaintTarget = 'pixels' | 'mask';
@@ -128,7 +132,8 @@ export class CanvasDoc {
     const d = new CanvasDoc(j.itemId, j.width, j.height);
     d.layers = await Promise.all(
       j.layers.map(async (m) => {
-        const c = newCanvas(j.width, j.height);
+        // an adjustment layer has no pixels of its own
+        const c = m.kind === 'adjust' ? newCanvas(1, 1) : newCanvas(j.width, j.height);
         const g = c.getContext('2d')!;
         if (m.painted) g.drawImage(await loadImage(partUrl(j.itemId, 'layers', m.id, m.rev)), 0, 0);
         else if (m.source) {
@@ -282,7 +287,7 @@ export class CanvasDoc {
   duplicate(id: string): void {
     const src = this.layers.find((l) => l.id === id);
     if (!src) return;
-    const c = newCanvas(this.width, this.height);
+    const c = src.kind === 'adjust' ? newCanvas(1, 1) : newCanvas(this.width, this.height);
     c.getContext('2d')!.drawImage(src.canvas, 0, 0);
     let m: HTMLCanvasElement | null = null;
     if (src.maskCanvas) {
@@ -314,23 +319,48 @@ export class CanvasDoc {
   }
 
   /** Merge into the layer below: it keeps its own settings; the upper layer's opacity, blend and mask are baked in. */
-  mergeDown(id: string): void {
+  mergeDown(id: string): string | null {
     const i = this.layers.findIndex((l) => l.id === id);
-    if (i < 1) return;
+    if (i < 1) return null;
     const up = this.layers[i];
     const lo = this.layers[i - 1];
+    if (lo.kind === 'adjust') return 'The layer below is an adjustment layer: move this one onto a picture or paint layer to merge it.';
     const c = newCanvas(this.width, this.height);
-    const g = c.getContext('2d')!;
-    g.drawImage(this.masked(lo.canvas, lo.maskOn ? lo.maskCanvas : null, 'b'), 0, 0);
-    g.globalAlpha = up.opacity;
-    g.globalCompositeOperation = blendOp(up.blend);
-    if (up.visible) g.drawImage(this.masked(up.canvas, up.maskOn ? up.maskCanvas : null, 'b'), 0, 0);
+    // the two layers on their own, the lower one at full strength (it keeps its opacity and blend as a layer)
+    this.render(c, undefined, this.full(), [{ ...lo, opacity: 1, blend: 'normal' }, up]);
     const merged: Layer = { ...lo, canvas: c, maskCanvas: null, maskRev: 0, painted: true, rev: this.counter++ };
     this.change('Merge down', () => {
       this.layers = [...this.layers.slice(0, i - 1), merged, ...this.layers.slice(i + 1)];
       this.active = merged.id;
       this.target = 'pixels';
     });
+    return null;
+  }
+
+  /** A new adjustment layer above the selected one (DECISIONS 124). */
+  addAdjustLayer(adjust: Partial<Adjust> = {}, name = 'Adjustment'): Layer {
+    const l = this.make({ name: nextLayerName(this.layers.map((x) => x.name), name), kind: 'adjust', canvas: newCanvas(1, 1), painted: false, adjust: mergeAdjust(adjust) });
+    this.change('New adjustment layer', () => this.insertAt(l, 'above'));
+    return l;
+  }
+
+  /** Change an adjustment layer's settings; a slider drag (same `key`) is one step. */
+  setAdjust(id: string, patch: Partial<Adjust>, label: string, key?: string): void {
+    const l = this.layers.find((x) => x.id === id);
+    if (!l || l.kind !== 'adjust') return;
+    this.change(label, () => (this.layers = this.layers.map((x) => (x.id === id ? { ...x, adjust: mergeAdjust({ ...(x.adjust ?? NEUTRAL), ...patch }) } : x))), key ? `adj:${key}:${id}` : undefined);
+  }
+
+  /** Histogram of everything below a layer (for Levels and Curves), from a small copy. */
+  histogramBelow(id: string): ReturnType<typeof histogram> {
+    const i = this.layers.findIndex((l) => l.id === id);
+    const full = newCanvas(this.width, this.height);
+    this.render(full, undefined, this.full(), this.layers.slice(0, Math.max(0, i)));
+    const s = Math.min(1, 480 / Math.max(this.width, this.height));
+    const c = newCanvas(Math.max(1, Math.round(this.width * s)), Math.max(1, Math.round(this.height * s)));
+    const g = c.getContext('2d', { willReadFrequently: true })!;
+    g.drawImage(full, 0, 0, c.width, c.height);
+    return histogram(g.getImageData(0, 0, c.width, c.height).data);
   }
 
   /** Layer mask: all shown, or from a selection (white = shown; the alpha of `from` is used). */
@@ -364,6 +394,7 @@ export class CanvasDoc {
     if (!l) return 'Pick a layer first.';
     if (!l.visible) return `“${l.name}” is hidden. Show it to paint on it.`;
     if (l.locked) return `“${l.name}” is locked. Unlock it to paint on it.`;
+    if (l.kind === 'adjust' && !(this.target === 'mask' && l.maskCanvas)) return `“${l.name}” is an adjustment layer: add a mask to it and paint on the mask to choose where it applies.`;
     return null;
   }
 
@@ -642,7 +673,7 @@ export class CanvasDoc {
     if (px < 0 || py < 0 || px >= this.width || py >= this.height) return null;
     for (let i = this.layers.length - 1; i >= 0; i--) {
       const l = this.layers[i];
-      if (!l.visible || l.opacity < 0.05) continue;
+      if (!l.visible || l.opacity < 0.05 || l.kind === 'adjust') continue;
       const a = l.canvas.getContext('2d', { willReadFrequently: true })!.getImageData(px, py, 1, 1).data[3];
       const m = l.maskCanvas && l.maskOn ? l.maskCanvas.getContext('2d', { willReadFrequently: true })!.getImageData(px, py, 1, 1).data[3] : 255;
       if (a > 24 && m > 24) return l.id;
@@ -691,12 +722,18 @@ export class CanvasDoc {
   }
 
   /** Draw the stack (with any stroke in progress) into `out` (width x height): all of it, or only `r`. */
-  render(out: HTMLCanvasElement, only?: string, r: Box = this.full()): void {
+  render(out: HTMLCanvasElement, only?: string, r: Box = this.full(), layers: Layer[] = this.layers): void {
     const g = out.getContext('2d')!;
     g.clearRect(r.x, r.y, r.w, r.h);
-    for (const l of this.layers) {
+    for (const l of layers) {
       if (!l.visible || (only && l.id !== only)) continue;
       const live = this.stroke?.layerId === l.id ? this.stroke : null;
+      if (l.kind === 'adjust') {
+        let mask = l.maskOn ? l.maskCanvas : null;
+        if (live && live.target === 'mask' && l.maskCanvas) mask = this.withStroke(l.maskCanvas, l, 'm', r);
+        this.adjustRegion(g, out, l, mask, r);
+        continue;
+      }
       const px = live && live.target === 'pixels' ? this.withStroke(l.canvas, l, 'a', r) : l.canvas;
       let mask = l.maskOn ? l.maskCanvas : null;
       if (live && live.target === 'mask' && l.maskCanvas) mask = this.withStroke(l.maskCanvas, l, 'm', r);
@@ -706,6 +743,46 @@ export class CanvasDoc {
     }
     g.globalAlpha = 1;
     g.globalCompositeOperation = 'source-over';
+  }
+
+  /** An adjustment layer over what is already in `out` within `r`: the GPU works on that region only. */
+  private adjustRegion(g: CanvasRenderingContext2D, out: HTMLCanvasElement, l: Layer, mask: HTMLCanvasElement | null, r: Box): void {
+    const a = l.adjust ?? NEUTRAL;
+    const below = this.region(0, r);
+    const bg = below.getContext('2d')!;
+    bg.clearRect(0, 0, r.w, r.h);
+    bg.drawImage(out, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+    let adjusted: HTMLCanvasElement;
+    try {
+      adjusted = adjustGL().apply(below, a, r);
+    } catch {
+      return; // no WebGL: the layer shows nothing rather than breaking the picture
+    }
+    const res = this.region(1, r);
+    const rg = res.getContext('2d')!;
+    rg.globalCompositeOperation = 'copy';
+    rg.drawImage(adjusted, 0, 0);
+    if (mask) {
+      rg.globalCompositeOperation = 'destination-in';
+      rg.drawImage(mask, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h);
+    }
+    rg.globalCompositeOperation = 'source-over';
+    g.save();
+    g.globalAlpha = l.opacity;
+    g.globalCompositeOperation = blendOp(l.blend);
+    g.drawImage(res, 0, 0, r.w, r.h, r.x, r.y, r.w, r.h);
+    g.restore();
+  }
+
+  private regions: HTMLCanvasElement[] = [];
+  /** A scratch canvas exactly r.w × r.h (the GPU takes the whole canvas). */
+  private region(k: number, r: Box): HTMLCanvasElement {
+    const c = (this.regions[k] ??= newCanvas(r.w, r.h));
+    if (c.width !== r.w || c.height !== r.h) {
+      c.width = r.w;
+      c.height = r.h;
+    }
+    return c;
   }
 
   /** The merged picture (what Flatten saves and what the AI sees). */
@@ -744,6 +821,7 @@ export class CanvasDoc {
         maskOn: l.maskOn,
         // one number busts the cache of both PNGs
         rev: Math.max(l.rev, l.maskRev),
+        ...(l.kind === 'adjust' ? { adjust: l.adjust ?? NEUTRAL } : {}),
       })),
     };
   }

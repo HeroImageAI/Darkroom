@@ -33,6 +33,7 @@ import {
   Shapes,
   RotateCcw,
   Layers as LayersIcon,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo } from '../lib/remove';
@@ -63,6 +64,8 @@ import { DEFAULT_BRUSH, settingsOf, type BrushSettings } from '../lib/brush';
 import { brushById, penGamma } from '../../shared/brushes';
 import { FillBar, PaintBar, ShapeBar, type ColourState, type ShapeKind, type Symmetry } from '../components/CanvasTools';
 import { CanvasLayers } from '../components/CanvasLayers';
+import { AdjustPanel } from '../components/AdjustPanel';
+import { LOOKS } from '../../shared/adjust';
 
 /** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
 const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
@@ -375,7 +378,7 @@ function Editor({ item }: { item: Item }) {
   const [docStarting, setDocStarting] = useState(false);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error' | 'none'>('none');
   const [flattening, setFlattening] = useState(false);
-  const [panel, setPanel] = useSessionState<'ai' | 'layers'>('edit.panel', 'ai');
+  const [panel, setPanel] = useSessionState<'ai' | 'layers' | 'adjust'>('edit.panel', 'ai');
   // brushes (DECISIONS 123): each preset keeps its own size, opacity… as you leave them; the colour is shared
   const [brushId, setBrushId] = usePersistent<string>('edit.brushId', 'round');
   const [brushPrefs, setBrushPrefs] = usePersistent<Record<string, Partial<BrushSettings>>>('edit.brushes', {});
@@ -505,6 +508,14 @@ function Editor({ item }: { item: Item }) {
       if (doc.unsaved) void doc.save().catch(() => undefined);
     };
   }, [doc]);
+  // Adjust tab (DECISIONS 124): the active adjustment layer and the histogram of what is below it
+  const adjLayer = doc?.activeLayer?.kind === 'adjust' ? doc.activeLayer : null;
+  const [hist, setHist] = useState<ReturnType<CanvasDoc['histogramBelow']> | null>(null);
+  useEffect(() => {
+    if (panel !== 'adjust' || !adjLayer || !doc) return setHist(null);
+    const t = setTimeout(() => setHist(doc.histogramBelow(adjLayer.id)), 50);
+    return () => clearTimeout(t);
+  }, [panel, adjLayer?.id, doc]); // eslint-disable-line react-hooks/exhaustive-deps
   // a fresh on-screen canvas (back from Compare) needs the whole picture once
   useEffect(() => {
     if (doc && compCanvas.current) doc.render(compCanvas.current);
@@ -1678,8 +1689,65 @@ function Editor({ item }: { item: Item }) {
             <button type="button" role="tab" aria-selected={panel === 'layers'} aria-pressed={panel === 'layers'} onClick={() => setPanel('layers')}>
               <LayersIcon size={14} /> Layers {doc && doc.layers.length > 1 ? <span className="mono">{doc.layers.length}</span> : null}
             </button>
+            <button type="button" role="tab" aria-selected={panel === 'adjust'} aria-pressed={panel === 'adjust'} onClick={() => setPanel('adjust')}>
+              <SlidersHorizontal size={14} /> Adjust
+            </button>
           </div>
-          {panel === 'layers' ? (
+          {panel === 'adjust' ? (
+            <div className="canvas-layers">
+              {adjLayer && doc ? (
+                <>
+                  <div className="layers-head">
+                    <p className="section-label" style={{ margin: 0 }}>
+                      {adjLayer.name} <span className="mono">adjustment</span>
+                    </p>
+                    <span className={`save-state ${saveState}`} role="status" aria-label="Layers saved">
+                      {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : saveState === 'unsaved' ? 'Unsaved' : ''}
+                    </span>
+                  </div>
+                  <AdjustPanel adjust={adjLayer.adjust ?? {}} hist={hist ?? undefined} onChange={(p, label, key) => doc.setAdjust(adjLayer.id, p, label, key)} />
+                  <p className="note">
+                    Changes everything below this layer; the pixels stay as they are. To limit it to part of the picture, give it a mask (Layers › Add mask, or Mask from selection) and paint on the mask. Lower its opacity to soften it.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="section-label">Adjust</p>
+                  <p className="note" style={{ marginTop: 0 }}>
+                    An adjustment layer changes the light and colour of everything below it: exposure, levels, curves, colour, black &amp; white, split tone and grain. The picture itself stays untouched, and you can change the adjustment again at any time.
+                  </p>
+                  <button
+                    className="btn"
+                    onClick={async () => {
+                      const d = await ensureDoc();
+                      d?.addAdjustLayer();
+                    }}
+                  >
+                    <SlidersHorizontal size={15} /> New adjustment layer
+                  </button>
+                  <p className="section-label" style={{ marginTop: 6 }}>
+                    Or start from a look
+                  </p>
+                  <div className="looks" role="group" aria-label="Start from a look">
+                    {LOOKS.map((l) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        className="pill"
+                        onClick={async () => {
+                          const d = await ensureDoc();
+                          d?.addAdjustLayer(l.adjust, l.label);
+                        }}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                  {doc?.layers.some((l) => l.kind === 'adjust') && <p className="note">To change an adjustment layer, select it in Layers.</p>}
+                </>
+              )}
+            </div>
+          ) : panel === 'layers' ? (
             <CanvasLayers
               doc={doc}
               version={docVer}
@@ -1695,6 +1763,7 @@ function Editor({ item }: { item: Item }) {
               onExport={() => void exportPng()}
               onUndoTo={undoDocSteps}
               saveState={saveState}
+              onOpenAdjust={() => setPanel('adjust')}
             />
           ) : (
           <>
