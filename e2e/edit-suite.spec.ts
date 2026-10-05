@@ -157,9 +157,14 @@ test.describe.serial('Edit suite · canvas and layers (v3.25)', () => {
     // the red stroke's right half shows in the merged picture, multiplied over the picture
     const { data, info } = await sharp(Buffer.from(await (await page.request.get(`/api/items/${id}/file`)).body())).raw().toBuffer({ resolveWithObject: true });
     const px = (x: number, y: number) => Array.from(data.subarray((Math.round(y) * info.width + Math.round(x)) * info.channels, (Math.round(y) * info.width + Math.round(x)) * info.channels + 3));
+    // red multiplied at 60%: red keeps most of itself, green and blue drop to about half (whatever the picture)
+    const orig = await sharp(Buffer.from(await (await page.request.get(`/api/items/${pic.id}/file`)).body())).raw().toBuffer({ resolveWithObject: true });
+    const op = (x: number, y: number) => Array.from(orig.data.subarray((Math.round(y) * orig.info.width + Math.round(x)) * orig.info.channels, (Math.round(y) * orig.info.width + Math.round(x)) * orig.info.channels + 3));
     const [r, g, b] = px(W * 0.7, H * 0.5);
-    expect(r).toBeGreaterThan(g + 25);
-    expect(r).toBeGreaterThan(b + 25);
+    const [r0, g0, b0] = op(W * 0.7, H * 0.5);
+    expect(r).toBeGreaterThanOrEqual(r0 * 0.7 - 2);
+    expect(g).toBeLessThanOrEqual(g0 * 0.65 + 2);
+    expect(b).toBeLessThanOrEqual(b0 * 0.65 + 2);
     await shot(page, 'flattened');
     await page.getByRole('button', { name: 'Open the layers' }).click();
     await expect(page).toHaveURL(new RegExp(pic.id));
