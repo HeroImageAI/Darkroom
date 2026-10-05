@@ -771,3 +771,10 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 .live-on { color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .live-on { animation: none; } }
+/* Regions (DECISIONS 133) */
+.regions { display: flex; flex-direction: column; gap: 8px; }
+.region-row { display: flex; gap: 8px; align-items: center; }
+.region-row .input { flex: 1; min-width: 0; }
+.region-thumb { width: 40px; height: 40px; padding: 0; border: 1px solid var(--input); border-radius: 6px; background: var(--bg); overflow: hidden; flex: none; cursor: pointer; display: grid; place-items: center; }
+.region-thumb img { max-width: 100%; max-height: 100%; display: block; }
+.region-thumb:hover { border-color: var(--accent); }

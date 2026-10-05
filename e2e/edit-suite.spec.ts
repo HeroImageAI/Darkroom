@@ -972,3 +972,46 @@ test.describe.serial('Edit suite · live painting (v3.30)', () => {
     await expect(panel).toHaveCount(0);
   });
 });
+
+test.describe.serial('Edit suite · regions (DECISIONS 133)', () => {
+  let page: Page;
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
+  });
+  test.afterAll(async () => page.context().close());
+
+  test('Regions: two areas, each with its prompt, are filled one after another as masked layers', async () => {
+    const pic = await pickPicture(page);
+    const { width: W, height: H } = pic;
+    await page.goto(`/#/edit/${pic.id}`);
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Regions', exact: true }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByRole('textbox', { name: 'The whole picture (optional)' }).fill('a moody autumn evening');
+    const tools = page.getByRole('navigation', { name: 'Tools' });
+    await tools.getByRole('button', { name: /^Marquee/ }).click();
+    // region 1: the top-left quarter, region 2: the bottom-right quarter
+    await stroke(page, [[W * 0.05, H * 0.05], [W * 0.45, H * 0.45]], W, H);
+    await page.getByRole('button', { name: 'Add the selection as a region' }).click();
+    await page.getByLabel('Region 1: what it is').fill('a flock of black birds in the sky');
+    await stroke(page, [[W * 0.55, H * 0.55], [W * 0.95, H * 0.95]], W, H);
+    await page.getByRole('button', { name: 'Add the selection as a region' }).click();
+    await page.getByLabel('Region 2: what it is').fill('orange autumn leaves');
+    await expect(page.getByRole('button', { name: /^Show region/ })).toHaveCount(2);
+    await shot(page, 'regions-panel');
+    const sent: any[] = [];
+    page.on('request', (r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && sent.push(r.postDataJSON()));
+    await page.locator('.panel-foot').getByRole('button', { name: /Render 2 regions/ }).click();
+    await expect(page.getByText(/All 2 regions are rendered/)).toBeVisible({ timeout: 600_000 });
+    expect(sent.map((b) => b.meta.mode)).toEqual(['edit:inpaint', 'edit:inpaint']);
+    expect(sent[0].params.prompt).toMatch(/black birds.*as part of a moody autumn evening/);
+    expect(sent[1].params.prompt).toMatch(/orange autumn leaves/);
+    await page.getByRole('tab', { name: /Layers/ }).click();
+    await saved(page);
+    const proj = await (await page.request.get(`/api/items/${pic.id}/project`)).json();
+    const regionLayers = proj.layers.filter((l: any) => /^Region \d · /.test(l.name));
+    expect(regionLayers.map((l: any) => l.name)).toEqual(['Region 1 · a flock of black birds in the sky', 'Region 2 · orange autumn leaves']);
+    for (const l of regionLayers) expect(l.mask).toBe(true);
+    await shot(page, 'regions-done');
+  });
+});

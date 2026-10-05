@@ -1010,3 +1010,15 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     paint", and **Keep as layer** adds the frame on top (paint over it and Live carries on from there). Frames are jobs
     with `meta.preview`: the server attaches the file to the job and makes **no Library item** (like mask jobs); files
     go to `darkroom/live`. A black disc + "a ripe red apple…" comes back as a photographed apple in ~6 s, upload and all.
+133. **Edit suite: Regions (plan phase 7), the reliable way.** A Regions mode in the AI panel: select an area (any
+    selection tool), **Add the selection as a region**, say what it is — up to five (Acly's advice: more blur what each
+    says) — plus optional words for the whole picture. **Render** fills them one after another with the same Fill path
+    (crop and stitch at full strength), each prompt as "<region>, as part of <whole picture>", and each result lands on
+    its own layer named "Region n · …", masked to its area (a wider blend at the edge, ~1 % of the picture, so a hard
+    marquee leaves no box). The run waits for each layer before the next region, so later regions see the earlier
+    ones; a region that fails or is cancelled stops the run with the earlier ones kept. A region's thumbnail shows its
+    area as the selection again. Regions belong to the picture open (cleared on another). True single-pass regional
+    conditioning stays unbuilt: the sequence is reliable and each region can be undone, hidden or redone on its own.
+    Two fixes on the way: an area must be read before React's state updater runs (it ran after the selection was
+    cleared, so regions came out empty), and a region run lands as layers even on a picture without layers yet.
+    The Advanced options (seed, LoRAs) now show for Sketch too, which already used your LoRAs.
