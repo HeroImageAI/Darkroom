@@ -622,3 +622,33 @@ details.layer-history summary { display: flex; align-items: center; gap: 6px; fo
 .paint-target { max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .paint-target b { color: var(--text); font-weight: 500; }
 .paint-cursor { box-shadow: 0 0 0 1px rgba(0,0,0,.55); }
+/* Edit suite v3.26: brushes, colour, fill, shapes, symmetry (DECISIONS 123) */
+.pop { position: relative; flex: none; }
+.pop-btn { display: inline-flex; align-items: center; gap: 4px; }
+.pop-panel { position: absolute; bottom: calc(100% + 10px); left: 0; z-index: 10; padding: 10px; border-radius: 12px; background: #161513; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.5); white-space: normal; }
+.brush-pop .pop-panel { width: 330px; }
+.brush-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.brush-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
+.brush-cell:hover { color: var(--text); background: var(--raised); }
+.brush-cell.on { border-color: var(--accent); color: var(--text); }
+.brush-more { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.paint-bar .mini.wide, .brush-more .mini.wide { width: 100%; }
+.brush-more .mini { width: 130px; }
+.colour-pop .pop-btn { padding: 0 6px; }
+.colour-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); display: inline-block; }
+.colour-picker { width: 200px; display: flex; flex-direction: column; gap: 8px; }
+.cp-square { position: relative; width: 180px; height: 140px; cursor: crosshair; touch-action: none; border-radius: 6px; overflow: hidden; }
+.cp-square canvas { display: block; width: 100%; height: 100%; }
+.cp-dot { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #000; pointer-events: none; }
+.cp-hue { position: relative; width: 180px; height: 14px; border-radius: 7px; cursor: pointer; touch-action: none; background: linear-gradient(90deg, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00); }
+.cp-hue-dot { position: absolute; top: -2px; width: 8px; height: 18px; margin-left: -4px; border-radius: 3px; border: 2px solid #fff; box-shadow: 0 0 0 1px #000; pointer-events: none; }
+.cp-now { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--line); flex: none; }
+.cp-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.cp-row button { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--line); padding: 0; cursor: pointer; }
+.segmented.sym { flex: none; }
+.segmented.sym button { min-height: 28px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+.paint-bar .check { font-size: 11.5px; white-space: nowrap; }
+.sym-axis { position: absolute; pointer-events: none; border: 0 dashed rgba(240,180,76,.75); }
+.sym-axis.v { left: 50%; top: 0; bottom: 0; border-left-width: 1px; }
+.sym-axis.h { top: 50%; left: 0; right: 0; border-top-width: 1px; }
+.paint-bar { position: relative; left: auto; bottom: auto; transform: none; z-index: 4; margin: 0 auto; max-width: 100%; overflow: visible; flex-wrap: wrap; justify-content: center; row-gap: 6px; border-radius: 0; border-width: 1px 0 0; width: 100%; background: var(--panel); }

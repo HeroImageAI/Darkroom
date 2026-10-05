@@ -29,8 +29,10 @@ import {
   Check,
   LayoutGrid,
   Paintbrush,
+  PaintBucket,
+  Shapes,
+  RotateCcw,
   Layers as LayersIcon,
-  Pipette,
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo } from '../lib/remove';
@@ -57,7 +59,9 @@ import { KleinWeights, kleinLabel, useFinetunes } from '../components/KleinWeigh
 import type { LoraUse } from '../../shared/loras';
 import { placeOnCanvas, type DocJson } from '../../shared/doc';
 import { CanvasDoc, loadImage } from '../lib/doc';
-import { DEFAULT_BRUSH, type BrushSettings } from '../lib/brush';
+import { DEFAULT_BRUSH, settingsOf, type BrushSettings } from '../lib/brush';
+import { brushById, penGamma } from '../../shared/brushes';
+import { FillBar, PaintBar, ShapeBar, type ColourState, type ShapeKind, type Symmetry } from '../components/CanvasTools';
 import { CanvasLayers } from '../components/CanvasLayers';
 
 /** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
@@ -65,7 +69,10 @@ const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
-type Tool = 'move' | 'paint' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
+type Tool = 'move' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
+/** tools that work on the canvas layers (DECISIONS 122, 123) */
+type CanvasTool = 'paint' | 'fill' | 'shape';
+const isCanvasTool = (t: Tool): t is CanvasTool => t === 'paint' || t === 'fill' || t === 'shape';
 type Mode = 'instruct' | 'inpaint' | 'outpaint' | 'turn' | 'enhance' | 'remove_bg' | 'layers' | 'upscale';
 /** restore = edit-style (default; fixes blur and low resolution), restore_upscale = restore then SeedVR2 2x,
  *  subtle = low-denoise img2img touch-up for pictures that are already clean (Addenda Phase 2, DECISIONS 66). */
@@ -86,6 +93,8 @@ interface Rect {
 const TOOLS: { id: Tool; label: string; key: string; icon: typeof Brush; disabled?: string }[] = [
   { id: 'move', label: 'Move', key: 'V', icon: Hand },
   { id: 'paint', label: 'Paint on a layer', key: 'P', icon: Paintbrush },
+  { id: 'fill', label: 'Fill bucket', key: 'G', icon: PaintBucket },
+  { id: 'shape', label: 'Shapes', key: 'U', icon: Shapes },
   { id: 'brush', label: 'Mask brush', key: 'B', icon: Brush },
   { id: 'eraser', label: 'Eraser', key: 'E', icon: Eraser },
   { id: 'lasso', label: 'Lasso', key: 'L', icon: Lasso },
@@ -367,9 +376,31 @@ function Editor({ item }: { item: Item }) {
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error' | 'none'>('none');
   const [flattening, setFlattening] = useState(false);
   const [panel, setPanel] = useSessionState<'ai' | 'layers'>('edit.panel', 'ai');
-  const [paint, setPaint] = usePersistent<BrushSettings>('edit.brush', DEFAULT_BRUSH);
+  // brushes (DECISIONS 123): each preset keeps its own size, opacity… as you leave them; the colour is shared
+  const [brushId, setBrushId] = usePersistent<string>('edit.brushId', 'round');
+  const [brushPrefs, setBrushPrefs] = usePersistent<Record<string, Partial<BrushSettings>>>('edit.brushes', {});
+  const [colour, setColour] = usePersistent<string>('edit.colour', DEFAULT_BRUSH.color);
+  const preset = brushById(brushId);
+  const paint: BrushSettings = { ...settingsOf(preset), ...brushPrefs[preset.id], engine: preset.engine, filter: preset.filter, color: colour };
+  const setPaint = (fn: (s: BrushSettings) => BrushSettings) => {
+    const n = fn(paint);
+    if (n.color !== colour) setColour(n.color);
+    const { color: _c, engine: _e, filter: _f, ...rest } = n;
+    setBrushPrefs((p) => ({ ...p, [preset.id]: rest }));
+  };
   const [paintErase, setPaintErase] = useState(false);
   const [recentColours, setRecentColours] = usePersistent<string[]>('edit.colours', []);
+  const [swatches, setSwatches] = usePersistent<string[]>('edit.swatches', []);
+  const [penFeel, setPenFeel] = usePersistent<number>('edit.penFeel', 0);
+  const [symmetry, setSymmetry] = useSessionState<Symmetry>('edit.symmetry', 'off');
+  const [fillOpts, setFillOpts] = usePersistent('edit.fillTool', { tolerance: 32, contiguous: true, merged: false, opacity: 1 });
+  const [shapeOpts, setShapeOpts] = usePersistent('edit.shapeTool', { kind: 'rect' as ShapeKind, filled: false, size: 6, opacity: 1 });
+  // view only: turn and mirror the canvas to draw at a comfortable angle (the picture is not changed)
+  const [rot, setRot] = useState(0);
+  const [flipView, setFlipView] = useState(false);
+  const pushRecent = (c: string) => setRecentColours((r) => [c, ...r.filter((x) => x !== c)].slice(0, 8));
+  const colourState: ColourState = { colour, setColour: (c) => setColour(c), recent: recentColours, swatches, setSwatches };
+  const shapeBrush = (): BrushSettings => ({ ...paint, size: shapeOpts.size, opacity: shapeOpts.opacity });
   const compCanvas = useRef<HTMLCanvasElement>(null);
   const strokePt = useRef<{ x: number; y: number } | null>(null);
   /** the selection a running edit used, to mask its result layer */
@@ -381,7 +412,7 @@ function Editor({ item }: { item: Item }) {
     if (order.current.undo.length > 200) order.current.undo.shift();
     order.current.redo = [];
   };
-  const drag = useRef<{ kind: 'pan' | 'paint' | 'stroke' | 'lasso' | 'frame' | 'crop' | 'sam'; sx: number; sy: number; vx: number; vy: number; side?: keyof Pad; start?: Pad; origin?: { x: number; y: number } } | null>(null);
+  const drag = useRef<{ kind: 'pan' | 'paint' | 'stroke' | 'shape' | 'lasso' | 'frame' | 'crop' | 'sam'; sx: number; sy: number; vx: number; vy: number; side?: keyof Pad; start?: Pad; origin?: { x: number; y: number } } | null>(null);
 
   const job: Job | undefined = jobId ? jobs[jobId] : undefined;
   const running = !!job && (job.status === 'queued' || job.status === 'running');
@@ -576,8 +607,8 @@ function Editor({ item }: { item: Item }) {
     const hex = '#' + [px[0], px[1], px[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
     setPaint((s) => ({ ...s, color: hex }));
   };
-  const choosePaint = () => {
-    setTool('paint');
+  const chooseCanvasTool = (t: CanvasTool) => {
+    setTool(t);
     setPanel('layers');
     void ensureDoc();
   };
@@ -639,9 +670,17 @@ function Editor({ item }: { item: Item }) {
     [jobId],
   );
 
+  /** Screen point → picture pixels, through the view's zoom, pan, turn and mirror. */
   const toImage = (e: { clientX: number; clientY: number }) => {
-    const r = imgRef.current!.getBoundingClientRect();
-    return { x: ((e.clientX - r.left) / r.width) * W, y: ((e.clientY - r.top) / r.height) * H };
+    const r = stageRef.current!.getBoundingClientRect();
+    const s = view.scale;
+    const dx = e.clientX - (r.left + view.x + (W * s) / 2);
+    const dy = e.clientY - (r.top + view.y + (H * s) / 2);
+    const a = (-rot * Math.PI) / 180;
+    let ux = dx * Math.cos(a) - dy * Math.sin(a);
+    const uy = dx * Math.sin(a) + dy * Math.cos(a);
+    if (flipView) ux = -ux;
+    return { x: ux / s + W / 2, y: uy / s + H / 2 };
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -652,23 +691,40 @@ function Editor({ item }: { item: Item }) {
       /* a pointer the browser no longer tracks */
     }
     const base = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
-    if (tool === 'paint' && e.button === 0 && e.altKey) return pickColour(e);
+    if (isCanvasTool(tool) && e.button === 0 && e.altKey) return pickColour(e);
     if (tool === 'move' || e.button === 1 || e.altKey) {
       drag.current = { kind: 'pan', ...base };
       return;
     }
     const p = toImage(e);
-    if (tool === 'paint') {
+    if (isCanvasTool(tool)) {
       const d = docRef.current;
       if (!d) {
         void ensureDoc();
-        return toast('Getting the canvas ready: paint again in a moment.', 'info');
+        return toast('Getting the canvas ready: try again in a moment.', 'info');
+      }
+      // Ctrl-click picks the layer under the pen
+      if (e.ctrlKey || e.metaKey) {
+        const id = d.layerAt(p.x, p.y);
+        if (id) d.select(id);
+        return;
       }
       const why = d.paintBlocker();
       if (why) return toast(why, 'info');
+      if (tool === 'fill') {
+        const err = d.fill(p.x, p.y, colour, fillOpts);
+        if (err) toast(err, 'info');
+        else pushRecent(colour);
+        return;
+      }
+      if (tool === 'shape') {
+        if (d.previewShape(shapeOpts.kind, p, p, shapeBrush(), shapeOpts.filled, e.shiftKey)) drag.current = { kind: 'shape', ...base, origin: p };
+        return;
+      }
       // the pen's eraser end erases
       const erase = paintErase || (e.pointerType === 'pen' && (e.buttons & 32) !== 0);
-      if (d.beginStroke(paint, erase, p.x, p.y, pressureOf(e))) {
+      const mirror = { mirrorX: symmetry === 'v' || symmetry === 'both' ? W / 2 : undefined, mirrorY: symmetry === 'h' || symmetry === 'both' ? H / 2 : undefined };
+      if (d.beginStroke(paint, erase, p.x, p.y, pressureOf(e), { ...mirror, gamma: penGamma(penFeel) })) {
         strokePt.current = p;
         drag.current = { kind: 'stroke', ...base };
       }
@@ -712,7 +768,8 @@ function Editor({ item }: { item: Item }) {
         docRef.current?.strokeTo(q.x, q.y, pressureOf(ev));
         strokePt.current = q;
       }
-    } else if (d.kind === 'lasso') setLasso((pts) => [...(pts ?? []), toImage(e)]);
+    } else if (d.kind === 'shape' && d.origin) docRef.current?.previewShape(shapeOpts.kind, d.origin, toImage(e), shapeBrush(), shapeOpts.filled, e.shiftKey);
+    else if (d.kind === 'lasso') setLasso((pts) => [...(pts ?? []), toImage(e)]);
     else if (d.kind === 'frame' && d.side && d.start) {
       const dx = (e.clientX - d.sx) / view.scale;
       const dy = (e.clientY - d.sy) / view.scale;
@@ -739,7 +796,10 @@ function Editor({ item }: { item: Item }) {
     } else if (d.kind === 'stroke') {
       docRef.current?.endStroke(strokePt.current?.x ?? null, strokePt.current?.y ?? null);
       strokePt.current = null;
-      if (!paintErase) setRecentColours((r) => [paint.color, ...r.filter((c) => c !== paint.color)].slice(0, 8));
+      if (!paintErase && paint.engine === 'paint') pushRecent(colour);
+    } else if (d.kind === 'shape') {
+      docRef.current?.endStroke(null, null);
+      pushRecent(colour);
     } else if (d.kind === 'lasso' && lasso) {
       layer.current?.fillPolygon(lasso, e.shiftKey);
       setLasso(null);
@@ -838,7 +898,7 @@ function Editor({ item }: { item: Item }) {
     (e) => !e.ctrlKey && !e.metaKey && !e.altKey && TOOLS.some((t) => t.key.toLowerCase() === e.key.toLowerCase() && !t.disabled),
     (e) => {
       const t = TOOLS.find((x) => x.key.toLowerCase() === e.key.toLowerCase())!.id;
-      if (t === 'paint') return choosePaint();
+      if (isCanvasTool(t)) return chooseCanvasTool(t);
       setTool(t);
       if (t === 'frame') setMode('outpaint');
     },
@@ -851,7 +911,18 @@ function Editor({ item }: { item: Item }) {
       if (tool === 'paint') setPaint((s) => ({ ...s, size: Math.max(1, Math.min(500, Math.round(s.size * (up ? 1.15 : 1 / 1.15)) + (up ? 1 : -1))) }));
       else setBrush((b) => Math.max(4, Math.min(400, b + (up ? 8 : -8))));
     },
-    [tool],
+    [tool, brushId, brushPrefs, colour],
+  );
+  // view: 4 / 6 turn it, 5 straightens it, H mirrors it (only the view)
+  useHotkey(
+    (e) => !e.ctrlKey && !e.metaKey && !e.altKey && ['4', '5', '6', 'h', 'H'].includes(e.key),
+    (e) => {
+      if (e.key === '4') setRot((r) => r - 15);
+      else if (e.key === '6') setRot((r) => r + 15);
+      else if (e.key === '5') (setRot(0), setFlipView(false));
+      else setFlipView((x) => !x);
+    },
+    [],
   );
   // X: paint / erase with the Paint tool
   useHotkey((e) => tool === 'paint' && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'x', () => setPaintErase((x) => !x), [tool]);
@@ -1262,7 +1333,7 @@ function Editor({ item }: { item: Item }) {
             aria-label={`${t.label} (${t.key})`}
             disabled={!!t.disabled}
             onClick={() => {
-              if (t.id === 'paint') return choosePaint();
+              if (isCanvasTool(t.id)) return chooseCanvasTool(t.id);
               setTool(t.id);
               if (t.id === 'frame') setMode('outpaint');
             }}
@@ -1349,7 +1420,7 @@ function Editor({ item }: { item: Item }) {
           onPointerLeave={() => setCursor(null)}
           onWheel={onWheel}
         >
-          <div style={{ position: 'absolute', left: view.x, top: view.y, width: W * view.scale, height: H * view.scale }}>
+          <div style={{ position: 'absolute', left: view.x, top: view.y, width: W * view.scale, height: H * view.scale, transform: rot || flipView ? `rotate(${rot}deg) scaleX(${flipView ? -1 : 1})` : undefined, transformOrigin: 'center' }}>
             {hasPad && (
               <div
                 aria-label="Outpaint frame"
@@ -1387,6 +1458,8 @@ function Editor({ item }: { item: Item }) {
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', background: CHECKER, pointerEvents: 'none' }}
               />
             )}
+            {tool === 'paint' && !compare && (symmetry === 'v' || symmetry === 'both') && <div className="sym-axis v" aria-hidden="true" />}
+            {tool === 'paint' && !compare && (symmetry === 'h' || symmetry === 'both') && <div className="sym-axis h" aria-hidden="true" />}
             <MaskOutlineDefs />
             <canvas
               ref={viewCanvas}
@@ -1433,55 +1506,6 @@ function Editor({ item }: { item: Item }) {
               />
             );
           })()}
-          {tool === 'paint' && !compare && (
-            <div className="paint-bar" role="toolbar" aria-label="Paint" onPointerDown={(e) => e.stopPropagation()}>
-              <label className="swatch-main" title="Colour (Alt-click the picture to pick one)">
-                <input type="color" value={paint.color} onChange={(e) => setPaint((s) => ({ ...s, color: e.target.value }))} aria-label="Paint colour" />
-              </label>
-              <div className="swatches" aria-label="Recent colours">
-                {recentColours.map((c) => (
-                  <button key={c} type="button" style={{ background: c }} title={c} aria-label={`Use ${c}`} onClick={() => setPaint((s) => ({ ...s, color: c }))} />
-                ))}
-              </div>
-              <span className="note" title="Alt-click the picture to pick a colour">
-                <Pipette size={13} /> Alt
-              </span>
-              <label className="mini" title="Brush size ([ and ])">
-                Size <b className="mono">{paint.size}</b>
-                <input type="range" min={1} max={500} value={paint.size} onChange={(e) => setPaint((s) => ({ ...s, size: Number(e.target.value) }))} aria-label="Brush size" />
-              </label>
-              <label className="mini" title="Hard edge or soft airbrush">
-                Hardness <b className="mono">{Math.round(paint.hardness * 100)}</b>
-                <input type="range" min={0} max={100} value={Math.round(paint.hardness * 100)} onChange={(e) => setPaint((s) => ({ ...s, hardness: Number(e.target.value) / 100 }))} aria-label="Brush hardness" />
-              </label>
-              <label className="mini">
-                Opacity <b className="mono">{Math.round(paint.opacity * 100)}%</b>
-                <input type="range" min={1} max={100} value={Math.round(paint.opacity * 100)} onChange={(e) => setPaint((s) => ({ ...s, opacity: Number(e.target.value) / 100 }))} aria-label="Brush opacity" />
-              </label>
-              <label className="mini" title="Stabiliser: the line lags behind the pen to smooth out wobble">
-                Smooth <b className="mono">{Math.round(paint.smoothing * 100)}</b>
-                <input type="range" min={0} max={90} value={Math.round(paint.smoothing * 100)} onChange={(e) => setPaint((s) => ({ ...s, smoothing: Number(e.target.value) / 100 }))} aria-label="Stabiliser" />
-              </label>
-              <div className="pen-toggles" title="What pen pressure changes">
-                Pen
-                <button type="button" className={`pill ${paint.pressureSize ? 'on' : ''}`} aria-pressed={paint.pressureSize} onClick={() => setPaint((s) => ({ ...s, pressureSize: !s.pressureSize }))}>
-                  size
-                </button>
-                <button type="button" className={`pill ${paint.pressureOpacity ? 'on' : ''}`} aria-pressed={paint.pressureOpacity} onClick={() => setPaint((s) => ({ ...s, pressureOpacity: !s.pressureOpacity }))}>
-                  opacity
-                </button>
-              </div>
-              <button type="button" className={`btn sm ${paintErase ? 'on' : ''}`} aria-pressed={paintErase} onClick={() => setPaintErase((x) => !x)} title="Erase (X). The pen's eraser end erases too.">
-                <Eraser size={14} /> {doc?.target === 'mask' ? (paintErase ? 'Show' : 'Hide') : 'Erase'}
-              </button>
-              {doc && (
-                <span className="paint-target">
-                  on <b>{doc.activeLayer?.name}</b>
-                  {doc.target === 'mask' ? ' · mask' : ''}
-                </span>
-              )}
-            </div>
-          )}
           {both && (
             <div className="both-strip" role="status" aria-label="Both models">
               {(['klein', 'qwen'] as const).map((m) => (
@@ -1516,6 +1540,20 @@ function Editor({ item }: { item: Item }) {
             />
           </div>
           <div style={{ position: 'absolute', right: 12, top: 12, display: 'flex', gap: 6 }} onPointerDown={(e) => e.stopPropagation()}>
+            <button className="btn sm" onClick={() => setRot((r) => r - 15)} title="Turn the view left (4)" aria-label="Turn view left">
+              <RotateCcw size={14} />
+            </button>
+            <button className="btn sm" onClick={() => setRot((r) => r + 15)} title="Turn the view right (6)" aria-label="Turn view right">
+              <RotateCw size={14} />
+            </button>
+            <button className={`btn sm ${flipView ? 'on' : ''}`} aria-pressed={flipView} onClick={() => setFlipView((x) => !x)} title="Mirror the view (H) to check proportions. The picture is not changed." aria-label="Mirror view">
+              <FlipHorizontal2 size={14} />
+            </button>
+            {(rot % 360 !== 0 || flipView) && (
+              <button className="btn sm" onClick={() => (setRot(0), setFlipView(false))} title="Straighten the view (5)">
+                Straighten
+              </button>
+            )}
             <button className="btn sm" onClick={fit} title="Fit to screen">
               <Maximize size={14} /> Fit
             </button>
@@ -1528,6 +1566,49 @@ function Editor({ item }: { item: Item }) {
           </div>
         </div>
 
+        {/* the canvas tools' options: a row of their own, so they never cover the picture */}
+          {tool === 'paint' && !compare && (
+            <PaintBar
+              brushId={brushId}
+              onBrush={setBrushId}
+              s={paint}
+              set={(patch) => setPaint((x) => ({ ...x, ...patch }))}
+              c={colourState}
+              erase={paintErase}
+              setErase={setPaintErase}
+              symmetry={symmetry}
+              setSymmetry={setSymmetry}
+              penFeel={penFeel}
+              setPenFeel={setPenFeel}
+              target={doc?.activeLayer ? { layer: doc.activeLayer.name, mask: doc.target === 'mask' } : null}
+            />
+          )}
+          {tool === 'fill' && !compare && (
+            <FillBar
+              c={colourState}
+              tolerance={fillOpts.tolerance}
+              setTolerance={(v) => setFillOpts((o) => ({ ...o, tolerance: v }))}
+              contiguous={fillOpts.contiguous}
+              setContiguous={(v) => setFillOpts((o) => ({ ...o, contiguous: v }))}
+              merged={fillOpts.merged}
+              setMerged={(v) => setFillOpts((o) => ({ ...o, merged: v }))}
+              opacity={fillOpts.opacity}
+              setOpacity={(v) => setFillOpts((o) => ({ ...o, opacity: v }))}
+            />
+          )}
+          {tool === 'shape' && !compare && (
+            <ShapeBar
+              c={colourState}
+              kind={shapeOpts.kind}
+              setKind={(k) => setShapeOpts((o) => ({ ...o, kind: k }))}
+              filled={shapeOpts.filled}
+              setFilled={(v) => setShapeOpts((o) => ({ ...o, filled: v }))}
+              size={shapeOpts.size}
+              setSize={(v) => setShapeOpts((o) => ({ ...o, size: v }))}
+              opacity={shapeOpts.opacity}
+              setOpacity={(v) => setShapeOpts((o) => ({ ...o, opacity: v }))}
+            />
+          )}
         <div className="filmstrip-bar">
           <span className="section-label" style={{ margin: 0 }}>
             Versions
