@@ -3079,7 +3079,9 @@ function EditEmpty() {
           </label>
         </div>
         <div className="field-row" style={{ gap: 8, justifyContent: 'center' }}>
-          <NewCanvasButton label="Start from a blank canvas" onCreate={(w, h, bg) => void createCanvas(w, h, bg)} />
+          <span className="primary-pop">
+            <NewCanvasButton label="Start from a blank canvas" onCreate={(w, h, bg) => void createCanvas(w, h, bg)} />
+          </span>
         </div>
         <p className="note scene-steps">
           To build a scene: a canvas (or a picture as the background) · Layers › Picture… to add pieces · the scissors to cut them out · Transform (T) to place them · paint · AI › Compose to render one picture.

@@ -452,14 +452,14 @@ function TimelineEditor({ id }: { id: string }) {
             <ArrowLeft size={14} /> All films
           </button>
           <input className="input" aria-label="Film name" value={name} onChange={(e) => setName(e.target.value)} style={{ flex: "1 1 140px", maxWidth: 240, minWidth: 120 }} />
-          <select className="input" aria-label="Export size" value={doc.size} onChange={(e) => setDoc({ ...doc, size: e.target.value as TimelineSize })} style={{ flex: "0 1 180px", minWidth: 140 }}>
+          <select className="input" aria-label="Export size" title={`Exports at ${size.width}×${size.height}, ${doc.fps} fps`} value={doc.size} onChange={(e) => setDoc({ ...doc, size: e.target.value as TimelineSize })} style={{ flex: "0 1 180px", minWidth: 140 }}>
             {SIZES.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
             ))}
           </select>
-          <span className="mono muted" style={{ fontSize: 12 }}>
+          <span className="mono muted tl-size" style={{ fontSize: 12 }}>
             {size.width}×{size.height} · {doc.fps} fps
           </span>
           <div style={{ flex: 1 }} />
