@@ -32,7 +32,11 @@ import {
   PaintBucket,
   Shapes,
   RotateCcw,
+  SquareDashed,
+  Wand,
+  Move,
   Layers as LayersIcon,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { api, downloadUrl, fileUrl, inputUrl, thumbUrl, type Item, type Job } from '../api';
 import { deleteWithUndo } from '../lib/remove';
@@ -60,16 +64,23 @@ import type { LoraUse } from '../../shared/loras';
 import { placeOnCanvas, type DocJson } from '../../shared/doc';
 import { CanvasDoc, loadImage } from '../lib/doc';
 import { DEFAULT_BRUSH, settingsOf, type BrushSettings } from '../lib/brush';
+import { floodMask } from '../../shared/flood';
 import { brushById, penGamma } from '../../shared/brushes';
-import { FillBar, PaintBar, ShapeBar, type ColourState, type ShapeKind, type Symmetry } from '../components/CanvasTools';
+import { FillBar, PaintBar, SelectBar, ShapeBar, type ColourState, type SelOpUi, type ShapeKind, type Symmetry } from '../components/CanvasTools';
+import { border as selBorder, combine as selCombine, growShrink } from '../../shared/selection';
+import { drawTransform, startTransform, TransformBar, TransformOverlay, type TransformState } from '../components/TransformTool';
 import { CanvasLayers } from '../components/CanvasLayers';
+import { AdjustPanel } from '../components/AdjustPanel';
+import { LOOKS } from '../../shared/adjust';
 
 /** Edits that run Klein / Qwen on the picture, so your LoRAs apply (not crop, upscale, background removal…). */
 const LORA_MODES = new Set(['edit:instruct', 'edit:inpaint', 'edit:outpaint']);
 import { MASK_OUTLINE_FILTER, MaskOutlineDefs } from '../components/MaskOutline';
 import { onJob, toast, useApp } from '../store';
 
-type Tool = 'move' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'lasso' | 'smart' | 'frame' | 'crop';
+type Tool = 'move' | 'transform' | 'paint' | 'fill' | 'shape' | 'brush' | 'eraser' | 'marquee' | 'lasso' | 'wand' | 'smart' | 'frame' | 'crop';
+/** tools that make a selection with Shift = add, Alt = subtract (DECISIONS 124) */
+const SEL_TOOLS = new Set<Tool>(['marquee', 'lasso', 'wand']);
 /** tools that work on the canvas layers (DECISIONS 122, 123) */
 type CanvasTool = 'paint' | 'fill' | 'shape';
 const isCanvasTool = (t: Tool): t is CanvasTool => t === 'paint' || t === 'fill' || t === 'shape';
@@ -92,12 +103,15 @@ interface Rect {
 
 const TOOLS: { id: Tool; label: string; key: string; icon: typeof Brush; disabled?: string }[] = [
   { id: 'move', label: 'Move', key: 'V', icon: Hand },
+  { id: 'transform', label: 'Transform the layer', key: 'T', icon: Move },
   { id: 'paint', label: 'Paint on a layer', key: 'P', icon: Paintbrush },
   { id: 'fill', label: 'Fill bucket', key: 'G', icon: PaintBucket },
   { id: 'shape', label: 'Shapes', key: 'U', icon: Shapes },
   { id: 'brush', label: 'Mask brush', key: 'B', icon: Brush },
   { id: 'eraser', label: 'Eraser', key: 'E', icon: Eraser },
+  { id: 'marquee', label: 'Marquee select', key: 'M', icon: SquareDashed },
   { id: 'lasso', label: 'Lasso', key: 'L', icon: Lasso },
+  { id: 'wand', label: 'Magic wand', key: 'W', icon: Wand },
   { id: 'smart', label: 'Smart select', key: 'S', icon: ScanSearch },
   { id: 'frame', label: 'Outpaint frame', key: 'O', icon: Expand },
   { id: 'crop', label: 'Crop', key: 'C', icon: Crop },
@@ -375,7 +389,7 @@ function Editor({ item }: { item: Item }) {
   const [docStarting, setDocStarting] = useState(false);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved' | 'error' | 'none'>('none');
   const [flattening, setFlattening] = useState(false);
-  const [panel, setPanel] = useSessionState<'ai' | 'layers'>('edit.panel', 'ai');
+  const [panel, setPanel] = useSessionState<'ai' | 'layers' | 'adjust'>('edit.panel', 'ai');
   // brushes (DECISIONS 123): each preset keeps its own size, opacity… as you leave them; the colour is shared
   const [brushId, setBrushId] = usePersistent<string>('edit.brushId', 'round');
   const [brushPrefs, setBrushPrefs] = usePersistent<Record<string, Partial<BrushSettings>>>('edit.brushes', {});
@@ -401,6 +415,22 @@ function Editor({ item }: { item: Item }) {
   const pushRecent = (c: string) => setRecentColours((r) => [c, ...r.filter((x) => x !== c)].slice(0, 8));
   const colourState: ColourState = { colour, setColour: (c) => setColour(c), recent: recentColours, swatches, setSwatches };
   const shapeBrush = (): BrushSettings => ({ ...paint, size: shapeOpts.size, opacity: shapeOpts.opacity });
+  // selections (DECISIONS 124)
+  const [selOp, setSelOp] = useSessionState<SelOpUi>('edit.selOp', 'add');
+  const [marqueeKind, setMarqueeKind] = useSessionState<'rect' | 'ellipse'>('edit.marquee', 'rect');
+  const [wandOpts, setWandOpts] = usePersistent('edit.wand', { tolerance: 32, contiguous: true, merged: true });
+  const [selPx, setSelPx] = usePersistent('edit.selPx', 8);
+  const [marq, setMarq] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  // Clone brush: where it copies from (Alt-click), and the offset it keeps once you start painting
+  const [cloneSrc, setCloneSrc] = useState<{ x: number; y: number } | null>(null);
+  const [cloneOff, setCloneOff] = useState<{ dx: number; dy: number } | null>(null);
+  const [cloneMerged, setCloneMerged] = usePersistent('edit.cloneMerged', true);
+  // Transform (DECISIONS 124): the lifted pixels and where the handles put them
+  const [tf, setTf] = useState<TransformState | null>(null);
+  const tfRef = useRef<TransformState | null>(null);
+  tfRef.current = tf;
+  /** the op for this click: Shift adds, Alt subtracts, both keep the overlap, else the chosen mode */
+  const opFor = (e: { shiftKey: boolean; altKey: boolean }): SelOpUi => (e.shiftKey && e.altKey ? 'intersect' : e.shiftKey ? 'add' : e.altKey ? 'subtract' : selOp);
   const compCanvas = useRef<HTMLCanvasElement>(null);
   const strokePt = useRef<{ x: number; y: number } | null>(null);
   /** the selection a running edit used, to mask its result layer */
@@ -412,7 +442,7 @@ function Editor({ item }: { item: Item }) {
     if (order.current.undo.length > 200) order.current.undo.shift();
     order.current.redo = [];
   };
-  const drag = useRef<{ kind: 'pan' | 'paint' | 'stroke' | 'shape' | 'lasso' | 'frame' | 'crop' | 'sam'; sx: number; sy: number; vx: number; vy: number; side?: keyof Pad; start?: Pad; origin?: { x: number; y: number } } | null>(null);
+  const drag = useRef<{ op?: SelOpUi; kind: 'pan' | 'paint' | 'stroke' | 'shape' | 'marquee' | 'lasso' | 'frame' | 'crop' | 'sam'; sx: number; sy: number; vx: number; vy: number; side?: keyof Pad; start?: Pad; origin?: { x: number; y: number } } | null>(null);
 
   const job: Job | undefined = jobId ? jobs[jobId] : undefined;
   const running = !!job && (job.status === 'queued' || job.status === 'running');
@@ -505,6 +535,89 @@ function Editor({ item }: { item: Item }) {
       if (doc.unsaved) void doc.save().catch(() => undefined);
     };
   }, [doc]);
+  // Adjust tab (DECISIONS 124): the active adjustment layer and the histogram of what is below it
+  const adjLayer = doc?.activeLayer?.kind === 'adjust' ? doc.activeLayer : null;
+  const [hist, setHist] = useState<ReturnType<CanvasDoc['histogramBelow']> | null>(null);
+  useEffect(() => {
+    if (panel !== 'adjust' || !adjLayer || !doc) return setHist(null);
+    const t = setTimeout(() => setHist(doc.histogramBelow(adjLayer.id)), 50);
+    return () => clearTimeout(t);
+  }, [panel, adjLayer?.id, doc]); // eslint-disable-line react-hooks/exhaustive-deps
+  // the transform preview follows the handles; leaving the tool puts the pixels down
+  useEffect(() => {
+    if (tf) docRef.current?.updateTransform((g) => drawTransform(g, tf));
+  }, [tf]);
+  useEffect(() => {
+    if (tool !== 'transform' && tfRef.current) applyTf();
+  }, [tool]); // eslint-disable-line react-hooks/exhaustive-deps
+  useHotkey((e) => !!tfRef.current && (e.key === 'Enter' || e.key === 'Escape') && !e.ctrlKey && !e.metaKey, (e) => (e.key === 'Enter' ? applyTf() : cancelTf()), [maskEmpty]);
+  // paint, fill and shapes stay inside the selection (DECISIONS 124)
+  useEffect(() => {
+    if (doc) doc.clip = !maskEmpty && layer.current ? layer.current.mask : null;
+  }, [doc, maskEmpty]);
+  /** Selection menu: all, none, invert, grow, shrink, feather, border, from the layer's pixels. */
+  const selAction = (a: 'all' | 'none' | 'invert' | 'grow' | 'shrink' | 'feather' | 'border' | 'layer') => {
+    const m = layer.current;
+    if (!m) return;
+    if (a === 'all') m.selectAll();
+    else if (a === 'none') m.clear();
+    else if (a === 'invert') m.invert();
+    else if (a === 'feather') m.feather(selPx);
+    else if (a === 'grow' || a === 'shrink') m.setAlpha(growShrink(m.alpha(), W, H, a === 'grow' ? selPx : -selPx));
+    else if (a === 'border') m.setAlpha(selBorder(m.alpha(), W, H, selPx));
+    else if (a === 'layer') {
+      const d = docRef.current;
+      const al = d?.activeLayer ? d.layerAlpha(d.activeLayer.id) : null;
+      if (!al) return toast('Pick a picture or paint layer to select what is on it.', 'info');
+      m.setAlpha(selCombine(m.alpha(), al, selOp));
+    }
+    setMaskEmpty(m.isEmpty());
+  };
+  /** Lift the selected layer (or its selected part) for the Transform tool. */
+  const startTf = async () => {
+    const d = await ensureDoc();
+    if (!d || d.transforming) return;
+    // read the selection now (this can run from a hotkey bound at first render)
+    const r = d.beginTransform(layer.current && !layer.current.isEmpty() ? layer.current.mask : null);
+    if (typeof r === 'string') return toast(r, 'info');
+    setTf(startTransform(r.src, r.box));
+  };
+  const applyTf = () => {
+    const d = docRef.current;
+    const s = tfRef.current;
+    if (!d || !s) return;
+    d.commitTransform(s.mode === 'free' ? 'Transform' : s.mode === 'perspective' ? 'Perspective' : 'Warp');
+    setTf(null);
+    // the selected part has moved: its old outline no longer fits
+    if (layer.current && !layer.current.isEmpty()) {
+      layer.current.clear();
+      setMaskEmpty(true);
+    }
+  };
+  const cancelTf = () => {
+    docRef.current?.cancelTransform();
+    setTf(null);
+  };
+  /** Magic wand at a picture point: the area of similar colour, combined into the selection. */
+  const wandAt = (p: { x: number; y: number }, op: SelOpUi) => {
+    const m = layer.current;
+    if (!m) return;
+    const d = docRef.current;
+    let src: HTMLCanvasElement;
+    if (d && !wandOpts.merged && d.activeLayer && d.activeLayer.kind !== 'adjust') src = d.activeLayer.canvas;
+    else if (d) src = d.flatten();
+    else {
+      src = document.createElement('canvas');
+      src.width = W;
+      src.height = H;
+      src.getContext('2d')!.drawImage(imgRef.current!, 0, 0, W, H);
+    }
+    const data = src.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, W, H).data;
+    const res = floodMask(data, W, H, p.x, p.y, wandOpts.tolerance, wandOpts.contiguous);
+    if (!res) return;
+    m.setAlpha(selCombine(m.alpha(), res.mask, op));
+    setMaskEmpty(m.isEmpty());
+  };
   // a fresh on-screen canvas (back from Compare) needs the whole picture once
   useEffect(() => {
     if (doc && compCanvas.current) doc.render(compCanvas.current);
@@ -612,6 +725,11 @@ function Editor({ item }: { item: Item }) {
     setPanel('layers');
     void ensureDoc();
   };
+  const chooseTransform = () => {
+    setTool('transform');
+    setPanel('layers');
+    void startTf();
+  };
 
   const fit = useCallback(() => {
     const el = stageRef.current;
@@ -691,12 +809,30 @@ function Editor({ item }: { item: Item }) {
       /* a pointer the browser no longer tracks */
     }
     const base = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y };
-    if (isCanvasTool(tool) && e.button === 0 && e.altKey) return pickColour(e);
-    if (tool === 'move' || e.button === 1 || e.altKey) {
+    if (isCanvasTool(tool) && e.button === 0 && e.altKey) {
+      if (tool === 'paint' && paint.engine === 'clone') {
+        setCloneSrc(toImage(e));
+        setCloneOff(null);
+        return;
+      }
+      return pickColour(e);
+    }
+    if (tool === 'move' || e.button === 1 || (e.altKey && !SEL_TOOLS.has(tool))) {
       drag.current = { kind: 'pan', ...base };
       return;
     }
     const p = toImage(e);
+    // Transform: the handles take the pointer; a click elsewhere lifts the layer again after an Apply
+    if (tool === 'transform') {
+      if (!tfRef.current) void startTf();
+      return;
+    }
+    if (tool === 'marquee') {
+      drag.current = { kind: 'marquee', ...base, origin: p, op: opFor(e) };
+      setMarq({ x: p.x, y: p.y, w: 0, h: 0 });
+      return;
+    }
+    if (tool === 'wand') return wandAt(p, opFor(e));
     if (isCanvasTool(tool)) {
       const d = docRef.current;
       if (!d) {
@@ -724,7 +860,15 @@ function Editor({ item }: { item: Item }) {
       // the pen's eraser end erases
       const erase = paintErase || (e.pointerType === 'pen' && (e.buttons & 32) !== 0);
       const mirror = { mirrorX: symmetry === 'v' || symmetry === 'both' ? W / 2 : undefined, mirrorY: symmetry === 'h' || symmetry === 'both' ? H / 2 : undefined };
-      if (d.beginStroke(paint, erase, p.x, p.y, pressureOf(e), { ...mirror, gamma: penGamma(penFeel) })) {
+      let clone: { dx: number; dy: number; merged: boolean } | undefined;
+      if (paint.engine === 'clone' && !erase) {
+        if (!cloneSrc) return toast('Alt-click where to copy from first, then paint where it should go.', 'info');
+        // aligned: the first stroke fixes the offset; later strokes keep it until you Alt-click again
+        const off = cloneOff ?? { dx: cloneSrc.x - p.x, dy: cloneSrc.y - p.y };
+        setCloneOff(off);
+        clone = { ...off, merged: cloneMerged };
+      }
+      if (d.beginStroke(paint, erase, p.x, p.y, pressureOf(e), { ...mirror, gamma: penGamma(penFeel), clone })) {
         strokePt.current = p;
         drag.current = { kind: 'stroke', ...base };
       }
@@ -735,7 +879,7 @@ function Editor({ item }: { item: Item }) {
       drag.current = { kind: 'paint', ...base };
     } else if (tool === 'lasso') {
       setLasso([p]);
-      drag.current = { kind: 'lasso', ...base };
+      drag.current = { kind: 'lasso', ...base, op: e.shiftKey || e.altKey ? opFor(e) : undefined };
     } else if (tool === 'frame') {
       const d = { left: Math.abs(p.x), right: Math.abs(W - p.x), top: Math.abs(p.y), bottom: Math.abs(H - p.y) };
       const side = (Object.keys(d) as (keyof Pad)[]).sort((a, b) => d[a] - d[b])[0];
@@ -769,7 +913,10 @@ function Editor({ item }: { item: Item }) {
         strokePt.current = q;
       }
     } else if (d.kind === 'shape' && d.origin) docRef.current?.previewShape(shapeOpts.kind, d.origin, toImage(e), shapeBrush(), shapeOpts.filled, e.shiftKey);
-    else if (d.kind === 'lasso') setLasso((pts) => [...(pts ?? []), toImage(e)]);
+    else if (d.kind === 'marquee' && d.origin) {
+      const q = toImage(e);
+      setMarq({ x: Math.min(d.origin.x, q.x), y: Math.min(d.origin.y, q.y), w: Math.abs(q.x - d.origin.x), h: Math.abs(q.y - d.origin.y) });
+    } else if (d.kind === 'lasso') setLasso((pts) => [...(pts ?? []), toImage(e)]);
     else if (d.kind === 'frame' && d.side && d.start) {
       const dx = (e.clientX - d.sx) / view.scale;
       const dy = (e.clientY - d.sy) / view.scale;
@@ -800,8 +947,19 @@ function Editor({ item }: { item: Item }) {
     } else if (d.kind === 'shape') {
       docRef.current?.endStroke(null, null);
       pushRecent(colour);
+    } else if (d.kind === 'marquee') {
+      const m = layer.current;
+      const r = marq;
+      setMarq(null);
+      if (m && r && r.w >= 3 && r.h >= 3) m.applyShape(m.shape(marqueeKind, r.x, r.y, r.w, r.h), d.op ?? selOp);
+      // a click without a drag deselects, as in other painting apps
+      else if (m && (d.op ?? selOp) === 'replace') m.clear();
+      setMaskEmpty(!!m?.isEmpty());
     } else if (d.kind === 'lasso' && lasso) {
-      layer.current?.fillPolygon(lasso, e.shiftKey);
+      // Shift on release still takes away (as before); Shift/Alt at the start choose the mode; else the bar's mode
+      if (d.op) layer.current?.fillPolygon(lasso, false, d.op);
+      else if (e.shiftKey) layer.current?.fillPolygon(lasso, true);
+      else layer.current?.fillPolygon(lasso, false, selOp === 'add' ? undefined : selOp);
       setLasso(null);
       setMaskEmpty(!!layer.current?.isEmpty());
     } else if (d.kind === 'sam' && d.origin) {
@@ -859,6 +1017,7 @@ function Editor({ item }: { item: Item }) {
   const versionIndex = lineage.findIndex((v) => v.id === item.id);
   // With layers on, Undo walks the mask and layer steps in the order you made them and never leaves the picture.
   const undo = () => {
+    if (tfRef.current) return cancelTf();
     const o = order.current;
     for (let k = o.undo.pop(); k; k = o.undo.pop()) {
       if (k === 'mask' && layer.current?.undo()) {
@@ -899,6 +1058,7 @@ function Editor({ item }: { item: Item }) {
     (e) => {
       const t = TOOLS.find((x) => x.key.toLowerCase() === e.key.toLowerCase())!.id;
       if (isCanvasTool(t)) return chooseCanvasTool(t);
+      if (t === 'transform') return chooseTransform();
       setTool(t);
       if (t === 'frame') setMode('outpaint');
     },
@@ -923,6 +1083,15 @@ function Editor({ item }: { item: Item }) {
       else setFlipView((x) => !x);
     },
     [],
+  );
+  // selections: Ctrl+A all, Ctrl+D none, Ctrl+Shift+I invert
+  useHotkey(
+    (e) => (e.ctrlKey || e.metaKey) && !e.altKey && (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'd' || (e.shiftKey && e.key.toLowerCase() === 'i')),
+    (e) => {
+      e.preventDefault();
+      selAction(e.key.toLowerCase() === 'a' ? 'all' : e.key.toLowerCase() === 'd' ? 'none' : 'invert');
+    },
+    [selPx, selOp],
   );
   // X: paint / erase with the Paint tool
   useHotkey((e) => tool === 'paint' && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'x', () => setPaintErase((x) => !x), [tool]);
@@ -1334,6 +1503,7 @@ function Editor({ item }: { item: Item }) {
             disabled={!!t.disabled}
             onClick={() => {
               if (isCanvasTool(t.id)) return chooseCanvasTool(t.id);
+              if (t.id === 'transform') return chooseTransform();
               setTool(t.id);
               if (t.id === 'frame') setMode('outpaint');
             }}
@@ -1466,6 +1636,20 @@ function Editor({ item }: { item: Item }) {
               data-testid="mask-overlay"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', display: compare ? 'none' : 'block', filter: MASK_OUTLINE_FILTER }}
             />
+            {tool === 'paint' && paint.engine === 'clone' && cloneSrc && !compare && (() => {
+              // where the clone copies from: the spot you chose, then following the brush at the same distance
+              let at = cloneSrc;
+              if (cloneOff && cursor && stageRef.current) {
+                const r = stageRef.current.getBoundingClientRect();
+                const q = toImage({ clientX: r.left + cursor.x, clientY: r.top + cursor.y });
+                at = { x: q.x + cloneOff.dx, y: q.y + cloneOff.dy };
+              }
+              return <div className="clone-src" aria-hidden="true" style={{ left: at.x * view.scale - 9, top: at.y * view.scale - 9 }} />;
+            })()}
+            {tf && tool === 'transform' && !compare && <TransformOverlay s={tf} set={setTf} W={W} H={H} scale={view.scale} toImage={toImage} />}
+            {marq && tool === 'marquee' && (
+              <div className={`marquee-box ${marqueeKind === 'ellipse' ? 'ellipse' : ''}`} style={{ left: marq.x * view.scale, top: marq.y * view.scale, width: marq.w * view.scale, height: marq.h * view.scale }} />
+            )}
             {lasso && (
               <svg viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                 <polyline points={lasso.map((p) => `${p.x},${p.y}`).join(' ')} fill="rgba(240,180,76,.2)" stroke="#F0B44C" strokeWidth={2 / view.scale} />
@@ -1567,6 +1751,28 @@ function Editor({ item }: { item: Item }) {
         </div>
 
         {/* the canvas tools' options: a row of their own, so they never cover the picture */}
+        {tool === 'transform' && tf && !compare && <TransformBar s={tf} set={setTf} onApply={applyTf} onCancel={cancelTf} />}
+        {tool === 'transform' && !tf && !compare && (
+          <div className="paint-bar" role="toolbar" aria-label="Transform">
+            <span className="note">Click the picture to transform the selected layer{!maskEmpty ? ' (the part inside the selection)' : ''}.</span>
+          </div>
+        )}
+        {SEL_TOOLS.has(tool) && !compare && (
+          <SelectBar
+            tool={tool as 'marquee' | 'wand' | 'lasso'}
+            op={selOp}
+            setOp={setSelOp}
+            marquee={marqueeKind}
+            setMarquee={setMarqueeKind}
+            wand={wandOpts}
+            setWand={(w) => setWandOpts((o) => ({ ...o, ...w }))}
+            amount={selPx}
+            setAmount={setSelPx}
+            has={!maskEmpty}
+            hasLayers={!!doc}
+            act={selAction}
+          />
+        )}
           {tool === 'paint' && !compare && (
             <PaintBar
               brushId={brushId}
@@ -1581,6 +1787,9 @@ function Editor({ item }: { item: Item }) {
               penFeel={penFeel}
               setPenFeel={setPenFeel}
               target={doc?.activeLayer ? { layer: doc.activeLayer.name, mask: doc.target === 'mask' } : null}
+              clipped={!maskEmpty}
+              onDeselect={() => selAction('none')}
+              clone={{ set: !!cloneSrc, merged: cloneMerged, setMerged: setCloneMerged }}
             />
           )}
           {tool === 'fill' && !compare && (
@@ -1678,8 +1887,65 @@ function Editor({ item }: { item: Item }) {
             <button type="button" role="tab" aria-selected={panel === 'layers'} aria-pressed={panel === 'layers'} onClick={() => setPanel('layers')}>
               <LayersIcon size={14} /> Layers {doc && doc.layers.length > 1 ? <span className="mono">{doc.layers.length}</span> : null}
             </button>
+            <button type="button" role="tab" aria-selected={panel === 'adjust'} aria-pressed={panel === 'adjust'} onClick={() => setPanel('adjust')}>
+              <SlidersHorizontal size={14} /> Adjust
+            </button>
           </div>
-          {panel === 'layers' ? (
+          {panel === 'adjust' ? (
+            <div className="canvas-layers">
+              {adjLayer && doc ? (
+                <>
+                  <div className="layers-head">
+                    <p className="section-label" style={{ margin: 0 }}>
+                      {adjLayer.name} <span className="mono">adjustment</span>
+                    </p>
+                    <span className={`save-state ${saveState}`} role="status" aria-label="Layers saved">
+                      {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : saveState === 'unsaved' ? 'Unsaved' : ''}
+                    </span>
+                  </div>
+                  <AdjustPanel adjust={adjLayer.adjust ?? {}} hist={hist ?? undefined} onChange={(p, label, key) => doc.setAdjust(adjLayer.id, p, label, key)} />
+                  <p className="note">
+                    Changes everything below this layer; the pixels stay as they are. To limit it to part of the picture, give it a mask (Layers › Add mask, or Mask from selection) and paint on the mask. Lower its opacity to soften it.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="section-label">Adjust</p>
+                  <p className="note" style={{ marginTop: 0 }}>
+                    An adjustment layer changes the light and colour of everything below it: exposure, levels, curves, colour, black &amp; white, split tone and grain. The picture itself stays untouched, and you can change the adjustment again at any time.
+                  </p>
+                  <button
+                    className="btn"
+                    onClick={async () => {
+                      const d = await ensureDoc();
+                      d?.addAdjustLayer();
+                    }}
+                  >
+                    <SlidersHorizontal size={15} /> New adjustment layer
+                  </button>
+                  <p className="section-label" style={{ marginTop: 6 }}>
+                    Or start from a look
+                  </p>
+                  <div className="looks" role="group" aria-label="Start from a look">
+                    {LOOKS.map((l) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        className="pill"
+                        onClick={async () => {
+                          const d = await ensureDoc();
+                          d?.addAdjustLayer(l.adjust, l.label);
+                        }}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                  {doc?.layers.some((l) => l.kind === 'adjust') && <p className="note">To change an adjustment layer, select it in Layers.</p>}
+                </>
+              )}
+            </div>
+          ) : panel === 'layers' ? (
             <CanvasLayers
               doc={doc}
               version={docVer}
@@ -1695,6 +1961,7 @@ function Editor({ item }: { item: Item }) {
               onExport={() => void exportPng()}
               onUndoTo={undoDocSteps}
               saveState={saveState}
+              onOpenAdjust={() => setPanel('adjust')}
             />
           ) : (
           <>

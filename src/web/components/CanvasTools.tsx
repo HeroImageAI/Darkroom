@@ -78,7 +78,14 @@ export function PaintBar({
   penFeel,
   setPenFeel,
   target,
+  clipped,
+  onDeselect,
+  clone,
 }: {
+  /** the Clone brush: is a source set, and does it copy from all layers */
+  clone?: { set: boolean; merged: boolean; setMerged: (v: boolean) => void };
+  clipped?: boolean;
+  onDeselect?: () => void;
   brushId: string;
   onBrush: (id: string) => void;
   s: BrushSettings;
@@ -114,7 +121,7 @@ export function PaintBar({
         </div>
         <p className="note" style={{ margin: '6px 0' }}>
           {preset.tip}
-          {preset.engine !== 'paint' ? ' Works on the selected layer’s own pixels.' : ''}
+          {preset.engine === 'smudge' || preset.engine === 'filter' ? ' Works on the selected layer’s own pixels.' : ''}
         </p>
         <div className="brush-more">
           <Mini label="Hardness" value={Math.round(s.hardness * 100)} min={0} max={100} onChange={(v) => set({ hardness: v / 100 })} aria="Brush hardness" />
@@ -152,6 +159,14 @@ export function PaintBar({
           <Pipette size={13} /> Alt
         </span>
       )}
+      {s.engine === 'clone' && clone && (
+        <>
+          <span className={`note ${clone.set ? '' : 'clip-note'}`}>{clone.set ? 'Alt-click to copy from somewhere else' : 'Alt-click where to copy from'}</span>
+          <label className="check" style={{ margin: 0 }} title="Copy what you see (all layers); off copies only the selected layer">
+            <input type="checkbox" checked={clone.merged} onChange={(e) => clone.setMerged(e.target.checked)} /> All layers
+          </label>
+        </>
+      )}
       <Mini label="Size" value={s.size} min={1} max={500} onChange={(v) => set({ size: v })} aria="Brush size" title="Brush size ([ and ])" />
       <Mini label={s.engine === 'paint' ? 'Opacity' : 'Strength'} value={Math.round(s.opacity * 100)} min={1} max={100} onChange={(v) => set({ opacity: v / 100 })} aria="Brush opacity" />
       <Mini label="Smooth" value={Math.round(s.smoothing * 100)} min={0} max={90} onChange={(v) => set({ smoothing: v / 100 })} aria="Stabiliser" title="Stabiliser: the line lags behind the pen to smooth out wobble" />
@@ -170,6 +185,14 @@ export function PaintBar({
         <span className="paint-target">
           on <b>{target.layer}</b>
           {target.mask ? ' · mask' : ''}
+        </span>
+      )}
+      {clipped && (
+        <span className="clip-note" title="You paint only inside the selection">
+          inside the selection
+          <button type="button" className="btn xs ghost" onClick={onDeselect} title="Deselect (Ctrl+D)">
+            Deselect
+          </button>
         </span>
       )}
     </div>
@@ -194,6 +217,14 @@ function BrushIcon({ id }: { id: string }) {
       </svg>
     );
   }
+  if (id === 'clone')
+    return (
+      <svg width="34" height="22" viewBox="0 0 34 22" aria-hidden="true">
+        <circle cx="10" cy="11" r="6" fill="none" stroke={stroke} strokeDasharray="2 2" />
+        <circle cx="24" cy="11" r="6" fill={stroke} opacity=".7" />
+        <path d="M15 11 h4" stroke={stroke} />
+      </svg>
+    );
   const w = { pencil: 1.2, ink: 2.4, marker: 6, airbrush: 9, chalk: 5, round: 4, smudge: 5 }[id] ?? 3;
   return (
     <svg width="34" height="22" viewBox="0 0 34 22" aria-hidden="true">
@@ -252,6 +283,105 @@ export function ShapeBar({ c, kind, setKind, filled, setFilled, size, setSize, o
       {(!filled || kind === 'line') && <Mini label="Width" value={size} min={1} max={200} onChange={setSize} aria="Line width" />}
       <Mini label="Opacity" value={Math.round(opacity * 100)} min={1} max={100} onChange={(v) => setOpacity(v / 100)} aria="Shape opacity" />
       <span className="note">Drag to draw · Shift keeps it square / straight</span>
+    </div>
+  );
+}
+
+export type SelOpUi = 'add' | 'subtract' | 'intersect' | 'replace';
+
+/**
+ * Selection options (Edit suite v3.27): how a new selection combines with the one there is (Shift adds, Alt subtracts,
+ * Shift+Alt intersects, whatever is chosen here), the marquee's shape, the wand's tolerance, and the selection menu.
+ */
+export function SelectBar({
+  tool,
+  op,
+  setOp,
+  marquee,
+  setMarquee,
+  wand,
+  setWand,
+  amount,
+  setAmount,
+  has,
+  hasLayers,
+  act,
+}: {
+  tool: 'marquee' | 'wand' | 'lasso';
+  op: SelOpUi;
+  setOp: (o: SelOpUi) => void;
+  marquee: 'rect' | 'ellipse';
+  setMarquee: (k: 'rect' | 'ellipse') => void;
+  wand: { tolerance: number; contiguous: boolean; merged: boolean };
+  setWand: (w: Partial<{ tolerance: number; contiguous: boolean; merged: boolean }>) => void;
+  amount: number;
+  setAmount: (n: number) => void;
+  has: boolean;
+  hasLayers: boolean;
+  act: (a: 'all' | 'none' | 'invert' | 'grow' | 'shrink' | 'feather' | 'border' | 'layer') => void;
+}) {
+  return (
+    <div className="paint-bar" role="toolbar" aria-label="Selection" onPointerDown={(e) => e.stopPropagation()}>
+      <div className="segmented sym" role="group" aria-label="Selection mode" title="Shift adds, Alt takes away, Shift+Alt keeps only the overlap">
+        {(['add', 'subtract', 'intersect', 'replace'] as SelOpUi[]).map((o) => (
+          <button key={o} type="button" aria-pressed={op === o} onClick={() => setOp(o)}>
+            {{ add: 'Add', subtract: 'Subtract', intersect: 'Overlap', replace: 'New' }[o]}
+          </button>
+        ))}
+      </div>
+      {tool === 'marquee' && (
+        <div className="segmented sym" role="group" aria-label="Marquee shape">
+          <button type="button" aria-pressed={marquee === 'rect'} aria-label="Rectangle selection" onClick={() => setMarquee('rect')}>
+            <Square size={14} />
+          </button>
+          <button type="button" aria-pressed={marquee === 'ellipse'} aria-label="Ellipse selection" onClick={() => setMarquee('ellipse')}>
+            <Circle size={14} />
+          </button>
+        </div>
+      )}
+      {tool === 'wand' && (
+        <>
+          <Mini label="Tolerance" value={wand.tolerance} min={0} max={255} onChange={(v) => setWand({ tolerance: v })} aria="Wand tolerance" title="How different a colour may be and still be selected" />
+          <label className="check" style={{ margin: 0 }} title="Only the connected area you click; off selects that colour everywhere">
+            <input type="checkbox" checked={wand.contiguous} onChange={(e) => setWand({ contiguous: e.target.checked })} /> Connected only
+          </label>
+          <label className="check" style={{ margin: 0 }} title="Look at the whole picture, not just the selected layer">
+            <input type="checkbox" checked={wand.merged} onChange={(e) => setWand({ merged: e.target.checked })} /> Use all layers
+          </label>
+        </>
+      )}
+      <span className="sel-menu" role="group" aria-label="Selection menu">
+        <button type="button" className="btn xs" onClick={() => act('all')} title="Select all (Ctrl+A)">
+          All
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('none')} title="Deselect (Ctrl+D)">
+          None
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('invert')} title="Invert (Ctrl+Shift+I)">
+          Invert
+        </button>
+        {hasLayers && (
+          <button type="button" className="btn xs" onClick={() => act('layer')} title="Select what is painted on the selected layer">
+            From layer
+          </button>
+        )}
+        <label className="px-input" title="Pixels for Grow, Shrink, Feather and Border">
+          <input className="input sm mono" type="number" min={1} max={200} value={amount} onChange={(e) => setAmount(Math.max(1, Math.min(200, Number(e.target.value) || 1)))} aria-label="Selection pixels" />
+          px
+        </label>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('grow')}>
+          Grow
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('shrink')}>
+          Shrink
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('feather')}>
+          Feather
+        </button>
+        <button type="button" className="btn xs" disabled={!has} onClick={() => act('border')}>
+          Border
+        </button>
+      </span>
     </div>
   );
 }

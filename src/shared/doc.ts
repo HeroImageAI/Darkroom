@@ -4,6 +4,7 @@
  * an optional layer mask. Saved per Library item under data/projects/<item id>/ (project.json + layer PNGs).
  * The pixels live in the browser (src/web/lib/doc.ts); this file holds what both sides share.
  */
+import { sanitizeAdjust, type Adjust } from './adjust.js';
 
 export const BLENDS = [
   { id: 'normal', label: 'Normal', op: 'source-over' },
@@ -27,7 +28,8 @@ export const BLENDS = [
 export type Blend = (typeof BLENDS)[number]['id'];
 
 /** picture = the item itself or a Library picture, paint = drawn here, result = an AI result applied as a layer. */
-export type LayerKind = 'picture' | 'paint' | 'result';
+/** adjust = an adjustment layer (DECISIONS 124): no pixels, it changes the look of everything below it */
+export type LayerKind = 'picture' | 'paint' | 'result' | 'adjust';
 
 export interface DocLayerMeta {
   id: string;
@@ -47,6 +49,8 @@ export interface DocLayerMeta {
   maskOn: boolean;
   /** bumped on every pixel change; a cache-buster for the stored PNGs. */
   rev: number;
+  /** an adjustment layer's settings */
+  adjust?: Adjust;
 }
 
 export interface DocJson {
@@ -82,13 +86,14 @@ export function parseDoc(raw: unknown, itemId?: string): DocJson | null {
   for (const x of r.layers as Record<string, unknown>[]) {
     if (!x || typeof x !== 'object' || typeof x.id !== 'string' || !LAYER_ID.test(x.id) || seen.has(x.id)) return null;
     seen.add(x.id);
-    const kind: LayerKind = x.kind === 'picture' || x.kind === 'result' ? x.kind : 'paint';
+    const kind: LayerKind = x.kind === 'picture' || x.kind === 'result' || x.kind === 'adjust' ? x.kind : 'paint';
     layers.push({
       id: x.id,
       name: String(x.name ?? 'Layer').slice(0, 80) || 'Layer',
       kind,
       ...(typeof x.source === 'string' && /^[0-9a-f-]{8,40}$/i.test(x.source) ? { source: x.source } : {}),
-      painted: kind === 'paint' || !!x.painted || typeof x.source !== 'string',
+      painted: kind !== 'adjust' && (kind === 'paint' || !!x.painted || typeof x.source !== 'string'),
+      ...(kind === 'adjust' ? { adjust: sanitizeAdjust(x.adjust) } : {}),
       visible: x.visible !== false,
       locked: !!x.locked,
       alphaLock: !!x.alphaLock,

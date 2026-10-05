@@ -99,12 +99,25 @@ export class MaskLayer {
     this.render();
   }
 
-  fillPolygon(points: { x: number; y: number }[], erase: boolean): void {
+  fillPolygon(points: { x: number; y: number }[], erase: boolean, op?: 'add' | 'subtract' | 'intersect' | 'replace'): void {
     if (points.length < 3) return;
+    if (op === 'intersect' || op === 'replace') {
+      const s = document.createElement('canvas');
+      s.width = this.width;
+      s.height = this.height;
+      const g = s.getContext('2d')!;
+      g.fillStyle = '#fff';
+      g.beginPath();
+      g.moveTo(points[0].x, points[0].y);
+      for (const p of points.slice(1)) g.lineTo(p.x, p.y);
+      g.closePath();
+      g.fill();
+      return this.applyShape(s, op);
+    }
     this.checkpoint();
     const c = this.ctx;
     c.save();
-    c.globalCompositeOperation = erase ? 'destination-out' : 'source-over';
+    c.globalCompositeOperation = erase || op === 'subtract' ? 'destination-out' : 'source-over';
     c.fillStyle = '#fff';
     c.beginPath();
     c.moveTo(points[0].x, points[0].y);
@@ -153,6 +166,76 @@ export class MaskLayer {
     this.ctx.globalCompositeOperation = op === 'subtract' ? 'destination-out' : 'source-over';
     this.ctx.drawImage(t, 0, 0);
     this.ctx.restore();
+    this.render();
+  }
+
+  // ---- selections (Edit suite v3.27, DECISIONS 124): the mask is the selection
+
+  /** The selection as 0..255 per pixel. */
+  alpha(): Uint8Array {
+    const d = this.ctx.getImageData(0, 0, this.width, this.height).data;
+    const a = new Uint8Array(this.width * this.height);
+    for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3];
+    return a;
+  }
+
+  /** Replace the selection with a 0..255 mask (one undo step). */
+  setAlpha(a: Uint8Array): void {
+    this.checkpoint();
+    const d = this.ctx.createImageData(this.width, this.height);
+    for (let i = 0; i < a.length; i++) {
+      d.data[i * 4] = d.data[i * 4 + 1] = d.data[i * 4 + 2] = 255;
+      d.data[i * 4 + 3] = a[i];
+    }
+    this.ctx.putImageData(d, 0, 0);
+    this.render();
+  }
+
+  /** Combine a shape (white on transparent, at the mask's size) into the selection. */
+  applyShape(shape: HTMLCanvasElement, op: 'add' | 'subtract' | 'intersect' | 'replace'): void {
+    this.checkpoint();
+    const c = this.ctx;
+    c.save();
+    if (op === 'replace') c.clearRect(0, 0, this.width, this.height);
+    c.globalCompositeOperation = op === 'subtract' ? 'destination-out' : op === 'intersect' ? 'destination-in' : 'source-over';
+    c.drawImage(shape, 0, 0);
+    c.restore();
+    this.render();
+  }
+
+  /** A rectangle or ellipse as a shape canvas for applyShape. */
+  shape(kind: 'rect' | 'ellipse', x: number, y: number, w: number, h: number): HTMLCanvasElement {
+    const s = document.createElement('canvas');
+    s.width = this.width;
+    s.height = this.height;
+    const g = s.getContext('2d')!;
+    g.fillStyle = '#fff';
+    g.beginPath();
+    if (kind === 'rect') g.rect(x, y, w, h);
+    else g.ellipse(x + w / 2, y + h / 2, Math.abs(w / 2), Math.abs(h / 2), 0, 0, Math.PI * 2);
+    g.fill();
+    return s;
+  }
+
+  selectAll(): void {
+    this.checkpoint();
+    this.ctx.fillStyle = '#fff';
+    this.ctx.fillRect(0, 0, this.width, this.height);
+    this.render();
+  }
+
+  /** Soften the selection's edge by `px` (one undo step). */
+  feather(px: number): void {
+    if (px <= 0 || this.isEmpty()) return;
+    this.checkpoint();
+    const t = document.createElement('canvas');
+    t.width = this.width;
+    t.height = this.height;
+    const g = t.getContext('2d')!;
+    g.filter = `blur(${px}px)`;
+    g.drawImage(this.mask, 0, 0);
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.drawImage(t, 0, 0);
     this.render();
   }
 

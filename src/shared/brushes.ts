@@ -5,7 +5,7 @@
  *  - filter: a filtered copy of the layer (blur, dodge, burn, sponge…) shows through the stroke — a darkroom's own tools.
  * Each preset is a starting point; size, opacity and the rest stay as you last left them per preset.
  */
-export type BrushEngine = 'paint' | 'smudge' | 'filter';
+export type BrushEngine = 'paint' | 'smudge' | 'filter' | 'clone';
 export type BrushFilter = 'blur' | 'dodge' | 'burn' | 'sponge' | 'saturate';
 
 export interface BrushPreset {
@@ -33,6 +33,7 @@ export const BRUSHES: BrushPreset[] = [
   { id: 'airbrush', label: 'Airbrush', engine: 'paint', size: 120, hardness: 0, opacity: 0.35, pressureSize: false, pressureOpacity: true, smoothing: 0.3, spacing: 0.06, tip: 'Soft shading and glows' },
   { id: 'chalk', label: 'Chalk', engine: 'paint', size: 36, hardness: 0.6, opacity: 0.85, pressureSize: true, pressureOpacity: true, smoothing: 0.2, spacing: 0.1, texture: true, tip: 'Grainy, painterly texture' },
   { id: 'round', label: 'Round', engine: 'paint', size: 24, hardness: 0.85, opacity: 1, pressureSize: true, pressureOpacity: false, smoothing: 0.35, spacing: 0.08, tip: 'All-round brush' },
+  { id: 'clone', label: 'Clone', engine: 'clone', size: 60, hardness: 0.6, opacity: 1, pressureSize: false, pressureOpacity: false, smoothing: 0.15, spacing: 0.08, tip: 'Copy one part of the picture over another: Alt-click where to copy from, then paint' },
   { id: 'smudge', label: 'Smudge', engine: 'smudge', size: 40, hardness: 0.5, opacity: 0.7, pressureSize: true, pressureOpacity: true, smoothing: 0.2, spacing: 0.1, tip: 'Push and blend the paint that is there' },
   { id: 'blur', label: 'Blur', engine: 'filter', filter: 'blur', size: 60, hardness: 0.3, opacity: 0.8, pressureSize: false, pressureOpacity: true, smoothing: 0.2, spacing: 0.1, tip: 'Soften detail where you paint' },
   { id: 'dodge', label: 'Dodge', engine: 'filter', filter: 'dodge', size: 90, hardness: 0.1, opacity: 0.35, pressureSize: false, pressureOpacity: true, smoothing: 0.2, spacing: 0.1, tip: 'Lighten, as under the enlarger' },
