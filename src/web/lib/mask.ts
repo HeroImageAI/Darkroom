@@ -8,6 +8,8 @@ export class MaskLayer {
   private undoStack: ImageData[] = [];
   private redoStack: ImageData[] = [];
   private last: { x: number; y: number } | null = null;
+  /** a new undo step (Edit keeps one undo order for the mask and the canvas layers) */
+  onCheckpoint?: () => void;
 
   constructor(
     public width: number,
@@ -29,6 +31,7 @@ export class MaskLayer {
     this.undoStack.push(this.ctx.getImageData(0, 0, this.width, this.height));
     if (this.undoStack.length > 40) this.undoStack.shift();
     this.redoStack = [];
+    this.onCheckpoint?.();
   }
 
   canUndo(): boolean {

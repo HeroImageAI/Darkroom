@@ -32,6 +32,7 @@ import { duration as timelineDuration, endOf, exactFrames, exportSize, ordered, 
 import { planVideo } from '../shared/manifest.js';
 import { desktopPython, grabFrame, inputDirFromArgv, inside, runExport } from './timeline.js';
 import { validMove, type OrbitMove } from '../shared/orbit.js';
+import { ProjectStore, type LayerPart } from './projects.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -46,6 +47,7 @@ function readJson<T>(file: string): T {
 }
 const manifest = (): Manifest => readJson<Manifest>(path.join(cfg.paths.workflows, 'manifest.json'));
 const jobs = new JobManager(store, manifest, cfg.paths.workflows, path.join(cfg.paths.data, 'thumbs'), broadcast);
+const projects = new ProjectStore(path.join(cfg.paths.data, 'projects'));
 
 // ---------------------------------------------------------------- status --
 type ComfyState = 'online' | 'offline' | 'starting' | 'desktop-open';
@@ -132,6 +134,8 @@ function publicStatus() {
 const app = Fastify({ logger: { level: 'warn' }, bodyLimit: 64 * 1024 * 1024 });
 await app.register(fastifyWebsocket);
 await app.register(fastifyMultipart, { limits: { fileSize: 512 * 1024 * 1024 } });
+// Edit canvas layer PNGs and flattened pictures come as the raw body (DECISIONS 122)
+app.addContentTypeParser('image/png', { parseAs: 'buffer' }, (_req, body, done) => done(null, body));
 
 app.setErrorHandler((err: any, _req, reply) => {
   reply.code(err.statusCode && err.statusCode < 500 ? err.statusCode : 500).send({ error: err.message ?? String(err) });
@@ -324,6 +328,76 @@ app.post('/api/items/:id/ingredients', async (req, reply) => {
     return job;
   } catch (e) {
     return reply.code(500).send({ error: 'Could not start the video: ' + (e as Error).message });
+  }
+});
+
+// ---- Edit canvas projects (DECISIONS 122): layers saved with the picture, under data/projects/<item id>/
+app.get('/api/items/:id/project', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  if (!store.getItem(id)) return reply.code(404).send({ error: 'Picture not found' });
+  return projects.get(id) ?? reply.code(404).send({ error: 'No layers yet' });
+});
+
+app.put('/api/items/:id/project', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  if (!store.getItem(id)) return reply.code(404).send({ error: 'Picture not found' });
+  const doc = projects.save(id, req.body);
+  return doc ? { ok: true, updatedAt: doc.updatedAt } : reply.code(400).send({ error: 'That is not a layer document.' });
+});
+
+app.put('/api/items/:id/project/:part/:layer', async (req, reply) => {
+  const { id, part, layer } = req.params as { id: string; part: string; layer: string };
+  if (!store.getItem(id)) return reply.code(404).send({ error: 'Picture not found' });
+  if (!Buffer.isBuffer(req.body)) return reply.code(400).send({ error: 'Send the layer as image/png.' });
+  try {
+    projects.putPart(id, part as LayerPart, layer, req.body);
+    return { ok: true };
+  } catch (e) {
+    return reply.code(400).send({ error: (e as Error).message });
+  }
+});
+
+app.get('/api/items/:id/project/:part/:layer', async (req, reply) => {
+  const { id, part, layer } = req.params as { id: string; part: string; layer: string };
+  let p: string;
+  try {
+    p = projects.partPath(id, part as LayerPart, layer.replace(/\.png$/, ''));
+  } catch {
+    return reply.code(400).send({ error: 'Bad layer' });
+  }
+  if (!fs.existsSync(p)) return reply.code(404).send({ error: 'Layer not found' });
+  reply.header('content-type', 'image/png').header('cache-control', 'private, max-age=31536000, immutable');
+  return reply.send(fs.createReadStream(p));
+});
+
+/** Flatten to version: the canvas, merged in the browser, becomes the next version of the picture. */
+app.post('/api/items/:id/flatten', async (req, reply) => {
+  const { id } = req.params as { id: string };
+  const it = store.getItem(id);
+  if (!it || it.kind !== 'image') return reply.code(404).send({ error: 'Picture not found' });
+  if (!Buffer.isBuffer(req.body) || req.body.readUInt32BE(0) !== 0x89504e47) return reply.code(400).send({ error: 'Send the picture as image/png.' });
+  if (!jobs.comfy) return reply.code(503).send({ error: "ComfyUI isn't running." });
+  const outDir = outputDirFromArgv(((await jobs.comfy.systemStats()) as SystemStats).system?.argv);
+  if (!outDir) return reply.code(409).send({ error: "ComfyUI doesn't report its output folder." });
+  try {
+    const q = req.query as { layers?: string };
+    const name = `canvas_${Date.now().toString(36)}_${crypto.randomBytes(2).toString('hex')}.png`;
+    fs.mkdirSync(path.join(outDir, 'darkroom', 'canvas'), { recursive: true });
+    fs.writeFileSync(path.join(outDir, 'darkroom', 'canvas', name), req.body);
+    const layers = Math.max(1, Math.min(64, Number(q.layers) || 1));
+    const item = await jobs.addPicture({
+      file: { filename: name, subfolder: 'darkroom/canvas', type: 'output' },
+      name: it.prompt || 'Canvas',
+      ...(it.title ? { title: it.title } : {}),
+      mode: 'edit:canvas',
+      model: `Darkroom canvas · ${layers} layer${layers === 1 ? '' : 's'}`,
+      params: { project: it.id, layers },
+      parentId: it.id,
+      ui: { ...(it.ui ?? {}), fromProject: it.id },
+    });
+    return slim(item);
+  } catch (e) {
+    return reply.code(500).send({ error: 'Could not save the version: ' + (e as Error).message });
   }
 });
 
@@ -1085,7 +1159,8 @@ function outputUrl(f: FileRef): string {
 
 function slim(item: NonNullable<ReturnType<typeof store.getItem>>) {
   const { api_prompt: _a, ...rest } = item;
-  return rest;
+  // has an Edit canvas project (layers) saved with it (DECISIONS 122)
+  return item.kind === 'image' && projects.has(item.id) ? { ...rest, layered: true } : rest;
 }
 
 // Production: serve the built UI.

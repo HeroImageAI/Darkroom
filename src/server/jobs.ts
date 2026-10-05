@@ -1118,7 +1118,10 @@ export class JobManager {
     this.broadcast({ type: 'toast', kind: 'ok', text: `Turnaround ready: "${base} · turnaround" is in your Library, with the three new views.` });
   }
 
-  async addPicture(a: { file: FileRef; name: string; title?: string; mode: string; model: string; params: Record<string, unknown>; boardId?: unknown }): Promise<Item> {
+  async addPicture(a: { file: FileRef; name: string; title?: string; mode: string; model: string; params: Record<string, unknown>; boardId?: unknown; parentId?: string; ui?: Record<string, unknown> }): Promise<Item> {
+    // a new version of a picture (Edit canvas "Flatten to version", DECISIONS 122) joins its lineage and board
+    const parent = a.parentId ? this.store.getItem(a.parentId) : null;
+    const rootId = parent ? (parent.root_id ?? parent.id) : null;
     const item: Item = {
       id: crypto.randomUUID(),
       created_at: Date.now(),
@@ -1136,20 +1139,20 @@ export class JobManager {
       fps: null,
       frames: null,
       params: a.params,
-      ui: {},
+      ui: a.ui ?? {},
       api_prompt: null,
       file: a.file,
       poster: null,
       last_frame: null,
       render_ms: null,
-      parent_id: null,
-      root_id: null,
-      version: 1,
+      parent_id: parent?.id ?? null,
+      root_id: rootId,
+      version: parent ? this.store.maxVersion(rootId!) + 1 : 1,
       favourite: false,
       tags: [],
       job_id: null,
       input_name: null,
-      board_id: this.liveBoard(a.boardId),
+      board_id: parent ? (parent.board_id ?? null) : this.liveBoard(a.boardId),
       title: a.title ?? null,
     };
     const meta = await this.makeThumb(item.id, a.file).catch(() => null);
