@@ -101,7 +101,8 @@ export function connectEvents(): void {
       const msg = JSON.parse(e.data as string);
       switch (msg.type) {
         case 'hello':
-          setState({ status: msg.status });
+          // (re)connected: anything that changed while the socket was down is read again
+          setState((s) => ({ status: msg.status, libraryRev: s.libraryRev + 1 }));
           (msg.jobs as Job[]).forEach(upsertJob);
           break;
         case 'status':
