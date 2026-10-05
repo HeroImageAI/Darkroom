@@ -353,7 +353,8 @@ test.describe.serial('Edit suite · sketch and paint (v3.26)', () => {
     const base = await layerPixels(page, pic.id, 0);
     const sum = (a: number[]) => a[0] + a[1] + a[2];
     expect(base.layer.painted).toBe(true);
-    expect(sum(base.at(W * 0.75, H * 0.6))).toBeGreaterThan(sum(o(W * 0.75, H * 0.6)) + 20);
+    const before = sum(o(W * 0.75, H * 0.6)); // the picture varies per run: a near-white spot has little room to lighten
+    expect(sum(base.at(W * 0.75, H * 0.6))).toBeGreaterThan(before + Math.min(20, (765 - before) * 0.25));
     expect(Math.abs(sum(base.at(W * 0.75, H * 0.1)) - sum(o(W * 0.75, H * 0.1)))).toBeLessThan(6); // untouched elsewhere
     await pickBrush('Smudge');
     await stroke(page, [[W * 0.4, H * 0.3], [W * 0.6, H * 0.35]], W, H);
