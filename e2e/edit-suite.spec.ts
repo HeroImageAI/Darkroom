@@ -1098,4 +1098,17 @@ test.describe.serial('Edit suite · polish round 3', () => {
     await page.getByRole('button', { name: 'Open it' }).last().click();
     await expect(page).toHaveURL(new RegExp(`#/edit/${result.id}$`));
   });
+
+  test('Old compositions can be deleted from Edit, and Undo brings one back', async () => {
+    const before = (await (await page.request.get('/api/compositions')).json()) as any[];
+    test.skip(!before.length, 'needs a composition from the old Compose screen');
+    await page.goto('/#/edit');
+    const list = page.getByRole('list', { name: 'Compositions' });
+    const first = before[0];
+    await list.getByRole('button', { name: `Delete ${first.name}` }).first().click();
+    await expect.poll(async () => ((await (await page.request.get('/api/compositions')).json()) as any[]).length).toBe(before.length - 1);
+    await page.getByRole('button', { name: 'Undo' }).last().click();
+    await expect.poll(async () => ((await (await page.request.get('/api/compositions')).json()) as any[]).length).toBe(before.length);
+    await expect(list.getByRole('button', { name: `Open ${first.name} in Edit` }).first()).toBeVisible();
+  });
 });

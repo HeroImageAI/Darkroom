@@ -102,8 +102,36 @@ export class JobManager {
     setInterval(() => {
       if (this.connected && this.store.activeJobs().some((j) => j.prompt_id)) void this.resync();
     }, 30_000).unref();
+    setInterval(() => void this.watchStalls(), 15_000).unref();
   }
   private clientId: string;
+  /** When each running job last moved (a step, a node). */
+  private lastActivity = new Map<string, number>();
+  private stallWarned = new Set<string>();
+
+  /**
+   * A video that stops moving while the graphics card is full (DECISIONS 136): on Windows the NVIDIA driver then lends
+   * the card normal RAM over PCIe ("sysmem fallback") — the GPU shows 100 % busy but a 1-minute render takes 5–15. Say
+   * so once, with what helps, instead of a silent "Model Initializing".
+   */
+  private async watchStalls(): Promise<void> {
+    const running = this.store.activeJobs().filter((j) => j.status === 'running' && j.kind === 'video' && !this.stallWarned.has(j.id));
+    if (!running.length) return;
+    const now = Date.now();
+    const stuck = running.filter((j) => now - (this.lastActivity.get(j.id) ?? j.started_at ?? now) >= 90_000);
+    if (!stuck.length) return;
+    const free = await this.vramFreeGB();
+    if (free === null || free >= 1) return;
+    for (const j of stuck) {
+      this.stallWarned.add(j.id);
+      this.patch(j.id, { stage: 'Slow: graphics memory full' });
+      this.broadcast({
+        type: 'toast',
+        kind: 'info',
+        text: `The video render is running slowly: the graphics card is full (${free.toFixed(1)} GB free), so Windows is lending it normal memory, which is many times slower. It will finish, just later. Closing other apps that use the GPU (browsers, games, video calls) helps; the lasting fix is in Darkroom's README (Troubleshooting, "A video takes 5–15 minutes").`,
+      });
+    }
+  }
   private ingesting = new Set<string>();
 
   template(file: string): ApiPrompt {
@@ -219,15 +247,18 @@ export class JobManager {
     if (!job) return;
     switch (ev.type) {
       case 'execution_start':
+        this.lastActivity.set(job.id, Date.now());
         this.patch(job.id, { status: 'running', started_at: Date.now(), stage: 'Starting', progress: 0 });
         break;
       case 'executing':
+        this.lastActivity.set(job.id, Date.now());
         if (ev.node) {
           const node = (job.api_prompt as ApiPrompt)[ev.node];
           this.patch(job.id, { status: 'running', stage: stageName(node ? titleOf(node) : '', node?.class_type ?? '') });
         }
         break;
       case 'progress': {
+        this.lastActivity.set(job.id, Date.now());
         const node = (job.api_prompt as ApiPrompt)[ev.node];
         const samplers = samplerIds(job.api_prompt as ApiPrompt);
         const idx = Math.max(0, samplers.indexOf(ev.node));
