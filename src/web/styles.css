@@ -763,7 +763,7 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 .live-panel header strong { font-weight: 600; }
 .live-panel .live-status { margin: 0 0 0 auto; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; }
 .live-panel header .btn { margin-left: 0; }
-.live-frame { aspect-ratio: 1; max-height: 52vh; background: var(--bg); border-radius: 8px; display: grid; place-items: center; overflow: hidden; text-align: center; padding: 0; }
+.live-frame { aspect-ratio: 1; max-height: 52vh; width: 100%; background: var(--bg); border-radius: 8px; display: grid; place-items: center; overflow: hidden; text-align: center; padding: 0; }
 .live-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .live-frame .note { padding: 16px; }
 .live-strength { gap: 8px; align-items: center; }
@@ -778,3 +778,5 @@ details.adj-sec summary { cursor: pointer; font-size: 13px; color: var(--text); 
 .region-thumb { width: 40px; height: 40px; padding: 0; border: 1px solid var(--input); border-radius: 6px; background: var(--bg); overflow: hidden; flex: none; cursor: pointer; display: grid; place-items: center; }
 .region-thumb img { max-width: 100%; max-height: 100%; display: block; }
 .region-thumb:hover { border-color: var(--accent); }
+.live-panel header strong { white-space: nowrap; }
+.live-panel .live-status { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

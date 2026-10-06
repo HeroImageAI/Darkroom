@@ -1030,7 +1030,7 @@ test.describe.serial('Edit suite · depth and pose (DECISIONS 134)', () => {
     await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Sketch', exact: true }).click();
     await page.getByRole('group', { name: 'Follow' }).getByRole('button', { name: 'Depth' }).click();
     await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
-    await page.getByLabel('What should the drawing become?').fill('a red sports car in a white studio');
+    await page.getByLabel('What should it become?').fill('a red sports car in a white studio');
     const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && r.postDataJSON().meta.mode === 'edit:sketch');
     await page.locator('.panel-foot').getByRole('button', { name: /Render from the depth/ }).click();
     const body = (await sent).postDataJSON();
@@ -1054,7 +1054,7 @@ test.describe.serial('Edit suite · depth and pose (DECISIONS 134)', () => {
     await page.getByRole('tab', { name: /AI/ }).click();
     await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Sketch', exact: true }).click();
     await page.getByRole('group', { name: 'Follow' }).getByRole('button', { name: 'Pose' }).click();
-    await page.getByLabel('What should the drawing become?').fill('a knight in silver armour in a castle courtyard');
+    await page.getByLabel('Who takes the pose?').fill('a knight in silver armour in a castle courtyard');
     const sent = page.waitForRequest((r) => r.url().endsWith('/api/jobs') && r.method() === 'POST' && /edit:(sketch|control)/.test(r.postDataJSON().meta.mode));
     await page.locator('.panel-foot').getByRole('button', { name: /Render in the pose/ }).click();
     const body = (await sent).postDataJSON();

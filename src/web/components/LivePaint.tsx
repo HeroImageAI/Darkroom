@@ -117,7 +117,7 @@ export function LivePanel({ doc, docVer, T, onKeep, onClose }: { doc: CanvasDoc;
           <X size={14} />
         </button>
       </header>
-      <div className="live-frame">{frame ? <img src={frame} alt="Live frame" /> : <span className="note">Paint, then pause: the first frame appears a few seconds later.</span>}</div>
+      <div className="live-frame" style={{ aspectRatio: `${doc.width} / ${doc.height}` }}>{frame ? <img src={frame} alt="Live frame" /> : <span className="note">Paint, then pause: the first frame appears a few seconds later.</span>}</div>
       <input className="input" aria-label="Live: what it should look like" placeholder="What it should look like, e.g. a leather sneaker, studio photo" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
       <label className="check">
         <input type="checkbox" checked={keepColours} onChange={(e) => setKeepColours(e.target.checked)} /> Keep the colours I paint

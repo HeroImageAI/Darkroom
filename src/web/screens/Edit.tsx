@@ -2513,7 +2513,11 @@ function Editor({ item }: { item: Item }) {
                     : mode === 'refine'
                       ? 'What it should look like (optional)'
                       : mode === 'sketch'
-                        ? 'What should the drawing become?'
+                        ? follow === 'depth'
+                          ? 'What should it become?'
+                          : follow === 'pose'
+                            ? 'Who takes the pose?'
+                            : 'What should the drawing become?'
                         : mode === 'regions'
                           ? 'The whole picture (optional)'
                         : mode === 'compose'
@@ -2523,7 +2527,7 @@ function Editor({ item }: { item: Item }) {
               <textarea
                 ref={promptBox}
                 className="input"
-                rows={4}
+                rows={mode === 'regions' ? 2 : 4}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder={
@@ -2534,7 +2538,11 @@ function Editor({ item }: { item: Item }) {
                       : mode === 'refine'
                         ? 'e.g. a leather sneaker, studio photo — or leave empty to keep the subject and finish it'
                         : mode === 'sketch'
-                          ? 'e.g. a photorealistic product photo of this sneaker: white knit upper, grey suede overlays, volt green sole, light grey studio'
+                          ? follow === 'depth'
+                            ? 'e.g. a matte black electric SUV concept, studio photo — in the same 3D layout'
+                            : follow === 'pose'
+                              ? 'e.g. a hooded elven ranger with a longbow, game concept art'
+                              : 'e.g. a photorealistic product photo of this sneaker: white knit upper, grey suede overlays, volt green sole, light grey studio'
                           : mode === 'regions'
                             ? 'e.g. a rain-soaked night market, neon signs, cinematic'
                         : mode === 'compose'
