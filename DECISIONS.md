@@ -1051,3 +1051,17 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     the Live frame takes the canvas's shape (a 3:2 canvas showed black bars), its header stays on one line on a laptop;
     the prompt says "What should it become?" for Depth and "Who takes the pose?" for Pose; the whole-picture box in
     Regions is two lines, so the regions are in view on a laptop.
+136. **Slow videos are a graphics-memory spill, not leftover models (JP: "clear VRAM before a video?").** Darkroom
+    already frees ComfyUI's memory before every video (`/free`). History: of 170 LTX renders, 6 % after another model and
+    11 % right after another LTX stalled (5–17 min instead of ~1) — no link to what ran before, nor to new sizes (1 of 14
+    slow ones was a first-time size). Caught live (`scripts/watch-gpu.ps1`, every 2 s): the weights load from the NVMe at
+    ~1 GB/s in 30 s (E: is a Predator GM7000; ComfyUI 0.38+ streams weights from disk, "fast_disk"), then LTX needs ~21.5
+    GB of the RTX 3090's 24 GB. Windows, Edge, Claude, Comfy Desktop's window and WhatsApp hold 2–3 GB of the same card:
+    with 2.16 GB in use a render took 54 s; with 2.79 GB it sat at 23.7 GB used, 100 % GPU, no disk reads, for 9+
+    minutes — the NVIDIA driver's sysmem fallback. Changed: a **watchdog** (`watchStalls`) marks a video that has not
+    moved for 90 s while < 1 GB of VRAM is free as "Slow: graphics memory full" and says why and what helps; the README
+    explains it; with JP's OK Comfy Desktop now starts ComfyUI with **`--reserve-vram 3`** (installations.json,
+    `launchArgs`; backup kept), so ComfyUI leaves room for the desktop and offloads deliberately; JP sets the NVIDIA
+    *Sysmem Fallback Policy → Prefer No Sysmem Fallback* for ComfyUI's python.exe. First full run on it: LTX 60 / 60 /
+    155 (1280×704 final) / 100 s, no stall, all tests pass. Also: old compositions can be deleted from Edit (with Undo),
+    and the turntable test waits for its own render (an earlier run's video let its render run on into the next test).
