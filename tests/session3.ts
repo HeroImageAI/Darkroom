@@ -130,12 +130,10 @@ await step('depth', async () => {
   await page.getByRole('group', { name: 'Follow' }).getByRole('button', { name: 'Depth' }).click();
   await page.getByLabel('What should it become?').fill('a matte black electric SUV concept with copper accents, studio photo');
   await snap('depth-ready');
-  const before = (await layerNames(pic.id).catch(() => [])).length;
   await page.locator('.panel-foot').getByRole('button', { name: /Render from the depth/ }).click();
   await page.waitForTimeout(6000);
   await snap('depth-running');
-  await page.waitForFunction(async () => true, null, { timeout: 1000 });
-  for (let i = 0; i < 120 && (await layerNames(pic.id).catch(() => [])).length <= before + 1; i++) await page.waitForTimeout(2500);
+  for (let i = 0; i < 120 && !(await layerNames(pic.id).catch(() => [] as string[])).some((n) => n.startsWith('Depth ·')); i++) await page.waitForTimeout(2500);
   await page.waitForTimeout(1500);
   await snap('depth-done');
   say(`   layers: ${(await layerNames(pic.id)).join(' | ')}`);
@@ -151,9 +149,8 @@ await step('pose', async () => {
   await page.getByRole('group', { name: 'Follow' }).getByRole('button', { name: 'Pose' }).click();
   await page.getByLabel('Who takes the pose?').fill('a hooded elven ranger with a longbow, game concept art');
   await snap('pose-ready');
-  const before = (await layerNames(pic.id).catch(() => [])).length;
   await page.locator('.panel-foot').getByRole('button', { name: /Render in the pose/ }).click();
-  for (let i = 0; i < 120 && (await layerNames(pic.id).catch(() => [])).length <= before + 1; i++) await page.waitForTimeout(2500);
+  for (let i = 0; i < 120 && !(await layerNames(pic.id).catch(() => [] as string[])).some((n) => n.startsWith('Pose ·')); i++) await page.waitForTimeout(2500);
   await page.waitForTimeout(1500);
   await snap('pose-done');
   say(`   layers: ${(await layerNames(pic.id)).join(' | ')}`);
