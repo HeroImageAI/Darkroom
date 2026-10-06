@@ -164,6 +164,16 @@ free VRAM is too low. If a job gets *very* slow rather than failing, the NVIDIA 
 change that in *NVIDIA Control Panel → Manage 3D settings → CUDA - Sysmem Fallback Policy → Prefer No Sysmem Fallback* for
 ComfyUI's `python.exe` (Darkroom does not change driver settings).
 
+**A video takes 5–15 minutes instead of about one (it says "Slow: graphics memory full").** Measured on this PC
+(DECISIONS 136): LTX 2.5 needs about 21.5 GB of the RTX 3090's 24 GB while it renders. Windows, the browser, Comfy Desktop's
+window and chat apps already use 2–3 GB of the same card. When they use a little more than usual (2.8 GB instead of 2.2), the
+render no longer fits and the NVIDIA driver quietly lends the card normal RAM over PCIe: the GPU shows 100 % busy, nothing is
+read from disk, and the render crawls. Clearing ComfyUI's memory first does not help (Darkroom already does it before every
+video). What helps: close GPU-heavy apps before long renders, and either (1) set *CUDA - Sysmem Fallback Policy → Prefer No
+Sysmem Fallback* for ComfyUI's `python.exe` (above), so ComfyUI offloads part of the model itself, which is far faster than the
+driver's spill, or (2) start ComfyUI with `--reserve-vram 3` (Comfy Desktop → Settings → Server config), so it leaves 3 GB for
+the desktop. Darkroom changes neither: they are your settings.
+
 **"A model file is missing: …".** The file is not in any model folder ComfyUI knows about. Run `bash scripts/download-models.sh`
 or check the file names at the top of `workflows/build_workflows.py`. Folders: `E:\Comfy-Desktop\ComfyUI-Shared\models\…` and
 `E:\ComfyUI\Desktop ComfyUI\ComfyUI\ComfyUI\models\…`.
