@@ -1336,7 +1336,8 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.getByRole('complementary', { name: 'Details' }).getByRole('button', { name: 'Animate as a turntable' }).click();
     const job = await (await sentTT).json();
     expect(JSON.parse(job.params.key_moments)).toHaveLength(3);
-    await expect.poll(async () => (await (await page.request.get(`/api/items?q=${encodeURIComponent('e2e shoe · turntable')}&limit=5`)).json()).items.find((i: any) => i.kind === 'video')?.duration ?? 0, { timeout: 600_000 }).toBeGreaterThan(4.5);
+    // this render's own video (an earlier run's "e2e shoe · turntable" must not count: the render would carry on into the next test)
+    await expect.poll(async () => ((await (await page.request.get(`/api/jobs/${job.id}/items`)).json()) as any[]).find((i) => i.kind === 'video')?.duration ?? 0, { timeout: 900_000 }).toBeGreaterThan(4.5);
     await page.getByPlaceholder(/Search/).first().fill('');
   });
 
