@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, Trash2 } from 'lucide-react';
 import { api } from '../api';
 import { compositionToEdit } from '../lib/canvasStart';
 import { go } from '../router';
@@ -15,12 +15,25 @@ export function OldCompositions() {
   const [comps, setComps] = useState<Omit<Composition, 'doc'>[]>([]);
   const [opening, setOpening] = useState<string | null>(null);
   const [all, setAll] = useState(false);
-  useEffect(() => {
+  const load = () =>
     api
       .get<Omit<Composition, 'doc'>[]>('/api/compositions')
       .then(setComps)
       .catch(() => setComps([]));
-  }, []);
+  useEffect(() => void load(), []);
+  /** Hide it (the server keeps it; Undo brings it back). Pictures it used and Edit copies made from it stay. */
+  const remove = async (c: Omit<Composition, 'doc'>) => {
+    try {
+      await api.post(`/api/compositions/${c.id}/delete`);
+      setComps((cs) => cs.filter((x) => x.id !== c.id));
+      toast(`"${c.name}" deleted. Its pictures, and any Edit copy you made of it, stay in your Library.`, 'info', 8000, {
+        label: 'Undo',
+        run: () => void api.post(`/api/compositions/${c.id}/restore`).then(load),
+      });
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
   if (!comps.length) return null;
   const open = async (cid: string) => {
     if (!online) return toast('Start ComfyUI first (top right): the canvas is saved into your Library.', 'info');
@@ -51,6 +64,9 @@ export function OldCompositions() {
             </div>
             <button className="btn sm" disabled={!!opening} onClick={() => void open(c.id)} aria-label={`Open ${c.name} in Edit`}>
               {opening === c.id ? <Loader2 size={14} className="spin" /> : <ArrowRight size={14} />} Open in Edit
+            </button>
+            <button className="btn ghost sm icon" disabled={!!opening} onClick={() => void remove(c)} aria-label={`Delete ${c.name}`} title="Delete this composition (Undo brings it back; its pictures stay in your Library)">
+              <Trash2 size={15} />
             </button>
           </div>
         ))}
