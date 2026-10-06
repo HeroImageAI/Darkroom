@@ -1038,3 +1038,16 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     (`POST /api/control`, a `preview` job: never a Library item), keep it as a hidden layer to look at, and render
     from it as a layer ("Depth · …" / "Pose · …"); a pose with your character as the Reference always uses Klein
     (with no LoRAs of the other model). The RTX 3090 (no native fp8) is why Klein steps are slow (DECISIONS 132).
+135. **Polish round 3: the newest tools at work** (`tests/session3.ts`: Live on a sneaker drawing, Regions on a film
+    still, Depth on a car, Pose on a figure, the panels at 1280×800; ComfyUI updated itself to 0.39.0 overnight and all
+    of it runs). Found: **a render could land on the next picture you opened.** Each picture gets a fresh Edit, which
+    restores "the job in progress" from session storage (to survive a reload) — but that job was not tied to its
+    picture, so the next picture adopted it: the Depth render of the car arrived on the picture opened next, opened as
+    a new version there, and the Pose that followed ran on that version. The stored job now carries its picture; a job
+    of another picture is only watched, and you are told when it is ready ("Open it" goes to that version), with an
+    e2e test. **Pose on a picture with nobody in it** rendered a figure on black: an empty skeleton (a stray point
+    draws 0.0025 % of the map, a real one ~1 %) is now refused with "No one was found…", and pose renders ask for a
+    fitting background and light in place of the diagram's black (a ranger in a forest instead of on black). Smaller:
+    the Live frame takes the canvas's shape (a 3:2 canvas showed black bars), its header stays on one line on a laptop;
+    the prompt says "What should it become?" for Depth and "Who takes the pose?" for Pose; the whole-picture box in
+    Regions is two lines, so the regions are in view on a laptop.
