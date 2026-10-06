@@ -375,7 +375,19 @@ function Editor({ item }: { item: Item }) {
   const [crop, setCrop] = useState<Rect | null>(null);
   const [view, setView] = useState({ scale: 1, x: 0, y: 0 });
   const [compare, setCompare] = useState(false);
-  const [jobId, setJobId] = useState<string | null>(() => sessionStorage.getItem('dr.edit.job'));
+  // the job running for this picture survives a reload; a job of another picture is never taken over (its result
+  // would land here): it is only watched, to say when it is ready
+  const storedJob = useRef<{ jobId: string; itemId: string } | null>(
+    (() => {
+      try {
+        return JSON.parse(sessionStorage.getItem('dr.edit.job') ?? 'null');
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  const [jobId, setJobId] = useState<string | null>(() => (storedJob.current?.itemId === item.id ? storedJob.current.jobId : null));
+  const elsewhere = useRef(storedJob.current && storedJob.current.itemId !== item.id ? storedJob.current : null);
   const [maskEmpty, setMaskEmpty] = useState(true);
   const [lasso, setLasso] = useState<{ x: number; y: number }[] | null>(null);
   // Smart select (SAM 3.1)
@@ -544,7 +556,7 @@ function Editor({ item }: { item: Item }) {
   }, [maskEmpty]);
   useEffect(() => sessionStorage.setItem('dr.edit.mode', mode), [mode]);
   useEffect(() => {
-    if (jobId) sessionStorage.setItem('dr.edit.job', jobId);
+    if (jobId) sessionStorage.setItem('dr.edit.job', JSON.stringify({ jobId, itemId: item.id }));
   }, [jobId]);
 
   useEffect(() => {
@@ -943,6 +955,20 @@ function Editor({ item }: { item: Item }) {
   useEffect(
     () =>
       onJob((j) => {
+        // the render of the picture you left: say it is ready there (it is a version of that picture)
+        const away = elsewhere.current;
+        if (away && (j.id === away.jobId || (j.meta as any).followOf === away.jobId)) {
+          if ((j.meta as any).followOf === away.jobId) return void (elsewhere.current = { ...away, jobId: j.id });
+          if (j.status === 'done' && !(j.meta as any).chain?.kind) {
+            elsewhere.current = null;
+            sessionStorage.removeItem('dr.edit.job');
+            toast('The render of the picture you left is ready: it is a new version of that picture.', 'ok', 12000, { label: 'Open it', run: () => go('edit', j.result_ids[0] ?? away.itemId) });
+          } else if (j.status === 'error' || j.status === 'cancelled' || j.status === 'lost') {
+            elsewhere.current = null;
+            sessionStorage.removeItem('dr.edit.job');
+          }
+          return;
+        }
         // a server-side follow-up of the job we're waiting on (pre-upscale -> enhance, enhance -> upscale): track that instead
         if (jobId && (j.meta as any).followOf === jobId) return setJobId(j.id);
         if (j.id !== jobId) return;
@@ -1558,7 +1584,7 @@ function Editor({ item }: { item: Item }) {
           ? `Turn this depth map into ${what}. Follow the depth map exactly: the same shapes, positions, layout and camera angle; near is light, far is dark.`
           : ref
             ? `${refToken(T, m, 1)} is a pose diagram (coloured lines for the limbs on black). Draw the character from ${refToken(T, m, 2)} as a full, real figure in exactly the pose of ${refToken(T, m, 1)}: the same body, arm, leg and head positions. Keep the character's look, body, clothing, props and style from ${refToken(T, m, 2)}${what ? `, ${what}` : ''}; never draw the diagram itself.`
-            : `This picture is a pose diagram (coloured lines for the limbs on black). Draw a real person, not the diagram: ${what}, in exactly this pose, with the same body, arm, leg and head positions.`;
+            : `This picture is a pose diagram (coloured lines for the limbs on black). Draw a real person, not the diagram: ${what}, in exactly this pose, with the same body, arm, leg and head positions. Give the picture a fitting background and natural light in place of the diagram's black.`;
       const params: Record<string, string | number> = { prompt: composeImagePrompt(T, { model: m, mode: 'instruct', text }), image_1: map.name };
       if (ref) params.image_2 = ref.name;
       resultName.current = `${kind === 'depth' ? 'Depth' : 'Pose'} · ${(what || 'your character').slice(0, 40)}`;

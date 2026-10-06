@@ -1068,3 +1068,34 @@ test.describe.serial('Edit suite · depth and pose (DECISIONS 134)', () => {
     await shot(page, 'control-pose');
   });
 });
+
+test.describe.serial('Edit suite · polish round 3', () => {
+  let page: Page;
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newContext({ baseURL: process.env.DR_E2E_URL ?? 'http://127.0.0.1:5173', viewport: { width: 1440, height: 900 } });
+    page = await ctx.newPage();
+  });
+  test.afterAll(async () => page.context().close());
+
+  test('A render of one picture never lands on the next picture you open; you are told when it is ready', async () => {
+    const a = await pickPicture(page);
+    const b = await pickPicture(page);
+    await page.goto(`/#/edit/${a.id}`);
+    await page.getByRole('tab', { name: /AI/ }).click();
+    await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Instruct', exact: true }).click();
+    await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: /^Klein 9B/ }).click();
+    await page.getByRole('textbox', { name: 'Instruction', exact: true }).fill('Make it a snowy winter scene. Keep everything else unchanged.');
+    const sent = page.waitForResponse((r) => r.url().endsWith('/api/jobs') && r.request().method() === 'POST');
+    await page.locator('.panel-foot').getByRole('button', { name: /Apply instruction/ }).click();
+    const job = await (await sent).json();
+    // open another picture while it renders
+    await page.goto(`/#/edit/${b.id}`);
+    await expect(page.getByText(/The render of the picture you left is ready/)).toBeVisible({ timeout: 300_000 });
+    expect(page.url()).toMatch(new RegExp(`#/edit/${b.id}$`)); // still on b
+    expect((await page.request.get(`/api/items/${b.id}/project`)).status()).toBe(404); // b got no layers
+    const result = ((await (await page.request.get(`/api/jobs/${job.id}/items`)).json()) as any[])[0];
+    expect(result.parent_id).toBe(a.id); // a version of a, where it belongs
+    await page.getByRole('button', { name: 'Open it' }).last().click();
+    await expect(page).toHaveURL(new RegExp(`#/edit/${result.id}$`));
+  });
+});

@@ -479,6 +479,14 @@ app.post('/api/control', async (req, reply) => {
     const f = ((done.meta as Record<string, unknown>).files as FileRef[] | undefined)?.[0];
     if (done.status !== 'done' || !f) return reply.code(500).send({ error: done.error ?? `The ${b.kind} map did not come out.` });
     const bytes = await jobs.comfy.view(f);
+    // no one found: the skeleton picture is black but for a stray point or two (a real skeleton draws ~1 % of it),
+    // and a render from it would only invent someone on black
+    if (b.kind === 'pose') {
+      const { data } = await sharp(Buffer.from(bytes)).removeAlpha().greyscale().raw().toBuffer({ resolveWithObject: true });
+      let drawn = 0;
+      for (const v of data) if (v > 40) drawn++;
+      if (drawn / data.length < 0.0005) return reply.code(422).send({ error: 'No one was found in the picture to take the pose from. Pose works on photos and pictures of people.' });
+    }
     const up = await jobs.comfy.upload('image', new Blob([new Uint8Array(bytes)]), `${b.kind}_${Date.now().toString(36)}.png`, { subfolder: 'darkroom' });
     return { name: inputName(up), url: outputUrl(f), seconds: Math.round((Date.now() - t0) / 100) / 10 };
   } catch (e) {
