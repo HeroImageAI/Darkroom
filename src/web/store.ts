@@ -16,6 +16,9 @@ export interface AppState {
   jobs: Record<string, Job>;
   previews: Record<string, string>;
   libraryRev: number;
+  /** Setup (DECISIONS 138): live download progress per model file, and a counter bumped when a download run starts or ends */
+  setupFiles: Record<string, { status?: string; received?: number; total?: number; error?: string }>;
+  setupRev: number;
   toasts: Toast[];
   /** The board new results go to (a preference, kept across launches); null = no board. */
   board: string | null;
@@ -30,7 +33,7 @@ const savedBoard = (() => {
     return null;
   }
 })();
-let state: AppState = { status: null, socket: 'connecting', boot: null, jobs: {}, previews: {}, libraryRev: 0, toasts: [], board: savedBoard, exports: {} };
+let state: AppState = { status: null, socket: 'connecting', boot: null, jobs: {}, previews: {}, libraryRev: 0, setupFiles: {}, setupRev: 0, toasts: [], board: savedBoard, exports: {} };
 const listeners = new Set<() => void>();
 const jobListeners = new Set<(job: Job) => void>();
 
@@ -126,6 +129,12 @@ export function connectEvents(): void {
           break;
         case 'export':
           setState((s) => ({ exports: { ...s.exports, [msg.timelineId]: { progress: msg.progress, itemId: msg.itemId } } }));
+          break;
+        case 'models':
+          setState((s) => ({ setupFiles: { ...s.setupFiles, [msg.file]: msg } }));
+          break;
+        case 'models-run':
+          setState((s) => ({ setupRev: s.setupRev + 1 }));
           break;
         case 'queue':
           setState((s) => (s.status ? { status: { ...s.status, queue: msg.remaining } } : {}));

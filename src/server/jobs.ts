@@ -72,6 +72,8 @@ export class VramWarning extends Error {
 
 export class JobManager {
   comfy: ComfyClient | null = null;
+  /** Fits a graph to the models this PC has (models.ts fitGraph); set by the server. Returns optional files left out. */
+  fitModels: ((prompt: ApiPrompt) => Promise<string[]>) | null = null;
   /** Your LoRAs, sorted by the model they fit (read from the files' headers). */
   readonly loraLibrary = new LoraLibrary(() => this.comfy?.baseUrl ?? null);
 
@@ -330,6 +332,9 @@ export class JobManager {
       if (!ok) throw new WorkflowError(`${weights} is not a Klein 9B model on this PC.`);
       node.inputs.unet_name = weights;
     }
+    // another name for the same model, or an optional LoRA left out (DECISIONS 138)
+    const leftOut = this.fitModels ? await this.fitModels(prompt) : [];
+    if (leftOut.length) this.broadcast({ type: 'toast', kind: 'info', text: `Ran without ${leftOut.join(', ')} (an optional model that is not installed).` });
     // Timeline AI tools (DECISIONS 104): key moments (more guide pictures), your sound to animate to, lip-sync boost
     if (spec.family === 'ltx') {
       const json = <T>(k: string): T | null => {

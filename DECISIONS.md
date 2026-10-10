@@ -1076,3 +1076,25 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     Also fixed: a quick click on a **video tile** was lost: hovering swapped the still for a playing video between press
     and release, and the browser drops a click whose element vanished. The video now lies over the still, never the
     click target. The Library test restores only its own three items (Recently deleted may hold thousands).
+
+138. **Darkroom installs its own models (JP: "let darkroom install the models it needs when I start it" — before a
+    fresh Windows install with every drive formatted).** A Setup screen (Home › *Models and setup*, and a banner on every
+    screen while required models are missing) lists the models by group, says which ComfyUI has, and downloads the rest
+    with one button: from Hugging Face straight into ComfyUI's models folder (read from the `--extra-model-paths-config`
+    file Comfy Desktop passes, so any folder layout works), free space checked first, a `.part` file resumed after a stop
+    or a dropped line, moved into place only when complete, never over an existing file. Klein (Black Forest Labs) and
+    LTX (Lightricks) need a free account and a click on Agree: Setup links both pages and takes a *Read* token, kept in
+    `data/` and sent only to huggingface.co (401 → "needs your token", 403 → "press Agree"). Sources found for the files
+    that had none, checked against JP's copies (SHA-256 for the public ones, byte size for the gated ones): the four LTX
+    IC-LoRAs and the cinemagraph / slow-motion LoRAs (Lightricks, one repo each), Qwen consistency (ausboss), Turbo8
+    (chriswritescode), the orbit LoRA (ML-Intern-lab, re-keyed after download exactly as DECISIONS 113 did — same keys,
+    same tensor data). Klein comes from Black Forest Labs' `flux-2-klein-9b-fp8`; models.json's `also` makes ComfyUI's
+    repack `…-fp8mixed` count as the same model, and each graph is fitted to the name this PC has before it runs
+    (`fitGraph`); the LoRA catalogue follows the same names and no longer fails when one family is not installed yet.
+    No public copy of Klein Image Restore V1: optional, and a graph whose optional LoRA is missing runs without it (the
+    loader is bypassed, with a note). Qwen-Image-Edit 2511 fp8 and its Lightning LoRA (20.4 + 0.9 GB) are off the list:
+    no screen uses that graph any more. The model list was also missing models in use (cinemagraph, slow motion, Lucida,
+    Wan 2.2): an audit of every workflow and source file now finds none missing. Wan 2.2 and Lucida are optional extras.
+    Detection checks size, not only names: a failed download had left a 145-byte "access restricted" page named
+    `flux-2-klein-9b-fp8.safetensors` on this PC. Comfy Desktop's exe is found through Windows' uninstall entry when
+    config.json's path does not exist. scripts/get-models.py follows the new list; docs/NEW-PC.md describes the flow.

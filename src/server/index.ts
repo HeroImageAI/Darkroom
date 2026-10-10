@@ -33,6 +33,7 @@ import { planVideo } from '../shared/manifest.js';
 import { desktopPython, grabFrame, inputDirFromArgv, inside, runExport } from './timeline.js';
 import { validMove, type OrbitMove } from '../shared/orbit.js';
 import { ProjectStore, type LayerPart } from './projects.js';
+import { freeGB, ModelSetup } from './models.js';
 
 const cfg = loadConfig();
 const store = new Store(cfg.paths.data);
@@ -48,6 +49,13 @@ function readJson<T>(file: string): T {
 const manifest = (): Manifest => readJson<Manifest>(path.join(cfg.paths.workflows, 'manifest.json'));
 const jobs = new JobManager(store, manifest, cfg.paths.workflows, path.join(cfg.paths.data, 'thumbs'), broadcast);
 const projects = new ProjectStore(path.join(cfg.paths.data, 'projects'));
+// Setup (DECISIONS 138): the models Darkroom needs, downloaded into ComfyUI's models folder when missing
+const modelSetup = new ModelSetup(path.join(ROOT, 'scripts', 'models.json'), cfg.paths.data, () => jobs.comfy, broadcast);
+jobs.fitModels = (p) => modelSetup.fit(p);
+jobs.loraLibrary.aliases = (n) => {
+  const m = modelSetup.list().models.find((x) => x.file === n || x.also?.includes(n));
+  return m ? [n, ...[m.file, ...(m.also ?? [])].filter((x) => x !== n)] : [n];
+};
 
 // ---------------------------------------------------------------- status --
 type ComfyState = 'online' | 'offline' | 'starting' | 'desktop-open';
@@ -1174,6 +1182,28 @@ async function missingItems(): Promise<string[] | null> {
     })
     .map((r) => r.id);
 }
+
+// ---- Setup: models (DECISIONS 138)
+app.get('/api/setup/models', async () => {
+  const [models, dir] = await Promise.all([modelSetup.scan(true), modelSetup.modelsDir().catch(() => null)]);
+  return { groups: modelSetup.list().groups, models, dir, freeGB: dir ? freeGB(dir) : null, signedIn: !!modelSetup.token(), ...modelSetup.status() };
+});
+app.get('/api/setup/summary', async () => modelSetup.summary());
+app.post('/api/setup/models/download', async (req) => {
+  const files = (req.body as { files?: unknown })?.files;
+  return modelSetup.download(Array.isArray(files) ? files.filter((f): f is string => typeof f === 'string') : []);
+});
+app.post('/api/setup/models/cancel', async () => {
+  modelSetup.cancel();
+  return { ok: true };
+});
+/** Your Hugging Face token (read access), typed in Setup; kept in data/, sent only to huggingface.co. */
+app.post('/api/setup/token', async (req, reply) => {
+  const t = (req.body as { token?: unknown })?.token;
+  if (t !== null && (typeof t !== 'string' || !/^hf_[A-Za-z0-9]{20,}$/.test(t.trim()))) return reply.code(400).send({ error: 'That does not look like a Hugging Face token (it starts with hf_).' });
+  modelSetup.setToken(t);
+  return { signedIn: !!t };
+});
 
 app.get('/api/library/missing', async () => {
   const ids = await missingItems().catch(() => null);

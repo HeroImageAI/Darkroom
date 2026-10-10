@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-export type Screen = 'home' | 'generate' | 'edit' | 'compose' | 'video' | 'timeline' | 'library';
+export type Screen = 'home' | 'generate' | 'edit' | 'compose' | 'video' | 'timeline' | 'library' | 'setup';
 export interface Route {
   screen: Screen;
   id?: string;
@@ -11,7 +11,7 @@ function parse(): Route {
   const h = location.hash.replace(/^#\/?/, '');
   const [pathPart, qs] = h.split('?');
   const [screen, id] = pathPart.split('/');
-  const s: Screen = (['home', 'generate', 'edit', 'compose', 'video', 'timeline', 'library'] as const).includes(screen as Screen) ? (screen as Screen) : 'home';
+  const s: Screen = (['home', 'generate', 'edit', 'compose', 'video', 'timeline', 'library', 'setup'] as const).includes(screen as Screen) ? (screen as Screen) : 'home';
   return { screen: s, id: id || undefined, query: new URLSearchParams(qs ?? '') };
 }
 

@@ -61,6 +61,9 @@ export class LoraLibrary {
   private variants = new Map<string, { key: string; ok: boolean }>();
   private fits = new Map<string, { key: string; klein: LoraFit; qwen: LoraFit; ltx: LoraFit; ic: number | null } | { key: string; error: string }>();
 
+  /** Other names of the same model file (models.json `also`): a fresh install may have Black Forest Labs' Klein file. */
+  aliases: (name: string) => string[] = (n) => [n];
+
   constructor(private comfyUrl: () => string | null) {}
 
   private async comfyJson<T>(p: string): Promise<T> {
@@ -76,7 +79,9 @@ export class LoraLibrary {
     const cached = this.models.get(unetName);
     if (cached) return cached;
     const folders = (await this.comfyJson<Record<string, string[]>>('/internal/folder_paths')).diffusion_models ?? [];
-    const file = folders.map((d) => path.join(d, unetName)).find((f) => fs.existsSync(f));
+    const file = this.aliases(unetName)
+      .flatMap((n) => folders.map((d) => path.join(d, n)))
+      .find((f) => fs.existsSync(f));
     if (!file) throw new Error(`Model file ${unetName} not found`);
     const layers = modelModules(readHeader(file));
     this.models.set(unetName, layers);
@@ -130,7 +135,9 @@ export class LoraLibrary {
       this.comfyJson<Record<string, any>>('/object_info/LoraLoaderModelOnly'),
     ]);
     const names: string[] = info.LoraLoaderModelOnly?.input?.required?.lora_name?.[0] ?? [];
-    const layers = { klein: await this.modelLayers(models.klein), qwen: await this.modelLayers(models.qwen), ltx: await this.modelLayers(models.ltx) };
+    // a family whose model is not installed yet (Setup still downloading) matches no LoRA instead of failing them all
+    const of = (n: string) => this.modelLayers(n).catch(() => new Map<string, number>());
+    const layers = { klein: await of(models.klein), qwen: await of(models.qwen), ltx: await of(models.ltx) };
     const out: LoraCatalogue = { klein: [], qwen: [], ltx: [], ltxTools: [], other: [] };
     for (const name of names) {
       const file = folders.map((d) => path.join(d, name)).find((f) => fs.existsSync(f));

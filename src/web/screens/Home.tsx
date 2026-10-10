@@ -176,6 +176,11 @@ export function Home() {
             </div>
           </section>
         )}
+        <p className="home-foot">
+          <button className="btn ghost sm" onClick={() => go('setup')} title="Which models are installed; download missing ones (a new PC needs nothing else)">
+            Models and setup <ArrowRight size={14} />
+          </button>
+        </p>
       </div>
     </div>
   );
