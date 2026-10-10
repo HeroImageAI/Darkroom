@@ -157,8 +157,11 @@ test.describe.serial('Darkroom v2 features', () => {
       await page.getByRole('group', { name: 'Edit model' }).getByRole('button', { name: new RegExp(`^${model}`) }).click();
       await page.keyboard.press('s');
       await page.getByLabel('Select by text').fill('person');
+      // wait for this test's own selection: the previous test's "Added to the selection" may still be showing
+      const found = page.waitForResponse((r) => r.url().endsWith('/api/segment'), { timeout: 240_000 });
       await page.getByRole('button', { name: 'Find' }).click();
-      await expect(page.getByText(/Added to the selection/).last()).toBeVisible({ timeout: 240_000 });
+      expect((await found).ok()).toBeTruthy();
+      await expect(page.getByRole('button', { name: 'Find' })).toBeEnabled();
       await expect(page.getByText('Change strength')).toBeVisible();
       await page.getByLabel('What should fill the selection?').fill('a lighthouse keeper in a bright red raincoat');
       const before = page.url();
@@ -1233,8 +1236,9 @@ test.describe.serial('Darkroom v2 features', () => {
     await page.request.post('/api/items/delete', { data: { ids } });
     await page.goto('/#/library');
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
-    await expect(page.getByRole('list', { name: 'Library items' }).getByRole('listitem')).toHaveCount(1);
-    await page.getByRole('list', { name: 'Library items' }).getByRole('listitem').first().click();
+    // Recently deleted may hold others: this test's crop is the newest, at the top
+    const tile = page.getByRole('list', { name: 'Library items' }).locator(`[data-id="${ids[0]}"]`);
+    await tile.click();
     await page.getByRole('complementary', { name: 'Details' }).getByRole('button', { name: 'Delete forever' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Delete forever' }).click();
     await expect(page.getByText(/Deleted 1 item for good. The files are in the Windows Recycle Bin./)).toBeVisible({ timeout: 30_000 });
