@@ -99,6 +99,9 @@ export const api = {
   /** Library delete: to "Recently deleted" (restorable), back, or for good (files to the Windows Recycle Bin). */
   deleteItems: (ids: string[]) => api.post<{ deleted: string[] }>('/api/items/delete', { ids }),
   restoreItems: (ids: string[]) => api.post<{ restored: string[] }>('/api/items/restore', { ids }),
+  /** Pictures whose file is gone from disk (only the preview is left), and putting them in Recently deleted. */
+  missingItems: () => api.get<{ checked: boolean; count: number; ids: string[] }>('/api/library/missing'),
+  deleteMissing: () => api.post<{ deleted: string[] }>('/api/library/missing/delete', {}),
   /** Video Takes: hide failed / cancelled / lost renders. */
   dismissJobs: (body: { ids: string[] } | { failedOfKind: string }) => api.post<{ dismissed: string[] }>('/api/jobs/dismiss', body),
   purgeItems: (body: { ids: string[] } | { all: true }) => api.post<{ purged: number; recycled: number; failed: string[] }>('/api/items/purge', body),

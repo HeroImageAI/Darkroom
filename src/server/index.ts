@@ -1158,6 +1158,36 @@ app.post('/api/items/delete', async (req) => {
   return { deleted: done };
 });
 
+/**
+ * Library pictures whose file is gone from ComfyUI's output folder (a disk cleaner, or data/ restored on a new PC
+ * without the output folder). Only the preview is left, so they can't be opened, edited or downloaded.
+ */
+async function missingItems(): Promise<string[] | null> {
+  if (!jobs.comfy) return null;
+  const outDir = outputDirFromArgv(((await jobs.comfy.systemStats()) as SystemStats).system?.argv);
+  if (!outDir || !fs.existsSync(outDir)) return null;
+  return store
+    .liveFiles()
+    .filter(({ file }) => {
+      const p = file && outputPath(outDir, file);
+      return p ? !fs.existsSync(p) : false;
+    })
+    .map((r) => r.id);
+}
+
+app.get('/api/library/missing', async () => {
+  const ids = await missingItems().catch(() => null);
+  return ids ? { checked: true, count: ids.length, ids } : { checked: false, count: 0, ids: [] };
+});
+
+/** Move the pictures with missing files to "Recently deleted" (restorable; nothing on disk is touched). */
+app.post('/api/library/missing/delete', async () => {
+  const ids = await missingItems();
+  const done = ids?.length ? store.softDelete(ids) : [];
+  if (done.length) broadcast({ type: 'library' });
+  return { deleted: done };
+});
+
 app.post('/api/items/restore', async (req) => {
   const done = store.restoreItems(idList(req.body));
   if (done.length) broadcast({ type: 'library' });

@@ -149,6 +149,31 @@ export function Library() {
       toast((e as Error).message, 'error');
     }
   };
+  // pictures whose file is gone from disk: checked when the Library opens
+  const [missing, setMissing] = useState(0);
+  useEffect(() => {
+    api
+      .missingItems()
+      .then((r) => setMissing(r.count))
+      .catch(() => {});
+  }, []);
+  const clearMissing = async () => {
+    try {
+      const r = await api.deleteMissing();
+      setMissing(0);
+      toast(`${count(r.deleted.length)} with missing files moved to Recently deleted.`, 'ok', 10000, {
+        label: 'Undo',
+        run: () =>
+          void (async () => {
+            for (let i = 0; i < r.deleted.length; i += 1000) await api.restoreItems(r.deleted.slice(i, i + 1000));
+            setMissing(r.deleted.length);
+            toast('Restored.', 'ok');
+          })(),
+      });
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    }
+  };
   const restore = async (ids: string[]) => {
     if (!ids.length) return;
     try {
@@ -345,6 +370,16 @@ export function Library() {
             }}
           />
         </div>
+        {!trash && missing > 0 && (
+          <div className="banner" role="status">
+            <span style={{ flex: 1 }}>
+              {missing === 1 ? '1 picture has' : `${missing} pictures have`} lost {missing === 1 ? 'its file' : 'their files'} on disk (only the preview is left), so {missing === 1 ? 'it' : 'they'} can't be opened or edited. A disk cleaner, or a Library brought over without the output folder, does this.
+            </span>
+            <button className="btn sm" onClick={() => void clearMissing()} title="Move them to Recently deleted. Nothing on disk is touched, and you can restore them.">
+              <Trash2 size={14} /> Move to Recently deleted
+            </button>
+          </div>
+        )}
         <div className="library-body">
         {!trash && (
           // boards as a column, like folders (audit #3): the grid gets the width

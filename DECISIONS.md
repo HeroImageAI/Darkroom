@@ -1065,3 +1065,11 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     *Sysmem Fallback Policy → Prefer No Sysmem Fallback* for ComfyUI's python.exe. First full run on it: LTX 60 / 60 /
     155 (1280×704 final) / 100 s, no stall, all tests pass. Also: old compositions can be deleted from Edit (with Undo),
     and the turntable test waits for its own render (an earlier run's video let its render run on into the next test).
+
+137. **Pictures whose file is gone are named, not hidden (found while backing Darkroom up to GitHub).** A disk cleaner
+    emptied ComfyUI's output folder: 3,481 of the test Library's pictures still showed (previews live in data/) but
+    would not open, edit or download, and two tests failed on them. The same happens on a new PC when data/ is restored
+    without the output folder. Changed: `/api/library/missing` checks each live item's file on disk; the Library shows
+    a one-line notice with **Move to Recently deleted** (soft delete, Undo; nothing on disk is touched). The Depth test
+    makes its own car photo when the library has none. Darkroom is now on GitHub (HeroImageAI/Darkroom, private, full
+    history and tags) with docs/NEW-PC.md, scripts/models.json and scripts/get-models.py to rebuild on a new PC.
