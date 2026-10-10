@@ -1073,3 +1073,6 @@ Each choice made while building Darkroom, and why. Newest decisions are appended
     a one-line notice with **Move to Recently deleted** (soft delete, Undo; nothing on disk is touched). The Depth test
     makes its own car photo when the library has none. Darkroom is now on GitHub (HeroImageAI/Darkroom, private, full
     history and tags) with docs/NEW-PC.md, scripts/models.json and scripts/get-models.py to rebuild on a new PC.
+    Also fixed: a quick click on a **video tile** was lost: hovering swapped the still for a playing video between press
+    and release, and the browser drops a click whose element vanished. The video now lies over the still, never the
+    click target. The Library test restores only its own three items (Recently deleted may hold thousands).

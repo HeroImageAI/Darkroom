@@ -771,11 +771,12 @@ function Tile({
         background: 'var(--panel)',
       }}
     >
-      {item.kind === 'video' && hover ? (
-        <video ref={vid} src={fileUrl(item.id)} autoPlay muted loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-      ) : (
-        // a compare sheet or a very wide/tall picture is shown whole: cropped square, both halves were cut off (audit #9)
-        <img src={thumbUrl(item.id)} alt="" loading="lazy" draggable={false} style={{ width: '100%', height: '100%', objectFit: wholeTile(item) ? 'contain' : 'cover', display: 'block', background: wholeTile(item) ? '#0b0908' : undefined }} />
+      {/* a compare sheet or a very wide/tall picture is shown whole: cropped square, both halves were cut off (audit #9) */}
+      <img src={thumbUrl(item.id)} alt="" loading="lazy" draggable={false} style={{ width: '100%', height: '100%', objectFit: wholeTile(item) ? 'contain' : 'cover', display: 'block', background: wholeTile(item) ? '#0b0908' : undefined }} />
+      {item.kind === 'video' && hover && (
+        // laid over the still and never the click target: swapping the element under the pointer between press and
+        // release made the browser drop a quick click on a video tile
+        <video ref={vid} src={fileUrl(item.id)} autoPlay muted loop playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', pointerEvents: 'none' }} />
       )}
       <span style={{ position: 'absolute', left: 6, bottom: 6, display: 'flex', gap: 4 }}>
         {item.kind === 'video' && (

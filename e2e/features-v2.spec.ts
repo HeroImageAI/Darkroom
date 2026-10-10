@@ -1055,6 +1055,7 @@ test.describe.serial('Darkroom v2 features', () => {
     // the grid has reloaded with it back in place before the next clicks
     await expect(tiles.nth(0)).toHaveAttribute('data-id', first!);
     // a range with Shift-click, deleted from the selection bar
+    const three = await Promise.all([1, 2, 3].map((n) => tiles.nth(n).getAttribute('data-id')));
     await tiles.nth(1).click();
     await tiles.nth(3).click({ modifiers: ['Shift'] });
     const bar = page.getByRole('toolbar', { name: 'Selection' });
@@ -1062,15 +1063,17 @@ test.describe.serial('Darkroom v2 features', () => {
     await bar.getByRole('button', { name: 'Delete' }).click();
     await expect(page.getByText('3 items moved to Recently deleted.').last()).toBeVisible();
     expect(await count('deleted')).toBe(deletedBefore + 3);
-    // they wait in Recently deleted and come back with Restore
+    // they wait in Recently deleted and come back with Restore (only these three: Recently deleted may hold others)
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Recently deleted' }).click();
-    await expect(tiles).toHaveCount(deletedBefore + 3);
+    const grid = page.getByRole('list', { name: 'Library items' });
+    for (const id of three) await expect(grid.locator(`[data-id="${id}"]`)).toBeVisible();
     await shot(page, 'library-recently-deleted');
-    await page.keyboard.press('Control+a');
+    for (const id of three) await grid.locator(`[data-id="${id}"] .tile-tick`).click();
+    await expect(bar).toContainText('3 selected');
     await bar.getByRole('button', { name: 'Restore' }).click();
-    await expect(page.getByText(`${deletedBefore + 3} items restored to the Library.`)).toBeVisible();
-    expect(await count()).toBe(before + deletedBefore);
-    expect(await count('deleted')).toBe(0);
+    await expect(page.getByText('3 items restored to the Library.')).toBeVisible();
+    expect(await count()).toBe(before);
+    expect(await count('deleted')).toBe(deletedBefore);
     await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'All' }).click();
   });
 

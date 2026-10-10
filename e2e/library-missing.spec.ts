@@ -29,3 +29,17 @@ test('Missing files: the Library names them and moves them to Recently deleted, 
   await page.reload();
   await expect(page.getByRole('status').filter({ hasText: 'lost' })).toHaveCount(0);
 });
+
+test('A quick click on a video tile counts (its hover preview no longer replaces the element under the pointer)', async ({ page }) => {
+  await page.goto('/#/library');
+  await page.getByRole('group', { name: 'Filter' }).getByRole('button', { name: 'Videos' }).click();
+  const tiles = page.getByRole('list', { name: 'Library items' }).getByRole('listitem');
+  await tiles.nth(1).waitFor({ timeout: 15_000 }).catch(() => {});
+  test.skip((await tiles.count()) < 2, 'fewer than two videos in this library');
+  // Playwright moves and presses at once: the hover preview used to swap the still for a video between press and
+  // release, and the browser dropped the click
+  await tiles.nth(0).click({ modifiers: ['Control'] });
+  await tiles.nth(1).click({ modifiers: ['Control'] });
+  await expect(page.getByRole('toolbar', { name: 'Selection' })).toContainText('2 selected');
+  await page.keyboard.press('Escape');
+});
