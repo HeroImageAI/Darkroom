@@ -77,6 +77,9 @@ See docs/QA_REPORT.md for how every feature performed on the test pictures, with
 
 ## Setup (already done on this PC)
 
+**New PC or a reinstalled Windows:** follow [docs/NEW-PC.md](docs/NEW-PC.md) — Comfy Desktop, ComfyUI's settings, this
+code from GitHub, the models (`scripts/models.json`, `scripts/get-models.py`) and restoring your Library.
+
 Requirements: Windows, Node.js 22+ (24 recommended), Comfy Desktop with ComfyUI ≥ 0.37 and the models listed in AUDIT.md.
 
 ```bash
