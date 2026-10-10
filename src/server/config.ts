@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +28,27 @@ export function parseEnv(text: string): Record<string, string> {
   return out;
 }
 
+/**
+ * Where Windows says Comfy Desktop is installed (its uninstall entry's DisplayIcon), for a new PC where config.json's
+ * path no longer fits (DECISIONS 138). Null when it is not installed or the registry cannot be read.
+ */
+export function findDesktopExe(): string | null {
+  for (const hive of ['HKCU', 'HKLM']) {
+    try {
+      const key = `${hive}\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall`;
+      const out = execFileSync('reg', ['query', key, '/s', '/f', 'Comfy Desktop', '/d'], { encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+      for (const block of out.split(/\r?\n(?=HKEY_)/)) {
+        if (!/DisplayName\s+REG_SZ\s+Comfy Desktop/i.test(block)) continue;
+        const icon = /DisplayIcon\s+REG_SZ\s+(.+?)(?:,\d+)?\s*$/m.exec(block)?.[1]?.replace(/^"|"$/g, '');
+        if (icon && fs.existsSync(icon)) return icon;
+      }
+    } catch {
+      /* not found in this hive */
+    }
+  }
+  return null;
+}
+
 function expandWinEnv(p: string): string {
   return p.replace(/%([^%]+)%/g, (_, k) => process.env[k] ?? `%${k}%`);
 }
@@ -39,6 +61,8 @@ export function loadConfig(root = ROOT): DarkroomConfig {
   if (env.DR_DESKTOP_EXE) cfg.desktop.exe = env.DR_DESKTOP_EXE;
   if (env.DR_SERVER_PORT) cfg.server.port = Number(env.DR_SERVER_PORT);
   if (env.DR_DATA_DIR) cfg.paths.data = env.DR_DATA_DIR;
+  // a fresh install puts Comfy Desktop somewhere else: ask Windows where it is
+  if (!fs.existsSync(cfg.desktop.exe)) cfg.desktop.exe = findDesktopExe() ?? cfg.desktop.exe;
   cfg.desktop.logsDir = expandWinEnv(cfg.desktop.logsDir);
   for (const k of ['data', 'workflows', 'presets'] as const) cfg.paths[k] = path.resolve(root, cfg.paths[k]);
   return cfg;

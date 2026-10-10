@@ -8,6 +8,7 @@ import { Edit } from './screens/Edit';
 import { Generate } from './screens/Generate';
 import { Home } from './screens/Home';
 import { Library } from './screens/Library';
+import { Setup, SetupBanner } from './screens/Setup';
 import { Timeline } from './screens/Timeline';
 import { Video } from './screens/Video';
 import { setState, toast, useApp } from './store';
@@ -29,6 +30,7 @@ export function App() {
       <TopBar screen={route.screen} />
       <div>
         <OfflineBanner />
+        <SetupBanner screen={route.screen} />
       </div>
       {!boot ? (
         <div className="empty" style={{ margin: 'auto' }}>
@@ -46,6 +48,8 @@ export function App() {
         <Video query={route.query} />
       ) : route.screen === 'timeline' ? (
         <Timeline id={route.id} />
+      ) : route.screen === 'setup' ? (
+        <Setup />
       ) : (
         <Library />
       )}

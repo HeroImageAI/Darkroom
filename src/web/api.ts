@@ -67,6 +67,33 @@ async function handle<T>(r: Response): Promise<T> {
   return body as T;
 }
 
+export type ModelStatus = 'present' | 'missing' | 'queued' | 'downloading' | 'failed' | 'sign-in' | 'licence' | 'manual';
+export interface SetupModel {
+  file: string;
+  folder: string;
+  gb: number | null;
+  repo?: string | null;
+  group: string;
+  signIn?: boolean;
+  optional?: boolean;
+  source?: string;
+  note?: string;
+  status: ModelStatus;
+  presentAs?: string;
+  received?: number;
+  total?: number;
+  error?: string;
+}
+export interface SetupModels {
+  groups: Record<string, string>;
+  models: SetupModel[] | null;
+  dir: string | null;
+  freeGB: number | null;
+  signedIn: boolean;
+  running: boolean;
+  queue: string[];
+}
+
 export const api = {
   get: <T>(url: string) => fetch(url).then((r) => handle<T>(r), offline),
   post: <T>(url: string, body?: unknown) =>
@@ -102,6 +129,12 @@ export const api = {
   /** Pictures whose file is gone from disk (only the preview is left), and putting them in Recently deleted. */
   missingItems: () => api.get<{ checked: boolean; count: number; ids: string[] }>('/api/library/missing'),
   deleteMissing: () => api.post<{ deleted: string[] }>('/api/library/missing/delete', {}),
+  /** Setup (DECISIONS 138): the models Darkroom needs, and downloading the missing ones. */
+  setupModels: () => api.get<SetupModels>('/api/setup/models'),
+  setupSummary: () => api.get<{ checked: boolean; missing: number; missingGB: number; optionalMissing: number }>('/api/setup/summary'),
+  downloadModels: (files: string[]) => api.post<{ queued: string[]; error?: string }>('/api/setup/models/download', { files }),
+  cancelModels: () => api.post<{ ok: true }>('/api/setup/models/cancel', {}),
+  setHfToken: (token: string | null) => api.post<{ signedIn: boolean }>('/api/setup/token', { token }),
   /** Video Takes: hide failed / cancelled / lost renders. */
   dismissJobs: (body: { ids: string[] } | { failedOfKind: string }) => api.post<{ dismissed: string[] }>('/api/jobs/dismiss', body),
   purgeItems: (body: { ids: string[] } | { all: true }) => api.post<{ purged: number; recycled: number; failed: string[] }>('/api/items/purge', body),

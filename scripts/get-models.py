@@ -1,5 +1,8 @@
 """Download the models Darkroom needs that are missing on this PC (scripts/models.json).
 
+Darkroom's own Setup screen (Home > Models and setup) does the same with one button; this script is the terminal
+fallback. Optional extras (Wan 2.2, Lucida) are only fetched with --all.
+
 Uses Hugging Face's fast (Xet) client, stages each file in a temporary folder and moves it into place when it is
 complete, and never overwrites a file that is already there. Files without a public download are listed at the end:
 copy those from your own backup.
@@ -18,10 +21,11 @@ import time
 here = os.path.dirname(os.path.abspath(__file__))
 args = [a for a in sys.argv[1:] if not a.startswith('--')]
 dry = '--dry-run' in sys.argv
+extras = '--all' in sys.argv
 root = args[0] if args else r'E:\Comfy-Desktop\ComfyUI-Shared\models'
 # where ComfyUI also looks for models (a file in either one is present)
 look = [root, r'E:\ComfyUI\Desktop ComfyUI\ComfyUI\ComfyUI\models']
-spec = json.load(open(os.path.join(here, 'models.json'), encoding='utf-8'))['models']
+spec = [m for m in json.load(open(os.path.join(here, 'models.json'), encoding='utf-8'))['models'] if extras or not m.get('optional')]
 
 
 def present(name):
@@ -32,9 +36,25 @@ def present(name):
     return None
 
 
+def orbit_keys(src, dest):
+    """Rename diffusion_model.* keys to transformer.* (DECISIONS 113), so ComfyUI maps Qwen 2.1's split MLP halves."""
+    import struct
+    with open(src, 'rb') as f:
+        n = struct.unpack('<Q', f.read(8))[0]
+        header = json.loads(f.read(n))
+        out = {'__metadata__': {**header.pop('__metadata__', {}), 'darkroom_note': 'keys renamed diffusion_model.* -> transformer.*'}}
+        for k, v in header.items():
+            out[('transformer.' + k[len('diffusion_model.'):]) if k.startswith('diffusion_model.') else k] = v
+        raw = json.dumps(out, separators=(',', ':')).encode()
+        raw += b' ' * ((8 - len(raw) % 8) % 8)
+        with open(dest, 'wb') as w:
+            w.write(struct.pack('<Q', len(raw)) + raw)
+            shutil.copyfileobj(f, w, 64 << 20)
+
+
 todo, manual = [], []
 for m in spec:
-    if present(m['file']):
+    if any(present(n) for n in [m['file'], *m.get('also', [])]):
         continue
     (todo if m.get('repo') else manual).append(m)
 
@@ -64,7 +84,10 @@ for m in todo:
         print(f'FAILED {m["file"]}: {e}')
         continue
     os.makedirs(os.path.dirname(target), exist_ok=True)
-    shutil.move(p, target)
+    if m.get('convert') == 'orbit-keys':
+        orbit_keys(p, target)
+    else:
+        shutil.move(p, target)
     print(f'ok {m["folder"]}/{m["file"]} in {time.time() - t0:.0f}s', flush=True)
 shutil.rmtree(stage, ignore_errors=True)
 print('done')
