@@ -77,6 +77,9 @@ See docs/QA_REPORT.md for how every feature performed on the test pictures, with
 
 ## Setup (already done on this PC)
 
+**New PC or a reinstalled Windows:** follow [docs/NEW-PC.md](docs/NEW-PC.md) — Comfy Desktop, ComfyUI's settings, this
+code from GitHub, the models (`scripts/models.json`, `scripts/get-models.py`) and restoring your Library.
+
 Requirements: Windows, Node.js 22+ (24 recommended), Comfy Desktop with ComfyUI ≥ 0.37 and the models listed in AUDIT.md.
 
 ```bash
@@ -163,6 +166,10 @@ tabs using WebGPU. Use Draft or a shorter clip. Darkroom already unloads image m
 free VRAM is too low. If a job gets *very* slow rather than failing, the NVIDIA driver is spilling into system RAM. You can
 change that in *NVIDIA Control Panel → Manage 3D settings → CUDA - Sysmem Fallback Policy → Prefer No Sysmem Fallback* for
 ComfyUI's `python.exe` (Darkroom does not change driver settings).
+
+**The Library says pictures have lost their files.** Their file is gone from ComfyUI's output folder (a disk cleaner,
+or a Library brought to a new PC without the output folder; see docs/NEW-PC.md). Copy the output folder back if you have
+a backup, then reload; otherwise press *Move to Recently deleted* (DECISIONS 137).
 
 **A video takes 5–15 minutes instead of about one (it says "Slow: graphics memory full").** Measured on this PC
 (DECISIONS 136): LTX 2.5 needs about 21.5 GB of the RTX 3090's 24 GB while it renders. Windows, the browser, Comfy Desktop's

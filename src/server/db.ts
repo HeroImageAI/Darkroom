@@ -438,6 +438,14 @@ export class Store {
     return (this.db.prepare('SELECT id FROM items WHERE deleted_at IS NOT NULL').all() as { id: string }[]).map((r) => r.id);
   }
 
+  /** Every live item's main file, for the missing-files check. */
+  liveFiles(): { id: string; file: FileRef | null }[] {
+    return (this.db.prepare("SELECT id, file FROM items WHERE deleted_at IS NULL AND mode != 'restore_part'").all() as { id: string; file: string | null }[]).map((r) => ({
+      id: r.id,
+      file: r.file ? (JSON.parse(r.file) as FileRef) : null,
+    }));
+  }
+
   /** Remove rows for good (only items already in "Recently deleted"). Returns the removed items. */
   purgeItems(ids: string[]): Item[] {
     const out: Item[] = [];

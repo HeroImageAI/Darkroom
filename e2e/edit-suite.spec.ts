@@ -1025,7 +1025,14 @@ test.describe.serial('Edit suite · depth and pose (DECISIONS 134)', () => {
   test.afterAll(async () => page.context().close());
 
   test('Sketch › Depth: the depth of a car photo becomes a new car in the same layout, as a layer; the map stays hidden', async () => {
-    const pic = await pickPicture(page, (i) => i.mode === 'generate' && /car/i.test(i.prompt ?? '') && i.width <= 1600);
+    const isCar = (i: any) => i.mode === 'generate' && /\bcar\b/i.test(i.prompt ?? '') && i.width <= 1600;
+    const items = (await (await page.request.get('/api/items?limit=2000')).json()).items as any[];
+    if (!items.some((i) => i.kind === 'image' && !i.deleted_at && isCar(i))) {
+      // a library without a car photo makes one first
+      const job = await (await page.request.post('/api/jobs', { data: { workflow: 'klein_t2i', params: { prompt: 'A vintage blue sports car parked on a quiet street, three-quarter view, daylight photo', seed: 7 }, meta: { mode: 'generate', model: 'Klein 9B', prompt: 'A vintage blue sports car parked on a quiet street, three-quarter view, daylight photo' } } })).json();
+      await expect.poll(async () => ((await (await page.request.get(`/api/jobs/${job.id}/items`)).json()) as any[]).length, { timeout: 180_000 }).toBeGreaterThan(0);
+    }
+    const pic = await pickPicture(page, isCar);
     await page.goto(`/#/edit/${pic.id}`);
     await page.getByRole('group', { name: 'Edit mode' }).getByRole('button', { name: 'Sketch', exact: true }).click();
     await page.getByRole('group', { name: 'Follow' }).getByRole('button', { name: 'Depth' }).click();
