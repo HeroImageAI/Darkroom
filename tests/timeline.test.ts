@@ -59,6 +59,11 @@ describe('timeline', () => {
     const d = rippleDelete(doc(clip('a', 0, 0, 5), clip('b', 5, 0, 3), clip('c', 8, 0, 2)), 'b');
     expect(d.clips.map((c) => [c.id, c.start])).toEqual([['a', 0], ['c', 5]]);
   });
+  it('ripple deletion closes a gap when the following clip overlapped the deleted segment', () => {
+    const d = rippleDelete(doc(clip('a', 0, 0, 1), clip('b', 1, 1, 3), clip('c', 2.5, 0, 3)), 'b');
+    expect(d.clips.map((c) => [c.id, c.start])).toEqual([['a', 0], ['c', 1]]);
+    expect(clipsAt(d, 1.5).top?.id).toBe('c');
+  });
 
   it('export size: the first clip, even-sided, or a fixed size', () => {
     const d = doc(clip('a', 3, 0, 1), clip('b', 0, 0, 1));

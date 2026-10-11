@@ -1,6 +1,6 @@
 {
   "name": "darkroom",
-  "version": "1.0.0",
+  "version": "3.35.0",
   "private": true,
   "type": "module",
   "description": "Darkroom - a local Fooocus-style front end for ComfyUI Desktop",

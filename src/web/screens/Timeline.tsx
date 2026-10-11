@@ -6,6 +6,7 @@ import { formatDuration, ProgressBar, Segmented, timecode } from '../components/
 import { openLibrary } from '../lib/remove';
 import { go } from '../router';
 import { getState, onTimeline, toast, useApp } from '../store';
+import { Autosave } from '../../shared/autosave';
 import {
   clipsAt,
   closeGaps,
@@ -155,13 +156,23 @@ function TimelineEditor({ id }: { id: string }) {
   const exp = useApp((s) => s.exports[id]);
   const online = useApp((s) => s.status?.comfy === 'online');
 
+  const [saveState, setSaveState] = useState<'saving' | 'saved' | 'error'>('saved');
+  const saver = useMemo(() => new Autosave(async (body) => {
+    const r = await fetch(`/api/timelines/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body, keepalive: true });
+    if (!r.ok) throw new Error('Save failed');
+  }, setSaveState), [id]);
+  useEffect(() => {
+    const flush = () => { void saver.flush(); };
+    window.addEventListener('pagehide', flush);
+    return () => { window.removeEventListener('pagehide', flush); void saver.flush(); };
+  }, [saver]);
   // ---- load, autosave ---------------------------------------------------------------------------------------
   useEffect(() => {
     api
       .get<Saved & { doc: TimelineDoc }>(`/api/timelines/${id}`)
       .then((r) => {
         // what was loaded counts as saved: opening a film must not re-save it (and move it to the top of the list)
-        saved.current = JSON.stringify({ name: r.name, doc: r.doc });
+        saver.markSaved(JSON.stringify({ name: r.name, doc: r.doc }));
         setName(r.name);
         setDocState(r.doc);
       })
@@ -183,19 +194,10 @@ function TimelineEditor({ id }: { id: string }) {
         .then((r) => setItems((m) => ({ ...m, [itemId]: r.item })))
         .catch(() => undefined);
   }, [need]);
-  const saved = useRef('');
   useEffect(() => {
     if (!doc) return;
-    const body = JSON.stringify({ name, doc });
-    if (body === saved.current) return;
-    const h = setTimeout(() => {
-      api
-        .put(`/api/timelines/${id}`, { name, doc })
-        .then(() => (saved.current = body))
-        .catch((e) => toast('Could not save the film: ' + (e as Error).message, 'error'));
-    }, 600);
-    return () => clearTimeout(h);
-  }, [doc, name, id]);
+    saver.schedule(JSON.stringify({ name, doc }));
+  }, [doc, name, saver]);
 
   /** Change the document; `history` false for the live steps of a drag (the drag commits once at the end). */
   const setDoc = (next: TimelineDoc, history = true, before?: TimelineDoc) => {
@@ -463,6 +465,9 @@ function TimelineEditor({ id }: { id: string }) {
             {size.width}×{size.height} · {doc.fps} fps
           </span>
           <div style={{ flex: 1 }} />
+          <button className="btn ghost sm" aria-label="Film save status" disabled={saveState !== 'error'} onClick={() => void saver.flush()}>
+            {saveState === 'saving' ? 'Saving…' : saveState === 'error' ? 'Save failed — retry' : 'Saved'}
+          </button>
           {exporting ? (
             <div style={{ width: 200 }} aria-label="Export progress">
               <ProgressBar value={exp.progress} />

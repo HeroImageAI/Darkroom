@@ -120,7 +120,7 @@ export const api = {
   renameBoard: (id: string, name: string) => api.patch<Board>(`/api/boards/${id}`, { name }),
   deleteBoard: (id: string) => fetch(`/api/boards/${id}`, { method: 'DELETE' }).then((r) => handle<{ ok: true }>(r), offline),
   moveToBoard: (ids: string[], boardId: string | null) => api.post<{ moved: string[] }>('/api/items/board', { ids, boardId }),
-  items: (q: { filter?: string; q?: string; limit?: number; offset?: number; board?: string; stack?: 1 }) =>
+  items: (q: { filter?: string; q?: string; limit?: number; offset?: number; board?: string; stack?: 1; sort?: string }) =>
     api.get<{ total: number; items: Item[] }>(`/api/items?${new URLSearchParams(Object.entries(q).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, String(v)]))}`),
   favourite: (id: string, favourite: boolean) => api.patch<Item>(`/api/items/${id}`, { favourite }),
   /** Library delete: to "Recently deleted" (restorable), back, or for good (files to the Windows Recycle Bin). */

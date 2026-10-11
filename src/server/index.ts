@@ -778,7 +778,7 @@ app.post('/api/jobs/:id/cancel', async (req) => {
 
 app.get('/api/items', async (req) => {
   const q = req.query as Record<string, string>;
-  const res = store.listItems({ filter: (q.filter as LibraryQuery['filter']) ?? 'all', q: q.q, limit: Number(q.limit) || 60, offset: Number(q.offset) || 0, board: q.board || undefined, stack: q.stack === '1' });
+  const res = store.listItems({ filter: (q.filter as LibraryQuery['filter']) ?? 'all', q: q.q, limit: Number(q.limit) || 60, offset: Number(q.offset) || 0, board: q.board || undefined, stack: q.stack === '1', sort: q.sort as LibraryQuery['sort'] });
   return { total: res.total, items: res.items.map(slim) };
 });
 

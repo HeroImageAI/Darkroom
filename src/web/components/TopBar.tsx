@@ -59,8 +59,8 @@ export function TopBar({ screen }: { screen: Screen }) {
           : state === 'desktop-open'
             ? 'ComfyUI not launched'
             : 'ComfyUI offline';
-  const used = status?.vram ? (status.vram.total - status.vram.free) / 1e9 : null;
-  const total = status?.vram ? status.vram.total / 1e9 : null;
+  const used = status?.vram ? (status.vram.total - status.vram.free) / 1024 ** 3 : null;
+  const total = status?.vram ? status.vram.total / 1024 ** 3 : null;
 
   return (
     <header className="topbar">
@@ -90,12 +90,12 @@ export function TopBar({ screen }: { screen: Screen }) {
             </button>
           )}
         </div>
-        <div className="vram" title={`Graphics memory in use${used !== null && total ? `: ${used.toFixed(1)} of ${total.toFixed(0)} GB` : ""}`}>
+        <div className="vram" title={`Graphics memory in use${used !== null && total ? `: ${used.toFixed(1)} of ${total.toFixed(0)} GiB` : ""}`}>
           <span className="vram-label">VRAM</span>
           <div className="vram-bar">
             <div style={{ width: used && total ? `${(used / total) * 100}%` : '0%' }} />
           </div>
-          <span className="mono vram-text">{used !== null && total ? `${used.toFixed(1)}/${total.toFixed(0)} GB` : '–'}</span>
+          <span className="mono vram-text">{used !== null && total ? `${used.toFixed(1)}/${total.toFixed(0)} GiB` : '–'}</span>
         </div>
         <div className="queue-count" title={`${status?.queue ?? 0} jobs waiting or running in ComfyUI`}>
           {/* the darkroom's safelight: on while something is developing */}

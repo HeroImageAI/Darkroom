@@ -64,6 +64,13 @@ describe('library version stacks', () => {
     expect(s.total).toBe(2);
     expect(store.listItems({}).total).toBe(4);
   });
+  it('sorts the complete query before paging and keeps the latest version in each stack', () => {
+    expect(store.listItems({ sort: 'oldest', limit: 2 }).items.map((i) => i.id)).toEqual(['a1', 'b1']);
+    expect(store.listItems({ sort: 'oldest', offset: 2, limit: 2 }).items.map((i) => i.id)).toEqual(['a2', 'a3']);
+    expect(store.listItems({ stack: true, sort: 'oldest' }).items.map((i) => i.id)).toEqual(['b1', 'a3']);
+    expect(store.listItems({ sort: 'name' }).items.map((i) => i.id)).toEqual(['a1', 'a2', 'a3', 'b1']);
+    expect(store.listItems({ sort: 'not-sql' as any }).total).toBe(4);
+  });
   it('a deleted version drops out of its stack; Recently deleted is never stacked', () => {
     store.softDelete(['a3']);
     expect(store.listItems({ stack: true }).items.map((i) => [i.id, i.stack_count])).toEqual([

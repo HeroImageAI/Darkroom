@@ -1,5 +1,7 @@
 # Darkroom
 
+Current release: **v3.35.0** — [reliability and Library improvements](docs/releases/v3.35.0.md).
+
 A simple, fast studio for **image generation, image editing and image-to-video** on your own RTX 3090. ComfyUI Desktop does the
 work; Darkroom is the only window you use day to day.
 

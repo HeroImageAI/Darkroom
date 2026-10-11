@@ -162,6 +162,7 @@ export interface LibraryQuery {
   board?: string;
   /** Version stacks: one item per picture (its newest matching version), with `stack_count`. Never in Recently deleted. */
   stack?: boolean;
+  sort?: 'newest' | 'oldest' | 'name' | 'largest';
 }
 
 export class Store {
@@ -361,17 +362,22 @@ export class Store {
       }
     }
     const w = where.length ? 'WHERE ' + where.join(' AND ') : '';
+    // Whitelist expressions: no query text is interpolated into SQL.
+    const order = q.sort === 'oldest' ? 'created_at ASC, id ASC'
+      : q.sort === 'name' ? "COALESCE(NULLIF(title, ''), prompt) COLLATE NOCASE ASC, created_at DESC, id DESC"
+      : q.sort === 'largest' ? 'COALESCE(width, 0) * COALESCE(height, 0) DESC, created_at DESC, id DESC'
+      : `${q.filter === 'deleted' ? 'deleted_at DESC, ' : ''}created_at DESC, id DESC`;
     if (q.stack && q.filter !== 'deleted') {
       // a picture and its versions share COALESCE(root_id, id); show the newest one that matches, with the count
       const grouped = `SELECT *, ROW_NUMBER() OVER (PARTITION BY COALESCE(root_id, id) ORDER BY created_at DESC, id DESC) AS stack_rank,
           COUNT(*) OVER (PARTITION BY COALESCE(root_id, id)) AS stack_count FROM items ${w}`;
       const total = (this.db.prepare(`SELECT COUNT(*) AS n FROM (${grouped}) WHERE stack_rank = 1`).get(...args) as any).n as number;
-      const rows = this.db.prepare(`SELECT * FROM (${grouped}) WHERE stack_rank = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?`).all(...args, q.limit ?? 60, q.offset ?? 0) as any[];
+      const rows = this.db.prepare(`SELECT * FROM (${grouped}) WHERE stack_rank = 1 ORDER BY ${order} LIMIT ? OFFSET ?`).all(...args, q.limit ?? 60, q.offset ?? 0) as any[];
       return { items: rows.map(({ stack_rank: _r, ...r }) => decode<Item>(r, JSON_ITEM)!), total };
     }
     const total = (this.db.prepare(`SELECT COUNT(*) AS n FROM items ${w}`).get(...args) as any).n as number;
     const rows = this.db
-      .prepare(`SELECT * FROM items ${w} ORDER BY ${q.filter === 'deleted' ? 'deleted_at DESC, ' : ''}created_at DESC LIMIT ? OFFSET ?`)
+      .prepare(`SELECT * FROM items ${w} ORDER BY ${order} LIMIT ? OFFSET ?`)
       .all(...args, q.limit ?? 60, q.offset ?? 0) as any[];
     return { items: rows.map((r) => decode<Item>(r, JSON_ITEM)!), total };
   }

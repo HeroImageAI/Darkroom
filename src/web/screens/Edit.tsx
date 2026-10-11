@@ -399,6 +399,16 @@ function Editor({ item }: { item: Item }) {
   // Remove BG v2
   const [bgSubject, setBgSubject] = useState('');
   const [bgMatte, setBgMatte] = useState('birefnet.safetensors');
+  const [lucidaPresent, setLucidaPresent] = useState(false);
+  useEffect(() => {
+    if (mode !== 'remove_bg') return;
+    let live = true;
+    api.setupModels().then((r) => {
+      if (live) setLucidaPresent(!!r.models?.some((m) => m.file === 'lucida.safetensors' && m.status === 'present'));
+    }).catch(() => { if (live) setLucidaPresent(false); });
+    return () => { live = false; };
+  }, [mode]);
+  useEffect(() => { if (!lucidaPresent && bgMatte === 'lucida.safetensors') setBgMatte('birefnet.safetensors'); }, [lucidaPresent, bgMatte]);
   const [bgEdge, setBgEdge] = useState(0);
   const [bgPlate, setBgPlate] = useState(false);
   const [bgMethod, setBgMethod] = useState<'matte' | 'qwen'>('matte'); // Fast (BiRefNet/SAM) or Best quality (Qwen 2.1)
@@ -2994,7 +3004,7 @@ function Editor({ item }: { item: Item }) {
                 <span>Edge model</span>
                 <select className="input" value={bgMatte} onChange={(ev) => setBgMatte(ev.target.value)}>
                   <option value="birefnet.safetensors">BiRefNet (default)</option>
-                  <option value="lucida.safetensors">Lucida (alternative)</option>
+                  <option value="lucida.safetensors" disabled={!lucidaPresent}>Lucida {lucidaPresent ? '(alternative)' : '(model not installed)'}</option>
                 </select>
               </label>
               <label className="field" style={{ marginTop: 8 }}>
@@ -3034,6 +3044,7 @@ function Editor({ item }: { item: Item }) {
                   <p className="note">One transparent layer per object at full resolution, plus the background with them removed. Best quality; about 25 seconds per layer.</p>
                 </>
               )}
+              {layerMode === 'qwen' && <p className="note">Automatic layers are reconstructed at 640 px and may overlap. Use SAM for source-pixel cutouts, or extract named objects for full-resolution layers.</p>}
               {layerMode === 'qwen21' ? null : layerMode === 'sam' ? (
                 <>
                   <label className="field" style={{ marginTop: 8 }}>

@@ -12,6 +12,7 @@ import { LoraPicker, useLoraCatalogue, type Catalogue } from '../components/Lora
 import type { LoraUse } from '../../shared/loras';
 import { composeImagePrompt, composeMotionPrompt, wordCount, type VideoModelKey } from '../../shared/prompts';
 import { restoreCanvas, restoredFrames, restoreWindows } from '../../shared/restore';
+import { playbackDuration } from '../../shared/mediaInfo';
 
 interface Frame {
   name: string;
@@ -1001,33 +1002,34 @@ function FrameSlot({
 }
 
 /** A take's name: its Library title, else the start of its motion prompt (audit #9). Fetched once per take. */
-const takeNames = new Map<string, string>();
-function useTakeName(job: Job): string {
+const takeItems = new Map<string, Item>();
+function useTakeItem(job: Job): Item | null {
   const meta = job.meta as Record<string, any>;
   const fallback = String(meta.prompt ?? '').trim();
   const id = job.result_ids[0];
-  const [name, setName] = useState(() => (id && takeNames.get(id)) || fallback);
+  const [item, setItem] = useState<Item | null>(() => (id && takeItems.get(id)) || null);
   useEffect(() => {
-    if (!id || takeNames.has(id)) return;
+    if (!id) { setItem(null); return; }
+    if (takeItems.has(id)) { setItem(takeItems.get(id)!); return; }
     let live = true;
     api
       .item(id)
       .then((r) => {
-        const t = r.item.title || fallback;
-        takeNames.set(id, t);
-        if (live) setName(t);
+        takeItems.set(id, r.item);
+        if (live) setItem(r.item);
       })
       .catch(() => undefined);
     return () => {
       live = false;
     };
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
-  return name;
+  return item;
 }
 
 function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; selected: boolean; onSelect: () => void; onDelete: () => void; onDismiss: () => void }) {
   const [now, setNow] = useState(Date.now());
-  const name = useTakeName(job);
+  const item = useTakeItem(job);
+  const name = item?.title || String((job.meta as Record<string, any>).prompt ?? '').trim();
   const running = job.status === 'queued' || job.status === 'running';
   useEffect(() => {
     if (!running) return;
@@ -1038,7 +1040,10 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
   const meta = job.meta as Record<string, any>;
   const elapsed = job.started_at ? (now - job.started_at) / 1000 : 0;
   const eta = job.estimate_sec && job.status === 'running' ? Math.max(0, job.estimate_sec - elapsed) : null;
-  const dur = p.frames && p.fps ? (p.frames - 1) / p.fps : meta.durationSec;
+  const dur = item ? playbackDuration(item) : p.frames && p.fps ? (p.frames - 1) / p.fps : meta.durationSec;
+  const width = item?.width ?? p.width;
+  const height = item?.height ?? p.height;
+  const fps = item?.fps ?? p.fps;
   return (
     <div
       className="take"
@@ -1068,9 +1073,9 @@ function Take({ job, selected, onSelect, onDelete, onDismiss }: { job: Job; sele
           {meta.ui?.quality ? ` · ${({ final: 'Final', hd: '1080p', draft: 'Draft' } as Record<string, string>)[meta.ui.quality] ?? 'Draft'}` : ''}{meta.ui?.sound === 'off' ? ' · Silent' : ''}
         </span>
         <span className="mono muted" style={{ fontSize: 11 }}>
-          {p.width ? `${p.width}×${p.height} · ` : ''}
+          {width ? `${width}×${height} · ` : ''}
           {dur ? `${Number(dur).toFixed(1)} s` : ''}
-          {p.fps ? ` · ${p.fps} fps` : ''}
+          {fps ? ` · ${fps} fps` : ''}
         </span>
         {running ? (
           <>

@@ -7,6 +7,7 @@ import { useItem, usePersistent } from '../lib/hooks';
 import { importFailedMessage, importPictures, importVideos, isVideoFile } from '../lib/importer';
 import { go } from '../router';
 import { getState, toast, useApp } from '../store';
+import { playbackDuration } from '../../shared/mediaInfo';
 
 const FILTERS = [
   { value: 'all', label: 'All' },
@@ -50,6 +51,7 @@ export function Library() {
   };
   /** Version stacks (DECISIONS 90): one tile per picture, its newest version on top. A preference. */
   const [stacked, setStacked] = usePersistent<boolean>('library.stacked', true);
+  const [sort, setSort] = usePersistent<string>('library.sort', 'newest');
   const [q, setQ] = useState('');
   const [items, setItems] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
@@ -100,7 +102,7 @@ export function Library() {
     const t = setTimeout(() => {
       setLoading(true);
       api
-        .items({ filter, q, limit: PAGE, board: boardQuery, stack: stacked && filter !== 'deleted' ? 1 : undefined })
+        .items({ filter, q, limit: PAGE, board: boardQuery, stack: stacked && filter !== 'deleted' ? 1 : undefined, sort })
         .then((r) => {
           if (!live) return;
           setItems(r.items);
@@ -114,7 +116,16 @@ export function Library() {
       live = false;
       clearTimeout(t);
     };
-  }, [filter, q, rev, shownBoard, stacked]);
+  }, [filter, q, rev, shownBoard, stacked, sort]);
+  const view = `${filter}\n${q}\n${shownBoard}\n${sort}`;
+  const previousView = useRef(view);
+  useEffect(() => {
+    if (previousView.current !== view) {
+      setSelected(null);
+      setPicked([]);
+      previousView.current = view;
+    }
+  }, [view]);
   // switching filter drops the old list at once, so nothing from the previous view can be clicked or acted on
   useEffect(() => {
     setPicked([]);
@@ -124,7 +135,7 @@ export function Library() {
   }, [filter]);
 
   const more = async () => {
-    const r = await api.items({ filter, q, limit: PAGE, offset: items.length, board: boardQuery, stack: stacked && filter !== 'deleted' ? 1 : undefined });
+    const r = await api.items({ filter, q, limit: PAGE, offset: items.length, board: boardQuery, stack: stacked && filter !== 'deleted' ? 1 : undefined, sort });
     setItems((x) => [...x, ...r.items]);
   };
 
@@ -344,7 +355,11 @@ export function Library() {
             <Search size={15} style={{ position: 'absolute', left: 12, top: 13, color: 'var(--muted)' }} />
             <input ref={searchRef} className="input" style={{ paddingLeft: 34 }} placeholder="Search  ( / )" title="Search prompts, titles, notes, seeds and tags. Press / to jump here." value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
-          <span className="mono muted item-count">{loading && !items.length ? '…' : `${total} items`}</span>
+          <select className="input" aria-label="Sort Library" value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option value="newest">Newest first</option><option value="oldest">Oldest first</option>
+            <option value="name">Name</option><option value="largest">Largest image first</option>
+          </select>
+          <span className="mono muted item-count">{loading && !items.length ? '…' : `${total} ${stacked && !trash ? 'stacks' : 'versions'}`}</span>
           {!trash && (
             <>
               <button className="btn sm" aria-pressed={selectMode} onClick={() => (selectMode ? clearSelection() : setSelecting(true))} title="Tick several pictures and videos to delete, move or favourite them together. Tip: drag a box over the grid, Ctrl-click, or Shift-click for a range.">
@@ -393,7 +408,7 @@ export function Library() {
             {boards.map((b) => (
               <button key={b.id} className="board-link board-pill" aria-pressed={shownBoard === b.id} onClick={() => setShownBoard(b.id)} title={b.name}>
                 {b.cover ? <img src={thumbUrl(b.cover)} alt="" /> : <span className="board-nocover" />}
-                <span className="board-name">{b.name}</span> <span className="mono muted">{b.count}</span>
+                <span className="board-name">{b.name}</span> <span className="mono muted" title="Total versions in this board">{b.count}</span>
               </button>
             ))}
             <button className="btn ghost sm" onClick={() => setBoardDialog('new')}>
@@ -1107,9 +1122,11 @@ function Detail({
                 <a className="btn sm ghost" href={`/api/items/${item.id}/settings`} download title="The settings as a JSON file (also works for videos); load it in Generate > Restore">
                   Settings (JSON)
                 </a>
+                {item.mode === 'timeline' && typeof item.ui.timelineId === 'string' && <button className="btn sm" onClick={() => go('timeline', item.ui.timelineId as string)}>Open originating film</button>}
                 <button
                   className="btn sm ghost"
                   title="Downloads the exact API graph and opens ComfyUI. Drop the file onto the ComfyUI canvas to load it."
+                  disabled={item.mode === 'timeline' || item.mode === 'upload'}
                   onClick={() => {
                     const a = document.createElement('a');
                     a.href = graphUrl(item.id);
@@ -1172,11 +1189,11 @@ function Detail({
             <>
               <dt>Length</dt>
               <dd>
-                {item.duration ? `${item.duration.toFixed(2)} s` : '—'} · {item.fps ?? '–'} fps · {item.frames ?? '–'} frames
+                {playbackDuration(item) ? `${playbackDuration(item)!.toFixed(2)} s` : '—'} · {item.fps ?? '–'} fps · {item.frames ?? '–'} frames
               </dd>
             </>
           )}
-          <dt>Render time</dt>
+          <dt>{['extend', 'restore', 'cutout'].includes(item.mode) ? 'Final stage time' : 'Render time'}</dt>
           <dd>{item.render_ms ? formatDuration(item.render_ms / 1000) : '—'}</dd>
           <dt>Version</dt>
           <dd>

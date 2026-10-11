@@ -167,8 +167,16 @@ export function closeGaps(doc: TimelineDoc): TimelineDoc {
 export function rippleDelete(doc: TimelineDoc, id: string): TimelineDoc {
   const c = doc.clips.find((x) => x.id === id);
   if (!c) return doc;
-  const len = lengthOf(c);
-  return { ...doc, clips: doc.clips.filter((x) => x.id !== id).map((x) => (x.start >= endOf(c) - 1e-6 ? { ...x, start: r3(Math.max(0, x.start - len)) } : x)) };
+  const list = ordered(doc.clips);
+  const index = list.findIndex((x) => x.id === id);
+  const followers = new Set(list.slice(index + 1).map((x) => x.id));
+  // Remove the occupied interval including its outgoing overlap. Keep earlier clips intact,
+  // and retain any incoming overlap with the predecessor without creating a hole.
+  const next = list[index + 1];
+  const prev = list[index - 1];
+  const boundary = prev ? Math.min(c.start, endOf(prev)) : 0;
+  const shift = next ? next.start - boundary : 0;
+  return { ...doc, clips: doc.clips.filter((x) => x.id !== id).map((x) => followers.has(x.id) ? { ...x, start: r3(Math.max(0, x.start - shift)) } : x) };
 }
 
 /** The export size: a fixed one, or the first clip's (rounded to even numbers for H.264). */
